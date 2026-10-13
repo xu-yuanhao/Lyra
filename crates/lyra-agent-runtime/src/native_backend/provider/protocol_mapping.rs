@@ -808,7 +808,7 @@ pub(crate) fn parse_streaming_response_with_commit<R: BufRead>(
     let started_at = Instant::now();
     let mut saw_done = false;
 
-    for line in reader.lines() {
+    for event in openai_chat::SseReader::new(reader) {
         if cancellation.is_cancelled()
             || (!session_id.is_empty()
                 && !turn_id.is_empty()
@@ -826,22 +826,20 @@ pub(crate) fn parse_streaming_response_with_commit<R: BufRead>(
         // `provider_http_client_builder`; it surfaces as a `reqwest::Error` whose
         // `is_timeout()` is true, classified below into a typed transport Timeout
         // that the caller's safe-retry / non-streaming fallback can recover from.
-        let line = line.map_err(|error| {
+        let event = event.map_err(|error| {
             *committed_any = state.committed_any;
-            streaming_body_read_error(error)
+            error
         })?;
-        let Some(event) = openai_chat::parse_sse_line(&line)? else {
-            continue;
-        };
         let openai_chat::SseEvent::Data(value) = event else {
             saw_done = true;
             break;
         };
         if let Some(error) = value.get("error").filter(|error| !error.is_null()) {
             *committed_any = state.committed_any;
-            return Err(AgentRuntimeError::Core(format!(
-                "provider streaming error: {error}"
-            )));
+            return Err(providers::errors::stream_error(
+                openai_chat::PROTOCOL_ID,
+                error,
+            ));
         }
         if let Err(error) = map_provider_stream_chunk(
             &value,
@@ -990,11 +988,8 @@ pub(crate) async fn parse_streaming_response_with_commit_async(
     let started_at = Instant::now();
     let mut saw_done = false;
 
-    let mut reader =
-        crate::native_backend::providers::protocol::async_line_reader::AsyncLineReader::new(
-            response.bytes_stream(),
-        );
-    while let Some(line_result) = reader.next_line().await {
+    let mut reader = openai_chat::AsyncSseReader::new(response.bytes_stream());
+    while let Some(event) = reader.next_event(cancellation).await {
         if cancellation.is_cancelled()
             || (!session_id.is_empty()
                 && !turn_id.is_empty()
@@ -1007,22 +1002,20 @@ pub(crate) async fn parse_streaming_response_with_commit_async(
             *committed_any = state.committed_any;
             return Err(provider_streaming_total_timeout_error());
         }
-        let line = line_result.map_err(|e| {
+        let event = event.map_err(|error| {
             *committed_any = state.committed_any;
-            e
+            error
         })?;
-        let Some(event) = openai_chat::parse_sse_line(&line)? else {
-            continue;
-        };
         let openai_chat::SseEvent::Data(value) = event else {
             saw_done = true;
             break;
         };
         if let Some(error) = value.get("error").filter(|error| !error.is_null()) {
             *committed_any = state.committed_any;
-            return Err(AgentRuntimeError::Core(format!(
-                "provider streaming error: {error}"
-            )));
+            return Err(providers::errors::stream_error(
+                openai_chat::PROTOCOL_ID,
+                error,
+            ));
         }
         if let Err(error) = map_provider_stream_chunk(
             &value,
@@ -1348,35 +1341,7 @@ pub(crate) fn normalize_model_reply_protocol(
         }
     }
     if let Some(content) = reply.content.take() {
-        let (visible, leaked) =
-            openai_chat::extract_leaked_tool_calls(&content, &allowed_tool_names);
-        if !leaked.is_empty() {
-            if reply.tool_calls.is_empty() {
-                reply.tool_calls = leaked;
-                if matches!(
-                    reply.stop_signal,
-                    TurnStopSignal::EndTurn | TurnStopSignal::Unknown
-                ) {
-                    reply.stop_signal = TurnStopSignal::ToolUse;
-                    if reply.raw_stop_reason.as_deref() != Some("tool_calls") {
-                        reply.raw_stop_reason = Some("tool_calls".to_string());
-                    }
-                }
-            }
-            if openai_chat::leftover_is_planning_monologue(&visible) {
-                fold_visible_into_reasoning(reply, &visible);
-            } else {
-                reply.content = (!visible.trim().is_empty()).then(|| visible.trim().to_string());
-            }
-        } else if openai_chat::content_has_unmapped_trailing_tool_json(&content) {
-            return Err(AgentRuntimeError::ProviderProtocol {
-                kind: ProviderProtocolFailureKind::TextualToolProtocolLeak,
-                detail: "provider emitted JSON tool arguments in visible text instead of a structured tool call"
-                    .to_string(),
-            });
-        } else {
-            reply.content = Some(content);
-        }
+        reply.content = Some(openai_chat::scrub_tool_markup(&content));
     }
     if reply.stop_signal != TurnStopSignal::MaxTokens {
         openai_chat::validate_tool_call_arguments(&reply.tool_calls)?;
@@ -1390,13 +1355,6 @@ pub(crate) fn normalize_model_reply_protocol(
             detail: "provider emitted an internal Lyra protocol marker in visible text".to_string(),
         });
     }
-    if contains_textual_tool_call_marker(&content, &allowed_tool_names) {
-        return Err(AgentRuntimeError::ProviderProtocol {
-            kind: ProviderProtocolFailureKind::TextualToolProtocolLeak,
-            detail: "provider emitted textual tool-call syntax instead of a structured tool call"
-                .to_string(),
-        });
-    }
     tool_protocol::validate_visible_assistant_text_protocol(&content)?;
     let sanitized = if reply.stop_signal == TurnStopSignal::MaxTokens {
         tool_protocol::sanitize_truncated_assistant_text(&content)
@@ -1407,88 +1365,27 @@ pub(crate) fn normalize_model_reply_protocol(
     Ok(())
 }
 
-fn fold_visible_into_reasoning(reply: &mut ModelReply, visible: &str) {
-    let visible = visible.trim();
-    if visible.is_empty() {
-        reply.content = None;
-        return;
-    }
-    match reply.reasoning_content.as_mut() {
-        Some(existing) => {
-            existing.push('\n');
-            existing.push_str(visible);
-        }
-        None => reply.reasoning_content = Some(visible.to_string()),
-    }
-    reply.content = None;
-}
-
-pub(crate) fn contains_textual_tool_call_marker(
-    content: &str,
-    allowed_tool_names: &HashSet<String>,
-) -> bool {
-    contains_textual_structured_tool_shape(content, allowed_tool_names)
-}
-
 pub(crate) fn clear_failed_assistant_draft(session_id: &str, turn_id: &str) {
     if let Some(message_id) = active_ui_message_id(session_id, turn_id) {
-        let _ = remove_assistant_message(session_id, &message_id);
+        let committed_prefix = state()
+            .lock()
+            .ok()
+            .and_then(|state| {
+                state.sessions.get(session_id)?.snapshot["messages"]
+                    .as_array()?
+                    .iter()
+                    .find(|message| message["id"] == message_id)
+                    .map(|message| {
+                        message.pointer("/metadata/providerPartial/retainOnRecovery")
+                            == Some(&Value::Bool(true))
+                    })
+            })
+            .unwrap_or(false);
+        if !committed_prefix {
+            let _ = remove_assistant_message(session_id, &message_id);
+        }
     }
     clear_active_ui_message_id(session_id, turn_id);
-}
-
-pub(crate) fn contains_textual_structured_tool_shape(
-    content: &str,
-    allowed_tool_names: &HashSet<String>,
-) -> bool {
-    let lower = content.to_ascii_lowercase();
-    if lower.contains("```")
-        && lower.contains("\"path\"")
-        && lower.contains("\"/tools/")
-        && lower.contains("\"args\"")
-    {
-        return true;
-    }
-    let tool_names = textual_tool_name_candidates(allowed_tool_names);
-    tool_names.iter().any(|tool_name| {
-        let tool = tool_name.to_ascii_lowercase();
-        if lower.contains(&format!("{tool}(")) {
-            return true;
-        }
-        let quoted = format!("\"{tool}\"");
-        if !lower.contains(&quoted) {
-            return false;
-        }
-        lower.contains("\"arguments\"")
-            || lower.contains("\"args\"")
-            || lower.contains("\"function\"")
-            || lower.contains("\"tool_calls\"")
-            || lower.contains("tool_call")
-            || lower.contains("```")
-    })
-}
-
-pub(crate) fn textual_tool_name_candidates(
-    allowed_tool_names: &HashSet<String>,
-) -> HashSet<String> {
-    let mut names = allowed_tool_names.clone();
-    for name in crate::native_backend::context::model_tool_names() {
-        names.insert(name);
-    }
-    for name in PROVIDER_VISIBLE_TOOL_NAMES {
-        names.insert(name.to_string());
-    }
-    for name in [
-        "tool_fs_run",
-        "tool_fs_search",
-        "tool_fs_list",
-        "tool_fs_inspect",
-        "tool_fs_read_doc",
-    ] {
-        names.insert(name.to_string());
-    }
-    names.insert(LYRA_SESSION_READ_MESSAGE_TOOL.to_string());
-    names
 }
 
 pub(crate) fn model_capabilities(

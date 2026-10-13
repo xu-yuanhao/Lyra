@@ -313,6 +313,7 @@ pub(crate) fn stamp_reasoning_content(session_id: &str, message_id: &str, reason
             return;
         };
         let callback = event_callback();
+        let root = state.root.clone();
         let Some(session) = state.sessions.get_mut(session_id) else {
             return;
         };
@@ -357,6 +358,10 @@ pub(crate) fn stamp_reasoning_content(session_id: &str, message_id: &str, reason
         }
         let committed_message = message.clone();
         mark_dialog_dirty_from(session, index);
+        if let Err(error) = persist_message_snapshot(&root, session, &committed_message) {
+            eprintln!("Unable to persist committed reasoning: {error}");
+            return;
+        }
         let _ = state.save_state();
         (callback, committed_message)
     };
@@ -381,12 +386,23 @@ pub(crate) fn emit_assistant_message_placeholder(
     let (callback, message) = match state().lock() {
         Ok(mut state) => {
             let callback = event_callback();
+            let root = state.root.clone();
             let session = state.sessions.get_mut(session_id)?;
             if session.snapshot.get("activeTurnId").and_then(Value::as_str) != Some(turn_id) {
                 return None;
             }
             let mut message = assistant_message_with_id(message_id.clone(), String::new());
             push_session_message(session, message.clone());
+            if !session.ephemeral {
+                let encoded = serde_json::to_string(&message).ok()?;
+                if let Err(error) =
+                    persist_stream_delta(&root, session, &message_id, "created", &encoded)
+                        .and_then(|()| save_session(&root, session))
+                {
+                    eprintln!("Unable to persist assistant placeholder: {error}");
+                    return None;
+                }
+            }
             let _ = state.save_state();
             (callback, message)
         }
@@ -413,12 +429,14 @@ pub(crate) fn append_assistant_delta(
     let callback = match state().lock() {
         Ok(mut state) => {
             let callback = event_callback();
+            let root = state.root.clone();
             let session = state.sessions.get_mut(session_id).ok_or_else(|| {
                 AgentRuntimeError::Core(format!("session not found: {session_id}"))
             })?;
             if session.snapshot.get("activeTurnId").and_then(Value::as_str) != Some(turn_id) {
                 return Err(AgentRuntimeError::Core("turn no longer active".to_string()));
             }
+            persist_stream_delta(&root, session, message_id, "visible", delta)?;
             let messages = session
                 .snapshot
                 .get_mut("messages")
@@ -477,12 +495,14 @@ pub(crate) fn append_assistant_reasoning_delta(
     let callback = match state().lock() {
         Ok(mut state) => {
             let callback = event_callback();
+            let root = state.root.clone();
             let session = state.sessions.get_mut(session_id).ok_or_else(|| {
                 AgentRuntimeError::Core(format!("session not found: {session_id}"))
             })?;
             if session.snapshot.get("activeTurnId").and_then(Value::as_str) != Some(turn_id) {
                 return Err(AgentRuntimeError::Core("turn no longer active".to_string()));
             }
+            persist_stream_delta(&root, session, message_id, "reasoning", delta)?;
             let messages = session
                 .snapshot
                 .get_mut("messages")
@@ -592,6 +612,7 @@ pub(crate) fn commit_assistant_message(
     let (callback, committed_message) = match state().lock() {
         Ok(mut state) => {
             let callback = event_callback();
+            let root = state.root.clone();
             let session = state.sessions.get_mut(session_id)?;
             if session.snapshot.get("activeTurnId").and_then(Value::as_str) != Some(turn_id) {
                 return None;
@@ -609,6 +630,10 @@ pub(crate) fn commit_assistant_message(
             }
             let committed_message = message.clone();
             mark_dialog_message_dirty(session, message_id);
+            if let Err(error) = persist_message_snapshot(&root, session, &committed_message) {
+                eprintln!("Unable to persist committed message: {error}");
+                return None;
+            }
             let _ = state.save_state();
             (callback, committed_message)
         }

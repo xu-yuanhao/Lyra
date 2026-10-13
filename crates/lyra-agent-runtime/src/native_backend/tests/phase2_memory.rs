@@ -84,6 +84,7 @@ fn pinned_todo_surfaces_in_context_window_plan() {
         persisted_dialog_len: 0,
         dialog_loaded: true,
         ephemeral: false,
+        stream_journal_sequence: 0,
     };
     save_session(&root, &session).expect("save");
 

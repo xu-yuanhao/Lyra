@@ -63,6 +63,7 @@ fn apply_compression_replaces_messages_with_block_and_archives_to_cut_store() {
         persisted_dialog_len: 0,
         dialog_loaded: true,
         ephemeral: false,
+        stream_journal_sequence: 0,
     };
     save_session(&root, &session).expect("save session");
 
@@ -251,6 +252,7 @@ fn member_user_identity_skips_ui_hidden_pokes() {
         persisted_dialog_len: 0,
         dialog_loaded: true,
         ephemeral: false,
+        stream_journal_sequence: 0,
     };
     let projection = memory_projection_for_session(&session, &[], &[], None);
     assert_eq!(

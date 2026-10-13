@@ -104,12 +104,19 @@ export const normalizeAgentSessionSnapshot = (
   };
 };
 
+export const isOlderSessionSnapshot = (current: AgentSessionSnapshot, incoming: AgentSessionSnapshot): boolean => {
+  if (current.id !== incoming.id || current.revision === undefined || incoming.revision === undefined) return false;
+  if (!/^\d+$/u.test(current.revision) || !/^\d+$/u.test(incoming.revision)) return false;
+  return BigInt(incoming.revision) < BigInt(current.revision);
+};
+
 export const mergeRunningSessionSnapshot = (
   current: AgentSessionSnapshot,
   incoming: AgentSessionSnapshot
 ): AgentSessionSnapshot => {
   const normalizedIncoming = normalizeAgentSessionSnapshot(incoming);
   if (current.id !== normalizedIncoming.id) return normalizedIncoming;
+  if (isOlderSessionSnapshot(current, normalizedIncoming)) return current;
 
   const incomingById = new Map(normalizedIncoming.messages.map((message) => [message.id, message]));
   const mergedMessages: AgentMessage[] = [];
@@ -140,7 +147,7 @@ export const mergeRunningSessionSnapshot = (
 
   return {
     ...normalizedIncoming,
-    messages: mergedMessages,
+    messages: normalizedIncoming.turnStatus === "running" ? mergedMessages : normalizedIncoming.messages,
     tools: [...toolsById.values()]
   };
 };
@@ -412,7 +419,9 @@ export const applyAgentRuntimeEventToSnapshot = (
         const visibleStarted = event.delta.trim().length > 0;
         return {
           ...message,
-          text: event.replace === true ? event.delta : `${message.text}${event.delta}`,
+          text: event.replace === true
+            ? blocks.filter((block) => block.type === "text").map((block) => block.text).join("")
+            : `${message.text}${event.delta}`,
           ...(visibleStarted && message.reasoningStatus === "thinking"
             ? { reasoningStatus: "done" as const }
             : {}),

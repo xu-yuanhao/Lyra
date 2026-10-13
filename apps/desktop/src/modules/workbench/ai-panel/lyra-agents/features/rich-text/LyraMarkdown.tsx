@@ -4,6 +4,7 @@ import {
   isValidElement,
   useContext,
   useMemo,
+  useRef,
   type ComponentProps,
   type ReactNode
 } from "react";
@@ -13,7 +14,7 @@ import remend from "remend";
 import { LyraImage, LyraLink } from "./streamdown-components";
 import { LyraMarkdownPre, MarkdownStreamingContext } from "./markdown-code-block";
 import { LyraMarkdownTable } from "./markdown-table";
-import { splitSettledMarkdown } from "./markdown-stream-split";
+import { SettledMarkdownSplitter } from "./markdown-stream-split";
 import { normalizeAiLatex } from "./normalize-ai-latex";
 import { lyraRehypePlugins, lyraRemarkPlugins } from "./rich-markdown-plugins";
 import { useLyraStreamdownPlugins } from "./streamdown-plugins";
@@ -135,7 +136,9 @@ export function LyraMarkdown({
     .filter(Boolean)
     .join(" ");
   const latexContent = useMemo(() => normalizeAiLatex(content), [content]);
-  const chunks = useMemo(() => splitSettledMarkdown(latexContent), [latexContent]);
+  const splitterRef = useRef<SettledMarkdownSplitter | null>(null);
+  splitterRef.current ??= new SettledMarkdownSplitter();
+  const chunks = useMemo(() => splitterRef.current!.split(latexContent), [latexContent]);
   const mediaTokens = useMemo(() => {
     if (!arrangeMedia || (!latexContent.includes("![") && !latexContent.includes("<img"))) {
       return emptyMediaTokens;

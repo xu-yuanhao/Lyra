@@ -171,6 +171,7 @@ pub(crate) fn new_session(
         persisted_dialog_len: 0,
         dialog_loaded: true,
         ephemeral: false,
+        stream_journal_sequence: 0,
     }
 }
 
@@ -232,6 +233,7 @@ fn new_ephemeral_session(
         persisted_dialog_len: 1,
         dialog_loaded: true,
         ephemeral: true,
+        stream_journal_sequence: 0,
     }
 }
 
@@ -597,12 +599,32 @@ pub(crate) fn list_sessions(payload: Value) -> AgentRuntimeResult<Value> {
     // every sqlite blob before the history pane could paint.
     let mut sessions = match try_state() {
         Some(mutex) => match mutex.try_lock() {
-            Ok(state) => state
-                .sessions
-                .values()
-                .filter(|session| should_list_session(session))
-                .map(session_summary)
-                .collect::<Vec<_>>(),
+            Ok(state) => {
+                let mut summaries = state
+                    .sessions
+                    .values()
+                    .filter(|session| should_list_session(session))
+                    .map(session_summary)
+                    .collect::<Vec<_>>();
+                for diagnostic in &state.tool_runtime_migration_diagnostics {
+                    if diagnostic.get("kind").and_then(Value::as_str)
+                        == Some("session-database-load")
+                        && let Some(id) = diagnostic.get("sessionId").and_then(Value::as_str)
+                        && !state.sessions.contains_key(id)
+                        && session_db_path(&root, id).is_file()
+                    {
+                        summaries.push(session_database_error_summary(
+                            &root,
+                            id,
+                            diagnostic
+                                .get("error")
+                                .and_then(Value::as_str)
+                                .unwrap_or("Unable to load session database"),
+                        ));
+                    }
+                }
+                summaries
+            }
             Err(std::sync::TryLockError::WouldBlock) => list_session_summaries_from_meta(&root),
             Err(std::sync::TryLockError::Poisoned(_)) => {
                 return Err(AgentRuntimeError::Core(

@@ -1,6 +1,71 @@
 use super::*;
 
 #[test]
+fn file_read_can_continue_past_the_default_byte_window_and_reports_eof() {
+    let temp = tempfile::tempdir().unwrap();
+    let text = (1..=12_000)
+        .map(|i| format!("line-{i:05}\n"))
+        .collect::<String>();
+    fs::write(temp.path().join("large.txt"), text).unwrap();
+    let created = LyraAgentBackend
+        .call_agent_method(
+            "agent.session.create",
+            json!({"workingDir": temp.path().display().to_string()}),
+        )
+        .unwrap();
+    let session_id = created["id"].as_str().unwrap();
+    let turn_id = start_test_runtime_turn(session_id);
+    let result = tool_file_read(
+        session_id,
+        &turn_id,
+        "late-lines",
+        &json!({
+            "path": "large.txt", "startLine": 11_000, "endLine": 11_002
+        }),
+    )
+    .unwrap();
+    assert!(
+        result
+            .content
+            .contains("line-11000\nline-11001\nline-11002")
+    );
+    assert_eq!(result.raw["truncated"], false);
+    let error = tool_file_read(
+        session_id,
+        &turn_id,
+        "past-eof",
+        &json!({
+            "path": "large.txt", "startLine": 12_001
+        }),
+    )
+    .expect_err("an out-of-range read must not silently return empty content");
+    assert_eq!(error.code, "line_out_of_range");
+    let artifact = write_tool_artifact_with_kind(
+        session_id,
+        &turn_id,
+        "large-log",
+        ToolArtifactKind::Stdout,
+        &fs::read_to_string(temp.path().join("large.txt")).unwrap(),
+    )
+    .unwrap();
+    let artifact_read = tool_file_read(
+        session_id,
+        &turn_id,
+        "late-artifact-lines",
+        &json!({
+            "path": artifact["path"], "startLine": 11_000, "endLine": 11_002
+        }),
+    )
+    .unwrap();
+    assert!(
+        artifact_read
+            .content
+            .contains("line-11000\nline-11001\nline-11002")
+    );
+    assert_eq!(artifact_read.raw["truncated"], false);
+}
+
+#[test]
 fn native_file_tools_enforce_policy_budgets_edits_and_patch_artifacts() {
     let backend = LyraAgentBackend;
     let temp = tempfile::tempdir().expect("tempdir");

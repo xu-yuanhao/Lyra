@@ -51,6 +51,7 @@ export const createLayoutController = ({
 }: LayoutControllerHost) => {
   const overlayView = new View();
   let overlayAttached = false;
+  let attachedWindow: BrowserWindow | null = null;
   let overlayVisible = false;
   let modalOcclusionActive = false;
   let topology: WorkbenchBrowserTopologySnapshot = {
@@ -88,6 +89,10 @@ export const createLayoutController = ({
       return;
     }
 
+    if (attachedWindow !== window) {
+      attachedWindow = window;
+      overlayAttached = false;
+    }
     const rootView = window.contentView;
     const contentBounds = window.getContentBounds();
     const nextOverlayBounds = {
@@ -161,11 +166,11 @@ export const createLayoutController = ({
           disposeCdpAuditSession(entry.tabId, "live");
         }
         if (entry.attached) {
-          overlayView.removeChildView(entry.view);
+          overlayView.removeChildView(entry.recoveryView ?? entry.view);
           entry.attached = false;
         }
         if (entry.viewVisible) {
-          entry.view.setVisible(false);
+          (entry.recoveryView ?? entry.view).setVisible(false);
           entry.viewVisible = false;
         }
         if (isLayoutVisible) {
@@ -179,31 +184,32 @@ export const createLayoutController = ({
     }
 
     for (const { entry, layout } of nativeVisibleEntries) {
+      const view = entry.recoveryView ?? entry.view;
       const nextBounds = toBounds(layout);
-      const currentBounds = entry.view.getBounds();
+      const currentBounds = view.getBounds();
       if (
         currentBounds.x !== nextBounds.x
         || currentBounds.y !== nextBounds.y
         || currentBounds.width !== nextBounds.width
         || currentBounds.height !== nextBounds.height
       ) {
-        entry.view.setBounds(nextBounds);
+        view.setBounds(nextBounds);
         bumpLiveViewBoundsEpoch(entry.tabId);
       }
       if (!entry.viewVisible) {
-        entry.view.setVisible(true);
+        view.setVisible(true);
         entry.viewVisible = true;
       }
       if (!entry.attached) {
-        overlayView.addChildView(entry.view);
+        overlayView.addChildView(view);
         entry.attached = true;
       }
-      startCdpAuditSessionForEntry(entry);
+      if (entry.recoveryView === undefined) startCdpAuditSessionForEntry(entry);
     }
     if (!modalOcclusionActive) {
       reattachVisiblePopover();
     }
-    syncFocusIsolation(window, nativeVisibleEntries.map(({ entry }) => entry));
+    syncFocusIsolation(window, nativeVisibleEntries.filter(({ entry }) => entry.recoveryView === undefined).map(({ entry }) => entry));
     evictExcessHiddenPages();
   };
 
@@ -235,9 +241,8 @@ export const createLayoutController = ({
   };
 
   const detachEntryView = (entry: BrowserPageEntry): void => {
-    const window = getWindow();
-    if (window !== null && window.isDestroyed() === false && entry.attached) {
-      overlayView.removeChildView(entry.view);
+    if (entry.attached) {
+      overlayView.removeChildView(entry.recoveryView ?? entry.view);
       entry.attached = false;
       entry.viewVisible = false;
     }

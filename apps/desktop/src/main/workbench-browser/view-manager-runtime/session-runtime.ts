@@ -74,6 +74,7 @@ let lastBrowserSessionSnapshotJson =
   persistedBrowserSessionSnapshot === null
     ? null
     : JSON.stringify(persistedBrowserSessionSnapshot);
+let disposed = false;
 let browserSessionSnapshotWriteTimer: ReturnType<typeof setTimeout> | null = null;
 
 const persistedTabSnapshot = (tabId: string): BrowserSessionTabSnapshot | null =>
@@ -261,6 +262,11 @@ const buildBrowserSessionSnapshot = (): BrowserSessionSnapshot | null => {
 };
 
 const persistBrowserSessionSnapshot = (): BrowserSessionSnapshot | null => {
+  if (disposed) return persistedBrowserSessionSnapshot;
+  if (browserSessionSnapshotWriteTimer !== null) {
+    clearTimeout(browserSessionSnapshotWriteTimer);
+    browserSessionSnapshotWriteTimer = null;
+  }
   const snapshot = buildBrowserSessionSnapshot();
   persistedBrowserSessionSnapshot = snapshot;
   if (snapshot === null || workbenchState === undefined) {
@@ -276,7 +282,7 @@ const persistBrowserSessionSnapshot = (): BrowserSessionSnapshot | null => {
 };
 
 const scheduleBrowserSessionSnapshotWrite = (delayMs = BROWSER_SESSION_SNAPSHOT_WRITE_DELAY_MS): void => {
-  if (workbenchState === undefined) {
+  if (disposed || workbenchState === undefined) {
     return;
   }
   if (browserSessionSnapshotWriteTimer !== null) {
@@ -503,10 +509,15 @@ const readPageStorageAvailability = async (
 
 
   const dispose = (): void => {
+    if (disposed) return;
     if (browserSessionSnapshotWriteTimer !== null) {
       clearTimeout(browserSessionSnapshotWriteTimer);
       browserSessionSnapshotWriteTimer = null;
     }
+    // Capture while entries and topology still exist; enqueue before the
+    // application waits for the workbench state's disk-write barrier.
+    persistBrowserSessionSnapshot();
+    disposed = true;
   };
 
   return {

@@ -85,6 +85,33 @@ describe("useLyraAgentDataProvider", () => {
     setLocale(originalLocale);
   });
 
+  test("shorter final commits win and a failed turn retains all deltas without a refetch", async () => {
+    const snapshot = createSnapshot({ turnStatus: "running", activeTurnId: "turn", follow: { running: true, activity: "streaming_model" } });
+    let listener: ((event: AgentRuntimeEvent) => void) | undefined;
+    const api = createDesktopApi(snapshot);
+    vi.mocked(api.agent!.onEvent).mockImplementation((next) => { listener = next; return () => {}; });
+    const { result } = renderHook(() => useLyraAgentDataProvider(api, undefined, snapshot.id));
+    await waitFor(() => expect(api.agent!.onEvent).toHaveBeenCalled());
+    await waitFor(() => expect(api.agent!.readSession).toHaveBeenCalled());
+    vi.mocked(api.agent!.readSession).mockRejectedValue(new Error("offline"));
+    act(() => {
+      listener?.({ kind: "messageDelta", sessionId: snapshot.id, messageId: "partial-regression", blockId: "text-0", delta: "first " });
+      listener?.({ kind: "messageDelta", sessionId: snapshot.id, messageId: "partial-regression", blockId: "text-0", delta: "second " });
+      listener?.({ kind: "messageDelta", sessionId: snapshot.id, messageId: "partial-regression", blockId: "text-0", delta: "third" });
+      listener?.({ kind: "turnFailed", sessionId: snapshot.id, turnId: "turn", message: "offline" });
+    });
+    await waitFor(() => expect(result.current.data.messages.at(-1)?.blocks[0]).toMatchObject({ type: "text", body: "first second third" }));
+    act(() => {
+      listener?.({ kind: "messageDelta", sessionId: snapshot.id, messageId: "final-regression", blockId: "text-0", delta: "old long unfiltered text" });
+      listener?.({ kind: "messageCommitted", sessionId: snapshot.id, message: {
+        id: "final-regression", role: "assistant", createdAt: "now", text: "final",
+        blocks: [{ id: "text-0", type: "text", text: "final" }]
+      } });
+    });
+    await waitFor(() => expect(result.current.data.messages.at(-1)?.blocks[0]).toMatchObject({ type: "text", body: "final" }));
+    expect(getStreamStore().getBlockText("final-regression", "text-0")).toBe("final");
+  });
+
   test("does not resync shell session metadata for streaming text deltas", async () => {
     // Reset the global streamStore to ensure test isolation (it's a singleton).
     getStreamStore().reset("message-1");

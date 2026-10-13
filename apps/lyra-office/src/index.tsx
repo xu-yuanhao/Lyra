@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { renderOfficeFile, type OfficePreviewSource } from "@lyra/office-render";
+import { useEffect, useRef, useState } from "react";
 
 import {
   createFirstPartyAppModule,
@@ -11,15 +12,6 @@ const PREVIEW = "lyra.core.office.preview";
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const bytesFromBase64 = (value: string): Uint8Array => {
-  const binary = atob(value);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes;
-};
-
 const OfficeSurface = ({
   host,
   instanceId
@@ -27,36 +19,27 @@ const OfficeSurface = ({
   const [title, setTitle] = useState("Office");
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState<string | null>(null);
-  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
-    let objectUrl: string | undefined;
+    let handle: { destroy: () => void } | null = null;
+    const element = hostRef.current;
+    if (element === null) return;
+    element.replaceChildren();
     setStatus("loading");
     setMessage(null);
     void (async () => {
       try {
         const result = await host.executeCommand(PREVIEW, { instanceId });
-        if (!isRecord(result) || typeof result.fileBase64 !== "string") {
+        if (!isRecord(result) || typeof result.sourceUrl !== "string" || typeof result.byteLength !== "number" || !["pdf", "docx", "xlsx", "pptx"].includes(String(result.format))) {
           throw new Error("Office preview returned no file.");
         }
         const nextTitle = typeof result.title === "string" && result.title.length > 0 ? result.title : "Office";
         if (cancelled) return;
         setTitle(nextTitle);
-        if (result.format !== "pdf") {
-          setStatus("ready");
-          return;
-        }
-        const bytes = bytesFromBase64(result.fileBase64);
-        const copy = new Uint8Array(bytes.byteLength);
-        copy.set(bytes);
-        objectUrl = URL.createObjectURL(new Blob([copy], { type: "application/pdf" }));
-        if (cancelled) {
-          URL.revokeObjectURL(objectUrl);
-          return;
-        }
-        setSourceUrl(objectUrl);
-        setStatus("ready");
+        handle = await renderOfficeFile(element, result as unknown as OfficePreviewSource, () => cancelled, () => {});
+        if (!cancelled && handle !== null) setStatus("ready");
       } catch (error) {
         if (!cancelled) {
           setStatus("error");
@@ -66,9 +49,8 @@ const OfficeSurface = ({
     })();
     return () => {
       cancelled = true;
-      if (objectUrl !== undefined) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      handle?.destroy();
+      element.replaceChildren();
     };
   }, [host, instanceId]);
 
@@ -79,7 +61,7 @@ const OfficeSurface = ({
       aria-label="office-viewer-surface"
       style={{
         display: "grid",
-        gridTemplateRows: "auto minmax(0, 1fr)",
+        gridTemplateRows: "auto minmax(0, 1fr) auto",
         minHeight: 0,
         height: "100%",
         background: "var(--lyra-app-panel-bg)",
@@ -89,15 +71,8 @@ const OfficeSurface = ({
       <header className="lyra-app-module-toolbar">
         <strong>{title}</strong>
       </header>
-      {status === "error" ? (
-        <LyraAppState kind="error" title={message ?? "Office preview failed."} />
-      ) : status !== "ready" ? (
-        <LyraAppState kind="loading" title="Opening…" />
-      ) : sourceUrl === null ? (
-        <LyraAppState kind="empty" title={title} />
-      ) : (
-        <embed src={sourceUrl} type="application/pdf" style={{ width: "100%", height: "100%", border: 0, background: "canvas" }} />
-      )}
+      <div ref={hostRef} style={{ minHeight: 0, height: "100%" }} />
+      {status !== "ready" && <LyraAppState kind={status === "error" ? "error" : "loading"} title={message ?? "Opening…"} />}
     </section>
   );
 };

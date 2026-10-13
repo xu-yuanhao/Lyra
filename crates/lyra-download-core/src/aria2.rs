@@ -55,11 +55,14 @@ impl Aria2RunError {
 pub(crate) struct Aria2Progress {
     pub(crate) received: u64,
     pub(crate) speed: u64,
+    pub(crate) total: u64,
+    pub(crate) connections: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Aria2Complete {
     pub(crate) received: u64,
+    pub(crate) total: u64,
 }
 
 impl Aria2Runtime {
@@ -145,7 +148,13 @@ impl Aria2Runtime {
             ))
         })?;
 
+        let rpc = crate::aria2_rpc::Aria2Rpc::new().map_err(Aria2RunError::Failed)?;
         let mut command = self.command_for(task, settings)?;
+        command
+            .arg("--enable-rpc=true")
+            .arg("--rpc-listen-all=false")
+            .arg(format!("--rpc-listen-port={}", rpc.port))
+            .arg(format!("--rpc-secret={}", rpc.secret));
         lyra_process_lifecycle_core::configure_daemon_child_command(&mut command);
         let mut child = command.spawn().map_err(|error| {
             Aria2RunError::Unavailable(unavailable_message(&format!(
@@ -162,7 +171,8 @@ impl Aria2Runtime {
             String::from_utf8_lossy(&bytes).trim().to_string()
         });
 
-        let mut last_bytes = directory_size(Path::new(&task.save_path));
+        let mut last_success = Instant::now();
+        let mut completed = None;
         let mut last_progress = Instant::now();
         let status = loop {
             match child.try_wait() {
@@ -184,26 +194,45 @@ impl Aria2Runtime {
             }
 
             if last_progress.elapsed() >= PROGRESS_INTERVAL {
-                let received = directory_size(Path::new(&task.save_path));
-                let elapsed = last_progress.elapsed().as_secs_f64().max(0.001);
-                let speed = ((received.saturating_sub(last_bytes)) as f64 / elapsed).round() as u64;
-                on_progress(Aria2Progress { received, speed });
-                last_bytes = received;
+                match rpc.progress() {
+                    Ok((progress, done)) => {
+                        last_success = Instant::now();
+                        on_progress(progress);
+                        if done {
+                            completed = Some(Aria2Complete {
+                                received: progress.received,
+                                total: progress.total,
+                            });
+                            stop_process_tree(&mut child);
+                            break child
+                                .wait()
+                                .map_err(|error| Aria2RunError::Failed(error.to_string()))?;
+                        }
+                    }
+                    Err(error) if last_success.elapsed() >= Duration::from_secs(15) => {
+                        stop_process_tree(&mut child);
+                        let _ = stderr_reader.join();
+                        return Err(Aria2RunError::Failed(format!(
+                            "aria2 progress unavailable: {error}"
+                        )));
+                    }
+                    Err(_) => {}
+                }
                 last_progress = Instant::now();
             }
             thread::sleep(PROCESS_POLL_INTERVAL);
         };
 
         let stderr = stderr_reader.join().unwrap_or_default();
-        if !status.success() {
+        if completed.is_none() && !status.success() {
             return Err(Aria2RunError::Failed(aria2_exit_message(status, &stderr)));
         }
         if !should_continue() {
             return Ok(None);
         }
-        let received = directory_size(Path::new(&task.save_path));
-        on_progress(Aria2Progress { received, speed: 0 });
-        Ok(Some(Aria2Complete { received }))
+        completed.map(Some).ok_or_else(|| {
+            Aria2RunError::Failed("aria2 exited without reporting completed payloads".to_string())
+        })
     }
 
     fn command_for(
@@ -224,7 +253,7 @@ impl Aria2Runtime {
             .arg("--console-log-level=warn")
             .arg("--show-console-readout=false")
             .arg("--download-result=hide")
-            .arg("--enable-rpc=false")
+            .arg("--file-allocation=none")
             .arg("--follow-torrent=mem")
             .arg("--follow-metalink=mem")
             .arg("--max-concurrent-downloads=1")
@@ -412,28 +441,6 @@ fn sha256_file(path: &Path) -> Result<String, String> {
     Ok(format!("{:x}", hasher.finalize()))
 }
 
-fn directory_size(root: &Path) -> u64 {
-    let Ok(metadata) = fs::symlink_metadata(root) else {
-        return 0;
-    };
-    if metadata.file_type().is_symlink() {
-        return 0;
-    }
-    if metadata.is_file() {
-        return metadata.len();
-    }
-    if !metadata.is_dir() {
-        return 0;
-    }
-    let Ok(entries) = fs::read_dir(root) else {
-        return 0;
-    };
-    entries
-        .filter_map(Result::ok)
-        .map(|entry| directory_size(&entry.path()))
-        .sum()
-}
-
 fn aria2_exit_message(status: ExitStatus, stderr: &str) -> String {
     if stderr.is_empty() {
         format!(
@@ -553,6 +560,97 @@ mod tests {
         }
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn real_engine_progress_ignores_sparse_file_length() {
+        use std::io::Write;
+        use std::net::TcpListener;
+        let binary = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../apps/desktop/resources/aria2/linux-x64/bin/aria2c");
+        if !binary.is_file() {
+            return;
+        }
+        let component = binary.parent().unwrap().parent().unwrap();
+        let runtime = runtime(component, &binary, sha256_file(&binary).unwrap()).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let address = listener.local_addr().unwrap();
+        let alive = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+        let server_alive = alive.clone();
+        const TOTAL: u64 = 8 * 1024 * 1024;
+        let server = thread::spawn(move || {
+            let mut workers = Vec::new();
+            while server_alive.load(std::sync::atomic::Ordering::Relaxed) {
+                match listener.accept() {
+                    Ok((mut stream, _)) => workers.push(thread::spawn(move || {
+                        stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
+                        let mut request = Vec::new(); let mut byte = [0];
+                        while !request.ends_with(b"\r\n\r\n") && request.len() < 16384 {
+                            if stream.read(&mut byte).unwrap_or(0) == 0 { return; }
+                            request.push(byte[0]);
+                        }
+                        let request = String::from_utf8_lossy(&request);
+                        let range = request.lines().find_map(|line| line.to_lowercase().strip_prefix("range: bytes=").map(str::to_owned));
+                        let start = range.as_deref().and_then(|value| value.split('-').next()).and_then(|value| value.parse::<u64>().ok()).unwrap_or(0);
+                        let end = range.as_deref().and_then(|value| value.split('-').nth(1)).and_then(|value| value.parse::<u64>().ok()).unwrap_or(TOTAL - 1).min(TOTAL - 1);
+                        let length = end.saturating_sub(start) + 1;
+                        let status = if range.is_some() { "206 Partial Content" } else { "200 OK" };
+                        let headers = format!("HTTP/1.1 {status}\r\nContent-Length: {length}\r\nAccept-Ranges: bytes\r\nContent-Range: bytes {start}-{end}/{TOTAL}\r\nConnection: close\r\n\r\n");
+                        if stream.write_all(headers.as_bytes()).is_err() || request.starts_with("HEAD ") { return; }
+                        let block = [7u8; 16384];
+                        let mut left = length;
+                        while left > 0 {
+                            let size = left.min(block.len() as u64) as usize;
+                            if stream.write_all(&block[..size]).is_err() { return; }
+                            left -= size as u64;
+                            thread::sleep(Duration::from_millis(12));
+                        }
+                    })),
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => thread::sleep(Duration::from_millis(10)),
+                    Err(_) => break,
+                }
+            }
+            for worker in workers {
+                let _ = worker.join();
+            }
+        });
+        let output = temp.path().join("payload.bin");
+        let mut download = task(&output);
+        download.url = format!("http://{address}/payload.bin");
+        download.file_name = "payload.bin".into();
+        download.output_kind = Some(DownloadTaskOutputKind::File);
+        let started = Instant::now();
+        let mut sparse = false;
+        let mut observed_real_progress = false;
+        let result = runtime.execute(
+            &download,
+            &settings(),
+            || started.elapsed() < Duration::from_secs(30),
+            |progress| {
+                if progress.received > 0 && progress.received < TOTAL {
+                    fs::OpenOptions::new()
+                        .write(true)
+                        .open(&output)
+                        .unwrap()
+                        .set_len(TOTAL)
+                        .unwrap();
+                    sparse = true;
+                    observed_real_progress |= progress.total == TOTAL
+                        && progress.speed > 0
+                        && fs::metadata(&output).unwrap().len() > progress.received;
+                }
+            },
+        );
+        alive.store(false, std::sync::atomic::Ordering::Relaxed);
+        server.join().unwrap();
+        let done = result.unwrap().unwrap();
+        assert!(sparse && observed_real_progress);
+        assert_eq!(done.received, TOTAL);
+        assert_eq!(done.total, TOTAL);
+        assert!(fs::read(output).unwrap().iter().all(|byte| *byte == 7));
+    }
+
     #[test]
     fn consumes_only_the_digest_bound_component_binary_path() {
         let temp = tempfile::tempdir().expect("tempdir");
@@ -628,9 +726,8 @@ mod tests {
                 || true,
                 |_| {},
             )
-            .expect("execute")
-            .expect("completed");
-        assert_eq!(outcome.received, 0);
+            .expect_err("an exit code cannot prove payload completion");
+        assert!(matches!(outcome, Aria2RunError::Failed(_)));
     }
 
     #[cfg(unix)]

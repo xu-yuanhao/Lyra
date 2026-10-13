@@ -1,5 +1,12 @@
 // ponytail: shared surface — en-US 字典片段，按 key 前缀切割自原单文件
 export const shared = {
+  "appStatus.pageStoppedTitle": "This page stopped working",
+  "appStatus.pageStoppedDescription": "Reload the page to continue.",
+  "appStatus.reloadPage": "Reload page",
+  "appStatus.windowStoppedTitle": "Lyra's window stopped working",
+  "appStatus.windowStoppedDescription": "Reopen the window to continue.",
+  "appStatus.reopenWindow": "Reopen window",
+  "appStatus.closeWindow": "Close window",
   "appStatus.unexpectedErrorTitle": "Interface error",
   "appStatus.unexpectedErrorDescription": "Lyra kept the window open. Reopen this area to continue.",
   "appStatus.operationFailed": "Operation failed",

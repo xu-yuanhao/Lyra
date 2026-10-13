@@ -89,9 +89,13 @@ const electronMock = vi.hoisted(() => {
       // Electron-only visual hook.
     }
 
-    on(): void {
-      // Listener registration is not needed by these fixtures.
-    }
+    // Geometry fixtures have no native keyboard focus. Match Electron's
+    // event-chain API without enabling focus emulation in these tests.
+    isVisible(): boolean { return true; }
+    isMinimized(): boolean { return false; }
+    isFocused(): boolean { return false; }
+    on(): this { return this; }
+    off(): this { return this; }
   }
 
   return {

@@ -316,7 +316,7 @@ describe("applyAgentRuntimeEventToSnapshot", () => {
     });
   });
 
-  test("merges same-session snapshots even when current turn is idle", () => {
+  test("accepts authoritative final text even when it is shorter", () => {
     const current = session({
       turnStatus: "idle",
       messages: [{
@@ -341,11 +341,11 @@ describe("applyAgentRuntimeEventToSnapshot", () => {
       })
     });
 
-    expect(next.messages[0]?.text).toBe("Hello complete text");
+    expect(next.messages[0]?.text).toBe("Hello");
     expect(next.messages[0]?.blocks?.[0]).toEqual({
       type: "text",
       id: "text-1",
-      text: "Hello complete text"
+      text: "Hello"
     });
   });
 
@@ -826,4 +826,12 @@ describe("applyAgentRuntimeEventToSnapshot", () => {
 
     expect(next.subagents?.[0]?.status).toBe("idle");
   });
+});
+
+test("late running snapshots cannot restore old text after completion", () => {
+  const final = session({ revision: "90071992547409931", messages: [{ id: "reply", role: "assistant", text: "final", createdAt: "now" }] });
+  const stale = session({ revision: "90071992547409930", turnStatus: "running", activeTurnId: "old-turn",
+    messages: [{ id: "reply", role: "assistant", text: "old longer streamed reply", createdAt: "now" }] });
+  expect(mergeRunningSessionSnapshot(final, stale)).toBe(final);
+  expect(applyAgentRuntimeEventToSnapshot(final, { kind: "sessionSnapshot", snapshot: stale })).toBe(final);
 });

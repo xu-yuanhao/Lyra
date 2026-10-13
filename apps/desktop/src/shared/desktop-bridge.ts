@@ -1837,7 +1837,8 @@ export type OfficePreviewRequest = {
 export type OfficePreviewResult = {
   readonly format: "pdf" | "docx" | "xlsx" | "pptx";
   readonly title: string;
-  readonly fileBase64: string;
+  readonly sourceUrl: string;
+  readonly byteLength: number;
 };
 
 export type OfficeReadRequest = {
@@ -2270,6 +2271,7 @@ export type OpenInEditorRequest = { editorId: string; path: string };
 export type I18nApi = {
   readonly readLocalBundles: () => Promise<Readonly<Record<string, Record<string, string>>>>;
   readonly readLanguageBundles: () => Promise<{
+    readonly directions?: Readonly<Record<string, "ltr" | "rtl">>;
     readonly managed: Readonly<Record<string, Record<string, string>>>;
     readonly local: Readonly<Record<string, Record<string, string>>>;
   }>;

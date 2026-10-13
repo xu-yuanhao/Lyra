@@ -2,8 +2,9 @@ use super::retention::{effective_tool_output_budget, trim_tool_output};
 use super::*;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64_STANDARD};
 
-#[path = "reasoning_replay.rs"]
-mod reasoning_replay;
+#[path = "protocol_replay.rs"]
+mod protocol_replay;
+use protocol_replay::provider_protocol_v2_messages;
 
 // Direct media is base64-encoded into the provider JSON body. Keep the raw
 // payload bounded so encoding cannot turn one attachment into an 80+ MiB
@@ -114,15 +115,8 @@ pub(super) fn provider_messages_from_agent_message(
         };
     }
 
-    // Any assistant message with tool blocks but no providerTranscript is an
-    // intermediate tool-call message from a multi-round turn. The complete
-    // provider-side view (tool_calls + role:"tool" pairs) is carried by the
-    // final assistant message's providerTranscript. Without that transcript,
-    // tool blocks can only be emitted as plain text — which strips tool
-    // identity and duplicates/confuses the provider. Skip unconditionally.
-    // This also covers the interrupted-turn case: if no final message ever
-    // received a transcript, the tool calls are incomplete and must not leak
-    // as text into the next turn's provider context.
+    // Legacy tool UI blocks are not an executable protocol. Keep the durable
+    // assistant prose; complete V2 calls/results are projected separately.
     if role == "assistant"
         && !message_has_provider_transcript(message)
         && message
@@ -134,7 +128,17 @@ pub(super) fn provider_messages_from_agent_message(
                     .any(|b| b.get("type").and_then(Value::as_str) == Some("tool"))
             })
     {
-        return Vec::new();
+        if all_messages
+            .iter()
+            .skip(message_index + 1)
+            .take_while(|message| message["role"] != "user")
+            .any(message_has_provider_transcript)
+        {
+            return Vec::new();
+        }
+        return text_content_or_none(text)
+            .map(|content| vec![json!({"role":"assistant", "content": content})])
+            .unwrap_or_default();
     }
 
     let mut transcript = provider_transcript_from_agent_message(message);
@@ -208,234 +212,6 @@ pub(super) fn provider_messages_from_agent_message(
     }
 
     transcript
-}
-
-fn provider_protocol_v2_messages(
-    message: &Value,
-    message_index: usize,
-    options: &ProviderContextOptions,
-) -> Option<Vec<Value>> {
-    let protocol = message.pointer("/metadata/providerProtocol")?;
-    if protocol.get("version").and_then(Value::as_u64) != Some(2) {
-        return None;
-    }
-    let mut output = Vec::new();
-    for prior in protocol
-        .get("priorSteps")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter(|step| step.get("version").and_then(Value::as_u64) == Some(2))
-    {
-        output.extend(provider_protocol_v2_step_messages(
-            prior,
-            message_index,
-            options,
-            message,
-            false,
-        ));
-    }
-    output.extend(provider_protocol_v2_step_messages(
-        protocol,
-        message_index,
-        options,
-        message,
-        true,
-    ));
-    Some(output)
-}
-
-fn provider_protocol_v2_step_messages(
-    protocol: &Value,
-    message_index: usize,
-    options: &ProviderContextOptions,
-    source_message: &Value,
-    current_step: bool,
-) -> Vec<Value> {
-    if protocol.get("status").and_then(Value::as_str) != Some("complete") {
-        return Vec::new();
-    }
-    let Some(assistant) = protocol.get("assistant") else {
-        return Vec::new();
-    };
-    let content = assistant
-        .get("content")
-        .and_then(Value::as_str)
-        .unwrap_or_default();
-    let tool_calls = assistant
-        .get("toolCalls")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
-    let mut assistant_message = json!({
-        "role": "assistant",
-        "content": content,
-        "tool_calls": tool_calls.iter().filter_map(|call| {
-            let id = call.get("id").and_then(Value::as_str)?;
-            let name = call.get("name").and_then(Value::as_str)?;
-            let arguments = call.get("arguments").cloned().unwrap_or_else(|| json!({}));
-            Some(json!({
-                "id": id,
-                "type": "function",
-                "function": {
-                    "name": name,
-                    "arguments": if let Some(text) = arguments.as_str() {
-                        text.to_string()
-                    } else {
-                        serde_json::to_string(&arguments).unwrap_or_else(|_| "{}".to_string())
-                    },
-                }
-            }))
-        }).collect::<Vec<_>>(),
-    });
-    let tool_results = protocol
-        .get("toolResults")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
-    let same_origin = [
-        (
-            protocol
-                .pointer("/origin/providerId")
-                .and_then(Value::as_str),
-            options.provider_id.as_deref(),
-        ),
-        (
-            protocol.pointer("/origin/routeId").and_then(Value::as_str),
-            options.route_id.as_deref(),
-        ),
-        (
-            protocol
-                .pointer("/origin/protocolId")
-                .and_then(Value::as_str),
-            options.protocol_id.as_deref(),
-        ),
-        (
-            protocol.pointer("/origin/model").and_then(Value::as_str),
-            options.model.as_deref(),
-        ),
-    ]
-    .into_iter()
-    .all(|(stored, active)| stored.is_some() && stored == active);
-    let replay_protocol = protocol.pointer("/replay/protocol").and_then(Value::as_str);
-    let replay_items = protocol
-        .pointer("/replay/items")
-        .and_then(Value::as_array)
-        .filter(|items| !items.is_empty());
-    let auxiliary_before =
-        provider_protocol_auxiliary_messages(protocol, "auxiliaryMessagesBeforeAssistant");
-    let auxiliary_after =
-        provider_protocol_auxiliary_messages(protocol, "auxiliaryMessagesAfterToolResults");
-
-    if same_origin
-        && options.protocol_id.as_deref() == Some("openai_responses")
-        && replay_protocol == Some("openai_responses")
-        && let Some(items) = replay_items
-    {
-        let mut output = auxiliary_before;
-        output.extend(items.iter().cloned().map(|mut item| {
-            if let Some(object) = item.as_object_mut() {
-                object.insert(
-                    OPENAI_RESPONSES_REPLAY_GROUP_KEY.to_string(),
-                    json!(message_index),
-                );
-            }
-            item
-        }));
-        output.extend(tool_results.iter().filter_map(|result| {
-            let call_id = result.get("toolCallId").and_then(Value::as_str)?;
-            let original = result.get("content").and_then(Value::as_str).unwrap_or("");
-            let mut item = json!({
-                "type": "function_call_output",
-                "call_id": call_id,
-                "output": original,
-            });
-            if let Some(name) = tool_result_name(result, &tool_calls) {
-                item["name"] = json!(name);
-            }
-            item[OPENAI_RESPONSES_REPLAY_GROUP_KEY] = json!(message_index);
-            Some(item)
-        }));
-        output.extend(auxiliary_after);
-        return output;
-    }
-
-    if same_origin
-        && let (Some(replay_protocol), Some(items)) = (replay_protocol, replay_items)
-        && options.protocol_id.as_deref() == Some(replay_protocol)
-    {
-        assistant_message["lyraProviderReplay"] = json!({
-            "protocol": replay_protocol,
-            "items": items,
-        });
-    }
-    if same_origin && options.protocol_id.as_deref() == Some("openai_chat_completions") {
-        reasoning_replay::restore_chat_reasoning(
-            &mut assistant_message,
-            protocol,
-            source_message,
-            current_step,
-        );
-    }
-
-    let mut output = auxiliary_before;
-    output.push(assistant_message);
-    output.extend(tool_results.iter().filter_map(|result| {
-        let call_id = result.get("toolCallId").and_then(Value::as_str)?;
-        let original = result.get("content").and_then(Value::as_str).unwrap_or("");
-        let mut item = json!({
-            "role": "tool",
-            "tool_call_id": call_id,
-            "content": original,
-        });
-        if let Some(name) = tool_result_name(result, &tool_calls) {
-            item["name"] = json!(name);
-        }
-        Some(item)
-    }));
-    output.extend(auxiliary_after);
-    output
-}
-
-fn tool_result_name(result: &Value, tool_calls: &[Value]) -> Option<String> {
-    result
-        .get("name")
-        .and_then(Value::as_str)
-        .filter(|name| !name.is_empty())
-        .map(str::to_string)
-        .or_else(|| {
-            let call_id = result.get("toolCallId").and_then(Value::as_str)?;
-            tool_calls.iter().find_map(|call| {
-                (call.get("id").and_then(Value::as_str) == Some(call_id))
-                    .then(|| call.get("name").and_then(Value::as_str).map(str::to_string))
-                    .flatten()
-            })
-        })
-}
-
-fn provider_protocol_auxiliary_messages(protocol: &Value, field: &str) -> Vec<Value> {
-    protocol
-        .get(field)
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(|message| {
-            let role = message.get("role").and_then(Value::as_str)?;
-            if !matches!(role, "user" | "system" | "developer") {
-                return None;
-            }
-            let mut restored = json!({
-                "role": role,
-                "content": message.get("content").cloned().unwrap_or(Value::Null),
-            });
-            // Internal browser-image provenance survives resume so the provider
-            // can bound its working context without touching uploaded images.
-            if let Some(meta) = message.get("lyraVisualEvidence").filter(|v| v.is_object()) {
-                restored["lyraVisualEvidence"] = meta.clone();
-            }
-            Some(restored)
-        })
-        .collect()
 }
 
 fn merge_user_content_with_transcript_citations(

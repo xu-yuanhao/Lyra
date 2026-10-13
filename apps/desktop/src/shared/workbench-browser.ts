@@ -308,7 +308,8 @@ export type WorkbenchBrowserRecoveryFailureReason =
   | "profile_missing"
   | "storage_unavailable"
   | "navigation_failed"
-  | "target_stale";
+  | "target_stale"
+  | "renderer_crashed";
 
 export type WorkbenchBrowserRecoveryFailure = {
   readonly reason: WorkbenchBrowserRecoveryFailureReason;
@@ -522,7 +523,7 @@ export type WorkbenchBrowserPageRuntimeState = {
   readonly canGoForward: boolean;
   readonly isHtmlFullscreen: boolean;
   readonly restoreState?: WorkbenchBrowserPageRestoreState;
-  readonly recoveryFailure?: WorkbenchBrowserRecoveryFailure;
+  readonly recoveryFailure?: WorkbenchBrowserRecoveryFailure | undefined;
   readonly updatedAt: number;
 };
 
@@ -576,7 +577,8 @@ const browserRecoveryFailureReason = (
   value === "profile_missing" ||
   value === "storage_unavailable" ||
   value === "navigation_failed" ||
-  value === "target_stale"
+  value === "target_stale" ||
+  value === "renderer_crashed"
     ? value
     : undefined;
 

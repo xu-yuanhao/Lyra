@@ -1,3 +1,4 @@
+import { nativeRecoveryLabels, type NativeRecoveryLabels } from "../../shared/native-recovery-labels";
 import { BrowserWindow, ipcMain } from "electron";
 import { createHash, verify } from "node:crypto";
 import { readFile, rm } from "node:fs/promises";
@@ -173,6 +174,7 @@ const normalizeCatalogEntry = (value: unknown): OfficialLanguagePackCatalogEntry
   const signature = normalizeAssetName(raw.signature);
   if (
     locale === null
+    || (raw.direction !== undefined && raw.direction !== "ltr" && raw.direction !== "rtl")
     || nativeName === null
     || englishName === null
     || version === null
@@ -189,6 +191,7 @@ const normalizeCatalogEntry = (value: unknown): OfficialLanguagePackCatalogEntry
   }
   return {
     locale,
+    ...(raw.direction === "ltr" || raw.direction === "rtl" ? { direction: raw.direction } : {}),
     nativeName,
     englishName,
     aliases: raw.aliases.map((alias) => String(alias).trim()),
@@ -394,6 +397,7 @@ const normalizeRegistry = (value: unknown, appVersion: string): LanguagePackRegi
 
 const publicInstalled = (record: StoredInstalledLanguagePack): InstalledLanguagePack => ({
   locale: record.locale,
+  ...(record.direction === undefined ? {} : { direction: record.direction }),
   version: record.version,
   installedAt: record.installedAt,
   updatedAt: record.updatedAt,
@@ -448,7 +452,9 @@ const fetchBytes = async (
 };
 
 export type LanguagePacksIpcBridge = {
+  readonly resolveNativeRecoveryLabels: (locale: string) => NativeRecoveryLabels;
   readonly dispose: () => void;
+  readonly readTextDirections: () => Promise<Readonly<Record<string, "ltr" | "rtl">>>;
   readonly readManagedBundles: () => Promise<Readonly<Record<string, Record<string, string>>>>;
   readonly reloadComponentBundles: () => Promise<void>;
   readonly resolveBrowserContextMenuLabels: (locale: string) => BrowserContextMenuLabels;
@@ -608,6 +614,7 @@ export const createLanguagePacksIpcBridge = ({
     await writeFileAtomic(path.join(packsPath, file), rawBundle.toString("utf8"));
     const installed: StoredInstalledLanguagePack = {
       locale: entry.locale,
+      ...(entry.direction === undefined ? {} : { direction: entry.direction }),
       version: entry.version,
       installedAt: existing?.installedAt ?? now,
       updatedAt: now,
@@ -894,8 +901,15 @@ export const createLanguagePacksIpcBridge = ({
   }
 
   return {
+    readTextDirections: async () => {
+      const registry = await readRegistry();
+      return Object.fromEntries(Object.values(registry.installed)
+        .filter((pack) => pack.direction !== undefined)
+        .map((pack) => [pack.locale, pack.direction as "ltr" | "rtl"]));
+    },
     readManagedBundles,
     reloadComponentBundles,
+    resolveNativeRecoveryLabels: (locale: string) => nativeRecoveryLabels(managedBundleCache[locale] ?? componentBundleCache[locale]),
     resolveBrowserContextMenuLabels: (locale: string): BrowserContextMenuLabels =>
       browserContextMenuLabels(
         locale,

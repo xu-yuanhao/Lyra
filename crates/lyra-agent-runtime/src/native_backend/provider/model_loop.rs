@@ -1,6 +1,7 @@
 use super::*;
 
 mod browser_order;
+mod context_budget;
 mod progress_guard;
 mod progress_guard_synthesis;
 mod recovery;
@@ -110,6 +111,11 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
             },
             "provider_request_started",
         );
+        if attempt_local_overlay_start.is_none()
+            && context_budget::compact(session_id, turn_id, &request, &mut messages)
+        {
+            reset_stateful_responses(&mut messages);
+        }
         seal_tool_result_groups(&mut messages);
         let early_tools = streaming_tools::StreamingTools::new(
             session_id,
@@ -136,6 +142,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
         let reply = match attempt_result {
             Ok(reply) => {
                 early_tools.validate_reply(&reply)?;
+                transient_provider_retries = 0;
                 super::session_runtime::record_progress(turn_id);
                 observations.observe(&reply);
                 checkpoint_model_loop_observations(session_id, turn_id, &observations, &messages);
@@ -483,8 +490,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
             }
             Err(error)
                 if providers::routes::mimo::is_mimo_route(&request.provider.route_id)
-                    && transient_provider_retries
-                        < providers::mimo_faults::MIMO_TRANSIENT_RETRY_LIMIT
+                    && transient_provider_retries < MAX_TRANSIENT_PROVIDER_RETRIES
                     && providers::mimo_faults::parse_mimo_fault_from_error(&error).is_some_and(
                         |fault| providers::mimo_faults::is_mimo_backoff_fault(&fault),
                     ) =>
@@ -497,7 +503,11 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     transient_provider_retries,
                     &error.to_string(),
                 );
-                sleep_before_provider_retry_async(transient_provider_retries, cancellation).await?;
+                wait_for_provider_retry(
+                    provider_retry_delay(transient_provider_retries, Some(&error)),
+                    cancellation,
+                )
+                .await?;
                 continue;
             }
             Err(error)
@@ -517,7 +527,10 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                 );
                 return Err(error);
             }
-            Err(error) if transient_provider_retries < 2 && is_retryable_provider_error(&error) => {
+            Err(error)
+                if transient_provider_retries < MAX_TRANSIENT_PROVIDER_RETRIES
+                    && is_retryable_provider_error(&error) =>
+            {
                 // 429/5xx: replay this same request after backoff. Do not append a
                 // "please continue" user turn; transcript stays as it was.
                 transient_provider_retries += 1;
@@ -528,7 +541,11 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     transient_provider_retries,
                     &error.to_string(),
                 );
-                sleep_before_provider_retry_async(transient_provider_retries, cancellation).await?;
+                wait_for_provider_retry(
+                    provider_retry_delay(transient_provider_retries, Some(&error)),
+                    cancellation,
+                )
+                .await?;
                 continue;
             }
             Err(AgentRuntimeError::ProviderProtocol { kind, detail }) => {
@@ -1521,46 +1538,6 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                 ));
             }
         }
-
-        // microCompact + MidTurn 压缩 — 在 model loop 中间减小 context。
-        // 两级阈值：先 microCompact 清理旧工具结果（不调 LLM），
-        // 如果 token 仍超限，MidTurn 用非损 checkpoint 替换旧消息（不调 LLM）。
-        let context_timing = super::session_runtime::LocalPhaseTimer::start(
-            session_id,
-            turn_id,
-            "contextAccounting",
-        );
-        let current_tokens = estimate_messages_tokens(&messages);
-        if current_tokens > MICRO_COMPACT_THRESHOLD {
-            let cleared = micro_compact_messages(&mut messages, MICRO_COMPACT_KEEP_RECENT);
-            let mut compacted = cleared > 0;
-            if cleared > 0 {
-                emit_context_trimmed(
-                    session_id,
-                    json!({
-                        "reason": "micro_compact",
-                        "clearedToolResults": cleared,
-                        "tokensBefore": current_tokens,
-                    }),
-                );
-            }
-            if let Some((before, after)) = midturn_compact_messages(&mut messages) {
-                compacted = true;
-                emit_context_trimmed(
-                    session_id,
-                    json!({
-                        "reason": "midturn_compress",
-                        "tokensBefore": before,
-                        "tokensAfter": after,
-                    }),
-                );
-            }
-            if compacted {
-                reset_stateful_responses(&mut messages);
-            }
-        }
-
-        drop(context_timing);
 
         if let Some(nudge) = progress_guard
             .browser_loop_detector

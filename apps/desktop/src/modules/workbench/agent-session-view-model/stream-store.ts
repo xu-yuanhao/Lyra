@@ -1,3 +1,5 @@
+import type { AgentMessage } from "../../../shared/agent";
+
 /**
  * Stream Store — external mutable store for streaming text deltas.
  *
@@ -168,6 +170,14 @@ export class StreamStore {
     return state.blocks.size === 0 ? state.committedText : "";
   }
 
+  getTextBlocks(messageId: string): readonly { readonly blockId: string | null; readonly text: string }[] {
+    const state = this.messages.get(messageId);
+    if (state === undefined) return [];
+    return state.blocks.size === 0
+      ? [{ blockId: null, text: state.committedText }]
+      : Array.from(state.blocks.values(), (block) => ({ blockId: block.id, text: block.committedText }));
+  }
+
   blockReplacesFallback(messageId: string, blockId: string | null): boolean {
     const state = this.messages.get(messageId);
     if (state === undefined) return false;
@@ -258,6 +268,19 @@ export class StreamStore {
     }
     for (const callback of subs) {
       callback();
+    }
+  }
+
+  /** Replace the live baseline with a chronologically authoritative snapshot. */
+  reconcileMessage(message: AgentMessage): void {
+    this.reset(message.id);
+    const state = this.getOrCreate(message.id);
+    state.committedText = message.text;
+    state.committedReasoning = message.reasoningContent ?? "";
+    for (const block of message.blocks ?? []) {
+      if (block.type !== "text") continue;
+      state.blocks.set(block.id, { id: block.id, chunks: [], committedText: block.text,
+        replacePending: false, replacementRevision: 0, replacesFallback: true });
     }
   }
 

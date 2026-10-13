@@ -1,3 +1,4 @@
+import { isOlderSessionSnapshot } from "../agent-session-view-model/runtime-reducer";
 import {
   useCallback,
   useEffect,
@@ -163,6 +164,7 @@ export const useLyraAgentDataProvider = (
   const [citationHighlightMessageId, setCitationHighlightMessageId] = useState<string | null>(null);
   const [citationScrollTarget, setCitationScrollTarget] = useState<CitationScrollTarget | null>(null);
   const currentSessionIdRef = useRef<string | null>(activeSessionId ?? null);
+  const streamingOwnersRef = useRef(new Map<string, string>());
   const handleRuntimeEventRef = useRef<(event: AgentRuntimeEvent) => void>(() => undefined);
   const materializedImagePathsRef = useRef<Map<string, string>>(new Map());
   // Session snapshot cache — LRU. Keep enough entries that a typical
@@ -221,6 +223,10 @@ export const useLyraAgentDataProvider = (
 
   handleRuntimeEventRef.current = (event: AgentRuntimeEvent) => {
     const eventSessionId = runtimeEventSessionId(event);
+    if (event.kind === "sessionSnapshot") {
+      const current = state.session?.id === event.snapshot.id ? state.session : cacheGet(event.snapshot.id);
+      if (current !== undefined && current !== null && isOlderSessionSnapshot(current, event.snapshot)) return;
+    }
     // Interactive events (clarifications, permissions, plan reviews, and
     // turn-end events that clear them) must pass through regardless of which
     // tab is active — otherwise a request from a background session is
@@ -243,6 +249,7 @@ export const useLyraAgentDataProvider = (
     // and messages.map rebuild that previously caused stalls on long messages.
     const streamStore = getStreamStore();
     if (event.kind === "messageDelta") {
+      if (eventSessionId !== null) streamingOwnersRef.current.set(event.messageId, eventSessionId);
       const startsStreamBlock = streamStore.appendDelta(
         event.messageId,
         event.blockId,
@@ -280,23 +287,39 @@ export const useLyraAgentDataProvider = (
       }
       return;
     }
+    if (event.kind === "turnFinished" || event.kind === "turnFailed" || event.kind === "turnInterrupted" || event.kind === "turnCompleted") {
+      streamStore.flush();
+      for (const [messageId, owner] of streamingOwnersRef.current) {
+        if (owner !== event.sessionId) continue;
+        for (const block of streamStore.getTextBlocks(messageId)) {
+          if (block.text.length === 0) continue;
+          const deltaEvent: AgentRuntimeEvent = { kind: "messageDelta", sessionId: event.sessionId,
+            messageId, ...(block.blockId === null ? {} : { blockId: block.blockId }), delta: block.text, replace: true };
+          if (currentSessionIdRef.current === event.sessionId) dispatch({ type: "event", event: deltaEvent });
+          else {
+            const cached = cacheGet(event.sessionId);
+            if (cached !== undefined) cachePut(event.sessionId, applyAgentRuntimeEventToSnapshot(cached, deltaEvent));
+          }
+        }
+        streamStore.reset(messageId);
+        streamingOwnersRef.current.delete(messageId);
+      }
+    }
     if (event.kind === "toolStarted") {
       const messageId = event.messageId;
       if (typeof messageId === "string" && messageId.length > 0) {
         streamStore.sealReasoning(messageId);
       }
     }
-    // messageCommitted brings the finalized message — reset the store's
-    // chunk accumulation for this message since the reducer now holds the
-    // authoritative text.
+    // The event queue preserves chronological order. A committed snapshot is
+    // authoritative regardless of length; subsequent deltas start a new suffix.
     if (event.kind === "messageCommitted") {
-      // Tool starts commit the message while the next sentence is still in
-      // the store. A shorter snapshot must not wipe that sentence.
-      streamStore.flush();
-      const streamed = streamStore.getMessageText(event.message.id);
-      const committed = event.message.text;
-      if (committed.length >= streamed.length) {
-        streamStore.reset(event.message.id);
+      streamStore.reconcileMessage(event.message);
+      streamingOwnersRef.current.set(event.message.id, event.sessionId);
+    } else if (event.kind === "sessionSnapshot") {
+      for (const message of event.snapshot.messages) {
+        streamStore.reset(message.id);
+        streamingOwnersRef.current.delete(message.id);
       }
     }
 

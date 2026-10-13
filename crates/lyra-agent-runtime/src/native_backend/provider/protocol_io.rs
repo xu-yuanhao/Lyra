@@ -1,22 +1,5 @@
 use super::*;
 
-fn connection_establishment_failed(error: &AgentRuntimeError) -> bool {
-    matches!(
-        error,
-        AgentRuntimeError::ProviderTransport {
-            kind: ProviderTransportKind::Connect,
-            ..
-        }
-    )
-}
-fn transport_retry_limit(error: &AgentRuntimeError) -> u8 {
-    if connection_establishment_failed(error) {
-        1
-    } else {
-        MAX_STREAM_TRANSPORT_RETRIES
-    }
-}
-
 fn apply_opencode_identity(
     builder: reqwest::blocking::RequestBuilder,
     provider: &NativeProviderProfile,
@@ -74,19 +57,23 @@ pub(crate) async fn call_model_once_for_loop_async(
     cancellation: &CancellationToken,
     commit_assistant_text: bool,
 ) -> AgentRuntimeResult<ModelReply> {
-    call_model_once_inner_async(
-        session_id,
-        turn_id,
-        provider,
-        model,
-        messages,
-        tools,
-        tool_choice,
-        capabilities,
-        cancellation,
-        commit_assistant_text,
-    )
-    .await
+    let result = tokio::select! {
+        biased;
+        _ = cancellation.cancelled() => Err(AgentRuntimeError::Cancelled),
+        result = call_model_once_inner_async(
+            session_id, turn_id, provider, model, messages, tools, tool_choice,
+            capabilities, cancellation, commit_assistant_text,
+        ) => result,
+    };
+    result.map_err(|mut error| {
+        if let AgentRuntimeError::ProviderFailure { failure } = &mut error
+            && failure.provider_id.is_empty()
+        {
+            failure.provider_id = provider.id.clone();
+            failure.route_id = provider.route_id.clone();
+        }
+        error
+    })
 }
 
 fn record_physical_provider_attempt(
@@ -389,7 +376,7 @@ pub(crate) fn classify_provider_failure(
         Some(404) => ProviderFailureCategory::NotFound,
         Some(421) => ProviderFailureCategory::ContentPolicy,
         Some(429) => ProviderFailureCategory::RateLimit,
-        Some(500..=599) => ProviderFailureCategory::Server,
+        Some(408 | 500..=599) => ProviderFailureCategory::Server,
         _ => ProviderFailureCategory::Unknown,
     }
 }
@@ -423,14 +410,6 @@ mod classify_provider_failure_tests {
             ProviderFailureCategory::Server
         );
     }
-}
-
-pub(crate) fn retry_after_milliseconds(headers: &reqwest::header::HeaderMap) -> Option<u64> {
-    headers
-        .get(reqwest::header::RETRY_AFTER)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.trim().parse::<u64>().ok())
-        .map(|seconds| seconds.saturating_mul(1_000))
 }
 
 pub(crate) fn provider_response_error_from_response(
@@ -774,6 +753,7 @@ pub(crate) async fn call_model_once_inner_async(
         // streaming would again risk a second partial commit. If the continue
         // also fails, we still finalize the original transport error.
         loop {
+            let previous_message_id = active_ui_message_id(session_id, turn_id);
             let mut committed_any: Option<bool> = None;
             let attempt_started_at = Instant::now();
             let mut request_started_at = None;
@@ -794,6 +774,30 @@ pub(crate) async fn call_model_once_inner_async(
                     )
                 })
                 .await;
+            if committed_any.is_none() {
+                committed_any = Some(super::continuation::StreamContinuation::has_progress(
+                    session_id,
+                    turn_id,
+                    previous_message_id.as_deref(),
+                ));
+            }
+            let attempt_result = if attempt_result.is_err() && committed_any == Some(true) {
+                super::continuation::StreamContinuation::mark_partial(session_id, turn_id);
+                attempt_result.map_err(|error| {
+                    if is_retryable_provider_error(&error) {
+                        AgentRuntimeError::ProviderTransport {
+                            kind: ProviderTransportKind::StreamInterrupted,
+                            detail: format!(
+                                "provider interrupted an already committed stream: {error}"
+                            ),
+                        }
+                    } else {
+                        error
+                    }
+                })
+            } else {
+                attempt_result
+            };
             record_physical_provider_attempt(
                 session_id,
                 turn_id,
@@ -869,22 +873,18 @@ pub(crate) async fn call_model_once_inner_async(
                     if connection_establishment_failed(&error) {
                         return Err(error);
                     }
-                    // Keep partial assistant prefix + send a continuation marker.
-                    // See zed's `Message::Resume` ("Continue where you left off",
-                    // thread.rs:238-243, 3047-3053) and codex's same-turn retry
-                    // with committed partials retained in history
-                    // (turn.rs:1356-1362). The in-memory `messages` were rebuilt
-                    // by the caller from `session.snapshot.messages` per attempt,
-                    // so they already include the committed partial assistant
-                    // row (committed_any == Some(true) is exactly the witness).
-                    // We append a user-role continuation marker so the provider
-                    // extends the previous text instead of re-generating it — no
-                    // duplication, because the partial row remains the prior
-                    // assistant turn in the request and the new attempt yields a
-                    // fresh assistant row. Non-streaming is safer here: no second
-                    // partial-commit risk. Gated once per turn — if the continue
-                    // also fails, finalize as usual.
-                    if committed_any == Some(true) {
+                    // A committed flag may witness reasoning or a tool preview.
+                    // Continue only when this attempt recorded actual visible text.
+                    if let Some(continuation) = (committed_any == Some(true))
+                        .then(|| {
+                            super::continuation::StreamContinuation::capture(
+                                session_id,
+                                turn_id,
+                                previous_message_id.as_deref(),
+                            )
+                        })
+                        .flatten()
+                    {
                         super::session_runtime::set_last_provider_attempt_recovery(
                             session_id,
                             turn_id,
@@ -906,15 +906,7 @@ pub(crate) async fn call_model_once_inner_async(
                         let attempt_started_at = Instant::now();
 
                         let mut request_started_at = None;
-                        let continue_marker = json!({
-                            "role": "user",
-                            "content": "继续之前未完成的话。完整文本补齐之前不要重复已写过的内容、不要解释，直接续写。".to_string(),
-                        });
-                        let messages_with_continue = {
-                            let mut clone = messages.to_vec();
-                            clone.push(continue_marker);
-                            clone
-                        };
+                        let messages_with_continue = continuation.request_messages(messages);
                         let attempt_result = scheduled_provider_request_async(
                             session_id,
                             provider,
@@ -955,25 +947,27 @@ pub(crate) async fn call_model_once_inner_async(
                             }
                             Err(e) => Err(e),
                         };
-                        if let Ok(reply) = attempt_result.as_mut()
-                            && commit_assistant_text
-                        {
-                            crate::native_backend::turns::commit_visible_assistant_reply(
-                                session_id, turn_id, reply, &None,
-                            );
+                        if let Ok(reply) = attempt_result.as_mut() {
+                            continuation.finish(
+                                session_id,
+                                turn_id,
+                                reply,
+                                commit_assistant_text,
+                            )?;
                         }
                         match attempt_result {
                             Ok(reply) => return Ok(reply),
-                            Err(_) => {
-                                // Failed again even with continuation. Fall through
-                                // to the finalize below.
+                            Err(continuation_error) => {
+                                return Err(AgentRuntimeError::ProviderTransport {
+                                    kind: ProviderTransportKind::StreamInterrupted,
+                                    detail: format!(
+                                        "provider streaming transport failed; committed prefix was preserved, but continuation failed: {continuation_error}"
+                                    ),
+                                });
                             }
                         }
                     }
-                    return Err(AgentRuntimeError::Core(format!(
-                        "provider streaming transport failed for route `{}`; retry-after-partial kept the committed prefix, but the continuation also failed: {}",
-                        provider.route_id, error
-                    )));
+                    return Err(error);
                 }
                 Err(error) => {
                     finish_running_tools_for_failed_turn(session_id, turn_id);
@@ -1135,66 +1129,6 @@ pub(crate) fn finish_running_tools_for_failed_turn(session_id: &str, turn_id: &s
         }),
     );
     true
-}
-
-#[cfg(test)]
-pub(crate) fn call_model_once_non_streaming_checked(
-    session_id: &str,
-    turn_id: &str,
-    provider: &NativeProviderProfile,
-    model: &str,
-    messages: &[Value],
-    tools: &[Value],
-    tool_choice: &ModelToolChoice,
-    cancellation: &CancellationToken,
-) -> AgentRuntimeResult<ModelReply> {
-    if cancellation.is_cancelled() || turn_was_cancelled(session_id, turn_id) {
-        return Err(AgentRuntimeError::Cancelled);
-    }
-    let reply = call_model_once_non_streaming_with_choice(
-        provider,
-        model,
-        messages,
-        tools,
-        tool_choice,
-        session_id,
-        turn_id,
-    )?;
-    if cancellation.is_cancelled() || turn_was_cancelled(session_id, turn_id) {
-        return Err(AgentRuntimeError::Cancelled);
-    }
-    Ok(reply)
-}
-
-/// Truly async non-streaming check — uses async request builders directly.
-/// Bedrock still uses spawn_blocking (no async Bedrock builder yet).
-pub(crate) async fn call_model_once_non_streaming_checked_async(
-    session_id: &str,
-    turn_id: &str,
-    provider: &NativeProviderProfile,
-    model: &str,
-    messages: &[Value],
-    tools: &[Value],
-    tool_choice: &ModelToolChoice,
-    cancellation: &CancellationToken,
-) -> AgentRuntimeResult<ModelReply> {
-    if cancellation.is_cancelled() || turn_was_cancelled(session_id, turn_id) {
-        return Err(AgentRuntimeError::Cancelled);
-    }
-    let reply = call_model_once_non_streaming_with_choice_async(
-        provider,
-        model,
-        messages,
-        tools,
-        tool_choice,
-        session_id,
-        turn_id,
-    )
-    .await?;
-    if cancellation.is_cancelled() || turn_was_cancelled(session_id, turn_id) {
-        return Err(AgentRuntimeError::Cancelled);
-    }
-    Ok(reply)
 }
 
 /// Async non-streaming request — mirrors the sync `call_model_once_non_streaming_with_choice`

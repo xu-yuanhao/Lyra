@@ -28,7 +28,13 @@ pub(crate) fn permission_request_for_tool(
         return None;
     }
     let risk = permission_risk(display_name, action, input)?;
-    match evaluate_permission_policy_for_session(session_id, display_name, action, Some(&risk), input) {
+    match evaluate_permission_policy_for_session(
+        session_id,
+        display_name,
+        action,
+        Some(&risk),
+        input,
+    ) {
         PermissionPolicyDecision::Allow => return None,
         PermissionPolicyDecision::Ask => {}
         PermissionPolicyDecision::Deny => {}
@@ -179,7 +185,10 @@ pub(crate) fn permission_risk(display_name: &str, action: &str, input: &Value) -
     // catalog's "file" risk class: write-path tools are never auto-allowed.
     if matches!(
         (display_name, action),
-        ("file", "write" | "edit" | "strict_edit" | "multiedit" | "apply_patch")
+        (
+            "file",
+            "write" | "edit" | "strict_edit" | "multiedit" | "apply_patch"
+        )
     ) {
         return Some("file".to_string());
     }

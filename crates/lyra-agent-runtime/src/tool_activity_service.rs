@@ -780,7 +780,9 @@ impl ToolProvider for BuiltInLyraToolProvider {
                         "id": { "type": "string" },
                         "path": { "type": "string" },
                         "source": { "type": "string" },
-                        "maxBytes": { "type": "number" }
+                        "maxBytes": { "type": "integer", "minimum": 1 },
+                        "startLine": { "type": "integer", "minimum": 1 },
+                        "endLine": { "type": "integer", "minimum": 1 }
                     }
                 }),
                 None,
@@ -795,9 +797,9 @@ impl ToolProvider for BuiltInLyraToolProvider {
                     "type": "object",
                     "properties": {
                         "path": { "type": "string" },
-                        "startLine": { "type": "number" },
-                        "endLine": { "type": "number" },
-                        "maxBytes": { "type": "number" },
+                        "startLine": { "type": "integer", "minimum": 1 },
+                        "endLine": { "type": "integer", "minimum": 1 },
+                        "maxBytes": { "type": "integer", "minimum": 1 },
                         "encoding": { "type": "string", "enum": ["utf-8", "utf8", "lossy-utf8"], "description": "Accepted for compatibility. Invalid UTF-8 bytes are always replaced." }
                     },
                     "required": ["path"]

@@ -96,3 +96,17 @@ describe("Workbench state IPC bridge", () => {
     bridge.dispose();
   });
 });
+
+test("flush reports failed disk writes and allows retrying the same cached snapshot", async () => {
+  const root = mkdtempSync(path.join(tmpdir(), "lyra-state-write-failure-"));
+  const bridge = await createWorkbenchStateIpcBridge(root);
+  try {
+    rmSync(root, { recursive: true }); writeFileSync(root, "not a directory");
+    const snapshot = JSON.stringify({ schemaVersion: 1, tabs: [] });
+    await expect(bridge.writeStateAsync("browser-session", snapshot)).rejects.toThrow();
+    await expect(bridge.flush()).rejects.toThrow("could not be saved");
+    rmSync(root); (await import("node:fs")).mkdirSync(root);
+    await bridge.writeStateAsync("browser-session", snapshot); await bridge.flush();
+    expect(readFileSync(path.join(root, "browser-session.v1.json"), "utf8")).toBe(snapshot);
+  } finally { bridge.dispose(); rmSync(root, { recursive: true, force: true }); }
+});

@@ -1,3 +1,6 @@
+import { createPageRecoveryView } from "./page-recovery-view";
+import { nativeRecoveryLabels, type NativeRecoveryLabels } from "../../../shared/native-recovery-labels";
+import { isIgnoredRendererGoneReason } from "../../workbench-renderer-recovery";
 import {
   WebContentsView,
   shell,
@@ -179,6 +182,7 @@ type PageRegistryHost = {
   ) => Promise<WorkbenchBrowserDebuggerSession>;
   readonly unregisterBrowserPageResource: (tabId: string) => void;
   readonly readBrowserContextMenuLabels: () => BrowserContextMenuLabels;
+  readonly readNativeRecoveryLabels?: (() => NativeRecoveryLabels) | undefined;
   readonly onBrowserHealthPopup?: (tabId: string, url: string) => void;
   readonly onBrowserHealthCrash?: (tabId: string) => void;
   readonly onBrowserHealthNavigationFailed?: (tabId: string, message: string) => void;
@@ -230,10 +234,20 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
     }
   };
 
+  const clearRecoveryView = (entry: BrowserPageEntry): void => {
+    if (entry.recoveryView === undefined) return;
+    host.detachEntryView(entry);
+    const view = entry.recoveryView;
+    delete entry.recoveryView;
+    view.webContents.removeAllListeners();
+    if (!view.webContents.isDestroyed()) view.webContents.close({ waitForBeforeUnload: false });
+  };
+
   const destroyEntry = (entry: BrowserPageEntry, emitClosedEvent: boolean): void => {
     if (entry.isDestroyed) {
       return;
     }
+    clearRecoveryView(entry);
     host.onBrowserHealthTabClosed?.(entry.tabId);
     entry.isDestroyed = true;
     pendingLoadAddressByTabId.delete(entry.tabId);
@@ -475,7 +489,11 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
 
     webContents.on("did-start-loading", () => {
       host.hideChromePopover(entry);
-      host.updateRuntimeState(entry, { isLoading: true });
+      clearRecoveryView(entry);
+      host.updateRuntimeState(entry, { isLoading: true,
+        ...(entry.runtime.recoveryFailure?.reason === "renderer_crashed" ? { recoveryFailure: undefined } : {})
+      });
+      host.applyLayout();
       syncNavigationFlags(entry);
     });
 
@@ -727,10 +745,29 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
       if (entries.get(entry.tabId) === entry) entries.delete(entry.tabId);
     });
 
-    webContents.on("render-process-gone", () => {
+    webContents.on("render-process-gone", (_event, details) => {
+      if (entry.isDestroyed || isIgnoredRendererGoneReason(details.reason)) return;
       host.onBrowserHealthCrash?.(entry.tabId);
-      destroyEntry(entry, true);
-      entries.delete(entry.tabId);
+      host.cancelPendingAgentPageLoad(webContents);
+      host.disposeCdpAuditSession(entry.tabId, "live");
+      host.disposeDebuggerSession(entry.tabId, "live");
+      host.invalidateBrowserAgentTargets(entry.tabId, "live", "frameReload");
+      host.handleElementPickerPageClosed(entry.tabId);
+      clearRecoveryView(entry);
+      host.detachEntryView(entry);
+      entry.view.setVisible(false);
+      host.updateRuntimeState(entry, {
+        isLoading: false, isHtmlFullscreen: false,
+        recoveryFailure: { reason: "renderer_crashed", message: `${details.reason} (${details.exitCode})`, at: Date.now() }
+      });
+      entry.recoveryView = createPageRecoveryView({
+        address: entry.runtime.address,
+        labels: host.readNativeRecoveryLabels?.() ?? nativeRecoveryLabels(),
+        reload: () => reload(entry.tabId),
+        focus: () => host.publishEvent({ kind: "request-activate-tab", tabId: entry.tabId })
+      });
+      host.applyLayout();
+      host.scheduleBrowserSessionSnapshotWrite();
     });
 
     loadRequestedAddress(entry);
@@ -947,6 +984,9 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
     if (entry === undefined || entry.isDestroyed || entry.webContents.isDestroyed()) {
       throw new Error(`Unknown browser tab: ${tabId}`);
     }
+    if (entry.runtime.recoveryFailure?.reason === "renderer_crashed") {
+      throw new Error(`Browser tab ${tabId} has crashed. Reload the page before using it.`);
+    }
     return entry;
   };
 
@@ -1016,6 +1056,11 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
     if (entry === undefined || entry.isDestroyed || entry.webContents.isDestroyed()) {
       return;
     }
+    clearRecoveryView(entry);
+    host.updateRuntimeState(entry, { isLoading: true,
+        ...(entry.runtime.recoveryFailure?.reason === "renderer_crashed" ? { recoveryFailure: undefined } : {})
+      });
+    host.applyLayout();
     if (ignoreCache) {
       entry.webContents.reloadIgnoringCache();
       return;

@@ -17,7 +17,17 @@ impl StreamingToolCallAccumulator {
             return;
         }
         let name = self.name.get_or_insert_with(String::new);
-        name.push_str(fragment);
+        // Function names are metadata: gateways may resend the full value or
+        // send cumulative prefixes. Only argument JSON is unconditionally a
+        // text delta. Still accept genuine name fragments for compatibility.
+        if name == fragment {
+            return;
+        }
+        if fragment.starts_with(name.as_str()) {
+            *name = fragment.to_string();
+        } else {
+            name.push_str(fragment);
+        }
     }
 }
 
@@ -271,5 +281,24 @@ mod tests {
         // half-formed tool call.
         let parsed = parse_tool_arguments(r#"{"path":""#);
         assert!(parsed.get("parseError").is_some());
+    }
+}
+
+#[cfg(test)]
+mod name_metadata_tests {
+    use super::*;
+    #[test]
+    fn repeated_names_cumulative_names_and_real_fragments_resolve_to_one_identity() {
+        for fragments in [
+            vec!["exec_command", "exec_command"],
+            vec!["exec_", "exec_command"],
+            vec!["exec_", "command", "exec_command"],
+        ] {
+            let mut call = StreamingToolCallAccumulator::default();
+            for name in fragments {
+                call.push_name_delta(name);
+            }
+            assert_eq!(call.name.as_deref(), Some("exec_command"));
+        }
     }
 }

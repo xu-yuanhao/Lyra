@@ -1,3 +1,4 @@
+import { textDirectionForLocale, type TextDirection } from "../../../shared/text-direction";
 import { useSyncExternalStore } from "react";
 
 import { readWorkbenchStateSync } from "../state-storage";
@@ -12,6 +13,7 @@ const BUILTIN_LOCALES = ["en-US"] as const;
 type LocaleSnapshot = {
   readonly locale: WorkbenchLocale;
   readonly revision: number;
+  readonly direction: TextDirection;
 };
 
 const localeListeners = new Set<() => void>();
@@ -64,13 +66,18 @@ let availableLocales = new Set<WorkbenchLocale>([
   ...BUILTIN_LOCALES,
   ...(PSEUDO_LOCALE_ENABLED ? ["pseudo"] : [])
 ]);
-let currentLocaleSnapshot: LocaleSnapshot = { locale, revision };
+let directions: Readonly<Record<string, TextDirection>> = {};
+let currentLocaleSnapshot: LocaleSnapshot = { locale, revision, direction: textDirectionForLocale(locale) };
+export const registerWorkbenchTextDirections = (next: Readonly<Record<string, TextDirection>>): void => {
+  directions = Object.fromEntries(Object.entries(next).filter(([, direction]) => direction === "ltr" || direction === "rtl"));
+  refreshWorkbenchLocale();
+};
 let currentAvailableLocales = Array.from(availableLocales).sort((left, right) =>
   left.localeCompare(right)
 );
 
 const updateLocaleSnapshot = (): void => {
-  currentLocaleSnapshot = { locale, revision };
+  currentLocaleSnapshot = { locale, revision, direction: textDirectionForLocale(locale, directions[locale]) };
 };
 
 const updateAvailableLocalesSnapshot = (): void => {

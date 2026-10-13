@@ -5,6 +5,7 @@ import { EN_US_DICTIONARY } from "../../../shared/i18n/en-US";
 import {
   getWorkbenchLocale,
   refreshWorkbenchLocale,
+  registerWorkbenchTextDirections,
   registerWorkbenchLocales
 } from "./locale-state";
 import { createStaticBundleSource, createPseudoLocaleSource } from "./translation-source";
@@ -62,6 +63,7 @@ type DesktopLanguageBundleApi = {
   readonly i18n?: {
     readonly readLocalBundles?: () => Promise<Readonly<Record<string, Record<string, string>>>>;
     readonly readLanguageBundles?: () => Promise<{
+      readonly directions?: Readonly<Record<string, "ltr" | "rtl">>;
       readonly managed: Readonly<Record<string, Record<string, string>>>;
       readonly local: Readonly<Record<string, Record<string, string>>>;
     }>;
@@ -75,6 +77,7 @@ const reloadDesktopLanguageBundles = async (): Promise<void> => {
   try {
     const api = (globalThis as unknown as { lyraDesktop?: DesktopLanguageBundleApi }).lyraDesktop;
     const snapshot = await api?.i18n?.readLanguageBundles?.();
+    registerWorkbenchTextDirections(snapshot?.directions ?? {});
     const managed = snapshot?.managed ?? {};
     const local = snapshot?.local ?? await api?.i18n?.readLocalBundles?.() ?? {};
     const locales = new Set([...Object.keys(managed), ...Object.keys(local)]);

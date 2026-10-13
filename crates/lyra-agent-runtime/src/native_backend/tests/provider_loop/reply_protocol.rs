@@ -67,7 +67,7 @@ fn visible_tool_preamble_without_native_tool_signal_is_not_reclassified() {
 }
 
 #[test]
-fn markdown_json_tool_call_snippet_is_rejected_as_protocol_error() {
+fn markdown_json_tool_call_example_remains_inert_text() {
     let mut reply = ModelReply {
         content: Some(
             r#"I will run this:
@@ -88,14 +88,16 @@ fn markdown_json_tool_call_snippet_is_rejected_as_protocol_error() {
         stop_signal: Default::default(),
     };
 
-    let error = normalize_model_reply_protocol(&mut reply, &model_tools())
-        .expect_err("markdown JSON tool snippets must be rejected");
-    assert!(error.to_string().contains("textual tool-call syntax"));
-    assert!(reply.content.is_none());
+    let original = reply.content.clone();
+    normalize_model_reply_protocol(&mut reply, &model_tools())
+        .expect("text examples have no executable authority");
+    assert!(reply.tool_calls.is_empty());
+    assert!(reply.reasoning_content.is_none());
+    assert_eq!(reply.content.as_deref(), original.as_deref().map(str::trim));
 }
 
 #[test]
-fn textual_provider_visible_function_call_is_rejected_as_protocol_error() {
+fn textual_function_call_example_remains_inert_text() {
     let mut reply = ModelReply {
         content: Some(
             "tool_fs_run({\"path\":\"/tools/workbench/list_tabs\",\"args\":{}})".to_string(),
@@ -110,14 +112,16 @@ fn textual_provider_visible_function_call_is_rejected_as_protocol_error() {
         stop_signal: Default::default(),
     };
 
-    let error = normalize_model_reply_protocol(&mut reply, &model_tools())
-        .expect_err("function-like textual tool calls must be rejected");
-    assert!(error.to_string().contains("textual tool-call syntax"));
-    assert!(reply.content.is_none());
+    let original = reply.content.clone();
+    normalize_model_reply_protocol(&mut reply, &model_tools())
+        .expect("text examples have no executable authority");
+    assert!(reply.tool_calls.is_empty());
+    assert!(reply.reasoning_content.is_none());
+    assert_eq!(reply.content.as_deref(), original.as_deref().map(str::trim));
 }
 
 #[test]
-fn leaked_xml_tool_calls_are_recovered_as_structured_calls() {
+fn leaked_xml_tool_calls_are_removed_without_execution() {
     let mut reply = ModelReply {
         content: Some(
             r#"好的，让我先看看目录。
@@ -140,20 +144,15 @@ fn leaked_xml_tool_calls_are_recovered_as_structured_calls() {
         stop_signal: TurnStopSignal::EndTurn,
     };
 
-    normalize_model_reply_protocol(&mut reply, &model_tools())
-        .expect("XML tool markup must be recovered, not shown");
+    normalize_model_reply_protocol(&mut reply, &model_tools()).expect("markup is display-only");
     assert_eq!(reply.content.as_deref(), Some("好的，让我先看看目录。"));
-    assert_eq!(reply.tool_calls.len(), 1);
-    assert_eq!(reply.tool_calls[0].name, "exec_command");
-    assert_eq!(
-        reply.tool_calls[0].arguments["command"],
-        "ls -la /Users/petehsu/Documents/Lyra"
-    );
-    assert_eq!(reply.stop_signal, TurnStopSignal::ToolUse);
+    assert!(reply.tool_calls.is_empty());
+    assert!(reply.reasoning_content.is_none());
+    assert_eq!(reply.stop_signal, TurnStopSignal::EndTurn);
 }
 
 #[test]
-fn leaked_dsml_tool_calls_are_recovered_as_structured_calls() {
+fn leaked_dsml_tool_calls_are_removed_without_execution() {
     let mut reply = ModelReply {
         content: Some(
             r#"先看看目录结构和关键文件。
@@ -180,17 +179,15 @@ fn leaked_dsml_tool_calls_are_recovered_as_structured_calls() {
         stop_signal: TurnStopSignal::EndTurn,
     };
 
-    normalize_model_reply_protocol(&mut reply, &[])
-        .expect("DSML tool markup must be recovered even when tools were omitted");
+    normalize_model_reply_protocol(&mut reply, &model_tools()).expect("markup is display-only");
     assert_eq!(reply.content.as_deref(), Some("先看看目录结构和关键文件。"));
-    assert_eq!(reply.tool_calls.len(), 2);
-    assert_eq!(reply.tool_calls[0].name, "exec_command");
-    assert_eq!(reply.tool_calls[1].name, "glob");
-    assert_eq!(reply.stop_signal, TurnStopSignal::ToolUse);
+    assert!(reply.tool_calls.is_empty());
+    assert!(reply.reasoning_content.is_none());
+    assert_eq!(reply.stop_signal, TurnStopSignal::EndTurn);
 }
 
 #[test]
-fn textual_provider_visible_function_call_is_rejected_even_without_advertised_tools() {
+fn textual_function_call_example_remains_inert_without_advertised_tools() {
     let mut reply = ModelReply {
         content: Some(
             "tool_fs_run({\"path\":\"/tools/workbench/list_tabs\",\"args\":{}})".to_string(),
@@ -205,14 +202,16 @@ fn textual_provider_visible_function_call_is_rejected_even_without_advertised_to
         stop_signal: Default::default(),
     };
 
-    let error = normalize_model_reply_protocol(&mut reply, &[])
-        .expect_err("textual Tool-FS calls must be rejected without advertised tools");
-    assert!(error.to_string().contains("textual tool-call syntax"));
-    assert!(reply.content.is_none());
+    let original = reply.content.clone();
+    normalize_model_reply_protocol(&mut reply, &[])
+        .expect("text examples have no executable authority");
+    assert!(reply.tool_calls.is_empty());
+    assert!(reply.reasoning_content.is_none());
+    assert_eq!(reply.content.as_deref(), original.as_deref().map(str::trim));
 }
 
 #[test]
-fn trailing_path_pattern_json_is_recovered_as_grep_and_hidden_from_chat() {
+fn trailing_path_pattern_example_preserves_prose_without_execution() {
     let mut reply = ModelReply {
         content: Some(
             r#"Let's search for "description" in Cargo.toml.{"path":"~/Documents/Lyra/Cargo.toml","pattern":"description"}"#
@@ -228,25 +227,16 @@ fn trailing_path_pattern_json_is_recovered_as_grep_and_hidden_from_chat() {
         stop_signal: TurnStopSignal::EndTurn,
     };
 
+    let original = reply.content.clone();
     normalize_model_reply_protocol(&mut reply, &model_tools())
-        .expect("trailing grep JSON must become a structured tool call");
-    assert!(reply.content.is_none());
-    assert_eq!(
-        reply.reasoning_content.as_deref(),
-        Some(r#"Let's search for "description" in Cargo.toml."#)
-    );
-    assert_eq!(reply.tool_calls.len(), 1);
-    assert_eq!(reply.tool_calls[0].name, "grep");
-    assert_eq!(
-        reply.tool_calls[0].arguments["path"],
-        "~/Documents/Lyra/Cargo.toml"
-    );
-    assert_eq!(reply.tool_calls[0].arguments["pattern"], "description");
-    assert_eq!(reply.stop_signal, TurnStopSignal::ToolUse);
+        .expect("text examples have no executable authority");
+    assert!(reply.tool_calls.is_empty());
+    assert!(reply.reasoning_content.is_none());
+    assert_eq!(reply.content.as_deref(), original.as_deref().map(str::trim));
 }
 
 #[test]
-fn unmapped_trailing_tool_fs_json_is_a_protocol_leak() {
+fn trailing_tool_fs_json_remains_inert_text() {
     let mut reply = ModelReply {
         content: Some(r#"{"path":"/tools/web/search","args":{"query":"Lyra"}}"#.to_string()),
         reasoning_content: None,
@@ -259,7 +249,10 @@ fn unmapped_trailing_tool_fs_json_is_a_protocol_leak() {
         stop_signal: TurnStopSignal::EndTurn,
     };
 
-    let error = normalize_model_reply_protocol(&mut reply, &model_tools())
-        .expect_err("bare Tool-FS JSON must not become the final answer");
-    assert!(error.to_string().contains("textual tool"));
+    let original = reply.content.clone();
+    normalize_model_reply_protocol(&mut reply, &model_tools())
+        .expect("text examples have no executable authority");
+    assert!(reply.tool_calls.is_empty());
+    assert!(reply.reasoning_content.is_none());
+    assert_eq!(reply.content.as_deref(), original.as_deref().map(str::trim));
 }

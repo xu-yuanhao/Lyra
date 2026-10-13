@@ -1,3 +1,4 @@
+import type { NativeRecoveryLabels } from "../../shared/native-recovery-labels";
 import {
   session as electronSessionApi,
   type BrowserWindow,
@@ -73,7 +74,8 @@ export const createWorkbenchBrowserViewManager = ({
   onWebContentsCreated,
   performanceScheduler,
   getActCacheEnabled,
-  resolveBrowserContextMenuLabels
+  resolveBrowserContextMenuLabels,
+  resolveNativeRecoveryLabels
 }: {
   readonly getWindow: () => BrowserWindow | null;
   readonly publishEvent: WorkbenchBrowserPublishEvent;
@@ -88,6 +90,7 @@ export const createWorkbenchBrowserViewManager = ({
   // may replay cached axActOnNode results for repeatable NL→axRef mappings.
   readonly getActCacheEnabled?: () => boolean;
   readonly resolveBrowserContextMenuLabels?: (locale: string) => BrowserContextMenuLabels;
+  readonly resolveNativeRecoveryLabels?: (locale: string) => NativeRecoveryLabels;
 }): WorkbenchBrowserViewManager => {
   const liveElectronSession = (): Session =>
     electronSessionApi.fromPartition(WORKBENCH_BROWSER_LIVE_PROFILE_PARTITION);
@@ -216,6 +219,8 @@ export const createWorkbenchBrowserViewManager = ({
       );
       return resolveBrowserContextMenuLabels?.(locale) ?? browserContextMenuLabels(locale);
     },
+    readNativeRecoveryLabels: resolveNativeRecoveryLabels === undefined ? undefined : () =>
+      resolveNativeRecoveryLabels(readBrowserContextMenuLocaleFromPreferences(workbenchState?.readState("preferences") ?? null)),
     onBrowserHealthPopup: (tabId, url) => browserHealthWatchdog.onPopupRequested(tabId, url),
     onBrowserHealthCrash: (tabId) => browserHealthWatchdog.onCrash(tabId),
     onBrowserHealthNavigationFailed: (tabId, message) =>
@@ -689,11 +694,11 @@ export const createWorkbenchBrowserViewManager = ({
 
   return {
     dispose: () => {
+      browserSessionRuntime.dispose();
       void focusIsolation.dispose();
       void elementPickerController.dispose();
       cdpDiagnostics.dispose();
       restoreTombstoneController.dispose();
-      browserSessionRuntime.dispose();
       pageRegistry.dispose();
       agentShadowController.dispose();
       sharedControlController.dispose();

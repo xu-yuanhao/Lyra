@@ -721,41 +721,6 @@ pub(crate) fn emit_provider_retry(
     );
 }
 
-#[cfg(test)]
-pub(crate) fn sleep_before_provider_retry(
-    attempt: u8,
-    cancellation: &CancellationToken,
-) -> AgentRuntimeResult<()> {
-    super::turn_engine::block_on(sleep_before_provider_retry_async(attempt, cancellation))
-}
-
-pub(crate) async fn sleep_before_provider_retry_async(
-    attempt: u8,
-    cancellation: &CancellationToken,
-) -> AgentRuntimeResult<()> {
-    let wait_ms = 250_u64.saturating_mul(2_u64.saturating_pow(attempt.saturating_sub(1).into()));
-    let deadline = Instant::now() + Duration::from_millis(wait_ms);
-    while Instant::now() < deadline {
-        if cancellation.is_cancelled() {
-            return Err(AgentRuntimeError::Cancelled);
-        }
-        tokio::time::sleep(Duration::from_millis(25)).await;
-    }
-    Ok(())
-}
-
-pub(crate) fn is_retryable_provider_error(error: &AgentRuntimeError) -> bool {
-    matches!(
-        error,
-        AgentRuntimeError::ProviderFailure {
-            failure: ProviderFailure {
-                category: ProviderFailureCategory::RateLimit | ProviderFailureCategory::Server,
-                ..
-            }
-        }
-    )
-}
-
 /// Classify a `reqwest::Error` into a transport category using reqwest's typed
 /// predicates — never its message text — so the category stays correct across
 /// reqwest versions and wording changes.

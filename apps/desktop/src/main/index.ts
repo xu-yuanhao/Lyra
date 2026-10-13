@@ -1,8 +1,14 @@
+import { createMainWindowLifecycle } from "./main-window-lifecycle";
+import { createBoundedShutdown } from "./bounded-shutdown";
+import { nativeRecoveryLabels } from "../shared/native-recovery-labels";
+import { readBrowserContextMenuLocaleFromPreferences } from "./workbench-browser/view-manager-runtime/page-context-menu-native";
 import {
   app,
   BrowserWindow,
+  dialog,
   Menu,
   nativeTheme,
+  net,
   session,
   type WebContents,
   type MenuItemConstructorOptions,
@@ -15,7 +21,7 @@ import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync } from 
 import { readFile } from "node:fs/promises";
 import { hostname, userInfo, platform, homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { pathToFileURL, fileURLToPath } from "node:url";
 
 import {
   LYRA_APP_NAME,
@@ -39,8 +45,7 @@ import { createAuthIpcBridge, type AuthIpcBridge } from "./auth/service";
 import { readActCacheEnabled } from "./agent/act-cache-toggle";
 import { createReapplyLayoutScheduler } from "./schedule-reapply-layout";
 import {
-  createRendererReloadLimiter,
-  isIgnoredRendererGoneReason,
+  createRendererRecoveryController,
   shouldLinuxStartupRelaunch
 } from "./workbench-renderer-recovery";
 import { createDownloadManagerIpcBridge } from "./download-manager";
@@ -194,6 +199,7 @@ let disposeAutoUpdateService: (() => void) | null = null;
 let workbenchAppQuitting = false;
 let workbenchBrowserBridge: WorkbenchBrowserIpcBridge | null = null;
 let languagePacksBridge: LanguagePacksIpcBridge | null = null;
+let readRecoveryPreferences: () => string | null = () => null;
 let authBridge: AuthIpcBridge | null = null;
 let pendingAuthCallbackUrl: string | null = null;
 let workbenchObservationService: WorkbenchObservationService | null = null;
@@ -665,10 +671,11 @@ const registerLyraFileProtocol = (): void => {
       });
     }
     try {
-      const fileBuffer = await readFile(resolved.path);
-      return new Response(fileBuffer, {
-        status: 200,
+      const response = await net.fetch(pathToFileURL(resolved.path).toString(), { headers: request.headers });
+      return new Response(response.body, {
+        status: response.status,
         headers: {
+          ...Object.fromEntries(response.headers),
           "content-type": resolved.contentType,
           "cache-control": "private, max-age=30"
         }
@@ -994,7 +1001,6 @@ const createMainWindow = (): BrowserWindow => {
 
   let didFinishLoad = false;
   let recoveryRestartRequested = false;
-  const rendererReloadLimiter = createRendererReloadLimiter();
   attachDevelopmentLogging(window);
   window.webContents.once("did-finish-load", () => {
     didFinishLoad = true;
@@ -1002,47 +1008,38 @@ const createMainWindow = (): BrowserWindow => {
     registerMainWindowRenderer(window.webContents.getOSProcessId());
     logProcessRoleSample();
   });
+  const rendererRecovery = createRendererRecoveryController({
+    isUnavailable: () => workbenchAppQuitting || window.isDestroyed() || window.webContents.isDestroyed(),
+    tryStartupRelaunch: (details) => {
+      if (recoveryRestartRequested || !shouldLinuxStartupRelaunch({
+        didFinishLoad, isDevelopmentMode: isDevelopmentMode(),
+        linuxCompatEnabled: linuxCompatBridge.status.enabled,
+        linuxRecoveryActive: linuxCompatBridge.status.recovery.active, reason: details.reason
+      })) return false;
+      recoveryRestartRequested = true;
+      linuxCompatBridge.requestRestart(app, { recovery: true, reason: `renderer-startup-${details.reason}-${details.exitCode}` });
+      return true;
+    },
+    reload: () => window.webContents.reload(),
+    chooseRecovery: async () => {
+      const locale = readBrowserContextMenuLocaleFromPreferences(readRecoveryPreferences());
+      const labels = languagePacksBridge?.resolveNativeRecoveryLabels(locale) ?? nativeRecoveryLabels();
+      const { response } = await dialog.showMessageBox(window, {
+        type: "warning", message: labels.windowTitle, detail: labels.windowDescription,
+        buttons: [labels.reopenWindow, labels.closeWindow], defaultId: 0, cancelId: 1, noLink: true
+      });
+      return response === 0 ? "reopen" : "close";
+    },
+    reopen: () => mainWindowLifecycle.reopen(window),
+    close: () => {
+      workbenchBrowserBridge?.readSessionSnapshot();
+      window.destroy();
+    },
+    report: (message) => console.error(`[lyra] ${message}`)
+  });
   window.webContents.on("render-process-gone", (_event, details) => {
     linuxCompatBridge.recordRendererGone(details);
-    if (
-      workbenchAppQuitting
-      || isIgnoredRendererGoneReason(details.reason)
-      || window.isDestroyed()
-    ) {
-      return;
-    }
-    if (
-      recoveryRestartRequested === false
-      && shouldLinuxStartupRelaunch({
-        didFinishLoad,
-        isDevelopmentMode: isDevelopmentMode(),
-        linuxCompatEnabled: linuxCompatBridge.status.enabled,
-        linuxRecoveryActive: linuxCompatBridge.status.recovery.active,
-        reason: details.reason
-      })
-    ) {
-      recoveryRestartRequested = true;
-      linuxCompatBridge.requestRestart(app, {
-        recovery: true,
-        reason: `renderer-startup-${details.reason}-${details.exitCode}`
-      });
-      return;
-    }
-    if (rendererReloadLimiter.shouldReload() === false) {
-      console.error(
-        `[lyra] workbench renderer crash loop reason=${details.reason} exitCode=${details.exitCode}; leaving the window for a manual restart`
-      );
-      return;
-    }
-    console.error(
-      `[lyra] workbench renderer gone reason=${details.reason} exitCode=${details.exitCode}; reloading`
-    );
-    setTimeout(() => {
-      if (workbenchAppQuitting || window.isDestroyed() || window.webContents.isDestroyed()) {
-        return;
-      }
-      window.webContents.reload();
-    }, 0);
+    rendererRecovery.handle(details);
   });
 
   const recoverOccludedPaint = (): void => {
@@ -1101,13 +1098,30 @@ const createMainWindow = (): BrowserWindow => {
   window.on("resize", createReapplyLayoutScheduler(window, () => {
     requestWorkbenchLayoutReapply(window);
   }));
+  window.on("close", () => {
+    workbenchBrowserBridge?.readSessionSnapshot();
+  });
   window.on("closed", () => {
+    rendererRecovery.dispose();
     powerMonitor.off("resume", recoverOccludedPaint);
     clearFullscreenLayoutSettleTimer();
   });
 
   return window;
 };
+
+const mainWindowLifecycle = createMainWindowLifecycle({
+  isQuitting: () => workbenchAppQuitting,
+  create: () => {
+    workbenchBrowserBridge?.readSessionSnapshot();
+    return createMainWindow();
+  },
+  publish: (window) => {
+    mainWindow = window;
+    if (window !== null) publishWindowState(window);
+  },
+  onClosed: () => { if (process.platform !== "darwin" && !workbenchAppQuitting) app.quit(); }
+});
 
 const resolveSystemAppIconVariant = (): LyraAppIconVariant =>
   nativeTheme.shouldUseDarkColors ? "dark" : "light";
@@ -1221,6 +1235,7 @@ const registerIpcHandlers = async (): Promise<void> => {
     storageRoots.modules.workbenchState
   );
   disposeWorkbenchStateBridge = workbenchStateBridge.dispose;
+  readRecoveryPreferences = () => workbenchStateBridge.readState("preferences");
   nativeTheme.themeSource = resolveThemeSourceFromPreferencesJson(
     workbenchStateBridge.readState("preferences")
   );
@@ -1293,7 +1308,8 @@ const registerIpcHandlers = async (): Promise<void> => {
     performanceScheduler,
     deferLayoutSync: deferWorkbenchBrowserLayoutSync,
     getActCacheEnabled: readActCacheEnabled,
-    resolveBrowserContextMenuLabels: languagePacksBridge.resolveBrowserContextMenuLabels
+    resolveBrowserContextMenuLabels: languagePacksBridge.resolveBrowserContextMenuLabels,
+    resolveNativeRecoveryLabels: languagePacksBridge.resolveNativeRecoveryLabels
   });
   disposeWorkbenchBrowserBridge = workbenchBrowserBridge.dispose;
   bindOpenInWorkbench({
@@ -1493,9 +1509,11 @@ const registerIpcHandlers = async (): Promise<void> => {
   ipcMain.handle(
     LYRA_CHANNELS.i18nReadLanguageBundles,
     async (): Promise<{
+      readonly directions: Readonly<Record<string, "ltr" | "rtl">>;
       readonly managed: Readonly<Record<string, Record<string, string>>>;
       readonly local: Readonly<Record<string, Record<string, string>>>;
     }> => ({
+      directions: await languagePacksBridge?.readTextDirections() ?? {},
       managed: await languagePacksBridge?.readManagedBundles() ?? {},
       local: readLocalLanguageBundles()
     })
@@ -1534,8 +1552,7 @@ app.whenReady().then(async () => {
   if (!readForceUninstaller(process.argv, process.env)) {
     void registerHostUninstallEntry(app);
   }
-  mainWindow = createMainWindow();
-  publishWindowState(mainWindow);
+  mainWindowLifecycle.open();
   const processRoleSample = setInterval(logProcessRoleSample, 60_000);
   app.once("before-quit", () => {
     clearInterval(processRoleSample);
@@ -1556,13 +1573,7 @@ app.whenReady().then(async () => {
     });
   }
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length > 0) {
-      return;
-    }
-    mainWindow = createMainWindow();
-    publishWindowState(mainWindow);
-  });
+  app.on("activate", () => mainWindowLifecycle.activate());
 }).catch((error: unknown) => {
   console.error(`[lyra-main] startup failed: ${error instanceof Error ? error.stack ?? error.message : String(error)}`);
   app.quit();
@@ -1700,18 +1711,14 @@ app.on("before-quit", () => {
   }
 });
 
+const stateShutdown = createBoundedShutdown({
+  flush: async () => { await flushWorkbenchStateBridge?.(); },
+  dispose: () => { disposeWorkbenchStateBridge?.(); disposeWorkbenchStateBridge = null; },
+  exit: () => app.exit(0),
+  reportFailure: (error) => console.error(`[lyra] state shutdown failed: ${String(error)}`)
+});
 app.on("will-quit", (event) => {
-  if (flushWorkbenchStateBridge === null) {
-    return;
-  }
+  if (flushWorkbenchStateBridge === null) return;
   event.preventDefault();
-  const flush = flushWorkbenchStateBridge;
-  flushWorkbenchStateBridge = null;
-  void flush().finally(() => {
-    if (disposeWorkbenchStateBridge !== null) {
-      disposeWorkbenchStateBridge();
-      disposeWorkbenchStateBridge = null;
-    }
-    app.exit(0);
-  });
+  void stateShutdown.run();
 });

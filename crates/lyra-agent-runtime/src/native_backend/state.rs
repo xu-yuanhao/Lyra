@@ -319,7 +319,11 @@ impl NativeRuntimeState {
         let mut sessions = HashMap::new();
         let mut startup_cancelled_background_children = Vec::new();
         for session_id in list_session_ids(&root).unwrap_or_default() {
-            if let Ok(Some(mut session)) = load_session_for_startup(&root, &session_id) {
+            if let Some(mut session) = load_session_for_startup_with_diagnostics(
+                &root,
+                &session_id,
+                &mut tool_runtime_migration_diagnostics,
+            ) {
                 let resumed_trim =
                     resume_pending_trim_journal(&mut session, &root).is_ok() && session.dirty;
                 let migrated_legacy_auth = fail_legacy_auth_tools(&mut session, &legacy_auth_tools);
@@ -544,7 +548,10 @@ impl NativeRuntimeState {
                 self.active_session_id = Some(id.clone());
                 return Ok(id);
             }
-            return Err(AgentRuntimeError::Core(format!("session not found: {id}")));
+            return Err(
+                session_database_load_error(&self.tool_runtime_migration_diagnostics, &id)
+                    .unwrap_or_else(|| AgentRuntimeError::Core(format!("session not found: {id}"))),
+            );
         }
         self.ensure_active_session()
     }

@@ -1,7 +1,8 @@
-import { mkdtemp, readFile, stat, writeFile } from "node:fs/promises";
+import { zip, xml, helloDocx, helloSheet, helloDeck, helloPdf } from "./office.test-fixtures";
+import { mkdtemp, open, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { deflateRawSync, inflateRawSync, crc32 } from "node:zlib";
+import { inflateRawSync } from "node:zlib";
 
 import { describe, expect, test } from "vitest";
 
@@ -37,84 +38,11 @@ const zipTexts = (archive: Uint8Array): Array<{ readonly name: string; readonly 
   return out;
 };
 
-const zip = (files: readonly { readonly name: string; readonly data: Buffer }[]): Uint8Array => {
-  const locals: Buffer[] = [];
-  const centrals: Buffer[] = [];
-  let offset = 0;
-  for (const file of files) {
-    const name = Buffer.from(file.name);
-    const compressed = deflateRawSync(file.data);
-    const checksum = crc32(file.data);
-    const local = Buffer.alloc(30 + name.length + compressed.length);
-    local.writeUInt32LE(0x04034b50, 0);
-    local.writeUInt16LE(20, 4);
-    local.writeUInt16LE(8, 8);
-    local.writeUInt32LE(checksum, 14);
-    local.writeUInt32LE(compressed.length, 18);
-    local.writeUInt32LE(file.data.length, 22);
-    local.writeUInt16LE(name.length, 26);
-    name.copy(local, 30);
-    compressed.copy(local, 30 + name.length);
-    locals.push(local);
-    const central = Buffer.alloc(46 + name.length);
-    central.writeUInt32LE(0x02014b50, 0);
-    central.writeUInt16LE(20, 4);
-    central.writeUInt16LE(20, 6);
-    central.writeUInt16LE(8, 10);
-    central.writeUInt32LE(checksum, 16);
-    central.writeUInt32LE(compressed.length, 20);
-    central.writeUInt32LE(file.data.length, 24);
-    central.writeUInt16LE(name.length, 28);
-    central.writeUInt32LE(offset, 42);
-    name.copy(central, 46);
-    centrals.push(central);
-    offset += local.length;
-  }
-  const centralDirectory = Buffer.concat(centrals);
-  const end = Buffer.alloc(22);
-  end.writeUInt32LE(0x06054b50, 0);
-  end.writeUInt16LE(files.length, 8);
-  end.writeUInt16LE(files.length, 10);
-  end.writeUInt32LE(centralDirectory.length, 12);
-  end.writeUInt32LE(offset, 16);
-  return new Uint8Array(Buffer.concat([...locals, centralDirectory, end]));
-};
 
-const xml = (value: string): Buffer => Buffer.from(value);
 
-const helloDocx = (): Uint8Array => zip([
-  {
-    name: "[Content_Types].xml",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-</Types>`)
-  },
-  {
-    name: "_rels/.rels",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-</Relationships>`)
-  },
-  {
-    name: "word/_rels/document.xml.rels",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`)
-  },
-  {
-    name: "word/document.xml",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-  <w:body>
-    <w:p><w:r><w:t>Hello</w:t></w:r></w:p>
-    <w:sectPr/>
-  </w:body>
-</w:document>`)
-  }
-]);
+
+
+
 
 const TINY_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -455,20 +383,36 @@ describe("office docx", () => {
 });
 
 describe("office preview", () => {
-  test("returns the original bytes for every preview format", async () => {
-    const cases = [
-      ["/tmp/note.pdf", "pdf", "note.pdf"],
-      ["/tmp/brief.docx", "docx", "brief.docx"],
-      ["/tmp/book.xlsx", "xlsx", "book.xlsx"],
-      ["/tmp/deck.pptx", "pptx", "deck.pptx"]
-    ] as const;
-    for (const [path, format, title] of cases) {
-      const preview = await previewOfficeFile(path, {
-        readFile: async () => new Uint8Array([1, 2, 3])
-      });
-      expect(preview).toMatchObject({ format, title });
-      expect(Array.from(preview.bytes)).toEqual([1, 2, 3]);
-    }
+  test("validates actual format and returns bounded metadata", async () => {
+    const root = await mkdtemp(join(tmpdir(), "lyra-office-preview-"));
+    try {
+      const path = join(root, "sample.pdf");
+      await writeFile(path, "%PDF-1.7\nfixture");
+      expect(await previewOfficeFile(path)).toMatchObject({ format: "pdf", title: "sample.pdf", byteLength: 16 });
+      await writeFile(path, "not a pdf");
+      await expect(previewOfficeFile(path)).rejects.toMatchObject({ code: "invalid" });
+      const disguised = join(root, "wrong.docx");
+      await writeFile(disguised, "%PDF-1.7");
+      await expect(previewOfficeFile(disguised)).rejects.toMatchObject({ code: "invalid" });
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
+  test("sniffs OOXML packages and rejects mismatches and oversized files", async () => {
+    const root = await mkdtemp(join(tmpdir(), "lyra-office-packages-"));
+    try {
+      for (const [format, bytes] of [["docx", helloDocx()], ["xlsx", helloSheet()], ["pptx", helloDeck()]] as const) {
+        const path = join(root, `sample.${format}`);
+        await writeFile(path, bytes);
+        expect((await previewOfficeFile(path)).format).toBe(format);
+      }
+      const disguised = join(root, "wrong.docx");
+      await writeFile(disguised, helloSheet());
+      await expect(previewOfficeFile(disguised)).rejects.toMatchObject({ code: "invalid" });
+      const large = join(root, "large.pdf");
+      const file = await open(large, "w");
+      await file.truncate(64 * 1024 * 1024 + 1); await file.close();
+      await expect(previewOfficeFile(large)).rejects.toMatchObject({ code: "too-large" });
+    } finally { await rm(root, { recursive: true, force: true }); }
   });
 
   test("rejects a file that is not an office document", async () => {
@@ -483,48 +427,7 @@ describe("office preview", () => {
   });
 });
 
-const helloSheet = (): Uint8Array => zip([
-  {
-    name: "[Content_Types].xml",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-</Types>`)
-  },
-  {
-    name: "_rels/.rels",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-</Relationships>`)
-  },
-  {
-    name: "xl/_rels/workbook.xml.rels",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-</Relationships>`)
-  },
-  {
-    name: "xl/workbook.xml",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets>
-</workbook>`)
-  },
-  {
-    name: "xl/worksheets/sheet1.xml",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <sheetData>
-    <row r="1"><c r="A1" t="inlineStr"><is><t>Hello</t></is></c><c r="B1"><v>42</v></c></row>
-  </sheetData>
-</worksheet>`)
-  }
-]);
+
 
 const chartSheet = (): Uint8Array => zip([
   {
@@ -584,57 +487,7 @@ const chartSheet = (): Uint8Array => zip([
   }
 ]);
 
-const helloDeck = (): Uint8Array => zip([
-  {
-    name: "[Content_Types].xml",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
-  <Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
-</Types>`)
-  },
-  {
-    name: "_rels/.rels",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
-</Relationships>`)
-  },
-  {
-    name: "ppt/_rels/presentation.xml.rels",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide1.xml"/>
-</Relationships>`)
-  },
-  {
-    name: "ppt/presentation.xml",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-  <p:sldIdLst><p:sldId id="256" r:id="rId2"/></p:sldIdLst>
-  <p:sldSz cx="9144000" cy="6858000"/>
-</p:presentation>`)
-  },
-  {
-    name: "ppt/slides/slide1.xml",
-    data: xml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
-  <p:cSld>
-    <p:spTree>
-      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
-      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
-      <p:sp>
-        <p:nvSpPr><p:cNvPr id="2" name="Title"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
-        <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1" cy="1"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
-        <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>Hello slide</a:t></a:r></a:p></p:txBody>
-      </p:sp>
-    </p:spTree>
-  </p:cSld>
-</p:sld>`)
-  }
-]);
+
 
 const shapeDeck = (
   box: { readonly x: number; readonly y: number; readonly cx: number; readonly cy: number },
@@ -976,30 +829,7 @@ describe("office sheet and slide edits", () => {
   });
 });
 
-const helloPdf = (): Buffer => {
-  const stream = "BT /F1 24 Tf 72 720 Td (Hello) Tj ET\n";
-  const objects = [
-    "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
-    "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
-    "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
-    `4 0 obj\n<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}endstream\nendobj\n`,
-    "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
-  ];
-  let body = "%PDF-1.4\n";
-  const offsets = [0];
-  for (const object of objects) {
-    offsets.push(Buffer.byteLength(body));
-    body += object;
-  }
-  const xref = Buffer.byteLength(body);
-  body += `xref\n0 ${objects.length + 1}\n`;
-  body += "0000000000 65535 f \n";
-  for (const offset of offsets.slice(1)) {
-    body += `${String(offset).padStart(10, "0")} 00000 n \n`;
-  }
-  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
-  return Buffer.from(body);
-};
+
 
 describe("office file creation", () => {
   test("creates a workbook and a document only when the path is new", async () => {

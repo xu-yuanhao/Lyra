@@ -99,30 +99,50 @@ const applyLine = (scan: ScanState, line: string): void => {
 // as literal text.
 const hasFootnoteMarkup = (text: string): boolean => /\[\^[^\s\]]+\]/u.test(text);
 
-export const splitSettledMarkdown = (text: string): SettledMarkdownChunks => {
-  const source = normalizeNewlines(text);
-  if (hasFootnoteMarkup(source)) {
-    return { settled: [], tail: source };
-  }
-  const settled: string[] = [];
-  const scan = createScan();
-  let settledLen = 0;
-  let index = 0;
-  while (index < source.length) {
-    const newline = source.indexOf("\n", index);
-    if (newline < 0) break;
-    if (newline === index) {
-      if (index > settledLen && !scan.codeOpen && scan.math === null) {
-        const block = source.slice(settledLen, newline + 1);
-        if (/\S/u.test(block)) {
-          settled.push(block);
-          settledLen = newline + 1;
-        }
-      }
-    } else {
-      applyLine(scan, source.slice(index, newline));
+/** Incremental scan state belongs to one rendered document, not a global cache. */
+export class SettledMarkdownSplitter {
+  private previous = "";
+  private scan = createScan();
+  private settled: string[] = [];
+  private settledLen = 0;
+  private index = 0;
+  private dependentTail = false;
+  private blockHasFootnote = false;
+
+  split(text: string): SettledMarkdownChunks {
+    const source = normalizeNewlines(text);
+    if (!source.startsWith(this.previous)) {
+      this.scan = createScan(); this.settled = []; this.settledLen = 0;
+      this.index = 0; this.dependentTail = false; this.blockHasFootnote = false;
     }
-    index = newline + 1;
+    this.previous = source;
+    while (!this.dependentTail && this.index < source.length) {
+      const newline = source.indexOf("\n", this.index);
+      if (newline < 0) break;
+      const line = source.slice(this.index, newline);
+      if (/^[ \t]*$/u.test(line)) {
+        if (this.index > this.settledLen && !this.scan.codeOpen && this.scan.math === null) {
+          const block = source.slice(this.settledLen, newline + 1);
+          // A reference and its future definition share a parse tree. Earlier
+          // unrelated paragraphs remain frozen; only this dependency suffix is live.
+          if (this.blockHasFootnote) { this.dependentTail = true; break; }
+          if (/\S/u.test(block)) {
+            this.settled = [...this.settled, block];
+            this.settledLen = newline + 1;
+          }
+        }
+      } else {
+        if (!this.scan.codeOpen && this.scan.math === null && !FENCE_LINE.test(line)) {
+          const prose = line.replace(/(`+).*?\1/gu, "").replace(/\\\[/gu, "");
+          this.blockHasFootnote ||= hasFootnoteMarkup(prose);
+        }
+        applyLine(this.scan, line);
+      }
+      this.index = newline + 1;
+    }
+    return { settled: this.settled, tail: source.slice(this.settledLen) };
   }
-  return { settled, tail: source.slice(settledLen) };
-};
+}
+
+export const splitSettledMarkdown = (text: string): SettledMarkdownChunks =>
+  new SettledMarkdownSplitter().split(text);

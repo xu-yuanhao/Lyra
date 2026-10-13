@@ -9,8 +9,8 @@
     "applicableAppVersion": "0.1.x beta",
     "verifiedDate": "2026-07-28"
   },
-  "x-lyra-source-keyset-hash": "759d011650ff983e93cc2356ea675c6558a4b781af546ac2fbf05a63752b256b",
-  "x-lyra-source-content-hash": "3f6959c9bcd8dc81d2c5010b97be7c2b3731099d83be4794aa7ae0103230109e",
+  "x-lyra-source-keyset-hash": "881208775d05a1e66fe1fd5c0ab19838141b9016e50914c131b1d8a5964cebf4",
+  "x-lyra-source-content-hash": "a25509ab5151c01bdc9852c4e3e29cc37fcb1d19face9ffbb6d7c5063fb797d6",
   "type": "object",
   "required": [
     "agentGit.binaryDiff",
@@ -231,13 +231,20 @@
     "aiPanel.defaultSessionTitle",
     "aiPanel.sessionTabsAriaLabel",
     "appStatus.clearSiteDataFailed",
+    "appStatus.closeWindow",
     "appStatus.openEditorFailed",
     "appStatus.openFileFailed",
     "appStatus.openUrlFailed",
     "appStatus.operationFailed",
+    "appStatus.pageStoppedDescription",
+    "appStatus.pageStoppedTitle",
+    "appStatus.reloadPage",
+    "appStatus.reopenWindow",
     "appStatus.revealPathFailed",
     "appStatus.unexpectedErrorDescription",
     "appStatus.unexpectedErrorTitle",
+    "appStatus.windowStoppedDescription",
+    "appStatus.windowStoppedTitle",
     "browser.channelError",
     "browser.channelIdle",
     "browser.channelLoading",
@@ -996,6 +1003,7 @@
     "settings.aiModelsDeleteConfirmDescription",
     "settings.aiModelsDeleteConfirmTitle",
     "settings.aiModelsDeleteLabel",
+    "settings.aiModelsDeleteProviderDescription",
     "settings.aiModelsDisableAll",
     "settings.aiModelsDiscoverEmptyDescription",
     "settings.aiModelsDiscoverModels",
@@ -1071,6 +1079,13 @@
     "settings.aiStopBehaviorTurnAndBackgroundLabel",
     "settings.aiStopBehaviorTurnOnlyDescription",
     "settings.aiStopBehaviorTurnOnlyLabel",
+    "settings.aiSubscriptionAccount",
+    "settings.aiSubscriptionBorrow",
+    "settings.aiSubscriptionCallback",
+    "settings.aiSubscriptionConfirm",
+    "settings.aiSubscriptionDescription",
+    "settings.aiSubscriptionLogin",
+    "settings.aiSubscriptionTitle",
     "settings.appearanceCategoryLabel",
     "settings.docsNavLabel",
     "settings.downloadsBtDht",
@@ -1490,6 +1505,9 @@
     "tool.collapseCall",
     "tool.collapseEditDetails",
     "tool.collapseGroup",
+    "tool.contextCompress",
+    "tool.contextCompressed",
+    "tool.contextCompressFailed",
     "tool.events",
     "tool.events_one",
     "tool.events_other",
@@ -2182,6 +2200,9 @@
     "appStatus.clearSiteDataFailed": {
       "type": "string"
     },
+    "appStatus.closeWindow": {
+      "type": "string"
+    },
     "appStatus.openEditorFailed": {
       "type": "string"
     },
@@ -2194,6 +2215,18 @@
     "appStatus.operationFailed": {
       "type": "string"
     },
+    "appStatus.pageStoppedDescription": {
+      "type": "string"
+    },
+    "appStatus.pageStoppedTitle": {
+      "type": "string"
+    },
+    "appStatus.reloadPage": {
+      "type": "string"
+    },
+    "appStatus.reopenWindow": {
+      "type": "string"
+    },
     "appStatus.revealPathFailed": {
       "type": "string"
     },
@@ -2201,6 +2234,12 @@
       "type": "string"
     },
     "appStatus.unexpectedErrorTitle": {
+      "type": "string"
+    },
+    "appStatus.windowStoppedDescription": {
+      "type": "string"
+    },
+    "appStatus.windowStoppedTitle": {
       "type": "string"
     },
     "browser.channelError": {
@@ -4477,6 +4516,9 @@
     "settings.aiModelsDeleteLabel": {
       "type": "string"
     },
+    "settings.aiModelsDeleteProviderDescription": {
+      "type": "string"
+    },
     "settings.aiModelsDisableAll": {
       "type": "string"
     },
@@ -4700,6 +4742,27 @@
       "type": "string"
     },
     "settings.aiStopBehaviorTurnOnlyLabel": {
+      "type": "string"
+    },
+    "settings.aiSubscriptionAccount": {
+      "type": "string"
+    },
+    "settings.aiSubscriptionBorrow": {
+      "type": "string"
+    },
+    "settings.aiSubscriptionCallback": {
+      "type": "string"
+    },
+    "settings.aiSubscriptionConfirm": {
+      "type": "string"
+    },
+    "settings.aiSubscriptionDescription": {
+      "type": "string"
+    },
+    "settings.aiSubscriptionLogin": {
+      "type": "string"
+    },
+    "settings.aiSubscriptionTitle": {
       "type": "string"
     },
     "settings.appearanceCategoryLabel": {
@@ -5957,6 +6020,15 @@
       "type": "string"
     },
     "tool.collapseGroup": {
+      "type": "string"
+    },
+    "tool.contextCompress": {
+      "type": "string"
+    },
+    "tool.contextCompressed": {
+      "type": "string"
+    },
+    "tool.contextCompressFailed": {
       "type": "string"
     },
     "tool.events": {

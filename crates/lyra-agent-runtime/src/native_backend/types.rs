@@ -275,6 +275,9 @@ pub(crate) struct NativeSession {
     /// the active session.
     #[serde(default, skip)]
     pub(crate) ephemeral: bool,
+    /// Snapshot revision; journal rows at or below it are included.
+    #[serde(default, skip)]
+    pub(crate) stream_journal_sequence: i64,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

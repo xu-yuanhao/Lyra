@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "appVersion": "0.1.0-preview.15",
-  "keysetHash": "759d011650ff983e93cc2356ea675c6558a4b781af546ac2fbf05a63752b256b",
-  "contentHash": "3f6959c9bcd8dc81d2c5010b97be7c2b3731099d83be4794aa7ae0103230109e",
+  "keysetHash": "881208775d05a1e66fe1fd5c0ab19838141b9016e50914c131b1d8a5964cebf4",
+  "contentHash": "a25509ab5151c01bdc9852c4e3e29cc37fcb1d19face9ffbb6d7c5063fb797d6",
   "entries": [
     {
       "key": "agentGit.binaryDiff",
@@ -877,6 +877,10 @@
       "source": "Could not clear site data"
     },
     {
+      "key": "appStatus.closeWindow",
+      "source": "Close window"
+    },
+    {
       "key": "appStatus.openEditorFailed",
       "source": "Could not open editor"
     },
@@ -893,6 +897,22 @@
       "source": "Operation failed"
     },
     {
+      "key": "appStatus.pageStoppedDescription",
+      "source": "Reload the page to continue."
+    },
+    {
+      "key": "appStatus.pageStoppedTitle",
+      "source": "This page stopped working"
+    },
+    {
+      "key": "appStatus.reloadPage",
+      "source": "Reload page"
+    },
+    {
+      "key": "appStatus.reopenWindow",
+      "source": "Reopen window"
+    },
+    {
       "key": "appStatus.revealPathFailed",
       "source": "Could not reveal location"
     },
@@ -903,6 +923,14 @@
     {
       "key": "appStatus.unexpectedErrorTitle",
       "source": "Interface error"
+    },
+    {
+      "key": "appStatus.windowStoppedDescription",
+      "source": "Reopen the window to continue."
+    },
+    {
+      "key": "appStatus.windowStoppedTitle",
+      "source": "Lyra's window stopped working"
     },
     {
       "key": "browser.channelError",
@@ -3937,6 +3965,10 @@
       "source": "Delete model"
     },
     {
+      "key": "settings.aiModelsDeleteProviderDescription",
+      "source": "Remove {model} from Lyra, including its saved login and model list."
+    },
+    {
       "key": "settings.aiModelsDisableAll",
       "source": "Disable all"
     },
@@ -4235,6 +4267,34 @@
     {
       "key": "settings.aiStopBehaviorTurnOnlyLabel",
       "source": "Reply only"
+    },
+    {
+      "key": "settings.aiSubscriptionAccount",
+      "source": "Account locator"
+    },
+    {
+      "key": "settings.aiSubscriptionBorrow",
+      "source": "Use local login"
+    },
+    {
+      "key": "settings.aiSubscriptionCallback",
+      "source": "Callback URL or code"
+    },
+    {
+      "key": "settings.aiSubscriptionConfirm",
+      "source": "Confirm"
+    },
+    {
+      "key": "settings.aiSubscriptionDescription",
+      "source": "Sign in with a product account. Lyra uses that account's model quota."
+    },
+    {
+      "key": "settings.aiSubscriptionLogin",
+      "source": "Sign in"
+    },
+    {
+      "key": "settings.aiSubscriptionTitle",
+      "source": "Subscription accounts"
     },
     {
       "key": "settings.appearanceCategoryLabel",
@@ -5911,6 +5971,18 @@
     {
       "key": "tool.collapseGroup",
       "source": "Collapse tool group"
+    },
+    {
+      "key": "tool.contextCompress",
+      "source": "Compressing context"
+    },
+    {
+      "key": "tool.contextCompressed",
+      "source": "Context compressed ({before} → {after})"
+    },
+    {
+      "key": "tool.contextCompressFailed",
+      "source": "Context compression failed"
     },
     {
       "key": "tool.events",

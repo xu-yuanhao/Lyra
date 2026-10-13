@@ -24,6 +24,7 @@ pub(crate) struct DownloadManager {
     tasks_file: PathBuf,
     settings_file: PathBuf,
     state: Mutex<ManagerState>,
+    persistence: Mutex<()>,
 }
 
 struct ManagerState {
@@ -45,6 +46,7 @@ impl DownloadManager {
             storage_root,
             tasks_file,
             settings_file,
+            persistence: Mutex::new(()),
             state: Mutex::new(ManagerState {
                 tasks,
                 settings,
@@ -77,6 +79,10 @@ impl DownloadManager {
         self: &Arc<Self>,
         update: DownloadSettingsUpdate,
     ) -> Result<DownloadSettings, String> {
+        let _persistence = self
+            .persistence
+            .lock()
+            .map_err(|_| "download persistence lock poisoned".to_string())?;
         let settings = {
             let mut state = self
                 .state
@@ -352,17 +358,23 @@ impl DownloadManager {
             &settings,
             || self.is_active(&task.id),
             |progress| {
-                self.update_progress(&task.id, progress.received, 0, progress.speed);
+                self.update_progress_with_connections(
+                    &task.id,
+                    progress.received,
+                    progress.total,
+                    progress.speed,
+                    progress.connections,
+                );
             },
         )?;
         let Some(outcome) = outcome else {
             return Ok(());
         };
-        self.update_progress(&task.id, outcome.received, 0, 0);
+        self.update_progress(&task.id, outcome.received, outcome.total, 0);
         self.patch_task(&task.id, |task| {
             task.state = DownloadTaskState::Completed;
             task.received_bytes = outcome.received;
-            task.total_bytes = 0;
+            task.total_bytes = outcome.total;
             task.speed_bytes_per_second = 0;
             task.estimated_remaining_ms = None;
             task.connections_active = 0;
@@ -651,13 +663,28 @@ impl DownloadManager {
     }
 
     pub(crate) fn update_progress(&self, task_id: &str, received: u64, total: u64, speed: u64) {
+        self.update_progress_with_connections(task_id, received, total, speed, 1);
+    }
+
+    fn update_progress_with_connections(
+        &self,
+        task_id: &str,
+        received: u64,
+        total: u64,
+        speed: u64,
+        connections: u32,
+    ) {
         self.patch_task(task_id, |task| {
+            // A completed RPC poll may arrive after pause/cancel was applied.
+            if task.state != DownloadTaskState::Downloading {
+                return;
+            }
             task.state = DownloadTaskState::Downloading;
             task.received_bytes = received;
             task.total_bytes = total;
             task.speed_bytes_per_second = speed;
             task.estimated_remaining_ms = estimate_remaining_ms(received, total, speed);
-            task.connections_active = 1;
+            task.connections_active = connections;
             task.can_resume = true;
             task.updated_at = now_iso();
             task.error_message = None;
@@ -665,6 +692,12 @@ impl DownloadManager {
     }
 
     pub(crate) fn persist_tasks(&self) -> Result<(), String> {
+        // Lock before taking the snapshot: an older snapshot can never land
+        // after a newer one when worker threads race to persist progress.
+        let _persistence = self
+            .persistence
+            .lock()
+            .map_err(|_| "download persistence lock poisoned".to_string())?;
         let tasks = self.snapshot();
         write_json_atomic(
             &self.storage_root,
@@ -819,6 +852,18 @@ pub(crate) fn estimate_remaining_ms(received: u64, total: u64, speed: u64) -> Op
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
+
+    #[test]
+    fn late_progress_does_not_reactivate_paused_downloads() {
+        let temp = tempfile::tempdir().unwrap();
+        let manager = DownloadManager::new(temp.path().to_path_buf()).unwrap();
+        let task = sample_task("paused", DownloadTaskState::Paused);
+        manager.set_task(task.clone()).unwrap();
+        manager.update_progress("paused", 1000, 1000, 500);
+        let actual = manager.task("paused").unwrap();
+        assert_eq!(actual.state, DownloadTaskState::Paused);
+        assert_eq!(actual.received_bytes, task.received_bytes);
+    }
 
     #[test]
     fn queue_sort_orders_priority_then_creation_time() {

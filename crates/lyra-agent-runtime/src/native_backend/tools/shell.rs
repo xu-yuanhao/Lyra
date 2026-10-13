@@ -305,15 +305,33 @@ pub(crate) async fn tool_shell_run_async(
     // An explicit maxOutputBytes from the model caps the output head-only;
     // the default budget keeps head and tail.
     let explicit_output_cap = input.get("maxOutputBytes").is_some();
-    let output_buffer = |limit: usize| {
-        if explicit_output_cap {
+    let artifact_store = ToolArtifactStore::from_runtime_state();
+    let output_buffer = |limit: usize, kind, suffix| {
+        let mut buffer = if explicit_output_cap {
             HeadTailBytes::head_only(limit)
         } else {
             HeadTailBytes::new(limit)
-        }
+        };
+        buffer.artifact = artifact_store.as_ref().and_then(|store| {
+            store.stream_text(
+                session_id,
+                turn_id,
+                &format!("{tool_call_id}-{suffix}"),
+                kind,
+            )
+        });
+        buffer
     };
-    let stdout_buf = Arc::new(Mutex::new(output_buffer(max_output)));
-    let stderr_buf = Arc::new(Mutex::new(output_buffer(max_output)));
+    let stdout_buf = Arc::new(Mutex::new(output_buffer(
+        max_output,
+        ToolArtifactKind::Stdout,
+        "stdout",
+    )));
+    let stderr_buf = Arc::new(Mutex::new(output_buffer(
+        max_output,
+        ToolArtifactKind::Stderr,
+        "stderr",
+    )));
     let stdout_total = Arc::new(AtomicUsize::new(0));
     let stderr_total = Arc::new(AtomicUsize::new(0));
     let stdout_task = spawn_pipe_pump(
@@ -370,8 +388,8 @@ pub(crate) async fn tool_shell_run_async(
             child,
             stdout_task,
             stderr_task,
-            stdout_buf,
-            stderr_buf,
+            Arc::clone(&stdout_buf),
+            Arc::clone(&stderr_buf),
             stdout_total,
             stderr_total,
             session_id.to_string(),
@@ -418,24 +436,8 @@ pub(crate) async fn tool_shell_run_async(
         stdout_output.text,
         stderr_output.text
     );
-    let stdout_ref = (!stdout_output.text.is_empty() || stdout_output.truncated).then(|| {
-        write_tool_artifact_with_kind(
-            session_id,
-            turn_id,
-            &format!("{tool_call_id}-stdout"),
-            ToolArtifactKind::Stdout,
-            &stdout_output.text,
-        )
-    });
-    let stderr_ref = (!stderr_output.text.is_empty() || stderr_output.truncated).then(|| {
-        write_tool_artifact_with_kind(
-            session_id,
-            turn_id,
-            &format!("{tool_call_id}-stderr"),
-            ToolArtifactKind::Stderr,
-            &stderr_output.text,
-        )
-    });
+    let stdout_ref = pipe_artifact_ref(&stdout_buf);
+    let stderr_ref = pipe_artifact_ref(&stderr_buf);
     let success = status.as_ref().is_some_and(|s| s.success())
         && !timed_out
         && !cancelled
@@ -466,8 +468,8 @@ pub(crate) async fn tool_shell_run_async(
             "outputCollectionTimedOut": output_collection_timed_out,
             "processGroupTerminated": cancelled,
             "processGroupSignal": null,
-            "stdoutRef": stdout_ref.flatten(),
-            "stderrRef": stderr_ref.flatten(),
+            "stdoutRef": stdout_ref,
+            "stderrRef": stderr_ref,
             "activityKind": "shell",
             "rendererHint": "shell",
         }),
@@ -725,7 +727,15 @@ where
 
 fn snapshot_live_pipe(buf: &Mutex<HeadTailBytes>, total: &AtomicUsize) -> LimitedOutput {
     if let Ok(buffer) = buf.lock() {
-        return buffer.snapshot();
+        let mut snapshot = buffer.snapshot();
+        let reference = buffer
+            .artifact
+            .as_ref()
+            .and_then(|artifact| artifact.reference());
+        snapshot
+            .text
+            .push_str(&full_output_notice(reference.as_ref(), snapshot.truncated));
+        return snapshot;
     }
     let total_bytes = total.load(Ordering::Relaxed);
     LimitedOutput {
@@ -733,6 +743,20 @@ fn snapshot_live_pipe(buf: &Mutex<HeadTailBytes>, total: &AtomicUsize) -> Limite
         truncated: total_bytes > 0,
         total_bytes,
         timed_out: false,
+    }
+}
+
+fn pipe_artifact_ref(buf: &Mutex<HeadTailBytes>) -> Option<Value> {
+    buf.lock().ok()?.artifact.as_ref()?.reference()
+}
+
+fn full_output_notice(reference: Option<&Value>, truncated: bool) -> String {
+    if !truncated {
+        return String::new();
+    }
+    match reference.and_then(|reference| reference["path"].as_str()) {
+        Some(path) => format!("\n[Full collected output: {path}. Use read_file to inspect it.]"),
+        None => "\n[Full output could not be saved; omitted bytes are unavailable.]".to_string(),
     }
 }
 
@@ -1523,8 +1547,34 @@ fn try_execute_via_elevated_helper(
         .and_then(Value::as_bool)
         .unwrap_or(false);
 
-    let (stdout_text, stdout_truncated) = cap_output_text(stdout_raw, max_output);
-    let (stderr_text, stderr_truncated) = cap_output_text(stderr_raw, max_output);
+    let explicit_cap = input.get("maxOutputBytes").is_some();
+    let (mut stdout_text, stdout_truncated) = cap_output_text(stdout_raw, max_output, explicit_cap);
+    let (mut stderr_text, stderr_truncated) = cap_output_text(stderr_raw, max_output, explicit_cap);
+
+    let stdout_ref = (!stdout_raw.is_empty())
+        .then(|| {
+            write_tool_artifact_with_kind(
+                session_id,
+                turn_id,
+                &format!("{tool_call_id}-stdout"),
+                ToolArtifactKind::Stdout,
+                stdout_raw,
+            )
+        })
+        .flatten();
+    let stderr_ref = (!stderr_raw.is_empty())
+        .then(|| {
+            write_tool_artifact_with_kind(
+                session_id,
+                turn_id,
+                &format!("{tool_call_id}-stderr"),
+                ToolArtifactKind::Stderr,
+                stderr_raw,
+            )
+        })
+        .flatten();
+    stdout_text.push_str(&full_output_notice(stdout_ref.as_ref(), stdout_truncated));
+    stderr_text.push_str(&full_output_notice(stderr_ref.as_ref(), stderr_truncated));
 
     let description = value_string(input, "description").unwrap_or_default();
     let content = format!(
@@ -1538,25 +1588,6 @@ fn try_execute_via_elevated_helper(
         stdout_text,
         stderr_text,
     );
-
-    let stdout_ref = (!stdout_text.is_empty() || stdout_truncated).then(|| {
-        write_tool_artifact_with_kind(
-            session_id,
-            turn_id,
-            &format!("{tool_call_id}-stdout"),
-            ToolArtifactKind::Stdout,
-            &stdout_text,
-        )
-    });
-    let stderr_ref = (!stderr_text.is_empty() || stderr_truncated).then(|| {
-        write_tool_artifact_with_kind(
-            session_id,
-            turn_id,
-            &format!("{tool_call_id}-stderr"),
-            ToolArtifactKind::Stderr,
-            &stderr_text,
-        )
-    });
 
     let success = exit_code == Some(0) && !timed_out;
     Some(Ok(NativeToolSuccess {
@@ -1576,8 +1607,8 @@ fn try_execute_via_elevated_helper(
             "stdoutBytes": stdout_raw.len(),
             "stderrBytes": stderr_raw.len(),
             "processGroupTerminated": false,
-            "stdoutRef": stdout_ref.flatten(),
-            "stderrRef": stderr_ref.flatten(),
+            "stdoutRef": stdout_ref,
+            "stderrRef": stderr_ref,
             "activityKind": "shell",
             "rendererHint": "shell",
         }),
@@ -1603,6 +1634,7 @@ struct HeadTailBytes {
     omitted: usize,
     head_budget: usize,
     tail_budget: usize,
+    artifact: Option<artifact::ToolArtifactStream>,
 }
 
 impl HeadTailBytes {
@@ -1614,6 +1646,7 @@ impl HeadTailBytes {
             omitted: 0,
             head_budget,
             tail_budget: limit.saturating_sub(head_budget),
+            artifact: None,
         }
     }
 
@@ -1626,10 +1659,14 @@ impl HeadTailBytes {
             omitted: 0,
             head_budget: limit,
             tail_budget: 0,
+            artifact: None,
         }
     }
 
     fn push(&mut self, chunk: &[u8]) {
+        if let Some(artifact) = self.artifact.as_mut() {
+            artifact.push(chunk);
+        }
         let chunk = self.fill_head(chunk);
         self.push_tail(chunk);
     }
@@ -1666,7 +1703,15 @@ impl HeadTailBytes {
             // a trailing partial character (process died mid-write)
             // legitimately renders as a replacement character.
             return LimitedOutput {
-                text: String::from_utf8_lossy(&self.head).into_owned(),
+                text: String::from_utf8_lossy(
+                    &self
+                        .head
+                        .iter()
+                        .chain(self.tail.iter())
+                        .copied()
+                        .collect::<Vec<_>>(),
+                )
+                .into_owned(),
                 truncated: false,
                 total_bytes,
                 timed_out: false,
@@ -1684,18 +1729,12 @@ impl HeadTailBytes {
             tail_start += 1;
         }
         let omitted = self.omitted + (self.head.len() - head_end) + tail_start;
-        // A head-only cap (explicit maxOutputBytes) has no tail to reattach,
-        // so the omission marker would only pad the output.
-        let text = if tail.is_empty() {
-            String::from_utf8_lossy(&self.head[..head_end]).into_owned()
-        } else {
-            format!(
-                "{}\n... {} bytes omitted ...\n{}",
-                String::from_utf8_lossy(&self.head[..head_end]),
-                omitted,
-                String::from_utf8_lossy(&tail[tail_start..]),
-            )
-        };
+        let text = format!(
+            "{}\n... {} bytes omitted ...\n{}",
+            String::from_utf8_lossy(&self.head[..head_end]),
+            omitted,
+            String::from_utf8_lossy(&tail[tail_start..]),
+        );
         LimitedOutput {
             text,
             truncated: true,
@@ -1710,10 +1749,16 @@ impl HeadTailBytes {
     /// buffer end itself is always a boundary.
     fn utf8_boundary_back(&self, end: usize) -> usize {
         let mut index = end.min(self.head.len());
-        while index > 0
-            && index < self.head.len()
-            && self.head[index] & 0xC0 == 0x80
-        {
+        if index == self.head.len() {
+            // The final byte can itself be an incomplete codepoint. There is
+            // no next byte in this bounded buffer to test for continuation.
+            if let Err(error) = std::str::from_utf8(&self.head)
+                && error.error_len().is_none()
+            {
+                return error.valid_up_to();
+            }
+        }
+        while index > 0 && index < self.head.len() && self.head[index] & 0xC0 == 0x80 {
             index -= 1;
         }
         index
@@ -1721,8 +1766,12 @@ impl HeadTailBytes {
 }
 
 #[cfg(target_os = "windows")]
-fn cap_output_text(text: &str, max_bytes: usize) -> (String, bool) {
-    let mut buffer = HeadTailBytes::new(max_bytes);
+fn cap_output_text(text: &str, max_bytes: usize, explicit_cap: bool) -> (String, bool) {
+    let mut buffer = if explicit_cap {
+        HeadTailBytes::head_only(max_bytes)
+    } else {
+        HeadTailBytes::new(max_bytes)
+    };
     buffer.push(text.as_bytes());
     let snapshot = buffer.snapshot();
     (snapshot.text, snapshot.truncated)
@@ -1731,6 +1780,25 @@ fn cap_output_text(text: &str, max_bytes: usize) -> (String, bool) {
 #[cfg(test)]
 mod mutation_tests {
     use super::*;
+
+    #[test]
+    fn output_below_the_budget_keeps_both_halves() {
+        let mut buffer = HeadTailBytes::new(20);
+        buffer.push(b"123456789012345");
+        let snapshot = buffer.snapshot();
+        assert_eq!(snapshot.text, "123456789012345");
+        assert!(!snapshot.truncated);
+    }
+
+    #[test]
+    fn explicit_output_cap_announces_omissions_at_utf8_boundaries() {
+        let mut buffer = HeadTailBytes::head_only(4);
+        buffer.push("中中文".as_bytes());
+        let snapshot = buffer.snapshot();
+        assert!(snapshot.text.starts_with("中\n"));
+        assert!(snapshot.text.contains("6 bytes omitted"));
+        assert!(!snapshot.text.contains('\u{FFFD}'));
+    }
 
     #[test]
     fn head_tail_output_keeps_the_real_command_end() {

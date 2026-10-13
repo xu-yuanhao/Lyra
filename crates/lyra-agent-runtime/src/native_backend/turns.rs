@@ -727,6 +727,17 @@ pub(crate) fn finish_turn_with_metadata_for_message(
                     let retention_metrics = prune_transient_tool_outputs(session);
                     prune_goal_continuation_session_messages(session);
                     touch_session(session);
+                    if !session.ephemeral {
+                        // Terminal UI events acknowledge a durable snapshot. The
+                        // checkpoint also prevents an earlier async clone from
+                        // restoring a running status after cancellation/finish.
+                        if let Err(error) =
+                            persist_stream_delta(&root, session, "", "checkpoint", "")
+                                .and_then(|()| save_session(&root, session))
+                        {
+                            eprintln!("Unable to persist terminal session snapshot: {error}");
+                        }
+                    }
                     recall_index_job = Some((root.clone(), session.clone()));
                     events.push(json!({
                         "kind": "sessionSnapshot",

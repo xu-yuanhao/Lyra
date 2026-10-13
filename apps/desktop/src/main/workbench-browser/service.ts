@@ -1,3 +1,4 @@
+import type { NativeRecoveryLabels } from "../../shared/native-recovery-labels";
 import { ipcMain, type BrowserWindow } from "electron";
 
 import {
@@ -387,7 +388,8 @@ export const createWorkbenchBrowserIpcBridge = ({
   performanceScheduler,
   deferLayoutSync,
   getActCacheEnabled,
-  resolveBrowserContextMenuLabels
+  resolveBrowserContextMenuLabels,
+  resolveNativeRecoveryLabels
 }: {
   readonly getWindow: () => BrowserWindow | null;
   readonly downloadManager?: DownloadManagerIpcBridge;
@@ -400,6 +402,7 @@ export const createWorkbenchBrowserIpcBridge = ({
   // and on to the AX controller so it can replay cached axActOnNode results.
   readonly getActCacheEnabled?: () => boolean;
   readonly resolveBrowserContextMenuLabels?: (locale: string) => BrowserContextMenuLabels;
+  readonly resolveNativeRecoveryLabels?: (locale: string) => NativeRecoveryLabels;
 }): WorkbenchBrowserIpcBridge => {
   registerBrowserPageFramePreload();
   const osAxAdapter = createOsAxAdapter(accessibilityNative);
@@ -411,6 +414,7 @@ export const createWorkbenchBrowserIpcBridge = ({
     ...(performanceScheduler === undefined ? {} : { performanceScheduler }),
     ...(getActCacheEnabled === undefined ? {} : { getActCacheEnabled }),
     ...(resolveBrowserContextMenuLabels === undefined ? {} : { resolveBrowserContextMenuLabels }),
+    ...(resolveNativeRecoveryLabels === undefined ? {} : { resolveNativeRecoveryLabels }),
     ...(
       downloadManager === undefined && loginManager === undefined
         ? {}

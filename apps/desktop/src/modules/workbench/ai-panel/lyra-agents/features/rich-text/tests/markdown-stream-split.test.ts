@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { splitSettledMarkdown } from "../markdown-stream-split";
+import { splitSettledMarkdown, SettledMarkdownSplitter } from "../markdown-stream-split";
 
 describe("splitSettledMarkdown", () => {
   it("keeps an incomplete paragraph in the tail", () => {
@@ -62,4 +62,23 @@ describe("splitSettledMarkdown", () => {
       tail: text
     });
   });
+});
+
+it("settles whitespace-only separators without splitting footnote dependencies", () => {
+  expect(splitSettledMarkdown("Intro\n \t\nSee this[^1].\n\nLater\n\n[^1]: note")).toEqual({
+    settled: ["Intro\n \t\n"], tail: "See this[^1].\n\nLater\n\n[^1]: note"
+  });
+});
+
+it("retains frozen blocks across appends and rebuilds on replacement", () => {
+  const splitter = new SettledMarkdownSplitter();
+  const first = splitter.split("A\n\npartial");
+  const second = splitter.split("A\n\npartial continuation");
+  expect(second.settled).toBe(first.settled);
+  expect(splitter.split("Replaced\n\nnew")).toEqual({ settled: ["Replaced\n\n"], tail: "new" });
+});
+
+it("does not treat footnote examples inside code as document dependencies", () => {
+  expect(splitSettledMarkdown("```md\n[^1]\n```\n\nNext").settled).toEqual(["```md\n[^1]\n```\n\n"]);
+  expect(splitSettledMarkdown("Literal `[^1]`\n\nNext").settled).toEqual(["Literal `[^1]`\n\n"]);
 });

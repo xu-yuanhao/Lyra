@@ -390,9 +390,7 @@ fn wait_for_pending_permission(session_id: &str) -> String {
             })
         })
     });
-    panic!(
-        "pending permission not observed: {debug:?}"
-    )
+    panic!("pending permission not observed: {debug:?}")
 }
 
 fn wait_for_pending_clarification(session_id: &str) -> String {
@@ -495,6 +493,7 @@ mod phase5_memory;
 mod phase6_memory;
 mod phase7_memory;
 mod provider_loop;
+mod provider_recovery;
 mod subagent;
 mod terminal_tools;
 mod trim;

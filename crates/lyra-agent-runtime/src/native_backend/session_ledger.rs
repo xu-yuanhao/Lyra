@@ -531,6 +531,7 @@ fn session_for_memory_event(root: &Path, session_id: &str) -> NativeSession {
                 persisted_dialog_len: 0,
                 dialog_loaded: true,
                 ephemeral: false,
+                stream_journal_sequence: 0,
             }
         })
 }
@@ -606,6 +607,7 @@ mod tests {
             persisted_dialog_len: 0,
             dialog_loaded: true,
             ephemeral: false,
+            stream_journal_sequence: 0,
         }
     }
 

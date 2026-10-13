@@ -48,6 +48,7 @@ export const NATIVE_CONTEXT_MENU_EN_US_TRANSLATIONS: Record<
 
 export type OfficialLanguagePackCatalogEntry = {
   readonly locale: string;
+  readonly direction?: "ltr" | "rtl";
   readonly nativeName: string;
   readonly englishName: string;
   readonly aliases: readonly string[];
@@ -75,6 +76,7 @@ export type LanguagePackCatalogResponse = {
 
 export type InstalledLanguagePack = {
   readonly locale: string;
+  readonly direction?: "ltr" | "rtl";
   readonly version: string;
   readonly installedAt: string;
   readonly updatedAt: string;

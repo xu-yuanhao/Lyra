@@ -779,3 +779,33 @@ fn preserves_numeric_retry_after_for_the_shared_scheduler() {
         Some(Duration::from_millis(3_000))
     );
 }
+
+#[test]
+fn retry_after_accepts_http_dates_fractional_seconds_and_millisecond_headers() {
+    let now = std::time::UNIX_EPOCH + Duration::from_secs(1_700_000_000);
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert(
+        reqwest::header::RETRY_AFTER,
+        httpdate::fmt_http_date(now + Duration::from_secs(90))
+            .parse()
+            .unwrap(),
+    );
+    assert_eq!(retry_after_milliseconds_at(&headers, now), Some(90_000));
+    headers.insert(
+        reqwest::header::RETRY_AFTER,
+        httpdate::fmt_http_date(now - Duration::from_secs(1))
+            .parse()
+            .unwrap(),
+    );
+    assert_eq!(retry_after_milliseconds_at(&headers, now), Some(0));
+    headers.insert(reqwest::header::RETRY_AFTER, "0.125".parse().unwrap());
+    assert_eq!(retry_after_milliseconds_at(&headers, now), Some(125));
+    headers.insert("retry-after-ms", "12.5".parse().unwrap());
+    assert_eq!(retry_after_milliseconds_at(&headers, now), Some(13));
+    headers.insert("retry-after-ms", "invalid".parse().unwrap());
+    assert_eq!(retry_after_milliseconds_at(&headers, now), Some(125));
+    for bad in ["invalid", "NaN", "inf", "-1"] {
+        headers.insert(reqwest::header::RETRY_AFTER, bad.parse().unwrap());
+        assert_eq!(retry_after_milliseconds_at(&headers, now), None);
+    }
+}

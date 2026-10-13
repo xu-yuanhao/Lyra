@@ -45,3 +45,49 @@ export const createRendererReloadLimiter = (
     }
   };
 };
+
+export const createRendererRecoveryController = (host: {
+  readonly isUnavailable: () => boolean;
+  readonly tryStartupRelaunch: (details: { reason: string; exitCode: number }) => boolean;
+  readonly reload: () => void;
+  readonly chooseRecovery: () => Promise<"reopen" | "close">;
+  readonly reopen: () => void;
+  readonly close: () => void;
+  readonly report: (message: string) => void;
+}) => {
+  const limiter = createRendererReloadLimiter();
+  let disposed = false;
+  let dialogOpen = false;
+  let reloadTimer: ReturnType<typeof setTimeout> | undefined;
+  const unavailable = () => disposed || host.isUnavailable();
+  return {
+    handle: (details: { reason: string; exitCode: number }): void => {
+      if (unavailable() || isIgnoredRendererGoneReason(details.reason) || dialogOpen) return;
+      if (host.tryStartupRelaunch(details)) return;
+      if (limiter.shouldReload()) {
+        if (reloadTimer !== undefined) clearTimeout(reloadTimer);
+        reloadTimer = setTimeout(() => {
+          reloadTimer = undefined;
+          if (!unavailable()) host.reload();
+        }, 0);
+        return;
+      }
+      if (reloadTimer !== undefined) clearTimeout(reloadTimer);
+      reloadTimer = undefined;
+      dialogOpen = true;
+      host.report(`Renderer crash loop: ${details.reason} (${details.exitCode})`);
+      void host.chooseRecovery().then((choice) => {
+        if (unavailable()) return;
+        if (choice === "reopen") host.reopen();
+        else host.close();
+      }).catch((error: unknown) => {
+        host.report(`Renderer recovery dialog failed: ${String(error)}`);
+        if (!unavailable()) host.reopen();
+      }).finally(() => { dialogOpen = false; });
+    },
+    dispose: (): void => {
+      disposed = true;
+      if (reloadTimer !== undefined) clearTimeout(reloadTimer);
+    }
+  };
+};

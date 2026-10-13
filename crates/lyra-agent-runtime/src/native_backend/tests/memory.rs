@@ -723,6 +723,7 @@ fn memory_candidate_events_record_to_session_ledger() {
         persisted_dialog_len: 0,
         dialog_loaded: true,
         ephemeral: false,
+        stream_journal_sequence: 0,
     };
     save_session(temp.path(), &session).expect("save session");
 

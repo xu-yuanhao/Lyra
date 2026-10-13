@@ -5005,6 +5005,9 @@
 }
 
 .lyra-agents-streamdown .lyra-markdown-code-block pre {
+  direction: ltr;
+  text-align: start;
+  unicode-bidi: isolate;
   padding: 0;
   font-size: var(--lyra-unit-13);
   line-height: 1.6;

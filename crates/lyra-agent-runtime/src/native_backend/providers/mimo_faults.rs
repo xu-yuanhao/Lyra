@@ -2,8 +2,6 @@ use crate::{AgentRuntimeError, ProviderFailure, ProviderFailureCategory};
 
 use super::routes::mimo;
 
-pub(crate) const MIMO_TRANSIENT_RETRY_LIMIT: u8 = 4;
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) enum MimoFaultCategory {
     Format,

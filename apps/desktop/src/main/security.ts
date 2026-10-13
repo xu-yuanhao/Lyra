@@ -32,6 +32,9 @@ const PREVIEW_MIME_BY_EXTENSION = new Map<string, string>([
   [".webm", "video/webm"],
   [".ogv", "video/ogg"],
   [".mov", "video/quicktime"],
+  [".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+  [".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+  [".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"],
   [".pdf", "application/pdf"]
 ]);
 

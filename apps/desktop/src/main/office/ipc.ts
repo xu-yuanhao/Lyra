@@ -15,14 +15,12 @@ import { assertOfficeEditPath } from "../../shared/office-documents";
 import { OfficePreviewError, previewOfficeFile } from "./preview";
 import { OfficeXlsxError, applyXlsxFile, readXlsxFile } from "./xlsx";
 
-const bytesToBase64 = (bytes: Uint8Array): string => Buffer.from(bytes).toString("base64");
-
 const asRecord = (value: unknown): Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
 
-export const createOfficeIpcBridge = (): { readonly dispose: () => void } => {
+export const createOfficeIpcBridge = (createPreviewUrl: (path: string) => string): { readonly dispose: () => void } => {
   ipcMain.handle(LYRA_CHANNELS.officePreview, async (_event, payload: unknown): Promise<OfficePreviewResult> => {
     const path = asRecord(payload).path;
     if (typeof path !== "string" || path.length === 0) {
@@ -33,7 +31,8 @@ export const createOfficeIpcBridge = (): { readonly dispose: () => void } => {
       return {
         format: preview.format,
         title: preview.title,
-        fileBase64: bytesToBase64(preview.bytes)
+        sourceUrl: createPreviewUrl(path),
+        byteLength: preview.byteLength
       };
     } catch (error) {
       if (error instanceof OfficePreviewError) {

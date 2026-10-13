@@ -1,5 +1,5 @@
 use super::{schema::*, *};
-use rusqlite::params;
+use rusqlite::{OptionalExtension, params};
 use serde_json::{Value, json};
 
 pub(super) fn load_session(
@@ -41,11 +41,31 @@ pub(super) fn fill_dialog(root: &Path, session: &mut NativeSession) -> AgentRunt
         session.dialog_loaded = true;
         return Ok(());
     }
-    let conn = open_connection(&db_path)?;
+    let connection = open_connection(&db_path)?;
+    init_schema(&connection)?;
+    let conn = connection
+        .unchecked_transaction()
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+    let replayed: bool = conn
+        .query_row("SELECT EXISTS(SELECT 1 FROM stream_deltas)", [], |row| {
+            row.get(0)
+        })
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
     let messages = read_dialog(&conn)?;
+    session.stream_journal_sequence = conn
+        .query_row(
+            "SELECT COALESCE(MAX(sequence), ?1) FROM stream_deltas",
+            [session.stream_journal_sequence],
+            |row| row.get::<_, i64>(0),
+        )
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?
+        .max(session.stream_journal_sequence);
     session.persisted_dialog_len = messages.len();
     session.snapshot["messages"] = Value::Array(messages);
     session.dialog_loaded = true;
+    if replayed {
+        mark_dialog_dirty_from(session, 0);
+    }
     Ok(())
 }
 
@@ -58,8 +78,11 @@ fn load_session_inner(
     if !db_path.is_file() {
         return Ok(None);
     }
-    let conn = open_connection(&db_path)?;
-    init_schema(&conn)?;
+    let connection = open_connection(&db_path)?;
+    init_schema(&connection)?;
+    let conn = connection
+        .unchecked_transaction()
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
 
     let meta = conn
         .query_row(
@@ -96,9 +119,9 @@ fn load_session_inner(
         Vec::new()
     };
 
-    let (snapshot_json, runtime_turns_json, rollback_json, file_read_json) = conn
+    let (snapshot_json, runtime_turns_json, rollback_json, file_read_json, stored_sequence) = conn
         .query_row(
-            "SELECT snapshot_json, runtime_turns_json, rollback_checkpoints_json, file_read_state_json
+            "SELECT snapshot_json, runtime_turns_json, rollback_checkpoints_json, file_read_state_json, stream_journal_sequence
              FROM session_bundle WHERE id = 1",
             [],
             |row| {
@@ -107,6 +130,7 @@ fn load_session_inner(
                     row.get::<_, String>(1)?,
                     row.get::<_, String>(2)?,
                     row.get::<_, String>(3)?,
+                    row.get::<_, i64>(4)?,
                 ))
             },
         )
@@ -130,9 +154,33 @@ fn load_session_inner(
         .unwrap_or(Value::Null);
     snapshot["updatedAt"] = Value::String(meta.updated_at_iso.clone());
     let persisted_dialog_len = messages.len();
+    let replayed: bool = load_dialog
+        && conn
+            .query_row("SELECT EXISTS(SELECT 1 FROM stream_deltas)", [], |row| {
+                row.get(0)
+            })
+            .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
     snapshot["messages"] = Value::Array(messages);
     super::super::sanitize_session_snapshot(&mut snapshot);
 
+    let stream_journal_sequence = if load_dialog {
+        conn.query_row(
+            "SELECT COALESCE(MAX(sequence), ?1) FROM stream_deltas",
+            [stored_sequence],
+            |row| row.get::<_, i64>(0),
+        )
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?
+        .max(stored_sequence)
+    } else {
+        stored_sequence
+    };
+    // Pending control checkpoints do not describe the on-disk metadata yet.
+    // Expose only the revision of the materialized snapshot and replayed data.
+    let visible_revision: i64 = if load_dialog {
+        conn.query_row("SELECT COALESCE(MAX(sequence), ?1) FROM stream_deltas WHERE channel != 'checkpoint'", [stored_sequence], |row| row.get(0))
+            .map_err(|error| AgentRuntimeError::Core(error.to_string()))?
+    } else { stored_sequence };
+    snapshot["revision"] = json!(visible_revision.max(stored_sequence).to_string());
     let runtime_turns: Vec<Value> = serde_json::from_str(&runtime_turns_json)
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
     let rollback_checkpoints: Vec<RollbackCheckpoint> = serde_json::from_str(&rollback_json)
@@ -153,11 +201,12 @@ fn load_session_inner(
         runtime_turns,
         rollback_checkpoints,
         file_read_state,
-        dirty: false,
-        dialog_dirty_from: None,
+        dirty: replayed,
+        dialog_dirty_from: replayed.then_some(0),
         persisted_dialog_len,
         dialog_loaded: load_dialog,
         ephemeral: false,
+        stream_journal_sequence,
     }))
 }
 
@@ -175,6 +224,50 @@ fn read_dialog(conn: &rusqlite::Connection) -> AgentRuntimeResult<Vec<Value>> {
             .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
         messages.push(message);
     }
+    let mut deltas = conn
+        .prepare("SELECT message_id, channel, delta FROM stream_deltas ORDER BY sequence")
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+    let rows = deltas
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        })
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+    for row in rows {
+        let (id, channel, delta) =
+            row.map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+        if channel == "checkpoint" {
+            continue;
+        }
+        if channel == "created" || channel == "committed" {
+            let replacement = serde_json::from_str(&delta)
+                .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+            if let Some(index) = messages
+                .iter()
+                .position(|message: &Value| message.get("id").and_then(Value::as_str) == Some(&id))
+            {
+                if channel == "committed" {
+                    messages[index] = replacement;
+                }
+            } else {
+                messages.push(replacement);
+            }
+            continue;
+        }
+        if let Some(message) = messages
+            .iter_mut()
+            .find(|message: &&mut Value| message.get("id").and_then(Value::as_str) == Some(&id))
+        {
+            if channel == "reasoning" {
+                append_reasoning_to_message(message, &delta, "done");
+            } else {
+                append_text_to_message(message, &delta);
+            }
+        }
+    }
     Ok(messages)
 }
 
@@ -182,7 +275,16 @@ pub(super) fn list_session_summaries_from_meta(root: &Path) -> Vec<Value> {
     super::list_session_ids(root)
         .unwrap_or_default()
         .into_iter()
-        .filter_map(|session_id| load_session_list_summary(root, &session_id).ok().flatten())
+        .filter_map(
+            |session_id| match load_session_list_summary(root, &session_id) {
+                Ok(summary) => summary,
+                Err(error) => Some(session_database_error_summary(
+                    root,
+                    &session_id,
+                    &error.to_string(),
+                )),
+            },
+        )
         .collect()
 }
 
@@ -371,9 +473,21 @@ pub(super) fn save_session(root: &Path, session: &NativeSession) -> AgentRuntime
     let file_read_json = serde_json::to_string(&session.file_read_state)
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
 
-    let tx = conn
-        .unchecked_transaction()
+    let tx = rusqlite::Transaction::new_unchecked(&conn, rusqlite::TransactionBehavior::Immediate)
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+
+    let stored_sequence = tx
+        .query_row(
+            "SELECT stream_journal_sequence FROM session_bundle WHERE id = 1",
+            [],
+            |row| row.get::<_, i64>(0),
+        )
+        .optional()
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?
+        .unwrap_or(0);
+    if session.stream_journal_sequence < stored_sequence {
+        return Ok(());
+    }
 
     tx.execute(
         "INSERT INTO session_meta (
@@ -507,17 +621,25 @@ pub(super) fn save_session(root: &Path, session: &NativeSession) -> AgentRuntime
     }
 
     tx.execute(
-        "INSERT INTO session_bundle (id, snapshot_json, runtime_turns_json, rollback_checkpoints_json, file_read_state_json)
-         VALUES (1, ?1, ?2, ?3, ?4)
+        "INSERT INTO session_bundle (id, snapshot_json, runtime_turns_json, rollback_checkpoints_json, file_read_state_json, stream_journal_sequence)
+         VALUES (1, ?1, ?2, ?3, ?4, ?5)
          ON CONFLICT(id) DO UPDATE SET
             snapshot_json = excluded.snapshot_json,
             runtime_turns_json = excluded.runtime_turns_json,
             rollback_checkpoints_json = excluded.rollback_checkpoints_json,
-            file_read_state_json = excluded.file_read_state_json",
-        params![snapshot_json, runtime_turns_json, rollback_json, file_read_json],
+            file_read_state_json = excluded.file_read_state_json,
+            stream_journal_sequence = excluded.stream_journal_sequence",
+        params![snapshot_json, runtime_turns_json, rollback_json, file_read_json, session.stream_journal_sequence],
     )
     .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
 
+    if session.dialog_loaded {
+        tx.execute(
+            "DELETE FROM stream_deltas WHERE sequence <= ?1",
+            [session.stream_journal_sequence],
+        )
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+    }
     tx.commit()
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
     Ok(())
@@ -558,4 +680,147 @@ struct SessionMetaRow {
     archived: bool,
     custom_title: Option<String>,
     short_name: Option<String>,
+}
+
+#[cfg(test)]
+mod stream_recovery_tests {
+    use super::*;
+
+    fn stream_session() -> NativeSession {
+        let timestamp = now();
+        NativeSession {
+            id: "durable-stream".into(),
+            snapshot: json!({ "messages": [{ "id": "reply", "role": "assistant", "text": "prefix", "blocks": [{"id":"text-0","type":"text","text":"prefix"}] }], "turnStatus": "running", "activeTurnId": "turn" }),
+            created_at: timestamp,
+            saved: false,
+            save_label: None,
+            archived: false,
+            custom_title: None,
+            short_name: None,
+            runtime_turns: vec![],
+            rollback_checkpoints: vec![],
+            file_read_state: HashMap::new(),
+            dirty: true,
+            dialog_dirty_from: Some(0),
+            persisted_dialog_len: 0,
+            dialog_loaded: true,
+            ephemeral: false,
+            stream_journal_sequence: 0,
+        }
+    }
+
+    #[test]
+    fn crash_replays_durable_suffix_and_snapshot_drains_it_once() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut session = stream_session();
+        save_session(temp.path(), &session).unwrap();
+        persist_stream_delta(temp.path(), &mut session, "reply", "visible", " suffix").unwrap();
+        persist_stream_delta(temp.path(), &mut session, "reply", "reasoning", "thought").unwrap();
+        let loaded = load_session(temp.path(), &session.id).unwrap().unwrap();
+        assert_eq!(loaded.snapshot["messages"][0]["text"], "prefix suffix");
+        assert!(loaded.dirty);
+        save_session(temp.path(), &loaded).unwrap();
+        let reopened = load_session(temp.path(), &session.id).unwrap().unwrap();
+        assert_eq!(reopened.snapshot["messages"][0]["text"], "prefix suffix");
+        assert_eq!(
+            reopened.snapshot["messages"][0]["reasoningContent"],
+            "thought"
+        );
+        assert!(!reopened.dirty);
+    }
+    #[test]
+    fn old_async_snapshot_keeps_future_deltas_and_cannot_overwrite_newer_snapshot() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut session = stream_session();
+        save_session(temp.path(), &session).unwrap();
+        let old = session.clone(); // persist worker's lock-free I/O snapshot
+        persist_stream_delta(
+            temp.path(),
+            &mut session,
+            "reply",
+            "visible",
+            " arrived after cloning",
+        )
+        .unwrap();
+        save_session(temp.path(), &old).unwrap();
+        let latest = load_session(temp.path(), &session.id).unwrap().unwrap();
+        assert_eq!(
+            latest.snapshot["messages"][0]["text"],
+            "prefix arrived after cloning"
+        );
+        save_session(temp.path(), &latest).unwrap();
+        save_session(temp.path(), &old).unwrap(); // out-of-order completion
+        assert_eq!(
+            load_session(temp.path(), &session.id)
+                .unwrap()
+                .unwrap()
+                .snapshot["messages"][0]["text"],
+            "prefix arrived after cloning"
+        );
+    }
+
+    #[test]
+    fn replays_created_message_before_first_materialization() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut session = stream_session();
+        session.snapshot["messages"] = json!([]);
+        save_session(temp.path(), &session).unwrap();
+        let message = json!({ "id": "new", "role": "assistant", "text": "" });
+        persist_stream_delta(
+            temp.path(),
+            &mut session,
+            "new",
+            "created",
+            &message.to_string(),
+        )
+        .unwrap();
+        persist_stream_delta(
+            temp.path(),
+            &mut session,
+            "new",
+            "visible",
+            "first durable delta",
+        )
+        .unwrap();
+        let latest = load_session(temp.path(), &session.id).unwrap().unwrap();
+        assert_eq!(
+            latest.snapshot["messages"][0]["text"],
+            "first durable delta"
+        );
+        save_session(temp.path(), &latest).unwrap();
+        assert_eq!(
+            load_session(temp.path(), &session.id)
+                .unwrap()
+                .unwrap()
+                .snapshot["messages"][0]["text"],
+            "first durable delta"
+        );
+    }
+    #[test]
+    fn final_snapshot_is_authoritative_even_when_shorter_than_streamed_text() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut session = stream_session();
+        save_session(temp.path(), &session).unwrap();
+        persist_stream_delta(
+            temp.path(),
+            &mut session,
+            "reply",
+            "visible",
+            " old long text",
+        )
+        .unwrap();
+        let final_message = json!({ "id": "reply", "role": "assistant", "text": "final", "blocks": [{ "id":"text-0", "type":"text", "text":"final" }] });
+        session.snapshot["messages"][0] = final_message.clone();
+        persist_message_snapshot(temp.path(), &mut session, &final_message).unwrap();
+        let recovered = load_session(temp.path(), &session.id).unwrap().unwrap();
+        assert_eq!(recovered.snapshot["messages"][0]["text"], "final");
+        save_session(temp.path(), &recovered).unwrap();
+        assert_eq!(
+            load_session(temp.path(), &session.id)
+                .unwrap()
+                .unwrap()
+                .snapshot["messages"][0]["text"],
+            "final"
+        );
+    }
 }

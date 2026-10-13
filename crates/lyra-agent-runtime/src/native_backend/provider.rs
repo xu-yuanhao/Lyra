@@ -14,9 +14,12 @@ use std::pin::Pin;
 use std::sync::Mutex as StdMutex;
 
 mod cache_state;
+mod continuation;
 mod model_loop;
+mod non_streaming;
 mod protocol_io;
 mod protocol_mapping;
+mod retry_policy;
 #[cfg(test)]
 #[path = "provider/scheduler_tests.test.rs"]
 mod scheduler_tests;
@@ -28,8 +31,10 @@ mod usage;
 
 pub(crate) use cache_state::*;
 pub(crate) use model_loop::*;
+pub(crate) use non_streaming::*;
 pub(crate) use protocol_io::*;
 pub(crate) use protocol_mapping::*;
+pub(crate) use retry_policy::*;
 pub(crate) use usage::*;
 
 const REPEATED_TOOL_ROUND_SOFT_OCCURRENCES: usize = 3;
@@ -328,7 +333,9 @@ fn retry_after_from_error(error: &AgentRuntimeError) -> Option<Duration> {
         return None;
     };
     let milliseconds = failure.retry_after_ms?;
-    Some(Duration::from_millis(milliseconds.min(60_000)))
+    // Keep the server's minimum wait even when it exceeds the local backoff
+    // cap. Bound pathological values to the same safe timer range as opencode.
+    Some(Duration::from_millis(milliseconds.min(i32::MAX as u64)))
 }
 pub(crate) struct ModelRequest {
     pub(crate) provider: NativeProviderProfile,

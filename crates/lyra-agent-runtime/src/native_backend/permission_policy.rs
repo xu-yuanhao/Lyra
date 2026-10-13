@@ -15,10 +15,12 @@ pub(crate) enum PermissionPolicyDecision {
 /// the global policy file (a pinned ask policy would leak into unrelated
 /// file-writing tests running in the same process).
 #[cfg(test)]
-fn session_policy_overrides() -> &'static std::sync::Mutex<std::collections::HashMap<String, PermissionPolicyConfig>> {
+fn session_policy_overrides()
+-> &'static std::sync::Mutex<std::collections::HashMap<String, PermissionPolicyConfig>> {
     use std::sync::OnceLock;
-    static OVERRIDES: OnceLock<std::sync::Mutex<std::collections::HashMap<String, PermissionPolicyConfig>>> =
-        OnceLock::new();
+    static OVERRIDES: OnceLock<
+        std::sync::Mutex<std::collections::HashMap<String, PermissionPolicyConfig>>,
+    > = OnceLock::new();
     OVERRIDES.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
 }
 
@@ -400,7 +402,9 @@ pub(crate) fn evaluate_permission_policy_for_session(
     evaluate_policy_config(&config, warning, display_name, action, risk, input)
 }
 
-fn effective_policy_config(session_id: Option<&str>) -> AgentRuntimeResult<(PermissionPolicyConfig, Option<String>)> {
+fn effective_policy_config(
+    session_id: Option<&str>,
+) -> AgentRuntimeResult<(PermissionPolicyConfig, Option<String>)> {
     #[cfg(test)]
     if let Some(session_id) = session_id
         && let Some(config) = session_policy_overrides()

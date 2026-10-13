@@ -31,8 +31,6 @@ type MarkdownItRenderer = Renderer;
 type MarkdownItFenceRule = MarkdownItRenderer["rules"]["fence"];
 
 const markdownInstances = new Map<MarkdownRenderMode, MarkdownIt>();
-const resultCache = new Map<string, MarkdownRenderResult>();
-const MAX_RESULT_CACHE_ENTRIES = 300;
 
 const escapeHtml = (value: string): string =>
   value
@@ -214,29 +212,11 @@ export const sanitizeMermaidSvg = (svg: string): string =>
     USE_PROFILES: { svg: true, svgFilters: true }
   });
 
-const pushCachedResult = (key: string, result: MarkdownRenderResult): MarkdownRenderResult => {
-  resultCache.set(key, result);
-  if (resultCache.size > MAX_RESULT_CACHE_ENTRIES) {
-    const firstKey = resultCache.keys().next().value as string | undefined;
-    if (firstKey !== undefined) {
-      resultCache.delete(firstKey);
-    }
-  }
-  return result;
-};
-
 export const renderMarkdown = (
   source: string,
   options: MarkdownRenderOptions
 ): MarkdownRenderResult => {
   const mode = options.mode;
-  const theme = options.theme ?? "system";
-  const cacheKey = `${mode}:${theme}:${source}`;
-  const cached = resultCache.get(cacheKey);
-  if (cached !== undefined) {
-    return cached;
-  }
-
   const mermaidJobs: MermaidRenderJob[] = [];
   const md = getMarkdownIt(mode);
   const previousFenceRule: MarkdownItFenceRule | undefined = md.renderer.rules.fence;
@@ -260,10 +240,10 @@ export const renderMarkdown = (
 
   try {
     const rendered = md.render(source);
-    return pushCachedResult(cacheKey, {
+    return {
       html: sanitizeHtml(rendered),
       mermaidJobs
-    });
+    };
   } finally {
     md.renderer.rules.fence = previousFenceRule;
   }

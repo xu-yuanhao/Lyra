@@ -28,7 +28,7 @@ export const createStorageBackedIpcBridges = ({
   const imageViewer = createImageViewerIpcBridge(imageViewerStorageRoot, {
     createPreviewUrl
   });
-  const office = createOfficeIpcBridge();
+  const office = createOfficeIpcBridge(createPreviewUrl);
   const sqlite = createSqliteIpcBridge();
   console.info(`[lyra-image-viewer] native loaded: ${imageViewer.loadResult.loadedFrom}`);
 

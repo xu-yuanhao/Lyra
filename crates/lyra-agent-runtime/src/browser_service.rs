@@ -37,7 +37,8 @@ impl BrowserService {
                     "profile_missing",
                     "storage_unavailable",
                     "navigation_failed",
-                    "target_stale"
+                    "target_stale",
+                    "renderer_crashed"
                 ]
             }
         })

@@ -11,6 +11,7 @@ use serde_json::Value;
 
 mod aria2;
 mod aria2_resource_lease;
+mod aria2_rpc;
 mod manager;
 mod model;
 mod persistence;

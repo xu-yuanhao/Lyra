@@ -131,6 +131,7 @@ export const createWorkbenchStateIpcBridge = async (
   const stateSnapshot = await loadSnapshot(storageRoot);
   const stateListeners = new Set<(event: WorkbenchStateChangeEvent) => void>();
   const writeQueues = new Map<WorkbenchStateKey, Promise<void>>();
+  const writeFailures = new Map<WorkbenchStateKey, unknown>();
 
   const publish = (key: WorkbenchStateKey, json: string | null): void => {
     const event = { key, json } satisfies WorkbenchStateChangeEvent;
@@ -151,10 +152,11 @@ export const createWorkbenchStateIpcBridge = async (
   ): Promise<void> => {
     const previous = writeQueues.get(key) ?? Promise.resolve();
     const queued = previous.catch(() => undefined).then(operation);
-    const tracked = queued.finally(() => {
-      if (writeQueues.get(key) === tracked) {
-        writeQueues.delete(key);
-      }
+    const tracked = queued.then(
+      () => { writeFailures.delete(key); },
+      (error: unknown) => { writeFailures.set(key, error); }
+    ).finally(() => {
+      if (writeQueues.get(key) === tracked) writeQueues.delete(key);
     });
     writeQueues.set(key, tracked);
     return queued;
@@ -171,7 +173,7 @@ export const createWorkbenchStateIpcBridge = async (
   const writeStateAsync = async (key: WorkbenchStateKey, json: string): Promise<void> => {
     normalizeKey(key);
     const normalizedJson = normalizeJson(json);
-    if (stateSnapshot[key] === normalizedJson) {
+    if (stateSnapshot[key] === normalizedJson && !writeFailures.has(key)) {
       return;
     }
     const filePath = resolveStateFilePath(storageRoot, key);
@@ -190,7 +192,7 @@ export const createWorkbenchStateIpcBridge = async (
 
   const removeStateAsync = async (key: WorkbenchStateKey): Promise<void> => {
     normalizeKey(key);
-    if (stateSnapshot[key] === null) {
+    if (stateSnapshot[key] === null && !writeFailures.has(key)) {
       return;
     }
     const filePath = resolveStateFilePath(storageRoot, key);
@@ -247,7 +249,8 @@ export const createWorkbenchStateIpcBridge = async (
     removeStateAsync,
     snapshot: () => ({ ...stateSnapshot }),
     flush: async () => {
-      await Promise.allSettled([...writeQueues.values()]);
+      while (writeQueues.size > 0) await Promise.all([...writeQueues.values()]);
+      if (writeFailures.size > 0) throw new AggregateError([...writeFailures.values()], "Workbench state could not be saved");
     },
     subscribe: (listener) => {
       stateListeners.add(listener);

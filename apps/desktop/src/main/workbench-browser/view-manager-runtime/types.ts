@@ -42,6 +42,7 @@ type BrowserPageFindRevealResult = {
 type BrowserPageEntry = {
   readonly tabId: string;
   readonly view: WebContentsView;
+  recoveryView?: WebContentsView;
   readonly webContents: WebContents;
   requestedAddress: string;
   titleHint: string | null;

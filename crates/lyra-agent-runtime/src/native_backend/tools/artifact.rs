@@ -148,6 +148,56 @@ impl ToolArtifactStore {
             false,
         ))
     }
+
+    /// Append redacted pipe output directly to disk; the model preview stays
+    /// bounded independently of the amount of command output.
+    pub(crate) fn stream_text(
+        &self,
+        session_id: &str,
+        turn_id: &str,
+        tool_call_id: &str,
+        kind: ToolArtifactKind,
+    ) -> Option<ToolArtifactStream> {
+        let mut reference = self.write_text(session_id, turn_id, tool_call_id, kind, "")?;
+        let path = reference["path"].as_str()?;
+        let file = fs::OpenOptions::new().append(true).open(path).ok()?;
+        reference.as_object_mut()?.remove("preview");
+        reference.as_object_mut()?.remove("previewTruncated");
+        Some(ToolArtifactStream {
+            file: Some(file),
+            reference,
+            bytes: 0,
+        })
+    }
+}
+
+pub(crate) struct ToolArtifactStream {
+    file: Option<fs::File>,
+    reference: Value,
+    bytes: usize,
+}
+
+impl ToolArtifactStream {
+    pub(crate) fn push(&mut self, bytes: &[u8]) {
+        use std::io::Write;
+        let Some(file) = self.file.as_mut() else {
+            return;
+        };
+        if file.write_all(bytes).is_err() {
+            // A partial write is not a full-output artifact. Never advertise it
+            // as one if the disk fills up or the write otherwise fails.
+            self.file = None;
+            return;
+        }
+        self.bytes = self.bytes.saturating_add(bytes.len());
+    }
+
+    pub(crate) fn reference(&self) -> Option<Value> {
+        self.file.as_ref()?;
+        let mut reference = self.reference.clone();
+        reference["bytes"] = json!(self.bytes);
+        Some(reference)
+    }
 }
 
 fn artifact_ref(

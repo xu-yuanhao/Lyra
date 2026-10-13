@@ -17,7 +17,7 @@ use crate::{
 };
 
 use super::{
-    super::openai_common::{SseEvent, parse_sse_line, parse_tool_arguments},
+    super::openai_common::{AsyncSseReader, SseEvent, SseReader, parse_tool_arguments},
     response::{
         provider_replay_items_from_content_blocks, response_meta, text_from_content_blocks,
         thinking_from_content_blocks, tool_calls_from_content_blocks,
@@ -52,7 +52,7 @@ pub(crate) fn parse_streaming_response<R: BufRead>(
     let buffer_assistant_text = false;
     let started_at = Instant::now();
 
-    for line in reader.lines() {
+    for event in SseReader::new(reader) {
         if cancellation.is_cancelled()
             || (!session_id.is_empty()
                 && !turn_id.is_empty()
@@ -63,10 +63,7 @@ pub(crate) fn parse_streaming_response<R: BufRead>(
         if crate::native_backend::provider::provider_streaming_total_deadline_exceeded(started_at) {
             return Err(crate::native_backend::provider::provider_streaming_total_timeout_error());
         }
-        let line = line.map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
-        let Some(event) = parse_sse_line(&line)? else {
-            continue;
-        };
+        let event = event?;
         let SseEvent::Data(event) = event else {
             break;
         };
@@ -104,8 +101,8 @@ pub(crate) async fn parse_streaming_response_async(
     let buffer_assistant_text = false;
     let started_at = Instant::now();
 
-    let mut reader = super::super::async_line_reader::AsyncLineReader::new(response.bytes_stream());
-    while let Some(line_result) = reader.next_line().await {
+    let mut reader = AsyncSseReader::new(response.bytes_stream());
+    while let Some(event) = reader.next_event(cancellation).await {
         if cancellation.is_cancelled()
             || (!session_id.is_empty()
                 && !turn_id.is_empty()
@@ -116,10 +113,7 @@ pub(crate) async fn parse_streaming_response_async(
         if crate::native_backend::provider::provider_streaming_total_deadline_exceeded(started_at) {
             return Err(crate::native_backend::provider::provider_streaming_total_timeout_error());
         }
-        let line = line_result?;
-        let Some(event) = parse_sse_line(&line)? else {
-            continue;
-        };
+        let event = event?;
         let SseEvent::Data(event) = event else {
             break;
         };
@@ -317,12 +311,9 @@ fn map_stream_event(
             state.saw_message_stop = true;
         }
         "error" => {
-            return Err(crate::native_backend::providers::errors::protocol_error(
-                crate::ProviderProtocolFailureKind::ProviderErrorEnvelope,
-                format!(
-                    "provider streaming error envelope: {}",
-                    event.get("error").cloned().unwrap_or_else(|| event.clone())
-                ),
+            return Err(crate::native_backend::providers::errors::stream_error(
+                super::PROTOCOL_ID,
+                event,
             ));
         }
         _ => {}
@@ -704,5 +695,24 @@ mod tests {
                 ..
             }
         ));
+    }
+}
+
+#[cfg(test)]
+mod overload_tests {
+    use super::*;
+    #[test]
+    fn overloaded_error_event_reaches_the_shared_retry_policy() {
+        let stream = "event: error\ndata: {\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"message\":\"Overloaded\"}}\n\n";
+        let error = parse_streaming_response(
+            std::io::Cursor::new(stream),
+            "",
+            "",
+            &CancellationToken::new(),
+            &[],
+            false,
+        )
+        .unwrap_err();
+        assert!(crate::native_backend::provider::is_retryable_provider_error(&error));
     }
 }

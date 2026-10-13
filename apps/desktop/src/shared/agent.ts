@@ -344,6 +344,8 @@ export type AgentSessionLedgerSummary = {
 };
 
 export type AgentSessionSnapshot = {
+  /** Monotonic opaque revision. Older async reads cannot replace newer events. */
+  readonly revision?: string;
   readonly id: string;
   readonly title: string;
   readonly sessionKind: AgentSessionKind;
@@ -1332,6 +1334,7 @@ export type AgentProviderIconResolveResponse = {
 
 
 export type AgentSessionSummary = {
+  readonly loadError?: string | null;
   readonly id: string;
   readonly title: string;
   readonly shortName?: string | null;

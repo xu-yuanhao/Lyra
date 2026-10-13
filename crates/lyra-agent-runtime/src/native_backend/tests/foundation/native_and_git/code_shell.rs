@@ -384,8 +384,17 @@ fn native_shell_code_lsp_and_budget_guards_are_structured() {
         &json!({ "timeoutMs": 8000, "command": "printf 1234567890", "maxOutputBytes": 4 }),
     )
     .expect("truncated output");
-    assert_eq!(truncated.raw["stdout"], "1234");
+    assert!(
+        truncated.raw["stdout"]
+            .as_str()
+            .unwrap()
+            .starts_with("1234")
+    );
+    assert!(truncated.content.contains("6 bytes omitted"));
     assert_eq!(truncated.raw["stdoutTruncated"], true);
+    let output_path = truncated.raw["stdoutRef"]["path"].as_str().unwrap();
+    assert_eq!(fs::read_to_string(output_path).unwrap(), "1234567890");
+    assert!(truncated.content.contains(output_path));
     let composite = tool_shell_run(
         &session_id,
         "turn-shell-direct",
@@ -950,6 +959,10 @@ fn shell_secure_reference_is_resolved_only_for_child_and_redacted_before_truncat
         assert_eq!(result.raw["exitCode"], 0);
         assert!(!result.content.contains(SECRET));
         assert!(!result.raw.to_string().contains(SECRET));
+        let artifact_path = result.raw["stdoutRef"]["path"].as_str().unwrap();
+        let full_output = fs::read_to_string(artifact_path).unwrap();
+        assert_eq!(full_output, "[sensitive value]");
+        assert!(!full_output.contains(SECRET));
         if max == 200 {
             assert_eq!(result.raw["stdout"], "[sensitive value]");
         } else {

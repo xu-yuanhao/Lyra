@@ -619,7 +619,7 @@ pub(crate) fn codex_code_model_tools() -> Vec<Value> {
                     "startLine": {
                         "type": "integer",
                         "minimum": 1,
-                        "description": "Optional 1-based first line."
+                        "description": "Optional 1-based first line in the original file. Beyond EOF returns an explicit error; use the reported nextLine to continue a truncated read."
                     },
                     "endLine": {
                         "type": "integer",
@@ -629,7 +629,7 @@ pub(crate) fn codex_code_model_tools() -> Vec<Value> {
                     "maxBytes": {
                         "type": "integer",
                         "minimum": 1,
-                        "description": "Optional maximum bytes returned."
+                        "description": "Optional maximum bytes returned after locating the requested line range. Complete lines are preferred; oversized partial lines are explicitly reported."
                     },
                     "encoding": {
                         "type": "string",

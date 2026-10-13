@@ -138,3 +138,14 @@ describe("i18n translator", () => {
     i18n.removeResourceBundle("ja-JP", "translation");
   });
 });
+
+test("locale changes apply and restore root text direction", () => {
+  const view = render(<WorkbenchI18nProvider><div>content</div></WorkbenchI18nProvider>);
+  act(() => setWorkbenchLocale("dv"));
+  expect(document.documentElement.dir).toBe("rtl");
+  act(() => setWorkbenchLocale("ar-Latn"));
+  expect(document.documentElement.dir).toBe("ltr");
+  act(() => setWorkbenchLocale("en-US"));
+  expect(document.documentElement.lang).toBe("en-US");
+  view.unmount();
+});

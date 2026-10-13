@@ -110,6 +110,8 @@ fn refresh_token_estimate_now(snapshot: &mut Value, now_ms: i64) {
 }
 
 pub(crate) fn touch_session(session: &mut NativeSession) {
+    session.stream_journal_sequence = session.stream_journal_sequence.saturating_add(1);
+    session.snapshot["revision"] = json!(session.stream_journal_sequence.to_string());
     touch_snapshot(&mut session.snapshot);
     session.dirty = true;
 }

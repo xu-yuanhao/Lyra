@@ -603,13 +603,13 @@ fn provider_context_v2_preserves_auxiliary_messages_in_protocol_order() {
 }
 
 #[test]
-fn provider_context_v2_skips_interrupted_attempts() {
+fn provider_context_v2_preserves_interrupted_visible_text() {
     let context = ContextBuilder::default().build_provider_context(
         "system".to_string(),
         vec![json!({
             "id": "message-assistant",
             "role": "assistant",
-            "text": "Do not replay this partial step.",
+            "text": "Keep this recorded prefix.",
             "metadata": {
                 "providerProtocol": {
                     "version": 2,
@@ -622,7 +622,7 @@ fn provider_context_v2_skips_interrupted_attempts() {
                     },
                     "status": "interrupted",
                     "assistant": {
-                        "content": "Do not replay this partial step.",
+                        "content": "Keep this recorded prefix.",
                         "toolCalls": []
                     },
                     "toolResults": [],
@@ -639,7 +639,8 @@ fn provider_context_v2_skips_interrupted_attempts() {
         },
     );
 
-    assert_eq!(context.messages.len(), 1);
+    assert_eq!(context.messages.len(), 2);
+    assert_eq!(context.messages[1]["content"], "Keep this recorded prefix.");
     assert_eq!(context.messages[0]["role"], "system");
 }
 
@@ -930,9 +931,8 @@ fn provider_context_v2_does_not_replace_ordinary_tool_results_with_session_summa
 }
 
 #[test]
-fn provider_context_skips_tool_blocks_without_transcript() {
-    // An assistant message with tool blocks but no providerTranscript must
-    // be skipped entirely — tool output must never leak as plain text.
+fn provider_context_keeps_prose_but_does_not_invent_tool_protocol_from_blocks() {
+    // Recorded prose survives; UI tool blocks have no executable authority.
     let context = ContextBuilder::default().build_provider_context(
         "system".to_string(),
         vec![json!({
@@ -953,8 +953,8 @@ fn provider_context_skips_tool_blocks_without_transcript() {
         "tool output must not leak as plain text without providerTranscript"
     );
     assert!(
-        !serialized.contains("Here are the findings"),
-        "intermediate tool-call assistant text must be skipped without transcript"
+        serialized.contains("Here are the findings"),
+        "recorded assistant prose must survive without a transcript"
     );
 }
 
@@ -1335,11 +1335,10 @@ fn provider_context_annotates_compressed_context_block() {
 }
 
 #[test]
-fn intermediate_tool_call_message_skipped_even_without_later_transcript() {
+fn interrupted_legacy_tool_blocks_preserve_prose_without_inventing_calls() {
     // Simulates an interrupted turn: the assistant made tool calls but no
     // final message with providerTranscript was ever committed. The
-    // intermediate message must still be skipped — tool blocks must never
-    // leak as plain text into the provider context.
+    // Tool UI blocks never become calls, but recorded prose remains context.
     let messages = vec![json!({
         "id": "msg-intermediate",
         "role": "assistant",
@@ -1356,16 +1355,14 @@ fn intermediate_tool_call_message_skipped_even_without_later_transcript() {
         ProviderContextOptions::default(),
     );
 
-    // No assistant content should be emitted — the only message had tool
-    // blocks and no transcript, so it is skipped entirely.
+    // Prose survives without inventing tool calls from UI blocks.
     let has_assistant = context
         .messages
         .iter()
         .any(|m| m.get("role").and_then(Value::as_str) == Some("assistant"));
-    assert!(
-        !has_assistant,
-        "intermediate tool-call message without transcript must be skipped entirely"
-    );
+    assert!(has_assistant, "interrupted assistant prose must survive");
+    assert_eq!(context.messages[1]["content"], "Let me search for that.");
+    assert!(context.messages[1].get("tool_calls").is_none());
     // Tool output must NOT appear as plain text.
     let serialized = serde_json::to_string(&context.messages).unwrap();
     assert!(
@@ -1720,4 +1717,42 @@ fn openai_responses_replay_demotes_old_function_call_output() {
             "kept {index}: {output}"
         );
     }
+}
+
+#[test]
+fn interrupted_protocol_step_preserves_completed_tools_and_closes_unfinished_calls() {
+    let context = ContextBuilder::default().build_provider_context("system".into(), vec![json!({
+        "role":"assistant", "id":"partial", "text":"Recorded visible prefix.",
+        "metadata":{"providerProtocol":{
+            "version":2, "status":"awaitingToolResults", "origin":{},
+            "assistant":{"content":"Older checkpoint text.", "toolCalls":[
+                {"id":"read-1", "name":"read_file", "arguments":{"path":"done.txt"}},
+                {"id":"write-1", "name":"apply_patch", "arguments":{"patch":"complete input"}},
+                {"id":"invalid", "name":"exec_command", "arguments":"{\"command\":"}
+            ]},
+            "toolResults":[{"toolCallId":"read-1", "content":"Completed evidence", "status":"completed"}],
+            "replay":{"protocol":"openai_responses", "items":[{"type":"reasoning", "id":"unfinished"}]}
+        }}
+    })], ProviderContextOptions::default());
+    assert_eq!(context.messages.len(), 4);
+    assert_eq!(context.messages[1]["content"], "Recorded visible prefix.");
+    assert_eq!(
+        context.messages[1]["tool_calls"].as_array().unwrap().len(),
+        2
+    );
+    assert_eq!(context.messages[2]["tool_call_id"], "read-1");
+    assert_eq!(context.messages[2]["content"], "Completed evidence");
+    assert_eq!(context.messages[3]["tool_call_id"], "write-1");
+    assert!(
+        context.messages[3]["content"]
+            .as_str()
+            .unwrap()
+            .contains("Completion is unconfirmed")
+    );
+    assert!(
+        !context
+            .messages
+            .iter()
+            .any(|message| message["type"] == "reasoning")
+    );
 }

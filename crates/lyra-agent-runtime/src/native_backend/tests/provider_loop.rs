@@ -4035,3 +4035,111 @@ mod model_discovery;
 mod reasoning_replay;
 mod refresh_and_runtime;
 mod reply_protocol;
+
+#[test]
+fn transient_provider_retry_replays_the_same_request_and_has_a_finite_budget() {
+    // Real HTTP responses exercise header parsing, model-loop retry decisions,
+    // and the scheduler together. A tiny server-specified wait keeps this test
+    // fast while still detecting the old 250/500 ms hardcoded sleep.
+    for statuses in [vec![503, 429, 503, 503, 503, 200], vec![503; 6], vec![401]] {
+        let created = LyraAgentBackend
+            .call_agent_method("agent.session.create", json!({}))
+            .unwrap();
+        let session_id = created["id"].as_str().unwrap();
+        let turn_id = start_test_runtime_turn(session_id);
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server_statuses = statuses.clone();
+        let server = thread::spawn(move || {
+            let mut requests = Vec::new();
+            for status in server_statuses {
+                let deadline = Instant::now() + Duration::from_secs(5);
+                let mut stream = loop {
+                    match listener.accept() {
+                        Ok((stream, _)) => break stream,
+                        Err(error)
+                            if error.kind() == std::io::ErrorKind::WouldBlock
+                                && Instant::now() < deadline =>
+                        {
+                            thread::sleep(Duration::from_millis(1))
+                        }
+                        Err(error) => panic!("missing retry request: {error}"),
+                    }
+                };
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                requests.push((Instant::now(), read_http_json_body(&mut stream)));
+                let body = if status == 200 {
+                    json!({"choices": [{"message": {"role": "assistant", "content": "Recovered."}, "finish_reason": "stop"}]})
+                } else {
+                    json!({"error": {"message": "temporary provider failure"}})
+                }.to_string();
+                write!(stream, "HTTP/1.1 {status} Test\r\ncontent-type: application/json\r\nretry-after-ms: 10\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}", body.len()).unwrap();
+            }
+            requests
+        });
+        let provider = NativeProviderProfile {
+            id: format!("retry-test-{addr}"),
+            label: "Retry Test".into(),
+            route_id: "custom_openai_compatible".into(),
+            base_url: Some(format!("http://{addr}")),
+            default_model: Some("test-model".into()),
+            api_key_ref: None,
+            api_key: Some("test-key".into()),
+            api_key_env: None,
+            auth_header: None,
+            embedding_model: None,
+            models: vec![NativeProviderModel {
+                id: "test-model".into(),
+                label: None,
+                context_window: None,
+                supports_image_input: false,
+                supports_tool_calling: false,
+                supports_streaming: false,
+                supports_reasoning_effort: None,
+                reasoning_replay_field: ReasoningReplayField::Auto,
+                requires_reasoning_field_on_assistant_messages: None,
+                supports_tool_choice: None,
+                enabled: true,
+                api_npm: None,
+            }],
+        };
+        let result = run_model_loop(
+            session_id,
+            &turn_id,
+            ModelRequest {
+                capabilities: model_capabilities(&provider, "test-model"),
+                provider,
+                model: "test-model".into(),
+                messages: vec![json!({"role": "user", "content": "hello"})],
+                tools: Vec::new(),
+                tool_choice: ModelToolChoice::Auto,
+                host_dispatcher: None,
+                input_downgrades: Vec::new(),
+                evidence_refs: Vec::new(),
+                token_estimate: 1,
+                context_trimmed: false,
+            },
+            &CancellationToken::new(),
+        );
+        let requests = server.join().unwrap();
+        assert_eq!(requests.len(), statuses.len());
+        for pair in requests.windows(2) {
+            assert_eq!(
+                pair[0].1, pair[1].1,
+                "retry must not invent a new user turn"
+            );
+            assert!(pair[1].0.duration_since(pair[0].0) >= Duration::from_millis(10));
+        }
+        if statuses.last() == Some(&200) {
+            assert_eq!(result.unwrap().final_text.as_deref(), Some("Recovered."));
+        } else {
+            assert!(matches!(
+                result,
+                Err(AgentRuntimeError::ProviderFailure { .. })
+            ));
+        }
+    }
+}

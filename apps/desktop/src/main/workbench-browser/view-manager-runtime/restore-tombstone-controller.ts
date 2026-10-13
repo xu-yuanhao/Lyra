@@ -431,7 +431,8 @@ export const createRestoreTombstoneController = ({
       return "keep";
     }
     if (
-      entry.runtime.isActive
+      entry.runtime.recoveryFailure?.reason === "renderer_crashed"
+      || entry.runtime.isActive
       || entry.runtime.isVisible
       || entry.runtime.isHtmlFullscreen
       || hasActiveDebuggerClients(entry.tabId, "live")
@@ -562,7 +563,8 @@ export const createRestoreTombstoneController = ({
   ): void => {
     const urgent = options?.urgent === true;
     if (
-      entry.runtime.isActive
+      entry.runtime.recoveryFailure?.reason === "renderer_crashed"
+      || entry.runtime.isActive
       || entry.runtime.isVisible
       || entry.runtime.isTombstoned === true
       || hasActiveLiveAgentBrowserTask(entry.tabId)
@@ -588,6 +590,7 @@ export const createRestoreTombstoneController = ({
     const hidden = [...entries.values()]
       .filter((entry) =>
         entry.isDestroyed === false
+        && entry.runtime.recoveryFailure?.reason !== "renderer_crashed"
         && entry.runtime.isActive === false
         && entry.runtime.isVisible === false
         && entry.runtime.isTombstoned !== true

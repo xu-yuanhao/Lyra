@@ -108,3 +108,18 @@ describe("StreamStore", () => {
     expect(subscriber).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("authoritative message commits", () => {
+  it("replaces a longer live stream and appends subsequent deltas to the new baseline", () => {
+    const store = new StreamStore();
+    store.appendDelta("reply", "text-0", "obsolete longer reply");
+    store.flush();
+    store.reconcileMessage({ id: "reply", role: "assistant", text: "final", createdAt: "now",
+      blocks: [{ id: "text-0", type: "text", text: "final" }] });
+    expect(store.getBlockText("reply", "text-0")).toBe("final");
+    store.appendDelta("reply", "text-0", " continuation");
+    store.flush();
+    expect(store.getBlockText("reply", "text-0")).toBe("final continuation");
+    store.clear();
+  });
+});
