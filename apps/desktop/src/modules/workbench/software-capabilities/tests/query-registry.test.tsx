@@ -11,7 +11,8 @@ import {
 
 import type {
   LyraSoftwareActionHandler,
-  LyraSoftwareManifest
+  LyraSoftwareManifest,
+  SoftwareInvokeCapabilityRequest
 } from "../../../../shared/desktop-bridge";
 import { useSoftwareCapabilitiesQueryRegistry } from "../query-registry";
 
@@ -172,5 +173,70 @@ describe("software capability query registry", () => {
     });
     expect(builtinHandler).toHaveBeenCalled();
     expect(externalHandler).not.toHaveBeenCalled();
+  });
+
+  test("missing or unknown softwareId names the parameter and valid ids", async () => {
+    const { result } = renderHook(() => useSoftwareCapabilitiesQueryRegistry({
+      activeUiPackId: "external:acme.tools",
+      software: externalSoftware,
+      builtinHandlers: new Map(),
+      readSoftwareState: () => ({ state: { available: true } })
+    }));
+
+    const missing = await result.current.handleBridgeQuery({
+      requestId: "missing-software-id",
+      method: "software.invokeCapability",
+      payload: {
+        actionId: "external:acme.tools:mail.open",
+        input: {}
+      } as unknown as SoftwareInvokeCapabilityRequest
+    });
+    expect(missing).toMatchObject({
+      requestId: "missing-software-id",
+      ok: false,
+      error: {
+        code: "software_capability_failed",
+        message: expect.stringContaining("softwareId is required")
+      }
+    });
+    expect((missing as { error: { message: string } }).error.message)
+      .toContain("external:acme.tools:mail");
+
+    const unknown = await result.current.handleBridgeQuery({
+      requestId: "unknown-software-id",
+      method: "software.invokeCapability",
+      payload: {
+        softwareId: "ghost",
+        actionId: "external:acme.tools:mail.open",
+        input: {}
+      }
+    });
+    expect(unknown).toMatchObject({
+      ok: false,
+      error: {
+        code: "software_capability_failed",
+        message: expect.stringContaining('Unknown software id "ghost"')
+      }
+    });
+    expect((unknown as { error: { message: string } }).error.message)
+      .toContain("Valid software ids: external:acme.tools:mail");
+
+    const missingAction = await result.current.handleBridgeQuery({
+      requestId: "missing-action-id",
+      method: "software.invokeCapability",
+      payload: {
+        softwareId: "external:acme.tools:mail",
+        input: {}
+      } as unknown as SoftwareInvokeCapabilityRequest
+    });
+    expect(missingAction).toMatchObject({
+      ok: false,
+      error: {
+        code: "software_capability_failed",
+        message: expect.stringContaining("actionId is required")
+      }
+    });
+    expect((missingAction as { error: { message: string } }).error.message)
+      .toContain("Valid action ids for external:acme.tools:mail: external:acme.tools:mail.open");
   });
 });

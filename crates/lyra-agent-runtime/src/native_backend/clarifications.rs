@@ -90,10 +90,6 @@ pub(crate) async fn wait_for_clarification_async(
         state
             .pending_clarifications
             .insert(request_id.clone(), request.clone());
-        let snapshot = state
-            .sessions
-            .get(&session_id)
-            .map(|session| session.snapshot.clone());
         state.save_state()?;
         let mut events = vec![
             json!({
@@ -124,9 +120,6 @@ pub(crate) async fn wait_for_clarification_async(
                 "turnId": turn_id,
                 "tool": tool,
             }));
-        }
-        if let Some(snapshot) = snapshot {
-            events.push(json!({ "kind": "sessionSnapshot", "snapshot": snapshot }));
         }
         events.push(super::user_gate::record_open(
             super::user_gate::UserGateKind::Clarification,
@@ -241,10 +234,6 @@ pub(crate) fn respond_clarification(payload: Value) -> AgentRuntimeResult<Value>
             }
             touch_session(session);
         }
-        let snapshot = state
-            .sessions
-            .get(&session_id)
-            .map(|session| session.snapshot.clone());
         state.save_state()?;
         let mut events = vec![
             json!({
@@ -273,9 +262,6 @@ pub(crate) fn respond_clarification(payload: Value) -> AgentRuntimeResult<Value>
                 "turnId": turn_id,
                 "tool": tool,
             }));
-        }
-        if let Some(snapshot) = snapshot {
-            events.push(json!({ "kind": "sessionSnapshot", "snapshot": snapshot }));
         }
         let response = json!({
             "sessionId": session_id,

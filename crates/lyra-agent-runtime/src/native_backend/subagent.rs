@@ -282,7 +282,7 @@ pub(crate) async fn tool_agent(
         .and_then(Value::as_bool)
         .unwrap_or(true);
     let resume_id = string_opt(input, "subagent_id");
-    let (child_id, working_dir, child_snapshot, parent_snapshot) = {
+    let (child_id, working_dir, child_snapshot, subagent_record) = {
         let mut state = state().lock().map_err(|_| {
             NativeToolFailure::new(
                 "runtime_state_unavailable",
@@ -390,11 +390,20 @@ pub(crate) async fn tool_agent(
             .sessions
             .get(&child_id)
             .map(|session| session.snapshot.clone());
-        let parent_snapshot = state
+        let subagent_record = state
             .sessions
             .get(session_id)
-            .map(|session| session.snapshot.clone());
-        (child_id, working_dir, child_snapshot, parent_snapshot)
+            .and_then(|session| session.snapshot.get("subagents"))
+            .and_then(Value::as_array)
+            .and_then(|children| {
+                children
+                    .iter()
+                    .find(|child| {
+                        child.get("id").and_then(Value::as_str) == Some(child_id.as_str())
+                    })
+                    .cloned()
+            });
+        (child_id, working_dir, child_snapshot, subagent_record)
     };
     if let Some(snapshot) = child_snapshot {
         emit_with_callback(
@@ -402,10 +411,14 @@ pub(crate) async fn tool_agent(
             json!({ "kind": "sessionSnapshot", "snapshot": snapshot }),
         );
     }
-    if let Some(snapshot) = parent_snapshot {
+    if let Some(subagent) = subagent_record {
         emit_with_callback(
             &event_callback(),
-            json!({ "kind": "sessionSnapshot", "snapshot": snapshot }),
+            json!({
+                "kind": "subagentStarted",
+                "sessionId": session_id,
+                "subagent": subagent,
+            }),
         );
     }
     announce_running_subagent(
@@ -450,7 +463,15 @@ pub(crate) async fn tool_agent(
         });
     }
 
-    wait_until_session_idle(&child_id).await;
+    let parent_cancellation = super::session_runtime::cancellation_token(turn_id);
+    if wait_until_session_idle(&child_id, parent_cancellation.as_ref()).await {
+        return Err(NativeToolFailure::cancelled(
+            CANCEL_REASON_TURN_CANCELLED,
+            "Agent spawn was cancelled while waiting for the subagent.",
+            "Stop this tool call and continue only after a new user turn.",
+        )
+        .with_detail(json!({ "subagentId": child_id, "cancelledWhile": "waiting_for_subagent" })));
+    }
     let (raw_status, text) = last_child_outcome(&child_id);
     let status = parent_index_status(&raw_status).to_string();
     emit_subagent_finished(session_id, turn_id, &child_id, &status, &text);
@@ -878,7 +899,7 @@ fn track_background_child(parent_id: &str, parent_turn_id: &str, child_id: &str)
     let parent_turn_id = parent_turn_id.to_string();
     let child_id = child_id.to_string();
     super::turn_engine::runtime().spawn(async move {
-        wait_until_session_idle(&child_id).await;
+        wait_until_session_idle(&child_id, None).await;
         let (raw_status, text) = last_child_outcome(&child_id);
         let status = parent_index_status(&raw_status).to_string();
         emit_subagent_finished(&parent_id, &parent_turn_id, &child_id, &status, &text);
@@ -1265,7 +1286,13 @@ fn interrupt_subagent(child_id: &str) -> Result<(), NativeToolFailure> {
     Ok(())
 }
 
-pub(crate) async fn wait_until_session_idle(session_id: &str) {
+/// Waits until the child session goes idle. Returns true when the wait was
+/// aborted by `cancellation` (the parent turn ended) instead of the child
+/// finishing.
+pub(crate) async fn wait_until_session_idle(
+    session_id: &str,
+    cancellation: Option<&tokio_util::sync::CancellationToken>,
+) -> bool {
     let notify = session_idle_notify(session_id);
     loop {
         let running = state()
@@ -1281,11 +1308,19 @@ pub(crate) async fn wait_until_session_idle(session_id: &str) {
                         .is_some()
             });
         if !running {
-            return;
+            return false;
         }
         tokio::select! {
             _ = notify.notified() => {}
             _ = tokio::time::sleep(Duration::from_millis(200)) => {}
+            _ = async {
+                match cancellation {
+                    Some(token) => token.cancelled().await,
+                    None => std::future::pending::<()>().await,
+                }
+            } => {
+                return true;
+            }
         }
     }
 }

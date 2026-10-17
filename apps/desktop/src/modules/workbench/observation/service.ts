@@ -81,7 +81,9 @@ const closeWorkbenchTab = async (
     return {
       tabId,
       closed: false,
-      activeTabId: dependencies.tabsModel.activeTabId ?? null
+      activeTabId: dependencies.tabsModel.activeTabId ?? null,
+      receipt: `Tab ${tabId} not found; workspace is unchanged.`,
+      reason: "tab_not_found"
     };
   }
 
@@ -89,7 +91,10 @@ const closeWorkbenchTab = async (
     return {
       tabId,
       closed: false,
-      activeTabId: dependencies.tabsModel.activeTabId ?? null
+      activeTabId: dependencies.tabsModel.activeTabId ?? null,
+      receipt: `Tab "${tab.title}" is the last open tab and was not closed; workspace is unchanged.`,
+      reason: "last_tab",
+      title: tab.title
     };
   }
 
@@ -110,7 +115,9 @@ const closeWorkbenchTab = async (
   return {
     tabId,
     closed: true,
-    activeTabId: dependencies.tabsModel.activeTabId ?? null
+    activeTabId: dependencies.tabsModel.activeTabId ?? null,
+    receipt: `Closed tab "${tab.title}". The active tab is now ${dependencies.tabsModel.activeTabId ?? "(none)"}; this result is post-mutation and needs no follow-up read.`,
+    title: tab.title
   };
 };
 
@@ -125,7 +132,8 @@ const reorderWorkbenchTab = (
     tabId,
     targetIndex,
     tabIds: dependencies.tabsModel.tabs.map((tab) => tab.id),
-    layout: readWorkbenchLayoutSnapshot(dependencies)
+    layout: readWorkbenchLayoutSnapshot(dependencies),
+    receipt: `Reordered tab ${tabId} to index ${targetIndex}. tabIds and layout are post-mutation; no follow-up read needed.`
   };
 };
 
@@ -139,7 +147,8 @@ const splitWorkbenchTabs = (
   return {
     sourceTabId,
     targetTabId,
-    layout: readWorkbenchLayoutSnapshot(dependencies)
+    layout: readWorkbenchLayoutSnapshot(dependencies),
+    receipt: `Split tab ${sourceTabId} with ${targetTabId}. Layout is post-mutation; no follow-up read needed.`
   };
 };
 
@@ -151,7 +160,8 @@ const detachWorkbenchSplit = (
   dependencies.tabsModel.detachTabFromSplit(tabId);
   return {
     tabId,
-    layout: readWorkbenchLayoutSnapshot(dependencies)
+    layout: readWorkbenchLayoutSnapshot(dependencies),
+    receipt: `Detached tab ${tabId} from its split. Layout is post-mutation; no follow-up read needed.`
   };
 };
 

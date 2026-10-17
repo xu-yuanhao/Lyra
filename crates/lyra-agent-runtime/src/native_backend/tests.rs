@@ -492,6 +492,7 @@ mod phase4_memory;
 mod phase5_memory;
 mod phase6_memory;
 mod phase7_memory;
+mod project_instructions;
 mod provider_loop;
 mod provider_recovery;
 mod subagent;

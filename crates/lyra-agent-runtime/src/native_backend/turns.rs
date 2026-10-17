@@ -22,6 +22,55 @@ use provider_metadata::{
 pub(crate) use provider_request::build_model_request;
 pub(crate) use provider_request::build_model_request_async;
 
+/// send_turn's two outcomes. A running session steers: the message is queued
+/// for injection at the live turn's next model boundary and the turn keeps
+/// running (reference semantics: queue, inject at boundaries, never abort the
+/// in-flight call). An idle session starts a turn.
+enum SendTurnPlan {
+    Steer {
+        session_id: String,
+        callback: Option<Arc<EventCallback>>,
+        user_message: Value,
+        turn_id: String,
+    },
+    StartTurn {
+        session_id: String,
+        callback: Option<Arc<EventCallback>>,
+        user_message: Value,
+        snapshot: Value,
+        cancellation: CancellationToken,
+        dispatch_legacy_todos: bool,
+    },
+}
+
+/// Transcript citations, page/file attachments and inline images — shared by
+/// the turn-start and steer paths so a steered message is projected exactly
+/// like a turn-starting one.
+fn apply_user_message_transcript_attachments(
+    user_message: &mut Value,
+    existing_messages: &[Value],
+    citations: &[Value],
+    page_citations: &[Value],
+    file_citations: &[Value],
+    uses_inline_image_markers: bool,
+    inline_images: &[Value],
+) {
+    if !citations.is_empty() {
+        let (accepted, rejected) = validate_transcript_citations(existing_messages, citations);
+        apply_transcript_citations_to_user_message(user_message, &accepted, &rejected);
+    }
+    if !page_citations.is_empty() {
+        apply_page_citations_to_user_message(user_message, page_citations);
+    }
+    if !file_citations.is_empty() {
+        apply_file_citations_to_user_message(user_message, file_citations);
+        apply_media_file_attachments_to_user_message(user_message, file_citations);
+    }
+    if uses_inline_image_markers {
+        apply_inline_images_to_user_message(user_message, inline_images);
+    }
+}
+
 pub(crate) fn send_turn(payload: Value) -> AgentRuntimeResult<Value> {
     let text = string_opt(&payload, "text")
         .or_else(|| string_opt(&payload, "prompt"))
@@ -68,14 +117,7 @@ pub(crate) fn send_turn(payload: Value) -> AgentRuntimeResult<Value> {
         .map(str::to_string)
         .unwrap_or_else(|| format!("message-{}", Uuid::new_v4()));
 
-    let (
-        session_id,
-        callback,
-        snapshot,
-        soft_interrupt_events,
-        cancellation,
-        dispatch_legacy_todos,
-    ) = {
+    let plan = {
         let mut state = state()
             .lock()
             .map_err(|_| AgentRuntimeError::Core("agent runtime state lock failed".to_string()))?;
@@ -97,170 +139,181 @@ pub(crate) fn send_turn(payload: Value) -> AgentRuntimeResult<Value> {
                 }));
             }
         }
-        let interrupted_turn_id = state
-            .sessions
-            .get(&session_id)
-            .filter(|session| session.snapshot["turnStatus"] == "running")
-            .and_then(|session| {
-                session
-                    .snapshot
-                    .get("activeTurnId")
-                    .and_then(Value::as_str)
-                    .map(str::to_string)
-            });
-        if let Some(previous_turn_id) = interrupted_turn_id.as_ref() {
-            super::session_runtime::request_turn_cancellation(previous_turn_id);
-            clear_pending_interactions_for_turn(&mut state, previous_turn_id);
-        }
-        let interrupted_provider_metadata = interrupted_turn_id.as_ref().and_then(|turn_id| {
-            super::session_runtime::take_turn_provider_metadata(&session_id, turn_id)
-        });
         let root = state.root.clone();
         let session = state
             .sessions
             .get_mut(&session_id)
             .ok_or_else(|| AgentRuntimeError::Core(format!("session not found: {session_id}")))?;
-        let dispatch_legacy_todos = migrate_legacy_todo_required_phase(session, &root)?;
-        let mut soft_interrupt_events = Vec::new();
-        if let Some(previous_turn_id) = interrupted_turn_id.as_ref() {
-            finalize_provider_state_before_interrupt(
-                session,
-                previous_turn_id,
-                interrupted_provider_metadata.as_ref(),
-            );
-            session.snapshot["turnStatus"] = Value::String("cancelled".to_string());
-            session.snapshot["activeTurnId"] = Value::Null;
-            finalize_interrupt_state(session, "soft_interrupt_new_user_message");
-            finish_running_tools_for_turn(
-                session,
-                previous_turn_id,
-                "cancelled",
-                json!({ "content": "Lyra tool call was cancelled by a newer user message." }),
-            );
-            update_runtime_turn_state(
-                session,
-                previous_turn_id,
-                "interrupted",
-                Some("soft_interrupt"),
-            );
-            soft_interrupt_events.push(json!({
-                "kind": "turnStateChanged",
-                "sessionId": session_id,
-                "turnId": previous_turn_id,
-                "state": "interrupted",
-                "reason": "soft_interrupt_new_user_message"
-            }));
-            soft_interrupt_events.push(json!({
-                "kind": "turnInterrupted",
-                "sessionId": session_id,
-                "turnId": previous_turn_id,
-                "reason": "soft_interrupt_new_user_message"
-            }));
-        }
-        if !citations.is_empty() {
-            let existing_messages = session
+        let existing_messages = session
+            .snapshot
+            .get("messages")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let running_turn_id = if session.snapshot["turnStatus"] == "running" {
+            session
                 .snapshot
-                .get("messages")
-                .and_then(Value::as_array)
-                .cloned()
-                .unwrap_or_default();
-            let (accepted, rejected) =
-                validate_transcript_citations(&existing_messages, &citations);
-            apply_transcript_citations_to_user_message(&mut user_message, &accepted, &rejected);
-        }
-        if !page_citations.is_empty() {
-            apply_page_citations_to_user_message(&mut user_message, &page_citations);
-        }
-        if !file_citations.is_empty() {
-            apply_file_citations_to_user_message(&mut user_message, &file_citations);
-            apply_media_file_attachments_to_user_message(&mut user_message, &file_citations);
-        }
-        if uses_inline_image_markers {
-            apply_inline_images_to_user_message(&mut user_message, &inline_images);
-        }
-        if ui_hidden {
-            if !user_message.get("metadata").is_some_and(Value::is_object) {
-                user_message["metadata"] = json!({});
-            }
-            user_message["metadata"]["uiHidden"] = json!(true);
-            if goal_continuation {
-                user_message["metadata"]["goalContinuation"] = json!(true);
-            }
-            if payload.get("terminalExit").and_then(Value::as_bool) == Some(true) {
-                user_message["metadata"]["terminalExit"] = json!(true);
-            }
-            user_message["rollback"] = json!({
-                "available": false,
-                "unavailableReason": "Rollback is unavailable for menu action turns."
-            });
+                .get("activeTurnId")
+                .and_then(Value::as_str)
+                .map(str::to_string)
         } else {
-            session.snapshot["goalContinuation"] = Value::Null;
-            session.snapshot["completionBlocked"] = Value::Null;
-            let checkpoint = rollback_checkpoint(&session_id, &turn_id, &user_message_id, session);
-            user_message["rollback"] = json!({
-                "available": true,
-                "anchorId": checkpoint.id,
-                "checkpointAt": checkpoint.created_at,
-                "unavailableReason": Value::Null
-            });
-            session.rollback_checkpoints.push(checkpoint);
-            maybe_title_session_from_first_user_message(session, &text, &page_citations);
+            None
+        };
+        if let Some(active_turn_id) = running_turn_id {
+            // ── Steer: the session is mid-turn ──
+            // Queue the message for injection at the live turn's next model
+            // boundary instead of killing the turn (reference semantics:
+            // opencode/claw/pi queue, inject at boundaries, never abort the
+            // in-flight call). The transcript keeps the message immediately
+            // so UI order == transcript order; the inbox copy is purely the
+            // in-flight delivery handle the model loop drains.
+            apply_user_message_transcript_attachments(
+                &mut user_message,
+                &existing_messages,
+                &citations,
+                &page_citations,
+                &file_citations,
+                uses_inline_image_markers,
+                &inline_images,
+            );
+            if ui_hidden {
+                if !user_message.get("metadata").is_some_and(Value::is_object) {
+                    user_message["metadata"] = json!({});
+                }
+                user_message["metadata"]["uiHidden"] = json!(true);
+                if payload.get("terminalExit").and_then(Value::as_bool) == Some(true) {
+                    user_message["metadata"]["terminalExit"] = json!(true);
+                }
+            }
+            push_session_message(session, user_message.clone());
+            touch_session(session);
+            super::session_runtime::enqueue_steer(&session_id, user_message.clone());
+            state.save_state()?;
+            let callback = event_callback();
+            SendTurnPlan::Steer {
+                session_id,
+                callback,
+                user_message,
+                turn_id: active_turn_id,
+            }
+        } else {
+            let dispatch_legacy_todos = migrate_legacy_todo_required_phase(session, &root)?;
+            apply_user_message_transcript_attachments(
+                &mut user_message,
+                &existing_messages,
+                &citations,
+                &page_citations,
+                &file_citations,
+                uses_inline_image_markers,
+                &inline_images,
+            );
+            if ui_hidden {
+                if !user_message.get("metadata").is_some_and(Value::is_object) {
+                    user_message["metadata"] = json!({});
+                }
+                user_message["metadata"]["uiHidden"] = json!(true);
+                if goal_continuation {
+                    user_message["metadata"]["goalContinuation"] = json!(true);
+                }
+                if payload.get("terminalExit").and_then(Value::as_bool) == Some(true) {
+                    user_message["metadata"]["terminalExit"] = json!(true);
+                }
+                user_message["rollback"] = json!({
+                    "available": false,
+                    "unavailableReason": "Rollback is unavailable for menu action turns."
+                });
+            } else {
+                session.snapshot["goalContinuation"] = Value::Null;
+                session.snapshot["completionBlocked"] = Value::Null;
+                let checkpoint =
+                    rollback_checkpoint(&session_id, &turn_id, &user_message_id, session);
+                user_message["rollback"] = json!({
+                    "available": true,
+                    "anchorId": checkpoint.id,
+                    "checkpointAt": checkpoint.created_at,
+                    "unavailableReason": Value::Null
+                });
+                session.rollback_checkpoints.push(checkpoint);
+                maybe_title_session_from_first_user_message(session, &text, &page_citations);
+            }
+            push_session_message(session, user_message.clone());
+            session.snapshot["turnStatus"] = Value::String("running".to_string());
+            session.snapshot["activeTurnId"] = Value::String(turn_id.clone());
+            session.snapshot["follow"] = json!({ "running": true, "activity": "calling_model" });
+            touch_session(session);
+            session.runtime_turns.push(runtime_turn(
+                &turn_id,
+                &session_id,
+                "calling_model",
+                Some(user_message_id.clone()),
+                None,
+            ));
+            let snapshot = session.snapshot.clone();
+            let cancellation = CancellationToken::new();
+            super::session_runtime::register_active_turn(
+                &session_id,
+                &turn_id,
+                cancellation.clone(),
+            );
+            let callback = event_callback();
+            state.save_state()?;
+            SendTurnPlan::StartTurn {
+                session_id,
+                callback,
+                user_message,
+                snapshot,
+                cancellation,
+                dispatch_legacy_todos,
+            }
         }
-        push_session_message(session, user_message.clone());
-        session.snapshot["turnStatus"] = Value::String("running".to_string());
-        session.snapshot["activeTurnId"] = Value::String(turn_id.clone());
-        session.snapshot["follow"] = json!({ "running": true, "activity": "calling_model" });
-        touch_session(session);
-        session.runtime_turns.push(runtime_turn(
-            &turn_id,
-            &session_id,
-            "calling_model",
-            Some(user_message_id.clone()),
-            None,
-        ));
-        let snapshot = session.snapshot.clone();
-        let cancellation = CancellationToken::new();
-        super::session_runtime::register_active_turn(&session_id, &turn_id, cancellation.clone());
-        let callback = event_callback();
-        state.save_state()?;
-        (
-            session_id,
-            callback,
-            snapshot,
-            soft_interrupt_events,
-            cancellation,
-            dispatch_legacy_todos,
-        )
     };
 
-    for event in soft_interrupt_events {
-        emit_with_callback(&callback, event);
-    }
-    emit_with_callback(
-        &callback,
-        json!({ "kind": "messageCommitted", "sessionId": session_id, "message": user_message }),
-    );
-    emit_with_callback(
-        &callback,
-        json!({ "kind": "turnStarted", "sessionId": session_id, "turnId": turn_id, "state": "calling_model" }),
-    );
-    emit_with_callback(
-        &callback,
-        json!({ "kind": "turnStateChanged", "sessionId": session_id, "turnId": turn_id, "state": "calling_model", "reason": "native_turn_started" }),
-    );
-    emit_with_callback(
-        &callback,
-        json!({ "kind": "sessionSnapshot", "snapshot": snapshot }),
-    );
-    if dispatch_legacy_todos {
-        emit_project_todo_events(&session_id, &snapshot);
-    }
+    match plan {
+        SendTurnPlan::Steer {
+            session_id,
+            callback,
+            user_message,
+            turn_id,
+        } => {
+            emit_with_callback(
+                &callback,
+                json!({ "kind": "messageCommitted", "sessionId": session_id, "message": user_message }),
+            );
+            Ok(json!({ "sessionId": session_id, "turnId": turn_id, "status": "steered" }))
+        }
+        SendTurnPlan::StartTurn {
+            session_id,
+            callback,
+            user_message,
+            snapshot,
+            cancellation,
+            dispatch_legacy_todos,
+        } => {
+            emit_with_callback(
+                &callback,
+                json!({ "kind": "messageCommitted", "sessionId": session_id, "message": user_message }),
+            );
+            emit_with_callback(
+                &callback,
+                json!({ "kind": "turnStarted", "sessionId": session_id, "turnId": turn_id, "state": "calling_model" }),
+            );
+            emit_with_callback(
+                &callback,
+                json!({ "kind": "turnStateChanged", "sessionId": session_id, "turnId": turn_id, "state": "calling_model", "reason": "native_turn_started" }),
+            );
+            // Snapshots are initial sync only. Turn state reaches clients through
+            // turnStarted/turnStateChanged; structural deltas arrive as their own events.
+            if dispatch_legacy_todos {
+                emit_project_todo_events(&session_id, &snapshot);
+            }
 
-    let thread_session_id = session_id.clone();
-    let thread_turn_id = turn_id.clone();
-    super::turn_engine::spawn_turn(thread_session_id, thread_turn_id, cancellation);
+            let thread_session_id = session_id.clone();
+            let thread_turn_id = turn_id.clone();
+            super::turn_engine::spawn_turn(thread_session_id, thread_turn_id, cancellation);
 
-    Ok(json!({ "sessionId": session_id, "turnId": turn_id, "status": "running" }))
+            Ok(json!({ "sessionId": session_id, "turnId": turn_id, "status": "running" }))
+        }
+    }
 }
 
 pub(crate) fn resume_idle_turn(session_id: &str) -> AgentRuntimeResult<Value> {
@@ -322,10 +375,8 @@ pub(crate) fn resume_idle_turn(session_id: &str) -> AgentRuntimeResult<Value> {
         &callback,
         json!({ "kind": "turnStateChanged", "sessionId": session_id, "turnId": turn_id, "state": "calling_model", "reason": "worker_completion_resume" }),
     );
-    emit_with_callback(
-        &callback,
-        json!({ "kind": "sessionSnapshot", "snapshot": snapshot }),
-    );
+    // Snapshots are initial sync only. Turn state reaches clients through
+    // turnStarted/turnStateChanged; structural deltas arrive as their own events.
     if dispatch_legacy_todos {
         emit_project_todo_events(&session_id, &snapshot);
     }
@@ -357,7 +408,7 @@ pub(crate) async fn run_native_turn_async(
             &turn_id,
             "cancelled",
             None,
-            Some("turn cancelled".to_string()),
+            Some("Lyra tool call was cancelled because its turn ended.".to_string()),
             metadata,
             None,
         );
@@ -614,7 +665,14 @@ pub(crate) fn finish_turn_with_metadata_for_message(
     let (unfinished_tool_status, unfinished_tool_output) = if status == "cancelled" {
         (
             "cancelled",
-            json!({ "content": failure.as_deref().unwrap_or("Lyra tool call was cancelled.") }),
+            cancelled_tool_output(
+                CANCEL_REASON_TURN_CANCELLED,
+                failure
+                    .as_deref()
+                    .unwrap_or("Lyra tool call was cancelled."),
+                "Stop this tool call and continue only after a new user turn.",
+                None,
+            ),
         )
     } else if let Some(failure) = failure.as_deref() {
         ("failed", json!({ "content": failure }))
@@ -629,7 +687,8 @@ pub(crate) fn finish_turn_with_metadata_for_message(
     let mut memory_job = None;
     let mut recall_index_job: Option<(PathBuf, NativeSession)> = None;
     let mut ledger_turn: Option<(PathBuf, NativeSession, String, String, Option<String>)> = None;
-    let (callback, events) = match state().lock() {
+    let mut committed_anchor: Option<String> = None;
+    let (callback, events, leftover_steers) = match state().lock() {
         Ok(mut state) => {
             let callback = event_callback();
             let mut events = Vec::new();
@@ -651,12 +710,17 @@ pub(crate) fn finish_turn_with_metadata_for_message(
                     );
                     if let Some(text) = assistant_text.filter(|text| !text.trim().is_empty()) {
                         let message = assistant_message_with_metadata(text, metadata.clone());
+                        let committed_message_id = message
+                            .get("id")
+                            .and_then(Value::as_str)
+                            .map(str::to_string);
                         push_session_message(session, message.clone());
                         events.push(json!({
                             "kind": "messageCommitted",
                             "sessionId": session_id,
                             "message": message
                         }));
+                        committed_anchor = committed_message_id;
                     } else if let (Some(metadata), Some(message_id)) =
                         (metadata.clone(), streamed_message_id.clone())
                     {
@@ -673,6 +737,17 @@ pub(crate) fn finish_turn_with_metadata_for_message(
                             }));
                         }
                     }
+                    // The protocol replay log is anchored to the committed
+                    // assistant message; unanchored leftovers of this turn can
+                    // never gain one anymore.
+                    match committed_anchor
+                        .clone()
+                        .or_else(|| streamed_message_id.clone())
+                    {
+                        Some(anchor) => anchor_provider_protocol_log(session, turn_id, &anchor),
+                        None => {}
+                    }
+                    drop_unanchored_provider_protocol_log_entries(session, turn_id);
                     // OpenCode step-finish leftover: the reasoning channel must
                     // close when the turn ends even if the provider omitted
                     // reasoning-end and never sent visible text or tools.
@@ -739,10 +814,6 @@ pub(crate) fn finish_turn_with_metadata_for_message(
                         }
                     }
                     recall_index_job = Some((root.clone(), session.clone()));
-                    events.push(json!({
-                        "kind": "sessionSnapshot",
-                        "snapshot": session.snapshot
-                    }));
                     if retention_metrics
                         .get("pruned")
                         .and_then(Value::as_u64)
@@ -840,8 +911,14 @@ pub(crate) fn finish_turn_with_metadata_for_message(
                     }));
                 }
             }
+            // Steers that arrived during the final response can no longer
+            // reach a drain point inside the model loop. Empty the inbox in
+            // the same critical section that ends the turn: any turn started
+            // afterwards rebuilds context from the transcript (which already
+            // holds these messages) and must never see the inbox copies.
+            let leftover_steers = super::session_runtime::take_pending_steers(session_id);
             let _ = state.save_state();
-            (callback, events)
+            (callback, events, leftover_steers)
         }
         Err(_) => return,
     };
@@ -860,6 +937,16 @@ pub(crate) fn finish_turn_with_metadata_for_message(
     }
     if let Some((root, session_id, turn_id)) = compress_check_job {
         super::memory_compress::spawn_extract_and_compress(root, session_id, turn_id);
+    }
+    // Final-response race: steers drained from the inbox here arrived too
+    // late for the model loop. A finished turn hands them to a continuation
+    // turn whose context rebuild projects them from the transcript; a
+    // cancelled turn drops them (abort clears the queue — the messages stay
+    // in the transcript, unanswered until the user's next turn). Draining
+    // before the poke flush matters: the poke flush may spawn a turn, and
+    // that turn's context must not race a still-populated inbox.
+    if !leftover_steers.is_empty() && status == "finished" {
+        let _ = resume_idle_turn(session_id);
     }
     super::poke::flush_pending_terminal_pokes(session_id);
     notify_session_idle(session_id);
@@ -888,30 +975,17 @@ fn merge_turn_metadata(left: Option<Value>, right: Option<Value>) -> Option<Valu
 }
 
 fn mark_unfinished_provider_protocol_steps_interrupted(session: &mut NativeSession, turn_id: &str) {
-    let Some(messages) = session
-        .snapshot
-        .get_mut("messages")
-        .and_then(Value::as_array_mut)
-    else {
-        return;
-    };
-    let mut first_changed = None;
-    for (index, message) in messages.iter_mut().enumerate() {
-        let protocol = message.pointer_mut("/metadata/providerProtocol");
-        let Some(protocol) = protocol else {
+    for entry in session.provider_protocol_log.iter_mut() {
+        let Some(step) = entry.get_mut("step") else {
             continue;
         };
-        if protocol.get("version").and_then(Value::as_u64) != Some(2)
-            || protocol.get("turnId").and_then(Value::as_str) != Some(turn_id)
-            || protocol.get("status").and_then(Value::as_str) != Some("awaitingToolResults")
+        if step.get("version").and_then(Value::as_u64) != Some(2)
+            || step.get("turnId").and_then(Value::as_str) != Some(turn_id)
+            || step.get("status").and_then(Value::as_str) != Some("awaitingToolResults")
         {
             continue;
         }
-        protocol["status"] = json!("interrupted");
-        first_changed.get_or_insert(index);
-    }
-    if let Some(index) = first_changed {
-        mark_dialog_dirty_from(session, index);
+        step["status"] = json!("interrupted");
     }
 }
 
@@ -921,9 +995,29 @@ fn finalize_provider_state_before_interrupt(
     provider_metadata: Option<&Value>,
 ) {
     mark_unfinished_provider_protocol_steps_interrupted(session, turn_id);
+    // No new anchor can appear after an interrupt; unanchored steps of this
+    // turn were never surfaced in the timeline and are not replayable.
+    drop_unanchored_provider_protocol_log_entries(session, turn_id);
     set_runtime_turn_provider_metadata(session, turn_id, provider_metadata);
 
     let Some(provider_metadata) = provider_metadata else {
+        return;
+    };
+    // The stateful-responses cursor rides the last message the interrupted
+    // turn anchored protocol state to; the log is the turn→message index.
+    let Some(message_id) = session
+        .provider_protocol_log
+        .iter()
+        .rev()
+        .filter(|entry| entry.get("turnId").and_then(Value::as_str) == Some(turn_id))
+        .find_map(|entry| {
+            entry
+                .get("messageId")
+                .and_then(Value::as_str)
+                .filter(|id| !id.is_empty())
+                .map(str::to_string)
+        })
+    else {
         return;
     };
     let Some(messages) = session
@@ -933,12 +1027,10 @@ fn finalize_provider_state_before_interrupt(
     else {
         return;
     };
-    let Some(index) = messages.iter().rposition(|message| {
-        message
-            .pointer("/metadata/providerProtocol/turnId")
-            .and_then(Value::as_str)
-            == Some(turn_id)
-    }) else {
+    let Some(index) = messages
+        .iter()
+        .position(|message| message.get("id").and_then(Value::as_str) == Some(message_id.as_str()))
+    else {
         return;
     };
     let current = messages[index].get("metadata").cloned();
@@ -959,18 +1051,20 @@ mod provider_protocol_interruption_tests {
         session.snapshot["messages"] = json!([{
             "id": "assistant-step",
             "role": "assistant",
-            "text": "",
-            "metadata": {
-                "providerProtocol": {
-                    "version": 2,
-                    "turnId": turn_id,
-                    "status": "awaitingToolResults",
-                    "assistant": { "content": "", "toolCalls": [] },
-                    "toolResults": [],
-                    "replay": null
-                }
-            }
+            "text": ""
         }]);
+        session.provider_protocol_log = vec![json!({
+            "turnId": turn_id,
+            "messageId": "assistant-step",
+            "step": {
+                "version": 2,
+                "turnId": turn_id,
+                "status": "awaitingToolResults",
+                "assistant": { "content": "", "toolCalls": [] },
+                "toolResults": [],
+                "replay": null
+            }
+        })];
         session.runtime_turns.push(runtime_turn(
             turn_id,
             &session.id,
@@ -989,11 +1083,12 @@ mod provider_protocol_interruption_tests {
         finalize_provider_state_before_interrupt(&mut session, turn_id, Some(&metadata));
 
         assert_eq!(
-            session.snapshot["messages"][0]
-                .pointer("/metadata/providerProtocol/status")
+            session.provider_protocol_log[0]
+                .pointer("/step/status")
                 .and_then(Value::as_str),
             Some("interrupted")
         );
+        // The stateful-responses cursor merge rides the log's turn→message index.
         assert_eq!(
             session.snapshot["messages"][0]
                 .pointer("/metadata/providerAttempts/0/outcome")
@@ -1081,7 +1176,12 @@ pub(crate) fn reconcile_orphan_running_turn(
         session,
         &turn_id,
         "cancelled",
-        json!({ "content": recovery_message }),
+        cancelled_tool_output(
+            CANCEL_REASON_SESSION_RECOVERY,
+            recovery_message,
+            "Retry the tool call in a new turn if it is still needed.",
+            None,
+        ),
     );
     let failure_kind = if stale_waiting_for_tool {
         "stale_waiting_for_tool_without_running_tools"
@@ -1174,11 +1274,11 @@ pub(crate) fn set_runtime_turn_state(
 
 pub(crate) fn turn_was_cancelled(session_id: &str, turn_id: &str) -> bool {
     if super::session_runtime::turn_cancellation_requested(turn_id) {
-        eprintln!(
-            "[DIAG] turn_was_cancelled TRUE(cancellation_requested): session={session_id} turn={turn_id}"
-        );
         return true;
     }
+    // A state lock failure must not fabricate a cancellation. RecoveringMutex
+    // makes this branch unreachable today; the fail-open default keeps the
+    // semantics honest if the lock ever changes: unknown ≠ cancelled.
     state()
         .lock()
         .map(|state| {
@@ -1188,17 +1288,9 @@ pub(crate) fn turn_was_cancelled(session_id: &str, turn_id: &str) -> bool {
                 .and_then(|session| session.snapshot.get("activeTurnId"))
                 .and_then(Value::as_str)
                 .map(str::to_string);
-            let active_turn_mismatch = snapshot_turn_id.as_deref() != Some(turn_id);
-            let cancelled = active_turn_mismatch;
-            if cancelled {
-                eprintln!(
-                    "[DIAG] turn_was_cancelled TRUE: session={session_id} turn={turn_id} \
-                     snapshot_turn_id={snapshot_turn_id:?} active_turn_mismatch={active_turn_mismatch}"
-                );
-            }
-            cancelled
+            snapshot_turn_id.as_deref() != Some(turn_id)
         })
-        .unwrap_or(true)
+        .unwrap_or(false)
 }
 
 pub(crate) fn cancel_turn(payload: Value) -> AgentRuntimeResult<Value> {
@@ -1236,6 +1328,10 @@ pub(crate) fn cancel_turn(payload: Value) -> AgentRuntimeResult<Value> {
             })?;
         super::session_runtime::request_turn_cancellation(&turn_id);
         clear_pending_interactions_for_turn(&mut state, &turn_id);
+        // User stop: abort clears the steer queue (reference semantics).
+        // Queued messages stay in the transcript, unanswered until the
+        // user's next turn.
+        super::session_runtime::take_pending_steers(&id);
         let provider_metadata = super::session_runtime::take_turn_provider_metadata(&id, &turn_id);
         let session = state
             .sessions
@@ -1249,24 +1345,25 @@ pub(crate) fn cancel_turn(payload: Value) -> AgentRuntimeResult<Value> {
             session,
             &turn_id,
             "cancelled",
-            json!({ "content": "Lyra tool call was cancelled by the user." }),
+            cancelled_tool_output(
+                CANCEL_REASON_USER_STOP,
+                "Lyra tool call was cancelled by the user.",
+                "Stop this tool call and continue only after a new user turn.",
+                None,
+            ),
         );
         update_runtime_turn(session, &turn_id, "cancelled");
         touch_session(session);
-        let snapshot = session.snapshot.clone();
         let ledger_session = session.clone();
         let callback = event_callback();
         state.save_state()?;
-        let events = vec![
-            json!({ "kind": "sessionSnapshot", "snapshot": snapshot }),
-            json!({
-                "kind": "turnStateChanged",
-                "sessionId": id,
-                "turnId": turn_id,
-                "state": "cancelled",
-                "reason": "user_cancelled",
-            }),
-        ];
+        let events = vec![json!({
+            "kind": "turnStateChanged",
+            "sessionId": id,
+            "turnId": turn_id,
+            "state": "cancelled",
+            "reason": "user_cancelled",
+        })];
         (
             turn_id,
             callback,

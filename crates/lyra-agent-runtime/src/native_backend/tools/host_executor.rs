@@ -395,10 +395,12 @@ pub(crate) async fn execute_host_tool_adapter(
     ) {
         let permission_record = permission.clone();
         if cancellation.is_cancelled() {
-            return json!({
-                "content": "Lyra tool call was cancelled before permission was resolved.",
-                "cancelled": true,
-            });
+            return cancelled_tool_output(
+                CANCEL_REASON_PERMISSION_WAIT,
+                "Lyra tool call was cancelled before permission was resolved.",
+                "Ask the user again in a new turn if the action is still needed.",
+                None,
+            );
         }
         match wait_for_permission_with_cancellation_async(permission, cancellation).await {
             Ok(true) => {
@@ -448,18 +450,19 @@ pub(crate) async fn execute_host_tool_adapter(
             Err(error) => {
                 let cancelled = permission_wait_was_cancelled(&error);
                 let output = if cancelled {
-                    json!({
-                        "content": "Lyra tool call was cancelled before permission was resolved.",
-                        "cancelled": true,
-                    })
+                    cancelled_tool_output(
+                        CANCEL_REASON_PERMISSION_WAIT,
+                        "Lyra tool call was cancelled before permission was resolved.",
+                        "Ask the user again in a new turn if the action is still needed.",
+                        None,
+                    )
                 } else {
-                    json!({
-                        "content": format!("Permission request failed: {error}"),
-                        "error": {
-                            "code": "permissionRequestFailed",
-                            "message": error.to_string(),
-                        }
-                    })
+                    tool_failure_output(
+                        "permission_request_failed",
+                        &format!("Permission request failed: {error}"),
+                        "Stop this tool call and wait for user input before retrying.",
+                        None,
+                    )
                 };
                 record_tool_activity(
                     session_id,
@@ -484,6 +487,12 @@ pub(crate) async fn execute_host_tool_adapter(
         inject_trusted_ax_authorization(display_name, action, &mut input, tool_call_id, None);
     }
     if cancellation.is_cancelled() {
+        let output = cancelled_tool_output(
+            CANCEL_REASON_TURN_CANCELLED,
+            "Lyra tool call was cancelled.",
+            "Stop this tool call and continue only after a new user turn.",
+            None,
+        );
         record_tool_activity(
             session_id,
             turn_id,
@@ -492,17 +501,14 @@ pub(crate) async fn execute_host_tool_adapter(
                 display_name,
                 &tool_label(display_name, action),
                 "cancelled",
-                input.clone(),
-                Some(json!({ "content": "Lyra tool call was cancelled." })),
+                input,
+                Some(output.clone()),
                 started_at,
                 Some(now()),
             ),
             "toolFinished",
         );
-        return json!({
-            "content": "Lyra tool call was cancelled.",
-            "cancelled": true,
-        });
+        return output;
     }
     let raw_result = async {
         let dispatcher = dispatcher
@@ -531,6 +537,12 @@ pub(crate) async fn execute_host_tool_adapter(
     }
     .await;
     if cancellation.is_cancelled() {
+        let output = cancelled_tool_output(
+            CANCEL_REASON_TURN_CANCELLED,
+            "Lyra tool call was cancelled.",
+            "Stop this tool call and continue only after a new user turn.",
+            None,
+        );
         record_tool_activity(
             session_id,
             turn_id,
@@ -539,17 +551,14 @@ pub(crate) async fn execute_host_tool_adapter(
                 display_name,
                 &tool_label(display_name, action),
                 "cancelled",
-                input.clone(),
-                Some(json!({ "content": "Lyra tool call was cancelled." })),
+                input,
+                Some(output.clone()),
                 started_at,
                 Some(now()),
             ),
             "toolFinished",
         );
-        return json!({
-            "content": "Lyra tool call was cancelled.",
-            "cancelled": true,
-        });
+        return output;
     }
     let (status, output, finished_input) = match raw_result {
         Ok(mut value) => {
@@ -640,20 +649,33 @@ pub(crate) async fn execute_host_tool_adapter(
             )
         }
         Err(error) => {
-            // Timeout failures keep their dedicated error contract so callers
-            // can distinguish an elapsed budget from a generic host failure.
-            let timed_out = timeouts::is_timeout_error(&error);
-            let mut output = json!({
-                "content": format!("Lyra tool failed: {error}"),
-                "error": {
-                    "code": if timed_out { "timeout" } else { "host_capability_failed" },
-                    "message": error,
-                },
-            });
-            if timed_out {
-                output["notRunReason"] = json!("timeout");
+            // The browser concurrency guard reports turn-end as a bare
+            // "cancelled" string; keep it in the cancellation contract
+            // instead of masking it as a host failure.
+            if error == "cancelled" {
+                let output = cancelled_tool_output(
+                    CANCEL_REASON_TURN_SUPERSEDED,
+                    "This tool call was cancelled because its turn is no longer active.",
+                    "Stop this tool call and continue only after a new user turn.",
+                    None,
+                );
+                ("cancelled", output, input)
+            } else {
+                // Timeout failures keep their dedicated error contract so callers
+                // can distinguish an elapsed budget from a generic host failure.
+                let timed_out = timeouts::is_timeout_error(&error);
+                let mut output = json!({
+                    "content": format!("Lyra tool failed: {error}"),
+                    "error": {
+                        "code": if timed_out { "timeout" } else { "host_capability_failed" },
+                        "message": error,
+                    },
+                });
+                if timed_out {
+                    output["notRunReason"] = json!("timeout");
+                }
+                ("failed", output, input.clone())
             }
-            ("failed", output, input.clone())
         }
     };
     record_tool_activity(
@@ -926,10 +948,7 @@ mod tests {
         // vact and the accessibility act keep the rewrite semantics: a
         // mutation hidden behind an observe declaration is reclassified as a
         // mutating effect so it still passes the mutating permission gate.
-        for (display, action) in [
-            ("lyra_lumen", "vact"),
-            ("lyra_ax", "act"),
-        ] {
+        for (display, action) in [("lyra_lumen", "vact"), ("lyra_ax", "act")] {
             let mut click = json!({"interaction":"click","effect":"observe"});
             default_browser_interaction(display, action, &mut click);
             assert_eq!(

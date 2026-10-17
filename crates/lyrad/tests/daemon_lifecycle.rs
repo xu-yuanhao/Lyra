@@ -334,3 +334,60 @@ async fn daemon_unix_socket_is_private() {
 
     assert_eq!(mode, 0o600);
 }
+
+#[cfg(unix)]
+#[tokio::test]
+async fn daemon_dies_with_its_parent_without_explicit_kill() {
+    // The desktop's freeze/force-kill must not orphan lyrad together with every
+    // PTY session it hosts — the zombie http.server that held a port across
+    // app restarts was a lyrad outliving Electron. lyrad arms
+    // PR_SET_PDEATHSIG(SIGTERM) at startup, so a parent that exits without
+    // sending any signal must take the daemon down with it.
+
+    let temp = TempDir::new().expect("tempdir");
+    let endpoint = unique_endpoint(&temp);
+    let agent_home = temp.path().join("agent");
+    let runtime_dir = agent_home.join("runtime");
+    let pid_file = temp.path().join("lyrad.pid");
+
+    let launcher = Command::new("/bin/sh")
+        .arg("-c")
+        .arg(format!(
+            "{bin} --socket {endpoint} >/dev/null 2>&1 & PID=$!; echo $PID > {pid_file}; sleep 3",
+            bin = env!("CARGO_BIN_EXE_lyrad"),
+            endpoint = endpoint,
+            pid_file = pid_file.display()
+        ))
+        .env("LYRA_AGENT_HOME", &agent_home)
+        .env("LYRA_AGENT_RUNTIME_DIR", &runtime_dir)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .expect("launch intermediate parent");
+    assert!(launcher.success(), "intermediate parent exited abnormally");
+
+    let pid = std::fs::read_to_string(&pid_file)
+        .expect("lyrad pid file")
+        .trim()
+        .parse::<i32>()
+        .expect("pid");
+
+    // The intermediate shell stays alive for 3s so the daemon finishes arming
+    // PR_SET_PDEATHSIG (a debug-build lyrad takes longer to start than the
+    // shell takes to exit — arming after the parent died would silently bind
+    // to the subreaper instead), then exits. PDEATHSIG fires within moments:
+    // the daemon must die on its own, with no kill signal from this test
+    // process.
+    let deadline = Instant::now() + Duration::from_secs(15);
+    loop {
+        let alive = std::fs::metadata(format!("/proc/{pid}")).is_ok();
+        if !alive {
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "lyrad (pid {pid}) survived its parent's exit; PDEATHSIG did not fire"
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+}

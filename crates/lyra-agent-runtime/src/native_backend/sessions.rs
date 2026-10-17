@@ -166,6 +166,7 @@ pub(crate) fn new_session(
         runtime_turns: Vec::new(),
         rollback_checkpoints: Vec::new(),
         file_read_state: HashMap::new(),
+        provider_protocol_log: vec![],
         dirty: true,
         dialog_dirty_from: Some(0),
         persisted_dialog_len: 0,
@@ -193,7 +194,7 @@ fn new_ephemeral_session(
     let working_dir_is_home = requested_dir.is_none();
     let working_dir = requested_dir.unwrap_or_else(home_working_dir);
     let project_bound = !working_dir.trim().is_empty();
-    let mut snapshot = json!({
+    let snapshot = json!({
         "id": id,
         "title": "Plan chat",
         "sessionKind": "temporary",
@@ -228,6 +229,7 @@ fn new_ephemeral_session(
         runtime_turns: Vec::new(),
         rollback_checkpoints: Vec::new(),
         file_read_state: HashMap::new(),
+        provider_protocol_log: vec![],
         dirty: false,
         dialog_dirty_from: None,
         persisted_dialog_len: 1,
@@ -417,10 +419,20 @@ pub(crate) fn read_session(payload: Value) -> AgentRuntimeResult<Value> {
     Ok(snapshot)
 }
 
-const DEFAULT_SESSION_MESSAGE_WINDOW: usize = 500;
-const MAX_SESSION_MESSAGE_WINDOW: usize = 1_000;
-const DEFAULT_TOOL_OUTPUT_PREVIEW_CHARS: usize = 16_384;
-const MAX_TOOL_OUTPUT_PREVIEW_CHARS: usize = 65_536;
+// Wire-bound read windows. Reference shape (codex pages of 25-100, opencode
+// 50-200, ZCode tail window of 60 rows): the initial view is a fixed tail
+// window, and the response fits its transport frame BY CONSTRUCTION — fixed
+// per-item caps × fixed window counts have a computable worst case. None of
+// the reference projects shrinks payload content at runtime to fit a budget;
+// over-budget is a named, fail-closed rejection (the lyrad wire guard).
+// Worst case at full windows:
+//   200 × (16KiB text + ~1KiB blocks) + 200 × (8KiB preview + 2KiB input)
+//   ≈ 5.4MiB < SESSION_RESPONSE_BYTE_BUDGET (6MiB) < the client's 8MiB frame cap.
+const SESSION_MESSAGE_WINDOW: usize = 200;
+const SESSION_TOOL_WINDOW: usize = 200;
+const SESSION_MESSAGE_TEXT_MAX_BYTES: usize = 16 * 1024;
+const SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES: usize = 8 * 1024;
+const SESSION_TOOL_INPUT_MAX_BYTES: usize = 2 * 1024;
 
 /// Renderer-facing session projection. The persisted session remains complete,
 /// while initial IPC reads stay bounded even for very long-running tasks.
@@ -429,20 +441,112 @@ pub(crate) fn read_session_window(payload: Value) -> AgentRuntimeResult<Value> {
         .get("messageLimit")
         .and_then(Value::as_u64)
         .map(|value| value as usize)
-        .unwrap_or(DEFAULT_SESSION_MESSAGE_WINDOW)
-        .clamp(1, MAX_SESSION_MESSAGE_WINDOW);
-    let output_preview_chars = payload
+        .unwrap_or(SESSION_MESSAGE_WINDOW)
+        .clamp(1, SESSION_MESSAGE_WINDOW);
+    let output_preview_bytes = payload
         .get("toolOutputPreviewChars")
         .and_then(Value::as_u64)
         .map(|value| value as usize)
-        .unwrap_or(DEFAULT_TOOL_OUTPUT_PREVIEW_CHARS)
-        .clamp(256, MAX_TOOL_OUTPUT_PREVIEW_CHARS);
+        .unwrap_or(SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES)
+        .clamp(256, SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES);
     let mut snapshot = read_session(payload)?;
-    project_session_window(&mut snapshot, message_limit, output_preview_chars);
+    project_session_window(&mut snapshot, message_limit, output_preview_bytes);
     Ok(snapshot)
 }
 
-fn project_session_window(snapshot: &mut Value, message_limit: usize, output_preview_chars: usize) {
+// Caps are byte-based: a char cap lets CJK text triple its wire cost
+// (3 bytes per char), which is exactly how a "32K chars" session grew to
+// 7.9MB on the wire. Truncation lands on a char boundary.
+fn truncate_bytes(value: &str, max_bytes: usize) -> String {
+    if value.len() <= max_bytes {
+        return value.to_string();
+    }
+    let mut end = max_bytes;
+    while end > 0 && !value.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}…[truncated {} bytes]", &value[..end], value.len() - end)
+}
+
+fn cap_message_text(message: &mut Value, max_bytes: usize) {
+    let Some(Value::String(text)) = message.get_mut("text") else {
+        return;
+    };
+    if text.len() > max_bytes {
+        *text = truncate_bytes(text, max_bytes);
+    }
+}
+
+// Provider replay state is runtime-internal resume data: it is persisted in
+// session state and protocol checkpoints, and no renderer code reads these
+// keys. No reference project ships protocol state inside UI messages (codex
+// records rollout items separately; ZCode ships windowed UI rows), so the UI
+// projection drops it — one turn's replay copy (full transcript + protocol
+// steps) cannot dominate the read window's wire cost.
+const RUNTIME_INTERNAL_METADATA_KEYS: &[&str] = &[
+    "providerProtocol",
+    "providerTranscript",
+    "openaiResponsesReplay",
+];
+
+fn strip_runtime_internal_metadata(message: &mut Value) {
+    let Some(metadata) = message.get_mut("metadata").and_then(Value::as_object_mut) else {
+        return;
+    };
+    for key in RUNTIME_INTERNAL_METADATA_KEYS {
+        metadata.remove(*key);
+    }
+}
+
+fn cap_tool_input_strings(value: &mut Value, max_bytes: usize) {
+    match value {
+        Value::String(text) => {
+            if text.len() > max_bytes {
+                *text = truncate_bytes(text, max_bytes);
+            }
+        }
+        Value::Array(items) => {
+            for item in items {
+                cap_tool_input_strings(item, max_bytes);
+            }
+        }
+        Value::Object(map) => {
+            for (_, item) in map.iter_mut() {
+                cap_tool_input_strings(item, max_bytes);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn compact_tool_outputs(snapshot: &mut Value, output_preview_bytes: usize) {
+    if let Some(tools) = snapshot.get_mut("tools").and_then(Value::as_array_mut) {
+        for tool in tools {
+            let artifact_refs = tool.get("artifactRefs").cloned().unwrap_or(Value::Null);
+            let Some(output) = tool.get_mut("output") else {
+                continue;
+            };
+            let Ok(serialized) = serde_json::to_string(output) else {
+                continue;
+            };
+            if serialized.len() <= output_preview_bytes {
+                continue;
+            }
+            let mut preview_end = output_preview_bytes.min(serialized.len());
+            while preview_end > 0 && !serialized.is_char_boundary(preview_end) {
+                preview_end -= 1;
+            }
+            *output = json!({
+                "preview": &serialized[..preview_end],
+                "truncated": true,
+                "originalBytes": serialized.len(),
+                "artifactRefs": artifact_refs,
+            });
+        }
+    }
+}
+
+fn project_session_window(snapshot: &mut Value, message_limit: usize, output_preview_bytes: usize) {
     if let Some(messages) = snapshot.get_mut("messages").and_then(Value::as_array_mut) {
         let total = messages.len();
         let omitted = total.saturating_sub(message_limit);
@@ -458,29 +562,43 @@ fn project_session_window(snapshot: &mut Value, message_limit: usize, output_pre
     }
 
     if let Some(tools) = snapshot.get_mut("tools").and_then(Value::as_array_mut) {
-        for tool in tools {
-            let artifact_refs = tool.get("artifactRefs").cloned().unwrap_or(Value::Null);
-            let Some(output) = tool.get_mut("output") else {
-                continue;
-            };
-            let Ok(serialized) = serde_json::to_string(output) else {
-                continue;
-            };
-            if serialized.chars().count() <= output_preview_chars {
-                continue;
-            }
-            let preview = serialized
-                .chars()
-                .take(output_preview_chars)
-                .collect::<String>();
-            *output = json!({
-                "preview": preview,
-                "truncated": true,
-                "originalBytes": serialized.len(),
-                "artifactRefs": artifact_refs,
-            });
+        let total = tools.len();
+        let omitted = total.saturating_sub(SESSION_TOOL_WINDOW);
+        if omitted > 0 {
+            tools.drain(..omitted);
+        }
+        snapshot["toolsWindow"] = json!({
+            "start": omitted,
+            "count": tools.len(),
+            "total": total,
+            "hasEarlier": omitted > 0,
+        });
+    }
+
+    if let Some(messages) = snapshot.get_mut("messages").and_then(Value::as_array_mut) {
+        for message in messages.iter_mut() {
+            strip_runtime_internal_metadata(message);
+            cap_message_text(message, SESSION_MESSAGE_TEXT_MAX_BYTES);
         }
     }
+    if let Some(tools) = snapshot.get_mut("tools").and_then(Value::as_array_mut) {
+        for tool in tools.iter_mut() {
+            if let Some(input) = tool.get_mut("input") {
+                cap_tool_input_strings(input, SESSION_TOOL_INPUT_MAX_BYTES);
+            }
+        }
+    }
+    compact_tool_outputs(
+        snapshot,
+        output_preview_bytes.min(SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES),
+    );
+
+    // No budget loop: windows and per-item byte caps above bound the response
+    // by construction (see the constants). If a pathological snapshot still
+    // exceeds the budget, the lyrad wire guard rejects that one request with
+    // RUNTIME_RESPONSE_TOO_LARGE — the reference behavior (claw-code
+    // RequestBodySizeExceeded, ZCode fail-closed) is to fail loudly, never to
+    // silently mangle content.
 }
 
 /// Compatibility escape hatch for opening one full tool result on demand.
@@ -512,6 +630,11 @@ pub(crate) fn read_session_tool_artifact(payload: Value) -> AgentRuntimeResult<V
 mod session_window_tests {
     use super::*;
 
+    // The worst case the windows and per-item byte caps can produce must stay
+    // under this budget (and under the client's 8MiB frame cap); the lyrad
+    // wire guard rejects anything above its own 7MiB cap as a named failure.
+    const SESSION_RESPONSE_BYTE_BUDGET: usize = 6 * 1024 * 1024;
+
     #[test]
     fn keeps_only_the_requested_message_tail_and_compacts_large_tool_output() {
         let mut snapshot = json!({
@@ -537,6 +660,128 @@ mod session_window_tests {
             snapshot["tools"][0]["output"]["artifactRefs"][0]["id"],
             "artifact-1"
         );
+    }
+
+    #[test]
+    fn tool_tail_window_keeps_the_most_recent_calls() {
+        let mut snapshot = json!({
+            "messages": [],
+            "tools": (0..450)
+                .map(|index| json!({ "id": format!("tool-{index}"), "output": { "content": "ok" } }))
+                .collect::<Vec<_>>()
+        });
+
+        project_session_window(&mut snapshot, 500, 16_384);
+
+        let tools = snapshot["tools"].as_array().unwrap();
+        assert_eq!(tools.len(), SESSION_TOOL_WINDOW);
+        assert_eq!(
+            tools[0]["id"],
+            format!("tool-{}", 450 - SESSION_TOOL_WINDOW)
+        );
+        assert_eq!(snapshot["toolsWindow"]["total"], 450);
+        assert_eq!(snapshot["toolsWindow"]["hasEarlier"], true);
+    }
+
+    #[test]
+    fn giant_message_text_and_tool_input_echoes_are_capped_by_bytes() {
+        // "汉" is 3 bytes in UTF-8: a char-based cap lets CJK text triple its
+        // wire cost, which is how a "32K chars" session reached 7.9MB.
+        let cjk = "汉".repeat(100_000);
+        let mut snapshot = json!({
+            "messages": [{ "id": "one", "text": cjk }],
+            "tools": [{
+                "id": "tool-1",
+                "input": { "command": "y".repeat(50_000) },
+                "output": { "content": "ok" }
+            }]
+        });
+
+        project_session_window(
+            &mut snapshot,
+            SESSION_MESSAGE_WINDOW,
+            SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES,
+        );
+
+        let text = snapshot["messages"][0]["text"].as_str().unwrap();
+        assert!(text.len() <= SESSION_MESSAGE_TEXT_MAX_BYTES + 40);
+        assert!(text.contains("[truncated"));
+        let input = snapshot["tools"][0]["input"]["command"].as_str().unwrap();
+        assert!(input.len() <= SESSION_TOOL_INPUT_MAX_BYTES + 40);
+    }
+
+    #[test]
+    fn response_fits_the_budget_by_construction_at_full_windows() {
+        // Regression (two layers): (1) an >8MB readWindow frame used to
+        // destroy the whole runtime connection on startup; (2) the
+        // shrink-to-fit loop that replaced it silently exited when its first
+        // step was a no-op (huge message texts, small tool outputs) and
+        // shipped 7.9MB anyway. Reference projects (codex/opencode/ZCode)
+        // bound by construction instead: fixed per-item caps × fixed window
+        // counts with a computable worst case — no runtime shrink loop.
+        let mut snapshot = json!({
+            "messages": (0..500)
+                .map(|index| json!({
+                    "id": format!("msg-{index}"),
+                    "text": "汉".repeat(20_000),
+                    "blocks": [{ "type": "tool", "toolId": format!("tool-{index}") }]
+                }))
+                .collect::<Vec<_>>(),
+            "tools": (0..600)
+                .map(|index| json!({
+                    "id": format!("tool-{index}"),
+                    "input": { "command": "y".repeat(30_000) },
+                    "output": { "content": "o".repeat(30_000) },
+                    "artifactRefs": [{ "id": format!("artifact-{index}") }]
+                }))
+                .collect::<Vec<_>>()
+        });
+
+        project_session_window(
+            &mut snapshot,
+            SESSION_MESSAGE_WINDOW,
+            SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES,
+        );
+
+        let bytes = serde_json::to_vec(&snapshot).unwrap().len();
+        assert!(
+            bytes <= SESSION_RESPONSE_BYTE_BUDGET,
+            "projected response is {bytes} bytes, above the budget"
+        );
+        let messages = snapshot["messages"].as_array().unwrap();
+        assert_eq!(messages.len(), SESSION_MESSAGE_WINDOW);
+        assert_eq!(messages[messages.len() - 1]["id"], "msg-499");
+        let tools = snapshot["tools"].as_array().unwrap();
+        assert_eq!(tools.len(), SESSION_TOOL_WINDOW);
+    }
+
+    #[test]
+    fn ui_projection_drops_runtime_internal_replay_metadata() {
+        // metadata.providerTranscript carried a full recorded provider
+        // conversation (including base64 captures) inside every turn's
+        // session message; it is resume state the renderer never reads. The
+        // projection drops it instead of paying its wire cost — old sessions
+        // with fat metadata become readable without any migration.
+        let mut snapshot = json!({
+            "messages": [{
+                "id": "msg-1",
+                "text": "done",
+                "metadata": {
+                    "providerProtocol": { "version": 2, "assistant": { "content": "x".repeat(200_000) } },
+                    "providerTranscript": [{ "role": "tool", "content": "y".repeat(200_000) }],
+                    "openaiResponsesReplay": [{ "type": "reasoning", "content": "z" }],
+                    "transcriptCitations": [{ "id": "cite-1" }]
+                }
+            }]
+        });
+
+        project_session_window(&mut snapshot, 10, 4_096);
+
+        let metadata = &snapshot["messages"][0]["metadata"];
+        assert!(metadata.get("providerProtocol").is_none());
+        assert!(metadata.get("providerTranscript").is_none());
+        assert!(metadata.get("openaiResponsesReplay").is_none());
+        assert_eq!(metadata["transcriptCitations"][0]["id"], "cite-1");
     }
 }
 

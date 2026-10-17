@@ -718,6 +718,7 @@ fn memory_candidate_events_record_to_session_ledger() {
         runtime_turns: Vec::new(),
         rollback_checkpoints: Vec::new(),
         file_read_state: HashMap::new(),
+        provider_protocol_log: vec![],
         dirty: true,
         dialog_dirty_from: Some(0),
         persisted_dialog_len: 0,
@@ -1162,6 +1163,63 @@ fn memory_search_surfaces_session_recall_records() {
     let formatted = format_memory_output("search", &result);
     assert!(formatted.contains("Session recall"));
     assert!(formatted.contains(&message_id));
+}
+
+#[test]
+fn memory_write_and_search_receipts_carry_record_ids() {
+    let marker = format!("receipt-id-{}", Uuid::new_v4());
+    let remembered = long_term_memory_create(json!({
+        "action": "remember",
+        "scope": "global",
+        "category": "preference",
+        "fact": format!("receipt test fact {marker}"),
+        "confidence": 0.9,
+    }))
+    .expect("remember");
+    let id = remembered
+        .pointer("/record/id")
+        .and_then(Value::as_str)
+        .expect("record id")
+        .to_string();
+
+    let formatted = format_memory_output("remember", &remembered);
+    assert!(
+        formatted.contains(&format!("(id: {id})")),
+        "remember receipt must carry the id: {formatted}"
+    );
+
+    let updated = long_term_memory_update(json!({
+        "id": id,
+        "fact": format!("receipt test fact updated {marker}"),
+    }))
+    .expect("update");
+    let updated_formatted = format_memory_output("update", &updated);
+    assert!(
+        updated_formatted.starts_with(&format!("Updated memory {id}:")),
+        "update receipt must carry the id: {updated_formatted}"
+    );
+
+    let searched = long_term_memory_search(json!({ "query": marker })).expect("search");
+    let formatted_search = format_memory_output("search", &searched);
+    assert!(
+        formatted_search.contains(&format!("id={id}")),
+        "search hits must carry ids: {formatted_search}"
+    );
+
+    // Missing id misses now name the closest stored ids (hermes-style).
+    let miss = long_term_memory_update(json!({
+        "id": format!("{id}-typo"),
+        "fact": "irrelevant",
+    }));
+    let error = format!("{}", miss.expect_err("must miss"));
+    assert!(
+        error.contains("Closest stored memory ids"),
+        "not-found error should hint closest ids: {error}"
+    );
+    assert!(
+        error.contains(&id),
+        "hint should include the real id: {error}"
+    );
 }
 
 #[test]

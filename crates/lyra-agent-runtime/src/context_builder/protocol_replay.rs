@@ -8,34 +8,33 @@ pub(super) fn provider_protocol_v2_messages(
     message_index: usize,
     options: &ProviderContextOptions,
 ) -> Option<Vec<Value>> {
-    let protocol = message.pointer("/metadata/providerProtocol")?;
-    if protocol.get("version").and_then(Value::as_u64) != Some(2) {
-        return None;
-    }
+    // Protocol replay state lives in the session's provider_protocol_log, not
+    // in message metadata. Each entry anchored to this message replays in log
+    // order; the old priorSteps/current nesting is gone.
+    let message_id = message.get("id").and_then(Value::as_str)?;
+    let mut matched = false;
     let mut output = Vec::new();
-    for prior in protocol
-        .get("priorSteps")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter(|step| step.get("version").and_then(Value::as_u64) == Some(2))
+    for entry in options
+        .protocol_log
+        .iter()
+        .filter(|entry| entry.get("messageId").and_then(Value::as_str) == Some(message_id))
     {
+        let Some(step) = entry.get("step") else {
+            continue;
+        };
+        if step.get("version").and_then(Value::as_u64) != Some(2) {
+            continue;
+        }
+        matched = true;
         output.extend(provider_protocol_v2_step_messages(
-            prior,
+            step,
             message_index,
             options,
             message,
-            false,
+            true,
         ));
     }
-    output.extend(provider_protocol_v2_step_messages(
-        protocol,
-        message_index,
-        options,
-        message,
-        true,
-    ));
-    Some(output)
+    matched.then_some(output)
 }
 
 fn provider_protocol_v2_step_messages(
@@ -175,12 +174,7 @@ fn provider_protocol_v2_step_messages(
     }
     if complete && same_origin && options.protocol_id.as_deref() == Some("openai_chat_completions")
     {
-        reasoning_replay::restore_chat_reasoning(
-            &mut assistant_message,
-            protocol,
-            source_message,
-            current_step,
-        );
+        reasoning_replay::restore_chat_reasoning(&mut assistant_message, protocol);
     }
 
     let mut output = auxiliary_before;

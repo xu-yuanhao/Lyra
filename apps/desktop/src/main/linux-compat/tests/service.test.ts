@@ -135,6 +135,65 @@ describe("linux compat resolver", () => {
     expect(plan.appliedSwitches["ozone-platform"]).toBe("x11");
   });
 
+  test("a socket-scanned X11 display does not outrank a Wayland session in the reliable profile", () => {
+    const plan = isolatedPlan({
+      platform: "linux",
+      argv: ["lyra"],
+      env: {
+        XDG_SESSION_TYPE: "wayland",
+        WAYLAND_DISPLAY: "wayland-1",
+        XDG_CURRENT_DESKTOP: "niri"
+      },
+      osReleaseText: ubuntuRelease,
+      x11Sockets: ["X0"]
+    });
+
+    expect(plan.backend).toBe("wayland");
+    expect(plan.backendSource).toBe("auto");
+    expect(plan.facts.x11Display).toBe(":0");
+    expect(plan.facts.x11DisplaySource).toBe("socket-scan");
+    expect(plan.appliedEnv.DISPLAY).toBeUndefined();
+    expect(plan.appliedSwitches["ozone-platform"]).toBe("wayland");
+    expect(plan.notes.some((note) => note.includes("socket scan"))).toBe(true);
+  });
+
+  test("a socket-scanned X11 display is still used when no Wayland session exists", () => {
+    const plan = isolatedPlan({
+      platform: "linux",
+      argv: ["lyra"],
+      env: {
+        XDG_SESSION_TYPE: "x11",
+        XDG_CURRENT_DESKTOP: "KDE"
+      },
+      osReleaseText: ubuntuRelease,
+      x11Sockets: ["X0"]
+    });
+
+    expect(plan.backend).toBe("x11");
+    expect(plan.facts.x11Display).toBe(":0");
+    expect(plan.facts.x11DisplaySource).toBe("socket-scan");
+    expect(plan.appliedEnv.DISPLAY).toBe(":0");
+  });
+
+  test("an X11 display from the launch environment keeps priority over Wayland in the reliable profile", () => {
+    const plan = isolatedPlan({
+      platform: "linux",
+      argv: ["lyra"],
+      env: {
+        XDG_SESSION_TYPE: "wayland",
+        WAYLAND_DISPLAY: "wayland-0",
+        DISPLAY: ":1",
+        XDG_CURRENT_DESKTOP: "KDE"
+      },
+      osReleaseText: ubuntuRelease,
+      x11Sockets: ["X0"]
+    });
+
+    expect(plan.backend).toBe("x11");
+    expect(plan.facts.x11DisplaySource).toBe("env");
+    expect(plan.warnings.some((warning) => warning.code === "both-display-servers-detected")).toBe(true);
+  });
+
   test("enables software mode in safe mode", () => {
     const plan = isolatedPlan({
       platform: "linux",
@@ -237,6 +296,143 @@ describe("linux compat resolver", () => {
     });
   });
 
+  test("a requested restart clears the display env correction marker", () => {
+    withLinuxRecoveryEnvRestore(() => {
+      const previousMarker = process.env.LYRA_LINUX_ENV_CORRECTION;
+      try {
+        process.env.LYRA_LINUX_ENV_CORRECTION = "1";
+        const bridge = createLinuxCompatBridge({
+          platform: "linux",
+          argv: ["lyra"],
+          env: baseEnv()
+        });
+
+        const response = bridge.requestRestart(
+          { relaunch: vi.fn(), exit: vi.fn() } as unknown as Electron.App,
+          { reason: "linux-compat-profile-change" }
+        );
+
+        expect(response.ok).toBe(true);
+        expect(process.env.LYRA_LINUX_ENV_CORRECTION).toBeUndefined();
+      } finally {
+        if (previousMarker === undefined) {
+          delete process.env.LYRA_LINUX_ENV_CORRECTION;
+        } else {
+          process.env.LYRA_LINUX_ENV_CORRECTION = previousMarker;
+        }
+      }
+    });
+  });
+
+  test("display env correction relaunches once with the corrected environment", () => {
+    const previousDisplay = process.env.DISPLAY;
+    const previousMarker = process.env.LYRA_LINUX_ENV_CORRECTION;
+    try {
+      delete process.env.DISPLAY;
+      delete process.env.LYRA_LINUX_ENV_CORRECTION;
+      const storageRoot = mkdtempSync(path.join(os.tmpdir(), "lyra-linux-compat-"));
+      const relaunch = vi.fn();
+      const exit = vi.fn();
+      const bridge = createLinuxCompatBridge({
+        platform: "linux",
+        argv: ["lyra", "--lyra-backend=x11"],
+        env: {
+          XDG_SESSION_TYPE: "wayland",
+          WAYLAND_DISPLAY: "wayland-0",
+          XDG_CURRENT_DESKTOP: "GNOME"
+        },
+        storageRoot,
+        x11Sockets: ["X0"]
+      });
+
+      const response = bridge.requestEnvCorrectionRelaunch(
+        { relaunch, exit } as unknown as Electron.App
+      );
+
+      expect(response.ok).toBe(true);
+      expect(relaunch).toHaveBeenCalledTimes(1);
+      const args = relaunch.mock.calls[0]?.[0]?.args as readonly string[];
+      expect(args).toContain("--lyra-linux-restart-reason=display-env-correction");
+      expect(args).not.toContain("--lyra-linux-recovery");
+      expect(exit).toHaveBeenCalledWith(0);
+      expect(process.env.DISPLAY).toBe(":0");
+      expect(process.env.LYRA_LINUX_ENV_CORRECTION).toBe("1");
+      const state = JSON.parse(
+        readFileSync(path.join(storageRoot, "runtime-state.v1.json"), "utf8")
+      ) as { readonly lastRestartReason?: string };
+      expect(state.lastRestartReason).toBe("display-env-correction");
+    } finally {
+      if (previousDisplay === undefined) {
+        delete process.env.DISPLAY;
+      } else {
+        process.env.DISPLAY = previousDisplay;
+      }
+      if (previousMarker === undefined) {
+        delete process.env.LYRA_LINUX_ENV_CORRECTION;
+      } else {
+        process.env.LYRA_LINUX_ENV_CORRECTION = previousMarker;
+      }
+    }
+  });
+
+  test("display env correction does not loop when already attempted in this launch chain", () => {
+    const previousDisplay = process.env.DISPLAY;
+    const previousMarker = process.env.LYRA_LINUX_ENV_CORRECTION;
+    try {
+      delete process.env.DISPLAY;
+      process.env.LYRA_LINUX_ENV_CORRECTION = "1";
+      const relaunch = vi.fn();
+      const bridge = createLinuxCompatBridge({
+        platform: "linux",
+        argv: ["lyra", "--lyra-backend=x11"],
+        env: {
+          XDG_SESSION_TYPE: "wayland",
+          WAYLAND_DISPLAY: "wayland-0",
+          XDG_CURRENT_DESKTOP: "GNOME",
+          // In production the marker is inherited through `process.env`.
+          LYRA_LINUX_ENV_CORRECTION: "1"
+        },
+        x11Sockets: ["X0"]
+      });
+
+      const response = bridge.requestEnvCorrectionRelaunch(
+        { relaunch, exit: vi.fn() } as unknown as Electron.App
+      );
+
+      expect(response.ok).toBe(false);
+      expect(response.error).toContain("already attempted");
+      expect(relaunch).not.toHaveBeenCalled();
+    } finally {
+      if (previousDisplay === undefined) {
+        delete process.env.DISPLAY;
+      } else {
+        process.env.DISPLAY = previousDisplay;
+      }
+      if (previousMarker === undefined) {
+        delete process.env.LYRA_LINUX_ENV_CORRECTION;
+      } else {
+        process.env.LYRA_LINUX_ENV_CORRECTION = previousMarker;
+      }
+    }
+  });
+
+  test("display env correction is a no-op when the launch environment already matches", () => {
+    const relaunch = vi.fn();
+    const bridge = createLinuxCompatBridge({
+      platform: "linux",
+      argv: ["lyra"],
+      env: baseEnv(),
+      x11Sockets: ["X0"]
+    });
+
+    const response = bridge.requestEnvCorrectionRelaunch(
+      { relaunch, exit: vi.fn() } as unknown as Electron.App
+    );
+
+    expect(response.ok).toBe(true);
+    expect(relaunch).not.toHaveBeenCalled();
+  });
+
   test("hybrid NVIDIA+Intel Wayland native uses the iGPU instead of software NVIDIA fallback", () => {
     const plan = isolatedPlan({
       platform: "linux",
@@ -269,7 +465,10 @@ describe("linux compat resolver", () => {
     expect(plan.appliedSwitches["disable-gpu-sandbox"]).toBe("true");
     expect(plan.appliedSwitches["disable-gpu"]).toBeUndefined();
     expect(plan.appliedEnv.GBM_BACKEND).toBeUndefined();
-    expect(plan.appliedEnv.DISPLAY).toBe(":0");
+    // The Wayland backend must not inject DISPLAY: a socket-scanned X11
+    // display (XWayland) would otherwise flip the display sources on a
+    // correction relaunch.
+    expect(plan.appliedEnv.DISPLAY).toBeUndefined();
   });
 
   test("NVIDIA-only Wayland native keeps hardware and disables the GPU sandbox", () => {

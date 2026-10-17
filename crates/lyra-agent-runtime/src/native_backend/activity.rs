@@ -1147,14 +1147,24 @@ pub(crate) fn format_memory_output(action: &str, value: &Value) -> String {
             .or_else(|| value.pointer("/record/content/fact"))
             .and_then(Value::as_str)
             .unwrap_or("memory updated");
-        return format!("Remembered: {fact}");
+        // Id receipt: without it the model cannot update/forget what it just
+        // wrote without a follow-up search (hermes/ZCode both return ids).
+        let id = value.pointer("/record/id").and_then(Value::as_str);
+        return match id {
+            Some(id) => format!("Remembered: {fact} (id: {id})"),
+            None => format!("Remembered: {fact}"),
+        };
     }
     if action == "update" {
         let fact = value
             .pointer("/record/fact")
             .and_then(Value::as_str)
             .unwrap_or("memory updated");
-        return format!("Updated memory: {fact}");
+        let id = value.pointer("/record/id").and_then(Value::as_str);
+        return match id {
+            Some(id) => format!("Updated memory {id}: {fact}"),
+            None => format!("Updated memory: {fact}"),
+        };
     }
     if action == "forget" {
         let id = value
@@ -1193,8 +1203,14 @@ pub(crate) fn format_memory_output(action: &str, value: &Value) -> String {
                 .and_then(Value::as_str)
                 .map(str::to_string)
                 .unwrap_or_else(|| serde_json::to_string(record).unwrap_or_default());
+            // Every search hit carries its id so follow-up update/forget calls
+            // can address the record directly.
+            let id = record.get("id").and_then(Value::as_str);
             let Some(score) = record.get("score").and_then(Value::as_f64) else {
-                return fact;
+                return match id {
+                    Some(id) => format!("{fact} [id={id}]"),
+                    None => fact,
+                };
             };
             let matched_by = record
                 .pointer("/scoreBreakdown/matchedBy")
@@ -1212,7 +1228,8 @@ pub(crate) fn format_memory_output(action: &str, value: &Value) -> String {
                 .pointer("/scoreBreakdown/decayPenalty")
                 .and_then(Value::as_f64)
                 .unwrap_or(0.0);
-            format!("{fact} [score={score:.3}; matched={matched_by}; decay={decay:.3}]")
+            let id_part = id.map(|id| format!("id={id}; ")).unwrap_or_default();
+            format!("{fact} [{id_part}score={score:.3}; matched={matched_by}; decay={decay:.3}]")
         })
         .collect::<Vec<_>>();
     lines.extend(session_recall_records.iter().take(10).map(|record| {
@@ -1801,6 +1818,68 @@ pub(crate) fn tool_result_content(output: &Value) -> String {
         .unwrap_or_else(|| serde_json::to_string_pretty(output).unwrap_or_default())
 }
 
+// Transcript copies persisted into message metadata (metadata.providerTranscript,
+// auxiliaryMessagesAfterToolResults) replay the recorded conversation on resume.
+// Reference projects replay recorded, already-bounded content (codex truncates
+// tool output at record time; no reference ships raw base64 image data inside
+// per-message metadata). Full captures stay recoverable through visual evidence
+// artifacts and tool activity evidence, so the persisted copy carries a bounded
+// marker instead.
+pub(crate) const PROVIDER_TRANSCRIPT_TEXT_MAX_BYTES: usize = 16 * 1024;
+
+pub(crate) fn truncate_bytes(value: &str, max_bytes: usize) -> String {
+    if value.len() <= max_bytes {
+        return value.to_string();
+    }
+    let mut end = max_bytes;
+    while end > 0 && !value.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}…[truncated {} bytes]", &value[..end], value.len() - end)
+}
+
+fn bound_provider_transcript_part(part: &mut Value) {
+    if part.get("type").and_then(Value::as_str) == Some("image_url") {
+        let url = part
+            .pointer("/image_url/url")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        if url.starts_with("data:") {
+            *part = json!({
+                "type": "text",
+                "text": format!(
+                    "[image omitted: {} bytes; full capture remains in Lyra visual evidence]",
+                    url.len()
+                ),
+            });
+        }
+        return;
+    }
+    if let Some(Value::String(text)) = part.get_mut("text") {
+        if text.len() > PROVIDER_TRANSCRIPT_TEXT_MAX_BYTES {
+            *text = truncate_bytes(text, PROVIDER_TRANSCRIPT_TEXT_MAX_BYTES);
+        }
+    }
+}
+
+pub(crate) fn bound_provider_transcript_message(message: &Value) -> Value {
+    let mut bounded = message.clone();
+    match bounded.get_mut("content") {
+        Some(Value::String(text)) => {
+            if text.len() > PROVIDER_TRANSCRIPT_TEXT_MAX_BYTES {
+                *text = truncate_bytes(text, PROVIDER_TRANSCRIPT_TEXT_MAX_BYTES);
+            }
+        }
+        Some(Value::Array(parts)) => {
+            for part in parts.iter_mut() {
+                bound_provider_transcript_part(part);
+            }
+        }
+        _ => {}
+    }
+    bounded
+}
+
 pub(crate) fn guarded_tool_result_content(
     output: &Value,
     max_chars: usize,
@@ -1956,4 +2035,61 @@ pub(crate) fn emit_turn_state(session_id: &str, turn_id: &str, state_name: &str,
             "reason": reason,
         }),
     );
+}
+
+#[cfg(test)]
+mod provider_transcript_bound_tests {
+    use super::*;
+
+    #[test]
+    fn elides_base64_image_parts_with_a_bounded_marker() {
+        // Visual evidence captures entered the persisted transcript copy as
+        // raw data URLs — a single screenshot made one message's metadata
+        // 1.6MB and blew past the read-window frame cap.
+        let message = json!({
+            "role": "user",
+            "content": [
+                { "type": "text", "text": "screenshot" },
+                { "type": "image_url", "image_url": { "url": format!("data:image/png;base64,{}", "A".repeat(1_000_000)) } }
+            ],
+            "lyraVisualEvidence": { "captureId": "capture-1" }
+        });
+
+        let bounded = bound_provider_transcript_message(&message);
+
+        let parts = bounded["content"].as_array().unwrap();
+        assert_eq!(parts[0]["type"], "text");
+        assert_eq!(parts[1]["type"], "text");
+        let marker = parts[1]["text"].as_str().unwrap();
+        assert!(marker.contains("[image omitted:"));
+        assert!(marker.contains("full capture remains in Lyra visual evidence"));
+        assert!(serde_json::to_vec(&bounded).unwrap().len() < 2_000);
+        assert_eq!(bounded["lyraVisualEvidence"]["captureId"], "capture-1");
+    }
+
+    #[test]
+    fn truncates_oversized_text_by_bytes_and_keeps_remote_image_urls() {
+        let message = json!({
+            "role": "user",
+            "content": [
+                { "type": "text", "text": "汉".repeat(40_000) },
+                { "type": "image_url", "image_url": { "url": "https://example.com/a.png" } }
+            ]
+        });
+
+        let bounded = bound_provider_transcript_message(&message);
+
+        let parts = bounded["content"].as_array().unwrap();
+        let text = parts[0]["text"].as_str().unwrap();
+        assert!(text.len() <= PROVIDER_TRANSCRIPT_TEXT_MAX_BYTES + 40);
+        assert!(text.contains("…[truncated"));
+        // Remote URLs are references, not inline payloads — they stay intact.
+        assert_eq!(parts[1]["image_url"]["url"], "https://example.com/a.png");
+    }
+
+    #[test]
+    fn keeps_small_string_content_untouched() {
+        let message = json!({ "role": "user", "content": "hello" });
+        assert_eq!(bound_provider_transcript_message(&message), message);
+    }
 }

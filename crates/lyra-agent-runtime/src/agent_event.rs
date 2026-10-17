@@ -21,6 +21,11 @@ pub enum AgentEvent {
     #[serde(rename_all = "camelCase")]
     MessageCommitted { session_id: String, message: Value },
     #[serde(rename_all = "camelCase")]
+    MessageRemoved {
+        session_id: String,
+        message_id: String,
+    },
+    #[serde(rename_all = "camelCase")]
     MessageDelta {
         session_id: String,
         message_id: String,
@@ -155,6 +160,8 @@ pub enum AgentEvent {
     #[serde(rename_all = "camelCase")]
     FollowStateChanged { session_id: String, follow: Value },
     #[serde(rename_all = "camelCase")]
+    SubagentStarted { session_id: String, subagent: Value },
+    #[serde(rename_all = "camelCase")]
     ProviderFault {
         session_id: String,
         turn_id: String,
@@ -170,6 +177,7 @@ pub enum AgentEvent {
         session_id: String,
         message_id: String,
         removed_message_count: u64,
+        removed_tool_count: u64,
         restored_file_count: u64,
     },
     #[serde(rename_all = "camelCase")]
@@ -196,6 +204,7 @@ pub enum AgentEvent {
 pub const TS_UNION_KINDS: &[&str] = &[
     "sessionSnapshot",
     "messageCommitted",
+    "messageRemoved",
     "messageDelta",
     "messageReasoningDelta",
     "toolStarted",
@@ -223,6 +232,7 @@ pub const TS_UNION_KINDS: &[&str] = &[
     "providerFault",
     "turnInterrupted",
     "followStateChanged",
+    "subagentStarted",
     "rollbackStarted",
     "rollbackFinished",
     "rollbackFailed",
@@ -473,6 +483,20 @@ mod tests {
                 "followStateChanged",
             ),
             (
+                AgentEvent::MessageRemoved {
+                    session_id: "s".into(),
+                    message_id: "m".into(),
+                },
+                "messageRemoved",
+            ),
+            (
+                AgentEvent::SubagentStarted {
+                    session_id: "s".into(),
+                    subagent: json!({}),
+                },
+                "subagentStarted",
+            ),
+            (
                 AgentEvent::ProviderFault {
                     session_id: "s".into(),
                     turn_id: "t".into(),
@@ -492,7 +516,8 @@ mod tests {
                     session_id: "s".into(),
                     message_id: "m".into(),
                     removed_message_count: 1,
-                    restored_file_count: 2,
+                    removed_tool_count: 2,
+                    restored_file_count: 3,
                 },
                 "rollbackFinished",
             ),
@@ -526,6 +551,7 @@ mod tests {
             let cases = vec![
                 "sessionSnapshot",
                 "messageCommitted",
+                "messageRemoved",
                 "messageDelta",
                 "messageReasoningDelta",
                 "toolStarted",
@@ -553,6 +579,7 @@ mod tests {
                 "userGateRequested",
                 "userGateResolved",
                 "followStateChanged",
+                "subagentStarted",
                 "providerFault",
                 "rollbackStarted",
                 "rollbackFinished",

@@ -29,15 +29,15 @@ pub(crate) fn clip_chars_head_tail(text: &str, max_chars: usize, footer: &str) -
     format!("{head_text}\n\n{footer}\n\n{tail_text}")
 }
 
-const MAX_MISSING_TOOL_RETRY: u8 = 2;
-const MAX_PROTOCOL_LEAK_RETRY: u8 = 2;
+/// One shared budget for every "model behavior needs correcting" retry in the
+/// thinking loop (reasoning-only, terminal-empty, truncated tool call, protocol
+/// leak, missing tool call). Reference agents keep a single correction budget
+/// and fail up when it is exhausted; per-kind counters multiply independent
+/// failure surfaces without adding recovery power.
+pub(crate) const MAX_MODEL_CORRECTION_RETRIES: u8 = 3;
 
-pub(crate) fn max_missing_tool_retry() -> u8 {
-    MAX_MISSING_TOOL_RETRY
-}
-
-pub(crate) fn max_protocol_leak_retry() -> u8 {
-    MAX_PROTOCOL_LEAK_RETRY
+pub(crate) fn max_model_correction_retry() -> u8 {
+    MAX_MODEL_CORRECTION_RETRIES
 }
 
 pub(crate) fn strip_internal_protocol_markers(text: &str) -> String {
@@ -338,13 +338,6 @@ pub(crate) fn validate_visible_assistant_text_protocol(
         });
     }
     Ok(())
-}
-
-pub(crate) fn message_has_provider_transcript(message: &Value) -> bool {
-    message
-        .pointer("/metadata/providerTranscript")
-        .and_then(Value::as_array)
-        .is_some_and(|items| !items.is_empty())
 }
 
 fn internal_protocol_markers() -> &'static [&'static str] {

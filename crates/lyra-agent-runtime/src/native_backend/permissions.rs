@@ -375,10 +375,6 @@ async fn wait_for_permission_internal_with_timeout_async(
         state
             .pending_permissions
             .insert(request_id.clone(), request.clone());
-        let snapshot = state
-            .sessions
-            .get(&session_id)
-            .map(|session| session.snapshot.clone());
         state.save_state()?;
         let mut events = vec![
             json!({
@@ -402,9 +398,6 @@ async fn wait_for_permission_internal_with_timeout_async(
                 "reason": "permission_request",
             }),
         ];
-        if let Some(snapshot) = snapshot {
-            events.push(json!({ "kind": "sessionSnapshot", "snapshot": snapshot }));
-        }
         events.push(super::user_gate::record_open(
             super::user_gate::UserGateKind::Permission,
             &request_id,
@@ -557,12 +550,8 @@ pub(crate) fn respond_permission(payload: Value) -> AgentRuntimeResult<Value> {
             });
             touch_session(session);
         }
-        let snapshot = state
-            .sessions
-            .get(&session_id)
-            .map(|session| session.snapshot.clone());
         state.save_state()?;
-        let mut events = vec![
+        let events = vec![
             json!({
                 "kind": "turnStateChanged",
                 "sessionId": session_id,
@@ -577,9 +566,6 @@ pub(crate) fn respond_permission(payload: Value) -> AgentRuntimeResult<Value> {
                 &resolve_source,
             ),
         ];
-        if let Some(snapshot) = snapshot {
-            events.push(json!({ "kind": "sessionSnapshot", "snapshot": snapshot }));
-        }
         let response = json!({
             "sessionId": session_id,
             "permissionId": permission_id,

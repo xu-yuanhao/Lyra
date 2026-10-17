@@ -291,6 +291,7 @@ mod tests {
             runtime_turns: Vec::new(),
             rollback_checkpoints: Vec::new(),
             file_read_state: std::collections::HashMap::new(),
+            provider_protocol_log: vec![],
             dirty: false,
             dialog_dirty_from: None,
             persisted_dialog_len: 0,

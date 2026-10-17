@@ -153,6 +153,7 @@ pub struct PromptPolicyInput {
     pub runtime_context: Value,
     pub persona: PersonaContext,
     pub active_skill_prompt: String,
+    pub project_instructions: String,
     pub memory_prompt: String,
     pub accounting: PromptAccounting,
     pub delivery_mode: Option<PromptDeliveryMode>,
@@ -217,7 +218,7 @@ pub fn build_system_prompt_report(input: &PromptPolicyInput) -> PromptBuildRepor
         .delivery_mode
         .unwrap_or_else(PromptDeliveryMode::from_env);
     let contract = current_prompt_runtime_contract();
-    let stable_sections = render_stable_prompt_sections();
+    let stable_sections = render_stable_prompt_sections(input);
     let stable_base_prompt =
         join_sections(stable_sections.iter().map(|section| section.text.as_str()));
     let stable_base_hash = hash_text(&stable_base_prompt);
@@ -699,8 +700,8 @@ fn render_prompt_sections(
     sections
 }
 
-fn render_stable_prompt_sections() -> Vec<PromptSectionCandidate> {
-    vec![
+fn render_stable_prompt_sections(input: &PromptPolicyInput) -> Vec<PromptSectionCandidate> {
+    let mut sections = vec![
         PromptSectionCandidate {
             id: "P0.kernel",
             layer: PromptLayer::P0,
@@ -721,6 +722,24 @@ fn render_stable_prompt_sections() -> Vec<PromptSectionCandidate> {
             scene_module: None,
             text: render_prompt_template("design_scene.md.j2", json!({})),
         },
+    ];
+    let project_instructions = input.project_instructions.trim();
+    if !project_instructions.is_empty() {
+        sections.push(PromptSectionCandidate {
+            id: "P1.projectInstructions",
+            layer: PromptLayer::P1,
+            mode_policy: PromptSectionModePolicy::Always,
+            include_full: true,
+            include_lean: true,
+            stable: true,
+            scene_module: None,
+            text: render_prompt_template(
+                "project_instructions.md.j2",
+                json!({ "project_instructions": project_instructions }),
+            ),
+        });
+    }
+    sections.extend([
         PromptSectionCandidate {
             id: "P1.interactionContract",
             layer: PromptLayer::P1,
@@ -751,7 +770,8 @@ fn render_stable_prompt_sections() -> Vec<PromptSectionCandidate> {
             scene_module: None,
             text: render_prompt_template("plan_mode.md.j2", json!({})),
         },
-    ]
+    ]);
+    sections
 }
 
 fn render_prompt_template(name: &str, context: Value) -> String {
@@ -1639,6 +1659,110 @@ mod tests {
             projection["sectionCount"]
                 .as_u64()
                 .is_some_and(|count| count >= 5)
+        );
+    }
+
+    #[test]
+    fn project_instructions_section_absent_by_default() {
+        let report = build_system_prompt_report(&PromptPolicyInput::default());
+        assert!(!report.section_hashes.contains_key("P1.projectInstructions"));
+        assert!(
+            !report
+                .sections
+                .iter()
+                .any(|section| section.id == "P1.projectInstructions")
+        );
+        assert!(
+            !report
+                .stable_prefix_prompt
+                .contains("Project instructions from this workspace")
+        );
+        assert_eq!(
+            report.stable_base_hash,
+            current_stable_base_hash(),
+            "default input and blank instructions must hash identically"
+        );
+    }
+
+    #[test]
+    fn project_instructions_render_into_full_and_lean_prefixes() {
+        let input = |instructions: &str| PromptPolicyInput {
+            project_instructions: instructions.to_string(),
+            ..PromptPolicyInput::default()
+        };
+        let full = build_system_prompt_report(&input("Follow repo rules."));
+        assert!(full.section_hashes.contains_key("P1.projectInstructions"));
+        assert!(full.stable_prefix_prompt.contains("Follow repo rules."));
+        assert!(
+            full.prompt
+                .contains("Project instructions from this workspace, nearest directory first:")
+        );
+        let lean = build_system_prompt_report(&PromptPolicyInput {
+            delivery_mode: Some(PromptDeliveryMode::LeanExperimental),
+            ..input("Follow repo rules.")
+        });
+        assert!(lean.stable_prefix_prompt.contains("Follow repo rules."));
+        assert!(
+            lean.prompt
+                .contains("Project instructions from this workspace, nearest directory first:")
+        );
+    }
+
+    #[test]
+    fn stable_base_hash_rotates_only_on_instruction_change() {
+        let baseline = current_stable_base_hash();
+        let blank = build_system_prompt_report(&PromptPolicyInput {
+            project_instructions: "   ".to_string(),
+            ..PromptPolicyInput::default()
+        })
+        .stable_base_hash;
+        assert_eq!(blank, baseline);
+        let first = build_system_prompt_report(&PromptPolicyInput {
+            project_instructions: "Rule one.".to_string(),
+            ..PromptPolicyInput::default()
+        })
+        .stable_base_hash;
+        assert_eq!(
+            first,
+            build_system_prompt_report(&PromptPolicyInput {
+                project_instructions: "Rule one.".to_string(),
+                ..PromptPolicyInput::default()
+            })
+            .stable_base_hash
+        );
+        assert_ne!(first, baseline);
+        let second = build_system_prompt_report(&PromptPolicyInput {
+            project_instructions: "Rule two.".to_string(),
+            ..PromptPolicyInput::default()
+        })
+        .stable_base_hash;
+        assert_ne!(second, first);
+    }
+
+    #[test]
+    fn project_instructions_section_sits_between_craft_and_interaction_contract() {
+        let report = build_system_prompt_report(&PromptPolicyInput {
+            project_instructions: "Follow repo rules.".to_string(),
+            ..PromptPolicyInput::default()
+        });
+        let ids: Vec<&str> = report.sections.iter().map(|s| s.id.as_str()).collect();
+        let craft = ids.iter().position(|id| *id == "P0.craft").expect("craft");
+        let instructions = ids
+            .iter()
+            .position(|id| *id == "P1.projectInstructions")
+            .expect("project instructions");
+        let contract = ids
+            .iter()
+            .position(|id| *id == "P1.interactionContract")
+            .expect("interaction contract");
+        assert!(craft < instructions && instructions < contract);
+        assert!(
+            report
+                .sections
+                .iter()
+                .filter(|section| section.id == "P1.projectInstructions")
+                .count()
+                == 1
         );
     }
 }

@@ -684,7 +684,9 @@ export type AgentMessageResolveResponse = {
 export type AgentTurnSendResponse = {
   readonly sessionId: string;
   readonly turnId?: string | null;
-  readonly status: "running";
+  /** "steered": the session was mid-turn, so the message was queued for
+   * injection at the running turn's next model boundary. */
+  readonly status: "running" | "steered";
 };
 
 export type AgentTurnCancelRequest = {
@@ -824,7 +826,6 @@ export type AgentRollbackPreviewResponse = {
 export type AgentRollbackRestoreResponse = {
   readonly sessionId: string;
   readonly messageId: string;
-  readonly snapshot: AgentSessionSnapshot;
   readonly removedMessageCount: number;
   readonly restoredFileCount: number;
 };
@@ -1022,6 +1023,11 @@ export type AgentRuntimeEvent =
       readonly message: AgentMessage;
     }
   | {
+      readonly kind: "messageRemoved";
+      readonly sessionId: string;
+      readonly messageId: string;
+    }
+  | {
       readonly kind: "messageDelta";
       readonly sessionId: string;
       readonly messageId: string;
@@ -1159,6 +1165,11 @@ export type AgentRuntimeEvent =
       readonly text: string;
     }
   | {
+      readonly kind: "subagentStarted";
+      readonly sessionId: string;
+      readonly subagent: AgentSubagentRecord;
+    }
+  | {
       readonly kind: "turnFailed";
       readonly sessionId: string;
       readonly turnId: string;
@@ -1192,6 +1203,7 @@ export type AgentRuntimeEvent =
       readonly sessionId: string;
       readonly messageId: string;
       readonly removedMessageCount: number;
+      readonly removedToolCount: number;
       readonly restoredFileCount: number;
     }
   | {

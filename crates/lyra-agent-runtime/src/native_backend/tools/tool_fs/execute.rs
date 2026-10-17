@@ -401,7 +401,10 @@ pub(super) async fn execute_tool_fs_run(
     eprintln!("DEBUG_RUN validated");
     let manifest = match validation_result {
         Ok(Some(manifest)) => {
-            eprintln!("DEBUG_RUN manifest domain={} path={} risk={}", manifest.domain, manifest.path, manifest.risk_level);
+            eprintln!(
+                "DEBUG_RUN manifest domain={} path={} risk={}",
+                manifest.domain, manifest.path, manifest.risk_level
+            );
             manifest
         }
         Ok(None) => {
@@ -564,7 +567,8 @@ pub(super) async fn execute_tool_fs_run(
             "permissionMode": operation_envelope.permission_mode,
         }),
     );
-    let mut policy_decision = match policy_mode_gate(&manifest, &operation_envelope.permission_mode) {
+    let mut policy_decision = match policy_mode_gate(&manifest, &operation_envelope.permission_mode)
+    {
         Ok(decision) => decision,
         Err(failure) => {
             push_trace(

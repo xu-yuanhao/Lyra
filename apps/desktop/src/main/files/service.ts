@@ -211,6 +211,26 @@ const withDirectorySnapshotPreviewUrls = (
   generation: snapshot.generation
 });
 
+// The Rust wire struct (lyra-files-core wire.rs FileManagerDirectoryPatch) has
+// Option fields without skip_serializing_if, so absent fields arrive as explicit
+// `null` instead of the `undefined` this shared type promises. Normalize at the
+// send boundary so every consumer (preview transforms, renderer state models)
+// sees the declared contract.
+const normalizeDirectoryPatch = (
+  patch: FileManagerDirectoryPatch
+): FileManagerDirectoryPatch => ({
+  subscriptionId: patch.subscriptionId,
+  directoryPath: patch.directoryPath,
+  generation: patch.generation,
+  kind: patch.kind,
+  ...(patch.entry == null ? {} : { entry: patch.entry }),
+  ...(patch.path == null ? {} : { path: patch.path }),
+  ...(patch.oldPath == null ? {} : { oldPath: patch.oldPath }),
+  ...(patch.newPath == null ? {} : { newPath: patch.newPath }),
+  ...(patch.snapshot == null ? {} : { snapshot: patch.snapshot }),
+  ...(patch.errorMessage == null ? {} : { errorMessage: patch.errorMessage })
+});
+
 const withDirectoryPatchPreviewUrl = (
   patch: FileManagerDirectoryPatch,
   createPreviewUrl: FilePreviewUrlFactory
@@ -341,7 +361,8 @@ export const createFilesIpcBridge = ({
     maxQueueSize: DIRECTORY_PATCH_MAX_QUEUE_SIZE,
     leading: false,
     estimateBytes: estimateSerializedBytes,
-    send: (patch) => {
+    send: (rawPatch) => {
+      const patch = normalizeDirectoryPatch(rawPatch);
       for (const window of BrowserWindow.getAllWindows()) {
         if (window.isDestroyed()) {
           continue;

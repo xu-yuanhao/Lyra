@@ -168,14 +168,15 @@ describe("workbench observation tab control bridge", () => {
     });
     expect(split.ok).toBe(true);
     expect(tabsModel.splitTabWithTarget).toHaveBeenCalledWith("tab-a", "tab-b");
-    expect(split.result).toEqual({
+    expect(split.result).toMatchObject({
       sourceTabId: "tab-a",
       targetTabId: "tab-b",
       layout: {
         layoutMode: "split",
         splitGroupTabIds: ["tab-a", "tab-b"],
         focusedSplitTabId: "tab-a"
-      }
+      },
+      receipt: expect.stringContaining("post-mutation")
     });
 
     const detach = await bridge({
@@ -193,10 +194,11 @@ describe("workbench observation tab control bridge", () => {
     });
     expect(close.ok).toBe(true);
     expect(tabsModel.closeTab).toHaveBeenCalledWith("tab-c");
-    expect(close.result).toEqual({
+    expect(close.result).toMatchObject({
       tabId: "tab-c",
       closed: true,
-      activeTabId: "tab-a"
+      activeTabId: "tab-a",
+      receipt: expect.stringContaining("Closed tab")
     });
   });
 

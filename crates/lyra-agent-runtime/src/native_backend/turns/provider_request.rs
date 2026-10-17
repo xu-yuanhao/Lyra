@@ -20,6 +20,7 @@ struct SessionContextData {
     previous_context_trimmed: bool,
     configured_prompt_delivery_mode: Option<String>,
     configured_stateful_prompt_contract: bool,
+    protocol_log: Vec<Value>,
     session_created_at: String,
     turn_count: u64,
 }
@@ -55,6 +56,7 @@ fn assemble_session_context(session_id: &str) -> AgentRuntimeResult<SessionConte
         previous_runtime_contract,
         previous_prompt_hash,
         previous_context_trimmed,
+        protocol_log,
         session_created_at,
         turn_count,
     ) = {
@@ -119,6 +121,7 @@ fn assemble_session_context(session_id: &str) -> AgentRuntimeResult<SessionConte
             previous_runtime_contract,
             previous_prompt_hash,
             previous_context_trimmed,
+            session.provider_protocol_log.clone(),
             session.created_at.clone(),
             session.runtime_turns.len() as u64,
         )
@@ -170,6 +173,7 @@ fn assemble_session_context(session_id: &str) -> AgentRuntimeResult<SessionConte
         previous_context_trimmed,
         configured_prompt_delivery_mode: state.config.prompt_delivery_mode.clone(),
         configured_stateful_prompt_contract: state.config.openai_responses_stateful_prompt_contract,
+        protocol_log,
         session_created_at,
         turn_count,
     })
@@ -235,9 +239,6 @@ pub(super) fn provider_history_fingerprint(messages: &[Value]) -> String {
                 "role": message.get("role").cloned().unwrap_or(Value::Null),
                 "text": message.get("text").cloned().unwrap_or(Value::Null),
                 "blocks": message.get("blocks").cloned().unwrap_or(Value::Null),
-                "providerTranscript": message.pointer("/metadata/providerTranscript").cloned().unwrap_or(Value::Null),
-                "openaiResponsesReplay": message.pointer("/metadata/openaiResponsesReplay").cloned().unwrap_or(Value::Null),
-                "providerProtocol": message.pointer("/metadata/providerProtocol").cloned().unwrap_or(Value::Null),
                 "transcriptCitations": message.pointer("/metadata/transcriptCitations").cloned().unwrap_or(Value::Null),
                 "pageCitations": message.pointer("/metadata/pageCitations").cloned().unwrap_or(Value::Null),
                 "fileAttachments": message.pointer("/metadata/fileAttachments").cloned().unwrap_or(Value::Null),
@@ -339,6 +340,7 @@ pub(crate) fn build_model_request(session_id: &str) -> AgentRuntimeResult<ModelR
         previous_context_trimmed,
         configured_prompt_delivery_mode,
         configured_stateful_prompt_contract,
+        protocol_log,
         session_created_at,
         turn_count,
     } = assemble_session_context(session_id)?;
@@ -429,8 +431,6 @@ pub(crate) fn build_model_request(session_id: &str) -> AgentRuntimeResult<ModelR
         providers::wire_protocol::api_npm_for(&provider, &model).as_deref(),
     )
     .unwrap_or(route.protocol_id.as_str());
-    let openai_responses_replay =
-        effective_protocol_id == providers::protocol::openai_responses::PROTOCOL_ID;
     let host_context = context::read_turn_host_context(host_dispatcher.as_ref());
     tools::tool_fs::update_software_catalog(host_dispatcher.as_ref(), &host_context["software"]);
     tools::tool_search::persist_discovered_snapshot(session_id, host_dispatcher.as_ref());
@@ -647,10 +647,12 @@ pub(crate) fn build_model_request(session_id: &str) -> AgentRuntimeResult<ModelR
             .unwrap_or(false),
     );
     let first_used_at = state().lock().ok().and_then(|s| s.first_used_at.clone());
+    let project_root = projects::snapshot_root(&session_snapshot);
     let prompt_report = build_system_prompt_report(
         &runtime_context,
         &persona_context,
-        &active_skill_prompt_for_project(projects::snapshot_root(&session_snapshot)),
+        &active_skill_prompt_for_project(project_root),
+        &project_instructions::project_instructions_prompt(project_root),
         &combined_memory_prompt(
             &memory_records,
             &system_recall_records,
@@ -692,7 +694,7 @@ pub(crate) fn build_model_request(session_id: &str) -> AgentRuntimeResult<ModelR
         max_tool_output_chars: 24_000,
         session_tool_count: session_tools.len(),
         last_turn_tool_count,
-        openai_responses_replay,
+        protocol_log,
         provider_id: Some(provider.id.clone()),
         route_id: Some(provider.route_id.clone()),
         protocol_id: Some(effective_protocol_id.to_string()),

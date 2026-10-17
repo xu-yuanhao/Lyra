@@ -399,6 +399,7 @@ pub(crate) fn build_system_prompt_report(
     runtime_context: &Value,
     persona: &PersonaContext,
     active_skill_prompt: &str,
+    project_instructions: &str,
     memory_prompt: &str,
     previous_runtime_contract: Option<Value>,
     previous_prompt_hash: Option<String>,
@@ -415,6 +416,7 @@ pub(crate) fn build_system_prompt_report(
         runtime_context: runtime_context.clone(),
         persona: persona.clone(),
         active_skill_prompt: active_skill_prompt.to_string(),
+        project_instructions: project_instructions.to_string(),
         memory_prompt: memory_prompt.to_string(),
         accounting: PromptAccounting {
             system_budget: 1200,

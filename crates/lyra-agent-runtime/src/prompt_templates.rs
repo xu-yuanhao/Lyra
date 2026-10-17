@@ -12,6 +12,10 @@ const TEMPLATES: &[(&str, &str)] = &[
         include_str!("prompts/compact_contract.md.j2"),
     ),
     (
+        "project_instructions.md.j2",
+        include_str!("prompts/project_instructions.md.j2"),
+    ),
+    (
         "full_contract.md.j2",
         include_str!("prompts/full_contract.md.j2"),
     ),
@@ -108,5 +112,20 @@ mod tests {
         assert!(managed.contains("do not need per-action consent"));
         assert!(autonomous.contains("do not need approval or consent"));
         assert!(autonomous.contains("think through the evidence"));
+    }
+
+    #[test]
+    fn project_instructions_template_renders_content_verbatim() {
+        let rendered = render_template(
+            "project_instructions.md.j2",
+            json!({ "project_instructions": "Follow <repo> rules && stay brief" }),
+        )
+        .expect("render");
+        assert!(
+            rendered.contains("Project instructions from this workspace, nearest directory first:")
+        );
+        assert!(rendered.contains("Follow <repo> rules && stay brief"));
+        assert!(!rendered.contains("&lt;"));
+        assert!(render_template("project_instructions.md.j2", json!({})).is_err());
     }
 }

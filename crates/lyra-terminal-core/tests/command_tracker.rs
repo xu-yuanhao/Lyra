@@ -115,10 +115,7 @@ fn prompt_shaped_osc7_is_not_a_directory() {
     assert!(poisoned.is_empty());
     let events = parser.feed(b"\x1b]7;file://localhost/home/xu-yuanhao/Documents\x07");
     assert_eq!(events.len(), 1);
-    assert_eq!(
-        events[0].cwd.as_deref(),
-        Some("/home/xu-yuanhao/Documents")
-    );
+    assert_eq!(events[0].cwd.as_deref(), Some("/home/xu-yuanhao/Documents"));
     let marker = parser.feed(b"\x1b]633;Cwd;#/home/xu-yuanhao/Documents%\x07");
     assert!(marker.is_empty());
     let absolute = parser.feed(b"\x1b]633;Cwd;/tmp/lyra\x07");

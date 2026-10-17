@@ -62,6 +62,9 @@ struct ShellCommandAst {
     executable: Option<String>,
     arguments: Vec<String>,
     executable_end: usize,
+    /// End byte of the whole `command` node, so post-executable edits (the
+    /// sudo -S injection) know where this command stops and the next one starts.
+    command_end: usize,
     backgrounded: bool,
 }
 
@@ -71,6 +74,136 @@ struct ShellAstAnalysis {
     has_write_redirect: bool,
     has_parse_error: bool,
     has_dynamic_interpreter: bool,
+}
+
+/// Prepare a sudo command for stdin password injection: insert `-S` right
+/// after `sudo` and strip `-n` / `--non-interactive` from sudo's own option
+/// run. Stripping matters because `-n` makes sudo skip stdin entirely, so a
+/// well-meant `sudo -n …` probe fails with "a password is required" even
+/// though the password is about to be piped in — elevation mode means sudo is
+/// pre-authorized, and the two flags contradict that. Only sudo's own option
+/// run is touched (it ends at the first token not starting with `-`), so the
+/// wrapped command's arguments (e.g. `pacman -nfoo`) are never modified.
+/// Combined short flags like `-ln` are left alone; the standalone probe flags
+/// are the shapes models actually emit.
+fn prepare_sudo_stdin_command(command: &str, sudo: &ShellCommandAst) -> String {
+    let zone_end = sudo.command_end.min(command.len());
+    let insert_at = sudo.executable_end.min(zone_end);
+    let zone = &command[insert_at..zone_end];
+
+    let mut token_spans: Vec<(usize, usize)> = Vec::new();
+    let mut index = 0usize;
+    while index < zone.len() {
+        if zone[index..].starts_with(char::is_whitespace) {
+            index += 1;
+            continue;
+        }
+        let end = zone[index..]
+            .find(char::is_whitespace)
+            .unwrap_or(zone.len() - index)
+            + index;
+        token_spans.push((index, end));
+        index = end;
+    }
+
+    let mut prepared = String::with_capacity(command.len() + 3);
+    prepared.push_str(&command[..insert_at]);
+    prepared.push_str(" -S");
+    let mut copied_up_to = 0usize;
+    let mut in_option_run = true;
+    for (start, end) in token_spans {
+        let token = &zone[start..end];
+        if in_option_run {
+            if token == "-n" || token == "--non-interactive" {
+                // Drop the token together with the whitespace before it so the
+                // result never keeps a double space behind.
+                copied_up_to = end;
+                continue;
+            }
+            if !token.starts_with('-') {
+                in_option_run = false;
+            }
+        }
+        prepared.push_str(&zone[copied_up_to..end]);
+        copied_up_to = end;
+    }
+    prepared.push_str(&zone[copied_up_to..]);
+    prepared.push_str(&command[zone_end..]);
+    prepared
+}
+
+#[cfg(test)]
+mod sudo_stdin_prepare_tests {
+    use super::*;
+
+    fn sudo_ast(command: &str, executable_end: usize, command_end: usize) -> ShellCommandAst {
+        ShellCommandAst {
+            executable: Some("sudo".to_string()),
+            arguments: Vec::new(),
+            executable_end,
+            command_end,
+            backgrounded: false,
+        }
+    }
+
+    #[test]
+    fn strips_standalone_n_flag_from_sudo_option_run() {
+        // Regression: a `sudo -n …` probe used to fail with "a password is
+        // required" even when the elevation password was piped in, because -n
+        // makes sudo skip stdin entirely. session-ce6240e2's first tool call
+        // died exactly this way and spiralled into a source-reading detour.
+        let command = "sudo -n true";
+        let prepared = prepare_sudo_stdin_command(command, &sudo_ast(command, 4, command.len()));
+        assert_eq!(prepared, "sudo -S true");
+    }
+
+    #[test]
+    fn strips_long_form_non_interactive_flag() {
+        let command = "sudo --non-interactive pacman -Syu";
+        let prepared = prepare_sudo_stdin_command(command, &sudo_ast(command, 4, command.len()));
+        assert_eq!(prepared, "sudo -S pacman -Syu");
+    }
+
+    #[test]
+    fn inserts_s_only_when_no_non_interactive_flag_present() {
+        let command = "sudo pacman -Syu";
+        let prepared = prepare_sudo_stdin_command(command, &sudo_ast(command, 4, command.len()));
+        assert_eq!(prepared, "sudo -S pacman -Syu");
+    }
+
+    #[test]
+    fn leaves_wrapped_command_flags_untouched() {
+        // `-n` belongs to pacman here, not to sudo: the option run ends at the
+        // first non-flag token, so stripping must stop there.
+        let command = "sudo pacman -n foo";
+        let prepared = prepare_sudo_stdin_command(command, &sudo_ast(command, 4, command.len()));
+        assert_eq!(prepared, "sudo -S pacman -n foo");
+    }
+
+    #[test]
+    fn strips_only_within_the_sudo_segment_of_a_compound_line() {
+        let command = "echo hi; sudo -k -n true; pacman -Qu";
+        let executable_end = command.find("sudo").expect("sudo present") + "sudo".len();
+        let prepared =
+            prepare_sudo_stdin_command(command, &sudo_ast(command, executable_end, command.len()));
+        assert_eq!(prepared, "echo hi; sudo -S -k true; pacman -Qu");
+    }
+
+    #[test]
+    fn keeps_combined_short_flags() {
+        // `-ln` is sudo's own combined flag run; only standalone probe flags
+        // are stripped (documented limitation).
+        let command = "sudo -ln true";
+        let prepared = prepare_sudo_stdin_command(command, &sudo_ast(command, 4, command.len()));
+        assert_eq!(prepared, "sudo -S -ln true");
+    }
+
+    #[test]
+    fn bare_sudo_still_gets_s_inserted() {
+        let command = "sudo";
+        let prepared = prepare_sudo_stdin_command(command, &sudo_ast(command, 4, command.len()));
+        assert_eq!(prepared, "sudo -S");
+    }
 }
 
 pub(crate) async fn execute_shell_tool_adapter(
@@ -247,15 +380,13 @@ pub(crate) async fn tool_shell_run_async(
     // 启发式检测 `sudo ` 子串，可能匹配字符串内的 sudo，但 elevation_secret 仅在
     // full_auto 模式下存在，此时用户已授权所有命令执行。
     let elevation = elevation_secret();
-    let sudo_insert_at = analysis
+    let sudo_command = analysis
         .commands
         .iter()
-        .find(|command| command.executable.as_deref() == Some("sudo"))
-        .map(|command| command.executable_end);
-    let needs_sudo_stdin = elevation.is_some() && sudo_insert_at.is_some();
-    let command = if needs_sudo_stdin {
-        let insert_at = sudo_insert_at.expect("checked above");
-        format!("{} -S{}", &command[..insert_at], &command[insert_at..])
+        .find(|command| command.executable.as_deref() == Some("sudo"));
+    let needs_sudo_stdin = elevation.is_some() && sudo_command.is_some();
+    let command = if let (Some(_secret), Some(sudo)) = (elevation.as_deref(), sudo_command) {
+        prepare_sudo_stdin_command(&command, sudo)
     } else {
         command
     };
@@ -453,6 +584,7 @@ pub(crate) async fn tool_shell_run_async(
             "predictedTimeoutMs": predicted_timeout_ms,
             "elapsedMs": elapsed_ms,
             "stillRunning": still_running,
+            "cancelledByTurn": cancelled,
             "timedOut": timed_out,
             "predictionMissed": timed_out,
             "commandKind": command_kind,
@@ -926,6 +1058,7 @@ fn collect_shell_ast(node: Node<'_>, source: &[u8], analysis: &mut ShellAstAnaly
         let executable_end = executable_node
             .map(|name| name.end_byte())
             .unwrap_or_default();
+        let command_end = node.end_byte();
         let mut arguments = Vec::new();
         let mut cursor = node.walk();
         for argument in node.children_by_field_name("argument", &mut cursor) {
@@ -937,6 +1070,7 @@ fn collect_shell_ast(node: Node<'_>, source: &[u8], analysis: &mut ShellAstAnaly
             executable,
             arguments,
             executable_end,
+            command_end,
             backgrounded: command_is_backgrounded(node, source),
         });
     } else if node.kind() == "file_redirect" && file_redirect_writes(node, source) {

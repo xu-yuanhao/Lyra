@@ -240,10 +240,10 @@ fn checkpoint(round: &StreamingTools, pending: &mut Pending) -> AgentRuntimeResu
             pending.checkpoint["assistant"]["content"] = message["text"].clone();
         }
     }
-    turns::persist_provider_protocol_step(
+    turns::upsert_provider_protocol_log_entry(
         &round.session_id,
         &round.turn_id,
-        message_id,
+        Some(message_id),
         pending.checkpoint.clone(),
     )
 }

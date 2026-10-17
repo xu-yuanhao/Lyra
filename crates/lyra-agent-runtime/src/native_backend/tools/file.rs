@@ -33,6 +33,7 @@ pub(crate) async fn execute_filesystem_tool_adapter(
         started_at,
         None,
         runtime,
+        true,
     )
     .await
 }
@@ -185,6 +186,17 @@ pub(crate) fn tool_file_glob(session_id: &str, input: &Value) -> NativeToolResul
     })?;
     let include_hidden = value_bool(input, "includeHidden", false);
     let limit = value_usize(input, "limit", DEFAULT_LIST_LIMIT, 2000);
+    // glob-0.3 quirk: `**/` cannot match zero directories in Pattern::matches
+    // (the empty match still has to consume the literal `/`), so `**/*.rs`
+    // silently misses root-level files. Retry with the `**/` prefix stripped;
+    // this also fixes `**/dir/**`-style patterns against their own subtree.
+    let bare_glob = pattern.strip_prefix("**/").and_then(|bare| {
+        if bare == pattern {
+            None
+        } else {
+            Pattern::new(bare).ok()
+        }
+    });
     let mut files = Vec::new();
     collect_workspace_files(
         &workspace_path.root,
@@ -206,7 +218,12 @@ pub(crate) fn tool_file_glob(session_id: &str, input: &Value) -> NativeToolResul
             .file_name()
             .and_then(|value| value.to_str())
             .unwrap_or("");
-        if compiled.matches(&relative) || (!pattern.contains('/') && compiled.matches(file_name)) {
+        if compiled.matches(&relative)
+            || bare_glob
+                .as_ref()
+                .is_some_and(|bare| bare.matches(&relative))
+            || (!pattern.contains('/') && compiled.matches(file_name))
+        {
             matches.push(json!({ "path": relative }));
         }
     }

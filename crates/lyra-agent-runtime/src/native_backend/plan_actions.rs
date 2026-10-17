@@ -133,13 +133,6 @@ pub(crate) fn project_plan_revise(payload: Value) -> AgentRuntimeResult<Value> {
             "plan": plan,
         }),
     );
-    emit_with_callback(
-        &callback,
-        json!({
-            "kind": "sessionSnapshot",
-            "snapshot": snapshot,
-        }),
-    );
     Ok(snapshot)
 }
 
@@ -290,13 +283,6 @@ pub(crate) fn plan_review_respond(payload: Value) -> AgentRuntimeResult<Value> {
         &session_id,
         super::user_gate::UserGateKind::PlanReview,
         &resolve_source,
-    );
-    emit_with_callback(
-        &callback,
-        json!({
-            "kind": "sessionSnapshot",
-            "snapshot": snapshot,
-        }),
     );
     if dispatch_todos {
         emit_project_todo_events(&session_id, &snapshot);

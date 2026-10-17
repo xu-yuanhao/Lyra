@@ -78,11 +78,11 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
     let mut retried_after_image_input_error = false;
     let mut retried_after_media_input_error = false;
     let mut retried_after_tool_calling_error = false;
-    let mut reasoning_only_retries = 0_u8;
-    let mut terminal_empty_retries = 0_u8;
-    let mut truncated_tool_retries = 0_u8;
-    let mut protocol_leak_retries = 0_u8;
-    let mut missing_tool_retries = 0_u8;
+    // One shared budget for every "model behavior needs correcting" retry
+    // (reasoning-only, terminal-empty, truncated tool call, protocol leak,
+    // missing tool call). Request-layer transient retries and capability
+    // downgrades keep their own budgets; corrections do not multiply.
+    let mut model_correction_retries = 0_u8;
     let mut transient_provider_retries = 0_u8;
     let mut continuation_retries = 0_u8;
     let mut truncated_prefix: Option<String> = None;
@@ -90,16 +90,40 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
     let mut provider_transcript = Vec::new();
     let mut provider_protocol_transcript_cursor = 0_usize;
     let mut provider_replay_items = Vec::new();
-    let mut deferred_provider_protocol_steps = Vec::new();
     let mut observations = ModelLoopObservations::default();
     let mut retried_without_prompt_cache = false;
     let mut retried_without_previous_response = false;
     let mut tool_choice_recovery_active = false;
     let mut attempt_local_overlay_start = None;
     let mut tool_catalog_revision = current_tool_catalog_revision(session_id);
+    let steer_projection_options = crate::context_builder::ProviderContextOptions {
+        provider_id: Some(request.provider.id.clone()),
+        route_id: Some(request.provider.route_id.clone()),
+        model: Some(request.model.clone()),
+        ..Default::default()
+    };
     loop {
         if cancellation.is_cancelled() || turn_was_cancelled(session_id, turn_id) {
             return Err(AgentRuntimeError::Cancelled);
+        }
+        // Boundary 1: inject steers queued while the previous round was in
+        // flight. Appended after the stateful cursor they are new input, so
+        // the provider sees [... tool results, steer] and the turn continues
+        // without losing its middle state or re-paying the cache prefix.
+        let pending_steers =
+            crate::native_backend::session_runtime::take_pending_steers(session_id);
+        if !pending_steers.is_empty() {
+            let transcript =
+                crate::native_backend::session_runtime::session_transcript_snapshot(session_id);
+            for steer in &pending_steers {
+                for wire_message in crate::context_builder::project_steer_user_message(
+                    steer,
+                    &transcript,
+                    &steer_projection_options,
+                ) {
+                    messages.push(wire_message);
+                }
+            }
         }
         emit_turn_state(
             session_id,
@@ -347,7 +371,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                 continue;
             }
             Err(error)
-                if reasoning_only_retries < 1
+                if model_correction_retries < max_model_correction_retry()
                     && matches!(
                         error,
                         AgentRuntimeError::ProviderProtocol {
@@ -356,7 +380,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                         }
                     ) =>
             {
-                reasoning_only_retries += 1;
+                model_correction_retries += 1;
                 clear_failed_assistant_draft(session_id, turn_id);
                 append_attempt_local_context_update(
                     &mut messages,
@@ -368,13 +392,13 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     session_id,
                     turn_id,
                     "provider_reasoning_only_retry",
-                    reasoning_only_retries,
+                    model_correction_retries,
                     &error.to_string(),
                 );
                 continue;
             }
             Err(error)
-                if terminal_empty_retries < 1
+                if model_correction_retries < max_model_correction_retry()
                     && matches!(
                         error,
                         AgentRuntimeError::ProviderProtocol {
@@ -383,7 +407,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                         }
                     ) =>
             {
-                terminal_empty_retries += 1;
+                model_correction_retries += 1;
                 clear_failed_assistant_draft(session_id, turn_id);
                 append_attempt_local_context_update(
                     &mut messages,
@@ -395,58 +419,51 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     session_id,
                     turn_id,
                     "provider_terminal_empty_retry",
-                    terminal_empty_retries,
+                    model_correction_retries,
                     &error.to_string(),
                 );
                 continue;
             }
             Err(error)
-                if protocol_leak_retries < max_protocol_leak_retry()
-                    && is_textual_protocol_leak_error(&error) =>
+                if model_correction_retries < max_model_correction_retry()
+                    && (is_textual_protocol_leak_error(&error)
+                        || is_tool_payload_leak_error(&error)) =>
             {
-                protocol_leak_retries += 1;
+                model_correction_retries += 1;
                 clear_failed_assistant_draft(session_id, turn_id);
+                let textual = is_textual_protocol_leak_error(&error);
                 append_attempt_local_context_update(
                     &mut messages,
                     &mut attempt_local_overlay_start,
-                    "protocol-correction",
-                    protocol_leak_corrective_prompt(),
+                    if textual {
+                        "protocol-correction"
+                    } else {
+                        "tool-protocol-correction"
+                    },
+                    if textual {
+                        protocol_leak_corrective_prompt()
+                    } else {
+                        tool_protocol::TOOL_OUTPUT_ECHO_CORRECTIVE_PROMPT
+                    },
                 );
                 emit_provider_retry(
                     session_id,
                     turn_id,
-                    "provider_textual_protocol_leak_retry",
-                    protocol_leak_retries,
+                    if textual {
+                        "provider_textual_protocol_leak_retry"
+                    } else {
+                        "provider_tool_payload_leak_retry"
+                    },
+                    model_correction_retries,
                     &error.to_string(),
                 );
                 continue;
             }
             Err(error)
-                if protocol_leak_retries < max_protocol_leak_retry()
-                    && is_tool_payload_leak_error(&error) =>
-            {
-                protocol_leak_retries += 1;
-                clear_failed_assistant_draft(session_id, turn_id);
-                append_attempt_local_context_update(
-                    &mut messages,
-                    &mut attempt_local_overlay_start,
-                    "tool-protocol-correction",
-                    tool_protocol::TOOL_OUTPUT_ECHO_CORRECTIVE_PROMPT,
-                );
-                emit_provider_retry(
-                    session_id,
-                    turn_id,
-                    "provider_tool_payload_leak_retry",
-                    protocol_leak_retries,
-                    &error.to_string(),
-                );
-                continue;
-            }
-            Err(error)
-                if missing_tool_retries < max_missing_tool_retry()
+                if model_correction_retries < max_model_correction_retry()
                     && is_missing_tool_call_reply_error(&error) =>
             {
-                missing_tool_retries += 1;
+                model_correction_retries += 1;
                 clear_failed_assistant_draft(session_id, turn_id);
                 if !request.tools.is_empty() {
                     request.tool_choice = if request.capabilities.supports_tool_choice {
@@ -466,7 +483,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     session_id,
                     turn_id,
                     "provider_missing_tool_call_retry",
-                    missing_tool_retries,
+                    model_correction_retries,
                     &error.to_string(),
                 );
                 continue;
@@ -489,17 +506,32 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                 return Err(error);
             }
             Err(error)
-                if providers::routes::mimo::is_mimo_route(&request.provider.route_id)
-                    && transient_provider_retries < MAX_TRANSIENT_PROVIDER_RETRIES
-                    && providers::mimo_faults::parse_mimo_fault_from_error(&error).is_some_and(
-                        |fault| providers::mimo_faults::is_mimo_backoff_fault(&fault),
-                    ) =>
+                if transient_provider_retries < MAX_TRANSIENT_PROVIDER_RETRIES
+                    && (is_retryable_provider_error(&error)
+                        || (providers::routes::mimo::is_mimo_route(
+                            &request.provider.route_id,
+                        ) && providers::mimo_faults::parse_mimo_fault_from_error(&error)
+                            .is_some_and(|fault| {
+                                providers::mimo_faults::is_mimo_backoff_fault(&fault)
+                            }))) =>
             {
+                // 429/5xx (and route-specific backoff faults): replay this same
+                // request after backoff. Do not append a "please continue" user
+                // turn; transcript stays as it was. Once the budget is exhausted
+                // the error surfaces and the turn fails.
                 transient_provider_retries += 1;
                 emit_provider_retry(
                     session_id,
                     turn_id,
-                    "mimo_provider_backoff_retry",
+                    if providers::routes::mimo::is_mimo_route(&request.provider.route_id)
+                        && providers::mimo_faults::parse_mimo_fault_from_error(&error).is_some_and(
+                            |fault| providers::mimo_faults::is_mimo_backoff_fault(&fault),
+                        )
+                    {
+                        "mimo_provider_backoff_retry"
+                    } else {
+                        "provider_transient_error_retry"
+                    },
                     transient_provider_retries,
                     &error.to_string(),
                 );
@@ -516,6 +548,8 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                         |fault| providers::mimo_faults::should_notify_for_mimo_fault(&fault, true),
                     ) =>
             {
+                // Transient budget exhausted: surface the route fault before the
+                // turn fails so the UI shows the provider-side reason.
                 let fault =
                     providers::mimo_faults::parse_mimo_fault_from_error(&error).expect("fault");
                 emit_provider_fault(
@@ -526,27 +560,6 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     &fault,
                 );
                 return Err(error);
-            }
-            Err(error)
-                if transient_provider_retries < MAX_TRANSIENT_PROVIDER_RETRIES
-                    && is_retryable_provider_error(&error) =>
-            {
-                // 429/5xx: replay this same request after backoff. Do not append a
-                // "please continue" user turn; transcript stays as it was.
-                transient_provider_retries += 1;
-                emit_provider_retry(
-                    session_id,
-                    turn_id,
-                    "provider_transient_error_retry",
-                    transient_provider_retries,
-                    &error.to_string(),
-                );
-                wait_for_provider_retry(
-                    provider_retry_delay(transient_provider_retries, Some(&error)),
-                    cancellation,
-                )
-                .await?;
-                continue;
             }
             Err(AgentRuntimeError::ProviderProtocol { kind, detail }) => {
                 clear_failed_assistant_draft(session_id, turn_id);
@@ -577,10 +590,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
         let attempt_outcome = classify_attempt_outcome(&reply);
         let recovery_action = recovery_action_for_attempt(
             attempt_outcome,
-            reasoning_only_retries,
-            terminal_empty_retries,
-            truncated_tool_retries,
-            missing_tool_retries,
+            model_correction_retries,
             continuation_retries,
         );
         if matches!(
@@ -625,7 +635,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     ),
                 });
             }
-            truncated_tool_retries += 1;
+            model_correction_retries += 1;
             append_truncated_tool_call_recovery(
                 &mut messages,
                 &mut attempt_local_overlay_start,
@@ -635,7 +645,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                 session_id,
                 turn_id,
                 "provider_truncated_tool_call_retry",
-                truncated_tool_retries,
+                model_correction_retries,
                 "tool calls were returned with max_tokens; no tool executed",
             );
             continue;
@@ -647,7 +657,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
             let wants_tool_retry = !request.tools.is_empty()
                 && recovery_action == RecoveryAction::RetryMissingToolCall;
             if wants_tool_retry {
-                missing_tool_retries += 1;
+                model_correction_retries += 1;
                 if let Some(message_id) = reply.ui_message_id.as_ref().filter(|id| !id.is_empty()) {
                     let _ = remove_assistant_message(session_id, message_id);
                 } else {
@@ -675,7 +685,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     session_id,
                     turn_id,
                     "provider_missing_tool_call_retry",
-                    missing_tool_retries,
+                    model_correction_retries,
                     "assistant promised tool use without structured tool_call",
                 );
                 continue;
@@ -717,7 +727,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     });
                 }
                 if recovery_action == RecoveryAction::RetryReasoningOnly {
-                    reasoning_only_retries += 1;
+                    model_correction_retries += 1;
                     let input_start = messages.len();
                     advance_stateful_responses(
                         &mut messages,
@@ -734,13 +744,13 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                         session_id,
                         turn_id,
                         "provider_reasoning_only_retry",
-                        reasoning_only_retries,
+                        model_correction_retries,
                         "provider returned reasoning without final assistant text or tool call",
                     );
                     continue;
                 }
                 if recovery_action == RecoveryAction::RetryTerminalEmpty {
-                    terminal_empty_retries += 1;
+                    model_correction_retries += 1;
                     let input_start = messages.len();
                     advance_stateful_responses(
                         &mut messages,
@@ -757,7 +767,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                         session_id,
                         turn_id,
                         "provider_terminal_empty_retry",
-                        terminal_empty_retries,
+                        model_correction_retries,
                         "assistant reply contained no visible text or tool call",
                     );
                     continue;
@@ -798,9 +808,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                         "Completion is blocked: {} {}",
                         failure.message, failure.recommended_next_action
                     ))
-                    .with_metadata(json!({ "completionBlocked": blocked }))
-                    .with_provider_transcript(provider_transcript)
-                    .with_provider_replay_items(provider_replay_items);
+                    .with_metadata(json!({ "completionBlocked": blocked }));
                     return Ok(with_model_loop_observations(
                         result,
                         &observations,
@@ -827,10 +835,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
             if recovery_action == RecoveryAction::ContinueVisibleText
                 && !this_segment.trim().is_empty()
             {
-                reasoning_only_retries = 0;
-                terminal_empty_retries = 0;
-                truncated_tool_retries = 0;
-                missing_tool_retries = 0;
+                model_correction_retries = 0;
                 continuation_retries += 1;
                 let mut accumulated = truncated_prefix.take().unwrap_or_default();
                 accumulated.push_str(&this_segment);
@@ -853,15 +858,22 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     &provider_transcript,
                     &mut provider_protocol_transcript_cursor,
                 );
-                deferred_provider_protocol_steps.push(provider_protocol_step(
-                    &request,
+                // Continuation segments have no surviving UI message; the step
+                // stays unanchored until finish_turn commits the final text.
+                crate::native_backend::turns::upsert_provider_protocol_log_entry(
+                    session_id,
                     turn_id,
-                    &reply,
-                    &[],
-                    "complete",
-                    Vec::new(),
-                    auxiliary_messages,
-                ));
+                    None,
+                    provider_protocol_step(
+                        &request,
+                        turn_id,
+                        &reply,
+                        &[],
+                        "complete",
+                        Vec::new(),
+                        auxiliary_messages,
+                    ),
+                )?;
                 let input_start = messages.len();
                 advance_stateful_responses(
                     &mut messages,
@@ -931,37 +943,26 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
             if !had_truncated_prefix {
                 final_protocol_step["assistant"]["content"] = Value::String(final_text.clone());
             }
-            attach_prior_provider_protocol_steps(
-                &mut final_protocol_step,
-                &deferred_provider_protocol_steps,
-            );
-            if !had_truncated_prefix
-                && let Some(message_id) = reply
+            // A truncated prefix means the streamed draft was removed and
+            // finish_turn commits a fresh message — leave the step unanchored
+            // so it is backfilled to that message id.
+            crate::native_backend::turns::upsert_provider_protocol_log_entry(
+                session_id,
+                turn_id,
+                reply
                     .ui_message_id
-                    .as_ref()
+                    .as_deref()
                     .filter(|id| !id.trim().is_empty())
-            {
-                crate::native_backend::turns::persist_provider_protocol_step(
-                    session_id,
-                    turn_id,
-                    message_id,
-                    final_protocol_step.clone(),
-                )?;
-            }
+                    .filter(|_| !had_truncated_prefix),
+                final_protocol_step,
+            )?;
             let mut result = ModelLoopResult::final_text(final_text)
                 .with_ui_text_committed(reply.ui_message_id.is_some() && !had_truncated_prefix)
                 .with_final_message_id(
                     (!had_truncated_prefix)
                         .then(|| reply.ui_message_id.clone())
                         .flatten(),
-                )
-                .with_provider_transcript(provider_transcript)
-                .with_provider_replay_items(if had_truncated_prefix {
-                    Vec::new()
-                } else {
-                    provider_replay_items
-                })
-                .with_merged_metadata(json!({ "providerProtocol": final_protocol_step }));
+                );
             if continuation_exhausted {
                 result = result.with_merged_metadata(json!({
                     "providerContinuation": {
@@ -971,6 +972,38 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                         "maxContinuationRetries": MAX_CONTINUATION_RETRIES,
                     }
                 }));
+            }
+            // Boundary 2: "anything else?" — a steer that arrived while the
+            // final response was streaming would otherwise strand in the
+            // inbox until finish_turn. The finalize path records the final
+            // reply only in the provider transcript, so continuing requires
+            // handing it to the wire too: the model must see its own prior
+            // reply before the steered follow-up. Same shape as the
+            // max-tokens continuation above.
+            let pending_steers =
+                crate::native_backend::session_runtime::take_pending_steers(session_id);
+            if !pending_steers.is_empty() {
+                if let Some(final_assistant) = provider_transcript.last().cloned() {
+                    messages.push(final_assistant);
+                }
+                let input_start = messages.len();
+                advance_stateful_responses(
+                    &mut messages,
+                    reply_response_id.as_deref(),
+                    input_start,
+                );
+                let transcript =
+                    crate::native_backend::session_runtime::session_transcript_snapshot(session_id);
+                for steer in &pending_steers {
+                    for wire_message in crate::context_builder::project_steer_user_message(
+                        steer,
+                        &transcript,
+                        &steer_projection_options,
+                    ) {
+                        messages.push(wire_message);
+                    }
+                }
+                continue;
             }
             return Ok(with_model_loop_observations(
                 result,
@@ -1153,13 +1186,20 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     turn_id,
                     |index, output| {
                         let call = &tool_calls[index];
-                        let failed = tool_output_failed(output);
+                        let cancelled = tool_output_cancelled(output);
+                        let failed = !cancelled && tool_output_failed(output);
                         let (content, _) =
                             provider_visible_tool_result_content(output, &call.id, 24_000);
                         completed_tool_results[index] = Some(json!({
                             "toolCallId": call.id,
                             "content": content,
-                            "status": if failed { "failed" } else { "completed" },
+                            "status": if cancelled {
+                                "cancelled"
+                            } else if failed {
+                                "failed"
+                            } else {
+                                "completed"
+                            },
                         }));
                         tool_protocol_step["toolResults"] = Value::Array(
                             completed_tool_results
@@ -1301,7 +1341,8 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                             }
                         }
                     };
-                    let failed = tool_output_failed(&output);
+                    let cancelled = tool_output_cancelled(&output);
+                    let failed = !cancelled && tool_output_failed(&output);
                     let (content, _) =
                         provider_visible_tool_result_content(&output, &call.id, 24_000);
                     if let Some(results) = tool_protocol_step
@@ -1311,7 +1352,13 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                         results.push(json!({
                             "toolCallId": call.id,
                             "content": content,
-                            "status": if failed { "failed" } else { "completed" },
+                            "status": if cancelled {
+                                "cancelled"
+                            } else if failed {
+                                "failed"
+                            } else {
+                                "completed"
+                            },
                         }));
                     }
                     persist_tool_protocol_checkpoint(
@@ -1342,7 +1389,8 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
             let mut pending_image_messages = Vec::new();
             for (call, mut output) in tool_calls.iter().zip(outputs.into_iter()) {
                 let image_content = prepare_tool_image_delivery(&mut output, &request.capabilities);
-                let failed = tool_output_failed(&output);
+                let cancelled = tool_output_cancelled(&output);
+                let failed = !cancelled && tool_output_failed(&output);
                 let (mut content, evidence_ref) =
                     provider_visible_tool_result_content(&output, &call.id, 24_000);
                 let progress_content = content.clone();
@@ -1388,7 +1436,13 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     "tool_call_id": call.id,
                     "name": call.name,
                     "content": content.clone(),
-                    "lyraToolStatus": if failed { "failed" } else { "completed" },
+                    "lyraToolStatus": if cancelled {
+                        "cancelled"
+                    } else if failed {
+                        "failed"
+                    } else {
+                        "completed"
+                    },
                     "lyraToolFailure": output.get("error")
                         .or_else(|| output.pointer("/raw/error"))
                         .cloned()
@@ -1452,9 +1506,6 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                 tool_step_message_id.as_deref(),
                 &tool_protocol_step,
             )?;
-            if tool_step_message_id.is_none() {
-                deferred_provider_protocol_steps.push(tool_protocol_step.clone());
-            }
             if request.tools.is_empty() {
                 // The tool-calling downgrade may have emptied the tool list;
                 // replaying a tool choice alongside no tools would 400.
@@ -1495,10 +1546,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                 }
             }
             tool_choice_recovery_active = false;
-            reasoning_only_retries = 0;
-            terminal_empty_retries = 0;
-            truncated_tool_retries = 0;
-            missing_tool_retries = 0;
+            model_correction_retries = 0;
             crate::native_backend::turns::clear_active_ui_message_id(session_id, turn_id);
             emit_turn_state(
                 session_id,
@@ -1511,7 +1559,7 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                 "tool_results_ready",
             );
             if plan_finalize_completed {
-                let mut result = ModelLoopResult {
+                let result = ModelLoopResult {
                     final_text: None,
                     final_message_id: None,
                     metadata: Some(json!({
@@ -1520,16 +1568,8 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                             "stoppedAfterFinalize": true,
                         }
                     })),
-                    provider_transcript,
-                    provider_replay_items,
                     ui_text_committed: false,
                 };
-                if let Some(provider_protocol) =
-                    combined_provider_protocol_steps(deferred_provider_protocol_steps)
-                {
-                    result = result
-                        .with_merged_metadata(json!({ "providerProtocol": provider_protocol }));
-                }
                 return Ok(with_model_loop_observations(
                     result,
                     &observations,
@@ -1572,15 +1612,14 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     reason,
                     observed_occurrences,
                 );
+                // The only remaining mid-turn warning is the domain-specific
+                // browser outcome review; the generic repeated-round warning
+                // was removed (no reference project has that form).
                 append_attempt_local_context_update(
                     &mut messages,
                     &mut attempt_local_overlay_start,
                     "progress-guard-warning",
-                    if reason == "browser_outcome_review_due" {
-                        "Browser outcome review: several observation/diagnosis rounds followed the last delivered input. Compare the user's requested end state with the current page and evidence already gathered. If the goal is established, give the final answer now; dismissing a result overlay or explaining its CSS is not required unless the user asked. If a fact is still missing, name that specific discrepancy and take one focused observation or source check. A failed cleanup click does not undo a verified outcome. Do not declare success from quiet pixels, a stale status line or source alone. Further source inspection remains available when it answers a new, task-relevant question."
-                    } else {
-                        PROGRESS_GUARD_WARNING_PROMPT
-                    },
+                    "Browser outcome review: several observation/diagnosis rounds followed the last delivered input. Compare the user's requested end state with the current page and evidence already gathered. If the goal is established, give the final answer now; dismissing a result overlay or explaining its CSS is not required unless the user asked. If a fact is still missing, name that specific discrepancy and take one focused observation or source check. A failed cleanup click does not undo a verified outcome. Do not declare success from quiet pixels, a stale status line or source alone. Further source inspection remains available when it answers a new, task-relevant question.",
                 );
             }
             ModelLoopProgressAction::Synthesize {
@@ -1592,9 +1631,6 @@ pub(crate) async fn run_model_loop_with_ui_commit_async(
                     turn_id,
                     &request,
                     messages,
-                    provider_transcript,
-                    provider_replay_items,
-                    deferred_provider_protocol_steps,
                     observations,
                     cancellation,
                     reason,

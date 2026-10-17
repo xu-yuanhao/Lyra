@@ -12,11 +12,13 @@ import { createComputerToolHost } from "./computer-tool-host";
 import { createFavoritesToolHost } from "./favorites-tool-host";
 import { createLumenToolHost } from "./lumen-tool-host";
 import { createRuntimeEventForwarder } from "./runtime-event-forwarder";
+import { ensureElevationSecretInjected } from "./elevation-restore";
 import { createSoftwareCapabilityHost } from "./software-capability-host";
 import { createTurnContextHost } from "./turn-context-host";
 import { createTerminalToolHost } from "./terminal-tool-host";
 import { createHostPersonaContextHandlers } from "./host-persona-context";
 import { createWorkbenchObservationAdapter } from "./workbench-observation-adapter";
+import { startLumenEvidenceSweeper } from "./artifact-materializer";
 import {
   captureWaylandPortalScreenshot,
   pickDesktopCaptureSource,
@@ -28,6 +30,7 @@ import type {
   LyraSensitiveValueStoreRequest,
   LyraSensitiveValueStoreResponse
 } from "../../shared/desktop-bridge";
+import type { AgentRuntimeEvent } from "../../shared/agent";
 import type { AgentHostCapabilityHandlers } from "./host-payload";
 import {
   AGENT_HOST_CAPABILITY_METHODS,
@@ -50,6 +53,7 @@ export const createAgentIpcBridge = ({
   getWorkbenchObservationService,
   workbenchState,
   resolveSensitiveValueForFill,
+  revealSensitiveValue,
   storeSensitiveValue,
   addAllowedPreviewRoot
 }: {
@@ -64,6 +68,9 @@ export const createAgentIpcBridge = ({
   readonly resolveSensitiveValueForFill?: (
     ref: LyraSensitiveValueRef
   ) => Promise<string>;
+  readonly revealSensitiveValue?: (
+    ref: LyraSensitiveValueRef
+  ) => Promise<{ readonly value: string }>;
   readonly storeSensitiveValue?: (
     request: LyraSensitiveValueStoreRequest
   ) => Promise<LyraSensitiveValueStoreResponse>;
@@ -71,6 +78,27 @@ export const createAgentIpcBridge = ({
 }): AgentIpcBridge => {
   const requestRuntime = async <T>(method: string, payload: object = {}): Promise<T> =>
     runtimeClient.request<T>(method, payload);
+
+  // Re-inject the elevation secret at every turn start. The in-memory secret
+  // is lost on runtime restarts by design; restoring here (main process,
+  // named failures) replaces the old fire-once renderer mount effect whose
+  // silent failure made the agent improvise its own sudo plumbing.
+  const unsubscribeElevationRestore =
+    revealSensitiveValue === undefined
+      ? null
+      : runtimeClient.subscribe((eventName, payload) => {
+        if (eventName !== "agent.runtime") {
+          return;
+        }
+        const event = payload as AgentRuntimeEvent;
+        if (event.kind !== "turnStarted") {
+          return;
+        }
+        void ensureElevationSecretInjected({
+          requestRuntime,
+          revealSensitiveValue: (ref) => revealSensitiveValue(ref as LyraSensitiveValueRef)
+        });
+      });
 
   const runtimeEventForwarder = createRuntimeEventForwarder({
     runtimeClient,
@@ -115,6 +143,8 @@ export const createAgentIpcBridge = ({
       ? {}
       : { resolveSensitiveValueForFill })
   });
+
+  startLumenEvidenceSweeper(storageRoot);
 
   const axToolHost = createAxToolHost({
     getBrowserBridge,
@@ -277,6 +307,7 @@ export const createAgentIpcBridge = ({
 
   return {
     dispose: () => {
+      unsubscribeElevationRestore?.();
       runtimeEventForwarder.dispose();
       softwareCapabilityHost.dispose();
       terminalToolHost.dispose();

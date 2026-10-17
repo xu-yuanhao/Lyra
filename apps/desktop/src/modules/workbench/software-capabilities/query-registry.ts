@@ -37,22 +37,46 @@ type ExternalHandlerRegistration = {
 
 export const findSoftware = (
   software: readonly LyraSoftwareManifest[],
-  softwareId: string
+  softwareId: unknown
 ): LyraSoftwareManifest => {
+  // Validation errors must name the offending parameter and the accepted
+  // values; a bare "undefined" leak tells the model nothing actionable.
+  if (typeof softwareId !== "string" || softwareId.trim().length === 0) {
+    throw new Error(
+      `softwareId is required and must be a non-empty string. Valid software ids: ${
+        software.map((item) => item.id).join(", ") || "(none registered)"
+      }`
+    );
+  }
   const entry = software.find((item) => item.id === softwareId);
   if (entry === undefined) {
-    throw new Error(`Unknown software capability: ${softwareId}`);
+    throw new Error(
+      `Unknown software id "${softwareId}". Valid software ids: ${
+        software.map((item) => item.id).join(", ") || "(none registered)"
+      }`
+    );
   }
   return entry;
 };
 
 export const findAction = (
   software: LyraSoftwareManifest,
-  actionId: string
+  actionId: unknown
 ): LyraSoftwareActionManifest => {
+  if (typeof actionId !== "string" || actionId.trim().length === 0) {
+    throw new Error(
+      `actionId is required and must be a non-empty string. Valid action ids for ${software.id}: ${
+        software.actions.map((item) => item.id).join(", ") || "(none)"
+      }`
+    );
+  }
   const action = software.actions.find((item) => item.id === actionId);
   if (action === undefined) {
-    throw new Error(`Unknown action ${actionId} for ${software.id}`);
+    throw new Error(
+      `Unknown action "${actionId}" for ${software.id}. Valid action ids: ${
+        software.actions.map((item) => item.id).join(", ") || "(none)"
+      }`
+    );
   }
   return action;
 };

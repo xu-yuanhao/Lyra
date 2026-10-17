@@ -13,6 +13,9 @@ pub(crate) struct NativeToolFailure {
     pub(crate) message: String,
     pub(crate) recommended_next_action: String,
     pub(crate) detail: Option<Value>,
+    /// Set when the failure is a cancellation; the output then uses the
+    /// cancellation envelope instead of the failure envelope.
+    pub(crate) cancel_reason: Option<&'static str>,
 }
 
 impl NativeToolFailure {
@@ -26,6 +29,18 @@ impl NativeToolFailure {
             message: message.into(),
             recommended_next_action: recommended_next_action.into(),
             detail: None,
+            cancel_reason: None,
+        }
+    }
+
+    pub(crate) fn cancelled(
+        reason: &'static str,
+        message: impl Into<String>,
+        recommended_next_action: impl Into<String>,
+    ) -> Self {
+        Self {
+            cancel_reason: Some(reason),
+            ..Self::new("cancelled", message, recommended_next_action)
         }
     }
 
@@ -96,6 +111,15 @@ async fn forward_tool_to_exec(
     arguments: &Value,
     started_at: &str,
 ) -> Option<Value> {
+    // The exec companion cannot execute forwarded tool calls correctly yet:
+    // it holds no turn state (every forwarded call looked "cancelled"), the
+    // exec role only serves `agent.exec.run` so a permission wait could never
+    // be answered, and mid-flight cancellation cannot reach it. Forwarding is
+    // therefore off by default and tools run locally in the agent host; set
+    // LYRA_EXEC_FORWARDING=1 only when developing the companion itself.
+    if std::env::var("LYRA_EXEC_FORWARDING").ok().as_deref() != Some("1") {
+        return None;
+    }
     let socket = std::env::var("LYRA_EXEC_SOCKET").ok()?;
     if socket.is_empty() || std::env::var("LYRA_HOST_ROLE").ok().as_deref() == Some("exec") {
         return None;
@@ -111,44 +135,55 @@ async fn forward_tool_to_exec(
         "startedAt": started_at,
     });
     let joined = tokio::task::spawn_blocking(move || submit_exec_job(socket, payload)).await;
-    Some(joined.unwrap_or_else(|error| {
-        serde_json::json!({
-            "error": format!("exec host failed: {error}")
-        })
-    }))
+    match joined {
+        // `None` means the call was never delivered to the exec host, so the
+        // caller falls back to running it locally instead of surfacing a
+        // transport error as the tool result.
+        Ok(Ok(value)) => Some(value),
+        _ => None,
+    }
 }
 
 struct ExecJob {
     socket: String,
     payload: Value,
-    reply: std::sync::mpsc::Sender<Value>,
+    reply: std::sync::mpsc::Sender<Result<Value, ExecJobError>>,
 }
 
-fn submit_exec_job(socket: String, payload: Value) -> Value {
-    #[cfg(unix)]
+/// Why a forwarded tool call produced no result.
+enum ExecJobError {
+    /// The request never reached the exec host; the caller may run the tool
+    /// locally without risking a double execution.
+    NotDelivered,
+    /// The connection dropped mid-call; the tool may have run, so the caller
+    /// must surface an error instead of re-executing locally.
+    ConnectionLost,
+}
+
+#[cfg(unix)]
+fn submit_exec_job(socket: String, payload: Value) -> Result<Value, ExecJobError> {
+    let (reply, receiver) = std::sync::mpsc::channel();
+    if exec_jobs()
+        .send(ExecJob {
+            socket,
+            payload,
+            reply,
+        })
+        .is_err()
     {
-        let (reply, receiver) = std::sync::mpsc::channel();
-        if exec_jobs()
-            .send(ExecJob {
-                socket,
-                payload,
-                reply,
-            })
-            .is_err()
-        {
-            return serde_json::json!({"error": "exec host worker stopped"});
-        }
-        // ponytail: one connection answers host callbacks, so tool calls queue.
-        // A host callback that itself waits on another tool deadlocks this queue.
-        return receiver
-            .recv()
-            .unwrap_or_else(|_| serde_json::json!({"error": "exec host worker stopped"}));
+        return Err(ExecJobError::NotDelivered);
     }
-    #[cfg(not(unix))]
-    {
-        let _ = (socket, payload);
-        serde_json::json!({"error": "exec host forwarding is only available on unix"})
-    }
+    // ponytail: one connection answers host callbacks, so tool calls queue.
+    // A host callback that itself waits on another tool deadlocks this queue.
+    receiver
+        .recv()
+        .map_err(|_| ExecJobError::NotDelivered)
+        .and_then(std::convert::identity)
+}
+
+#[cfg(not(unix))]
+fn submit_exec_job(_socket: String, _payload: Value) -> Result<Value, ExecJobError> {
+    Err(ExecJobError::NotDelivered)
 }
 
 #[cfg(unix)]
@@ -178,12 +213,24 @@ fn exec_client_loop(jobs: std::sync::mpsc::Receiver<ExecJob>) {
         }
         let id = format!("exec-run-{}", NEXT_ID.fetch_add(1, Ordering::Relaxed));
         let result = run_exec_job(&mut connection, &job, &id);
-        if result.get("error").and_then(Value::as_str) == Some("exec host closed the connection")
-            || result.get("error").and_then(Value::as_str) == Some("exec host request failed")
-        {
-            connection = None;
+        match result {
+            Ok(value) => {
+                let _ = job.reply.send(Ok(value));
+            }
+            Err(error @ ExecJobError::NotDelivered) => {
+                connection = None;
+                let _ = job.reply.send(Err(error));
+            }
+            Err(ExecJobError::ConnectionLost) => {
+                connection = None;
+                let _ = job.reply.send(Ok(tool_failure_output(
+                    "exec_host_unavailable",
+                    "The exec host connection was lost while running this tool call.",
+                    "Retry the tool call.",
+                    None,
+                )));
+            }
         }
-        let _ = job.reply.send(result);
     }
 }
 
@@ -196,12 +243,12 @@ fn run_exec_job(
     )>,
     job: &ExecJob,
     id: &str,
-) -> Value {
+) -> Result<Value, ExecJobError> {
     use std::io::{BufRead, Write};
     use std::time::Duration;
 
     let Some((reader, writer, _)) = connection.as_mut() else {
-        return serde_json::json!({"error": "exec host is not available"});
+        return Err(ExecJobError::NotDelivered);
     };
     let request = serde_json::json!({
         "kind": "request",
@@ -211,12 +258,12 @@ fn run_exec_job(
     });
     let _ = writer.set_write_timeout(Some(Duration::from_secs(5)));
     if writeln!(writer, "{request}").is_err() || writer.flush().is_err() {
-        return serde_json::json!({"error": "exec host request failed"});
+        return Err(ExecJobError::NotDelivered);
     }
     loop {
         let mut line = String::new();
         if reader.read_line(&mut line).is_err() || line.is_empty() {
-            return serde_json::json!({"error": "exec host closed the connection"});
+            return Err(ExecJobError::ConnectionLost);
         }
         let envelope: Value = serde_json::from_str(line.trim()).unwrap_or(Value::Null);
         match envelope.get("kind").and_then(Value::as_str) {
@@ -252,19 +299,22 @@ fn run_exec_job(
                     }),
                 };
                 if writeln!(writer, "{response}").is_err() || writer.flush().is_err() {
-                    return serde_json::json!({"error": "exec host request failed"});
+                    return Err(ExecJobError::ConnectionLost);
                 }
             }
             Some("response") if envelope.get("id").and_then(Value::as_str) == Some(id) => {
                 if envelope.get("ok").and_then(Value::as_bool) == Some(true) {
-                    return envelope.get("result").cloned().unwrap_or(Value::Null);
+                    return Ok(envelope.get("result").cloned().unwrap_or(Value::Null));
                 }
-                return serde_json::json!({
-                    "error": envelope
+                return Ok(tool_failure_output(
+                    "exec_host_rejected",
+                    envelope
                         .pointer("/error/message")
                         .and_then(Value::as_str)
-                        .unwrap_or("exec host rejected the tool")
-                });
+                        .unwrap_or("The exec host rejected this tool call."),
+                    "Retry the tool call.",
+                    None,
+                ));
             }
             _ => {}
         }
@@ -346,6 +396,7 @@ pub(crate) async fn execute_native_tool_adapter_with_dispatcher(
         started_at,
         dispatcher,
         ToolExecutionRuntime::default(),
+        true,
     )
     .await
 }
@@ -363,6 +414,7 @@ pub(crate) async fn execute_native_tool_adapter_with_runtime(
     started_at: &str,
     dispatcher: Option<&Arc<HostCapabilityDispatcher>>,
     runtime: ToolExecutionRuntime,
+    turn_cancellation_authoritative: bool,
 ) -> Value {
     let mut input = native_tool_input(action, arguments);
     let mut policy_decision = None;
@@ -381,13 +433,30 @@ pub(crate) async fn execute_native_tool_adapter_with_runtime(
         ),
         "toolStarted",
     );
-    if cancellation.is_cancelled() || turn_was_cancelled(session_id, turn_id) {
-        let output = tool_failure_output(
-            "cancelled",
-            "Lyra tool call was cancelled.",
-            "Stop this tool call and continue only after a new user turn.",
-            None,
-        );
+    // `turn_cancellation_authoritative` is false for calls served by the exec
+    // host: that process holds no turn state, and the agent host already gated
+    // cancellation before forwarding. Deriving cancellation from the exec
+    // host's (absent) session snapshot would falsely cancel every forwarded
+    // call — turn ids are fresh UUIDs, so the snapshot can never match — so
+    // only the forwarded token applies there.
+    let turn_state_cancelled =
+        turn_cancellation_authoritative && turn_was_cancelled(session_id, turn_id);
+    if cancellation.is_cancelled() || turn_state_cancelled {
+        let output = if cancellation.is_cancelled() {
+            cancelled_tool_output(
+                CANCEL_REASON_TURN_CANCELLED,
+                "Lyra tool call was cancelled.",
+                "Stop this tool call and continue only after a new user turn.",
+                None,
+            )
+        } else {
+            cancelled_tool_output(
+                CANCEL_REASON_TURN_SUPERSEDED,
+                "This tool call was cancelled because its turn is no longer active.",
+                "Stop this tool call and continue only after a new user turn.",
+                None,
+            )
+        };
         record_tool_activity(
             session_id,
             turn_id,
@@ -518,10 +587,12 @@ pub(crate) async fn execute_native_tool_adapter_with_runtime(
             Err(error) => {
                 let cancelled = permission_wait_was_cancelled(&error);
                 let output = if cancelled {
-                    json!({
-                        "content": "Lyra tool call was cancelled before permission was resolved.",
-                        "cancelled": true,
-                    })
+                    cancelled_tool_output(
+                        CANCEL_REASON_PERMISSION_WAIT,
+                        "Lyra tool call was cancelled before permission was resolved.",
+                        "Ask the user again in a new turn if the action is still needed.",
+                        None,
+                    )
                 } else {
                     tool_failure_output(
                         "permission_request_failed",
@@ -583,29 +654,56 @@ pub(crate) async fn execute_native_tool_adapter_with_runtime(
                 tool_content_char_budget(display_name, action),
             );
             if let Some((code, message)) = reported_failure {
-                output["error"] = json!({
-                    "code": code,
-                    "message": message,
-                });
-                ("failed", output)
+                if code == "cancelled" {
+                    // A cancelled tool kept its partial output; mark it with
+                    // the cancellation contract instead of a failure code so
+                    // loop detection does not count a user stop as a failure.
+                    output["cancelled"] = Value::Bool(true);
+                    output["error"] = json!({
+                        "code": "cancelled",
+                        "reason": CANCEL_REASON_TURN_CANCELLED,
+                        "message": message,
+                    });
+                    ("cancelled", output)
+                } else {
+                    output["error"] = json!({
+                        "code": code,
+                        "message": message,
+                    });
+                    ("failed", output)
+                }
             } else if keep_open {
                 ("running", output)
             } else {
                 ("completed", output)
             }
         }
-        Err(error) => (
-            "failed",
-            attach_policy_decision_to_output(
+        Err(error) => {
+            let output = if let Some(reason) = error.cancel_reason {
+                cancelled_tool_output(
+                    reason,
+                    &error.message,
+                    &error.recommended_next_action,
+                    error.detail,
+                )
+            } else {
                 tool_failure_output(
                     &error.code,
                     &error.message,
                     &error.recommended_next_action,
                     error.detail,
-                ),
-                policy_decision,
-            ),
-        ),
+                )
+            };
+            let status = if error.cancel_reason.is_some() {
+                "cancelled"
+            } else {
+                "failed"
+            };
+            (
+                status,
+                attach_policy_decision_to_output(output, policy_decision),
+            )
+        }
     };
     record_tool_activity(
         session_id,
@@ -641,6 +739,12 @@ fn native_reported_failure(raw: &Value) -> Option<(&'static str, String)> {
         && raw.get("ok").and_then(Value::as_bool) != Some(false)
     {
         return None;
+    }
+    if raw.get("cancelledByTurn").and_then(Value::as_bool) == Some(true) {
+        return Some((
+            "cancelled",
+            "The foreground command was stopped because the turn was cancelled.".to_string(),
+        ));
     }
     if raw.get("timedOut").and_then(Value::as_bool) == Some(true) {
         return Some((

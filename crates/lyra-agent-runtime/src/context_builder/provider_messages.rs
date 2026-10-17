@@ -30,28 +30,6 @@ pub(super) fn provider_messages_from_agent_message(
     {
         return messages;
     }
-    if options.openai_responses_replay
-        && role == "assistant"
-        && legacy_openai_responses_replay_matches_origin(message, options)
-        && let Some(items) = message
-            .pointer("/metadata/openaiResponsesReplay")
-            .and_then(Value::as_array)
-            .filter(|items| !items.is_empty())
-    {
-        return items
-            .iter()
-            .cloned()
-            .map(|mut item| {
-                if let Some(object) = item.as_object_mut() {
-                    object.insert(
-                        OPENAI_RESPONSES_REPLAY_GROUP_KEY.to_string(),
-                        json!(message_index),
-                    );
-                }
-                item
-            })
-            .collect();
-    }
     let text = message
         .get("text")
         .and_then(Value::as_str)
@@ -118,7 +96,6 @@ pub(super) fn provider_messages_from_agent_message(
     // Legacy tool UI blocks are not an executable protocol. Keep the durable
     // assistant prose; complete V2 calls/results are projected separately.
     if role == "assistant"
-        && !message_has_provider_transcript(message)
         && message
             .get("blocks")
             .and_then(Value::as_array)
@@ -128,20 +105,12 @@ pub(super) fn provider_messages_from_agent_message(
                     .any(|b| b.get("type").and_then(Value::as_str) == Some("tool"))
             })
     {
-        if all_messages
-            .iter()
-            .skip(message_index + 1)
-            .take_while(|message| message["role"] != "user")
-            .any(message_has_provider_transcript)
-        {
-            return Vec::new();
-        }
         return text_content_or_none(text)
             .map(|content| vec![json!({"role":"assistant", "content": content})])
             .unwrap_or_default();
     }
 
-    let mut transcript = provider_transcript_from_agent_message(message);
+    let mut projected = Vec::new();
     let blocks = message
         .get("blocks")
         .and_then(Value::as_array)
@@ -208,10 +177,10 @@ pub(super) fn provider_messages_from_agent_message(
             "role": role,
             "content": merged,
         });
-        transcript.push(provider_message);
+        projected.push(provider_message);
     }
 
-    transcript
+    projected
 }
 
 fn merge_user_content_with_transcript_citations(
@@ -418,91 +387,6 @@ fn format_transcript_cite_xml(citation: &Value) -> Option<String> {
     ))
 }
 
-fn provider_transcript_from_agent_message(message: &Value) -> Vec<Value> {
-    message
-        .pointer("/metadata/providerTranscript")
-        .and_then(Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter_map(sanitize_provider_transcript_message)
-        .collect()
-}
-
-fn sanitize_provider_transcript_message(message: &Value) -> Option<Value> {
-    let role = message.get("role").and_then(Value::as_str)?;
-    match role {
-        "assistant" => {
-            let mut output = json!({
-                "role": "assistant",
-                "content": message.get("content").cloned().unwrap_or(Value::String(String::new())),
-            });
-            if let Some(tool_calls) = message.get("tool_calls").filter(|value| value.is_array()) {
-                output["tool_calls"] = tool_calls.clone();
-            }
-            Some(output)
-        }
-        "tool" => {
-            let tool_call_id = message
-                .get("tool_call_id")
-                .or_else(|| message.get("toolCallId"))
-                .and_then(Value::as_str)
-                .unwrap_or("tool-result");
-            let original = match message.get("content") {
-                Some(Value::String(text)) => text.as_str(),
-                _ => "",
-            };
-            let mut output = json!({
-                "role": "tool",
-                "tool_call_id": tool_call_id,
-                "content": original,
-            });
-            if let Some(name) = message
-                .get("name")
-                .and_then(Value::as_str)
-                .filter(|name| !name.is_empty())
-            {
-                output["name"] = json!(name);
-            }
-            Some(output)
-        }
-        "user" | "system" => message.get("content").map(|content| {
-            json!({
-                "role": role,
-                "content": content,
-            })
-        }),
-        _ => None,
-    }
-}
-
-fn legacy_openai_responses_replay_matches_origin(
-    message: &Value,
-    options: &ProviderContextOptions,
-) -> bool {
-    if options.protocol_id.as_deref() != Some("openai_responses") {
-        return false;
-    }
-    let Some(origin) = message.pointer("/metadata/openaiResponsesState") else {
-        return false;
-    };
-    [
-        (
-            origin.get("providerId").and_then(Value::as_str),
-            options.provider_id.as_deref(),
-        ),
-        (
-            origin.get("routeId").and_then(Value::as_str),
-            options.route_id.as_deref(),
-        ),
-        (
-            origin.get("model").and_then(Value::as_str),
-            options.model.as_deref(),
-        ),
-    ]
-    .into_iter()
-    .all(|(stored, active)| stored.is_some() && stored == active)
-}
-
 fn text_content_or_none(text: &str) -> Option<Value> {
     (!text.trim().is_empty()).then(|| Value::String(text.to_string()))
 }
@@ -663,9 +547,6 @@ fn content_from_blocks(
                 }
             }
             Some("tool") => {
-                if message_has_provider_transcript(message) {
-                    continue;
-                }
                 let tool_id = block
                     .get("toolId")
                     .or_else(|| block.get("tool_id"))

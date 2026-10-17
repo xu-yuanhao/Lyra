@@ -27,6 +27,13 @@ static TURN_ACTIVITIES: OnceLock<Mutex<HashMap<String, TurnActivityState>>> = On
 static TURN_ACTIVITY_CHANGES: OnceLock<Mutex<HashMap<String, watch::Sender<u64>>>> =
     OnceLock::new();
 static TURN_PROVIDER_METADATA: OnceLock<Mutex<HashMap<String, Value>>> = OnceLock::new();
+// Mid-turn user messages (steers) waiting for the running turn's next model
+// boundary. FIFO per session; drained by the model loop (in-flight delivery)
+// or by finish_turn's tail (final-response race). An empty inbox at turn
+// start is an invariant: finish_turn drains it inside the same critical
+// section that ends the turn, so a steer in the inbox always belongs to the
+// currently running turn and no later context rebuild can double-include it.
+static PENDING_STEERS: OnceLock<Mutex<HashMap<String, Vec<Value>>>> = OnceLock::new();
 
 fn turn_cancellations() -> &'static Mutex<HashMap<String, CancellationToken>> {
     TURN_CANCELLATIONS.get_or_init(|| Mutex::new(HashMap::new()))
@@ -54,6 +61,60 @@ fn turn_activity_changes() -> &'static Mutex<HashMap<String, watch::Sender<u64>>
 
 fn turn_provider_metadata() -> &'static Mutex<HashMap<String, Value>> {
     TURN_PROVIDER_METADATA.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn pending_steers() -> &'static Mutex<HashMap<String, Vec<Value>>> {
+    PENDING_STEERS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+/// Queue a mid-turn user message for delivery at the running turn's next
+/// model boundary. The message is already a transcript citizen (send_turn
+/// appended it before enqueueing), so the inbox copy is purely the
+/// in-flight delivery handle.
+pub(crate) fn enqueue_steer(session_id: &str, message: Value) {
+    if let Ok(mut pending) = pending_steers().lock() {
+        pending
+            .entry(session_id.to_string())
+            .or_default()
+            .push(message);
+    }
+}
+
+/// Drain every queued steer for the session, oldest first.
+pub(crate) fn take_pending_steers(session_id: &str) -> Vec<Value> {
+    pending_steers()
+        .lock()
+        .ok()
+        .and_then(|mut pending| pending.remove(session_id))
+        .unwrap_or_default()
+}
+
+#[cfg(test)]
+pub(crate) fn pending_steer_count(session_id: &str) -> usize {
+    pending_steers()
+        .lock()
+        .ok()
+        .and_then(|pending| pending.get(session_id).cloned())
+        .unwrap_or_default()
+        .len()
+}
+
+/// Transcript snapshot for steer projection: the drain needs the messages
+/// that precede each steer (inline-image inheritance, citation context) and
+/// the steer's own index, exactly as a full context rebuild would see them.
+pub(crate) fn session_transcript_snapshot(session_id: &str) -> Vec<Value> {
+    state()
+        .lock()
+        .ok()
+        .and_then(|state| {
+            state
+                .sessions
+                .get(session_id)
+                .and_then(|session| session.snapshot.get("messages"))
+                .and_then(Value::as_array)
+                .cloned()
+        })
+        .unwrap_or_default()
 }
 
 fn turn_key(session_id: &str, turn_id: &str) -> String {
@@ -349,10 +410,13 @@ pub(crate) fn clear_turn_cancellation(turn_id: &str) {
 }
 
 pub(crate) fn turn_cancellation_requested(turn_id: &str) -> bool {
+    // Fail open on lock errors: a broken lock must not fabricate a
+    // cancellation (unknown ≠ cancelled). RecoveringMutex makes both
+    // `unwrap_or` branches unreachable today.
     if cancelled_turns()
         .lock()
         .map(|cancelled| cancelled.contains(turn_id))
-        .unwrap_or(true)
+        .unwrap_or(false)
     {
         return true;
     }
@@ -363,7 +427,7 @@ pub(crate) fn turn_cancellation_requested(turn_id: &str) -> bool {
                 .get(turn_id)
                 .is_some_and(|token| token.is_cancelled())
         })
-        .unwrap_or(true)
+        .unwrap_or(false)
 }
 
 pub(crate) fn cancellation_token(turn_id: &str) -> Option<CancellationToken> {

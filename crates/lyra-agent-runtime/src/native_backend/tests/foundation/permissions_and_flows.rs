@@ -81,13 +81,10 @@ fn rollback_preview_and_restore_recover_messages_and_files() {
         fs::read_to_string(file_path).expect("read restored"),
         "before"
     );
-    assert_eq!(
-        restored["snapshot"]["messages"]
-            .as_array()
-            .expect("messages")
-            .len(),
-        0
-    );
+    let after = backend
+        .call_agent_method("agent.session.read", json!({ "sessionId": session_id }))
+        .expect("read after restore");
+    assert_eq!(after["messages"].as_array().expect("messages").len(), 0);
 }
 #[test]
 fn direct_file_read_requests_outside_workspace_permission() {

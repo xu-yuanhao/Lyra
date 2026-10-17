@@ -119,9 +119,9 @@ fn load_session_inner(
         Vec::new()
     };
 
-    let (snapshot_json, runtime_turns_json, rollback_json, file_read_json, stored_sequence) = conn
+    let (snapshot_json, runtime_turns_json, rollback_json, file_read_json, provider_protocol_json, stored_sequence) = conn
         .query_row(
-            "SELECT snapshot_json, runtime_turns_json, rollback_checkpoints_json, file_read_state_json, stream_journal_sequence
+            "SELECT snapshot_json, runtime_turns_json, rollback_checkpoints_json, file_read_state_json, provider_protocol_json, stream_journal_sequence
              FROM session_bundle WHERE id = 1",
             [],
             |row| {
@@ -130,7 +130,8 @@ fn load_session_inner(
                     row.get::<_, String>(1)?,
                     row.get::<_, String>(2)?,
                     row.get::<_, String>(3)?,
-                    row.get::<_, i64>(4)?,
+                    row.get::<_, String>(4)?,
+                    row.get::<_, i64>(5)?,
                 ))
             },
         )
@@ -177,9 +178,15 @@ fn load_session_inner(
     // Pending control checkpoints do not describe the on-disk metadata yet.
     // Expose only the revision of the materialized snapshot and replayed data.
     let visible_revision: i64 = if load_dialog {
-        conn.query_row("SELECT COALESCE(MAX(sequence), ?1) FROM stream_deltas WHERE channel != 'checkpoint'", [stored_sequence], |row| row.get(0))
-            .map_err(|error| AgentRuntimeError::Core(error.to_string()))?
-    } else { stored_sequence };
+        conn.query_row(
+            "SELECT COALESCE(MAX(sequence), ?1) FROM stream_deltas WHERE channel != 'checkpoint'",
+            [stored_sequence],
+            |row| row.get(0),
+        )
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?
+    } else {
+        stored_sequence
+    };
     snapshot["revision"] = json!(visible_revision.max(stored_sequence).to_string());
     let runtime_turns: Vec<Value> = serde_json::from_str(&runtime_turns_json)
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
@@ -188,6 +195,8 @@ fn load_session_inner(
     let file_read_state: HashMap<String, FileReadStateEntry> =
         serde_json::from_str(&file_read_json)
             .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+    let provider_protocol_log: Vec<Value> = serde_json::from_str(&provider_protocol_json)
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
 
     Ok(Some(NativeSession {
         id: session_id.to_string(),
@@ -201,6 +210,7 @@ fn load_session_inner(
         runtime_turns,
         rollback_checkpoints,
         file_read_state,
+        provider_protocol_log,
         dirty: replayed,
         dialog_dirty_from: replayed.then_some(0),
         persisted_dialog_len,
@@ -472,6 +482,8 @@ pub(super) fn save_session(root: &Path, session: &NativeSession) -> AgentRuntime
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
     let file_read_json = serde_json::to_string(&session.file_read_state)
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+    let provider_protocol_json = serde_json::to_string(&session.provider_protocol_log)
+        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
 
     let tx = rusqlite::Transaction::new_unchecked(&conn, rusqlite::TransactionBehavior::Immediate)
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
@@ -621,15 +633,16 @@ pub(super) fn save_session(root: &Path, session: &NativeSession) -> AgentRuntime
     }
 
     tx.execute(
-        "INSERT INTO session_bundle (id, snapshot_json, runtime_turns_json, rollback_checkpoints_json, file_read_state_json, stream_journal_sequence)
-         VALUES (1, ?1, ?2, ?3, ?4, ?5)
+        "INSERT INTO session_bundle (id, snapshot_json, runtime_turns_json, rollback_checkpoints_json, file_read_state_json, stream_journal_sequence, provider_protocol_json)
+         VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6)
          ON CONFLICT(id) DO UPDATE SET
             snapshot_json = excluded.snapshot_json,
             runtime_turns_json = excluded.runtime_turns_json,
             rollback_checkpoints_json = excluded.rollback_checkpoints_json,
             file_read_state_json = excluded.file_read_state_json,
-            stream_journal_sequence = excluded.stream_journal_sequence",
-        params![snapshot_json, runtime_turns_json, rollback_json, file_read_json, session.stream_journal_sequence],
+            stream_journal_sequence = excluded.stream_journal_sequence,
+            provider_protocol_json = excluded.provider_protocol_json",
+        params![snapshot_json, runtime_turns_json, rollback_json, file_read_json, session.stream_journal_sequence, provider_protocol_json],
     )
     .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
 
@@ -700,6 +713,7 @@ mod stream_recovery_tests {
             runtime_turns: vec![],
             rollback_checkpoints: vec![],
             file_read_state: HashMap::new(),
+            provider_protocol_log: vec![],
             dirty: true,
             dialog_dirty_from: Some(0),
             persisted_dialog_len: 0,

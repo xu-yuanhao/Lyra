@@ -41,10 +41,15 @@ function __lyra_preexec --on-event fish_preexec
 end
 
 function __lyra_postexec --on-event fish_postexec
-    set -l status $status
+    # fish 4.x forbids re-assigning the special `status` variable
+    # ("Tried to modify the special variable 'status' with the wrong scope"),
+    # which printed an error into the PTY after every command. Capture the
+    # exit status into a differently-named local instead; expansion happens
+    # before `set` runs, so the first read is still the command's status.
+    set -l exit_status $status
     if test "$__lyra_fish_command_running" = 1
-        __lyra_osc "133;D;$status"
-        __lyra_osc "633;CommandEnd;exitCode=$status"
+        __lyra_osc "133;D;$exit_status"
+        __lyra_osc "633;CommandEnd;exitCode=$exit_status"
         set -g __lyra_fish_command_running 0
     end
 end

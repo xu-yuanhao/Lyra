@@ -135,6 +135,19 @@ fn tool_started_in_turn_window(
 }
 
 fn tool_has_failure_signal(tool: &Value) -> bool {
+    // A cancelled call is not a failure: the tool never ran, so it must not
+    // feed the consecutive-failure loop detector or the prompt policy.
+    if matches!(
+        tool.get("status").and_then(Value::as_str),
+        Some("cancelled")
+    ) || matches!(
+        tool.pointer("/output/status").and_then(Value::as_str),
+        Some("cancelled")
+    ) || tool.get("cancelled").and_then(Value::as_bool) == Some(true)
+        || tool.pointer("/output/cancelled").and_then(Value::as_bool) == Some(true)
+    {
+        return false;
+    }
     matches!(
         tool.get("status").and_then(Value::as_str),
         Some("failed" | "error")
@@ -404,5 +417,52 @@ mod tests {
                 .consecutive_failed_tool_domains
                 .contains(&"terminal".to_string())
         );
+    }
+
+    #[test]
+    fn cancelled_tool_output_is_not_a_failure_signal() {
+        // The cancellation envelope carries an error object, but "cancelled"
+        // must never count toward consecutive-failure loop detection.
+        let cancelled = json!({
+            "id": "call-cancelled",
+            "status": "cancelled",
+            "startedAt": "2026-06-22T00:01:50.000Z",
+            "toolPath": "/tools/exec/run",
+            "domain": "exec",
+            "operation": "run",
+            "output": {
+                "cancelled": true,
+                "error": {"code": "cancelled", "reason": "turn_cancelled"},
+            },
+        });
+        assert!(!tool_has_failure_signal(&cancelled));
+
+        // Output-level cancelled flag with a non-cancelled activity status
+        // (e.g. shell partial output) is still excluded.
+        let output_cancelled = json!({
+            "id": "call-shell-cancelled",
+            "status": "completed",
+            "startedAt": "2026-06-22T00:01:50.000Z",
+            "toolPath": "/tools/exec/run",
+            "domain": "exec",
+            "operation": "run",
+            "output": {
+                "cancelled": true,
+                "error": {"code": "cancelled"},
+            },
+        });
+        assert!(!tool_has_failure_signal(&output_cancelled));
+
+        // A genuine failure right after a cancellation still counts.
+        let failed_after_cancelled = json!({
+            "id": "call-failed",
+            "status": "failed",
+            "startedAt": "2026-06-22T00:01:55.000Z",
+            "toolPath": "/tools/exec/run",
+            "domain": "exec",
+            "operation": "run",
+            "output": {"error": {"code": "exit_code_nonzero"}},
+        });
+        assert!(tool_has_failure_signal(&failed_after_cancelled));
     }
 }

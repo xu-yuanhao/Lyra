@@ -589,6 +589,16 @@ export const createTerminalToolHost = ({
   ) => {
     rememberTerminalCursor(target, response.cursor);
     const projected = projectTerminalOutput(response);
+    // A foreground command that dies between the write and the read-back (bind
+    // conflict, bad flag, crash) otherwise looks identical to success: the
+    // traceback scrolls by in `output` and the exit code hides in a JSON field
+    // the model skips. Surface non-zero exits in the text the model reads —
+    // reference shape: codex prefixes every exec result with "Exit code: N".
+    const output = response.running === false
+      && typeof response.exitCode === "number"
+      && response.exitCode !== 0
+      ? `${projected.output}\n[process exited with code ${response.exitCode}]`
+      : projected.output;
     const responseMemory = response.memory ?? undefined;
     const memory = responseMemory === undefined
       ? undefined
@@ -603,7 +613,7 @@ export const createTerminalToolHost = ({
       ...(target.terminalTabId === undefined ? {} : { terminalTabId: target.terminalTabId }),
       ...(target.paneId === undefined ? {} : { paneId: target.paneId }),
       cursor: response.cursor,
-      output: projected.output,
+      output,
       running: response.running,
       exitCode: response.exitCode,
       lifecycle: response.lifecycle,

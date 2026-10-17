@@ -15,8 +15,7 @@ use crate::native_backend::inline_images::{
 };
 use crate::native_backend::token_estimate::{estimate_message_tokens, estimate_messages_tokens};
 use crate::native_backend::tool_protocol::{
-    TOOL_OUTPUT_CLEARED_SUMMARY, TOOL_OUTPUT_OMITTED_SUMMARY, message_has_provider_transcript,
-    tool_activity_output_summary,
+    TOOL_OUTPUT_CLEARED_SUMMARY, TOOL_OUTPUT_OMITTED_SUMMARY, tool_activity_output_summary,
 };
 use crate::prompt_policy::PromptAccounting;
 
@@ -73,7 +72,9 @@ pub struct ProviderContextOptions {
     pub max_tool_output_chars: usize,
     pub session_tool_count: usize,
     pub last_turn_tool_count: usize,
-    pub openai_responses_replay: bool,
+    /// Durable provider-protocol steps (one JSON entry per replayable round),
+    /// anchored to assistant message ids. Replaces the former metadata copies.
+    pub protocol_log: Vec<Value>,
     pub provider_id: Option<String>,
     pub route_id: Option<String>,
     pub protocol_id: Option<String>,
@@ -93,7 +94,7 @@ impl Default for ProviderContextOptions {
             max_tool_output_chars: 24_000,
             session_tool_count: 0,
             last_turn_tool_count: 0,
-            openai_responses_replay: false,
+            protocol_log: Vec::new(),
             provider_id: None,
             route_id: None,
             protocol_id: None,
@@ -229,6 +230,27 @@ use retention::{
     compact_to_retention_policy, demote_old_tool_results, prompt_accounting_json,
     should_compact_provider_context, strip_openai_responses_replay_groups,
 };
+
+/// Project one queued mid-turn user message (steer) into provider wire
+/// messages. Steers are durable transcript citizens, so this must stay in
+/// lockstep with the normal rebuild path — hence the shared projection
+/// instead of a hand-built wire message.
+pub(crate) fn project_steer_user_message(
+    steer: &Value,
+    transcript: &[Value],
+    options: &ProviderContextOptions,
+) -> Vec<Value> {
+    let message_index = transcript
+        .iter()
+        .position(|message| {
+            message
+                .get("id")
+                .is_some_and(|id| Some(id) == steer.get("id"))
+        })
+        .unwrap_or_else(|| transcript.len().saturating_sub(1));
+    let mut output = ProviderContext::default();
+    provider_messages_from_agent_message(steer, message_index, transcript, options, &mut output)
+}
 
 fn insert_volatile_appendix(messages: &mut Vec<Value>, appendix: Option<&str>) {
     let Some(appendix) = appendix.map(str::trim).filter(|text| !text.is_empty()) else {

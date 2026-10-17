@@ -192,6 +192,42 @@ describe("terminal agent tools", () => {
     bridge.dispose();
   });
 
+  test("a foreground command that dies immediately surfaces its exit code in the output text", async () => {
+    const registered = new Map<string, (payload: unknown) => unknown>();
+    const terminalBridge = createTerminalBridgeMock({
+      readObservation: vi.fn(async (request: { readonly sessionId: string }) => ({
+        sessionId: request.sessionId,
+        cursor: "40",
+        output: "Traceback (most recent call last): ...\nOSError: [Errno 98] Address already in use",
+        running: false,
+        exitCode: 1,
+        truncated: false,
+        source: "agent",
+        mode: "shell"
+      }))
+    });
+    const bridge = createAgentIpcBridge({
+      runtimeClient: createRuntimeClient(registered),
+      storageRoot: "/tmp/lyra-agent-test",
+      terminalBridge: terminalBridge as never,
+      getWindow: () => null,
+      getBrowserBridge: () => null,
+      getWorkbenchObservationService: () => ({ openTerminalPane: vi.fn() }) as never,
+      workbenchState: createWorkbenchStateMock()
+    });
+
+    const result = await registered.get("terminal.write")?.({
+      data: "python3 -m http.server 8765",
+      appendNewline: true,
+      runtimeCancellation: { sessionId: "agent-1", turnId: "turn-1", toolCallId: "tool-bind" }
+    }) as { readonly output: string };
+
+    expect(result.output).toContain("Address already in use");
+    expect(result.output).toContain("[process exited with code 1]");
+
+    bridge.dispose();
+  });
+
   test("createNew starts a second private terminal instead of reusing", async () => {
     const registered = new Map<string, (payload: unknown) => unknown>();
     const terminalBridge = createTerminalBridgeMock();

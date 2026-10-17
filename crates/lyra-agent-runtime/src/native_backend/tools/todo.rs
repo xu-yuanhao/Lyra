@@ -85,7 +85,7 @@ pub(crate) fn tool_todo_write(session_id: &str, turn_id: &str, input: &Value) ->
             "Retry with every ordered step needed to complete the approved plan.",
         ));
     }
-    let (callback, snapshot, project_todo, host_id) = {
+    let (callback, project_todo, host_id) = {
         let mut state = state().lock().map_err(|_| {
             NativeToolFailure::new(
                 "runtime_state_unavailable",
@@ -170,7 +170,6 @@ pub(crate) fn tool_todo_write(session_id: &str, turn_id: &str, input: &Value) ->
             None
         };
         touch_session(session);
-        let snapshot = session.snapshot.clone();
         let callback = event_callback();
         state.save_state().map_err(|error| {
             NativeToolFailure::new(
@@ -179,7 +178,7 @@ pub(crate) fn tool_todo_write(session_id: &str, turn_id: &str, input: &Value) ->
                 "Retry after checking runtime storage.",
             )
         })?;
-        (callback, snapshot, project_todo, host_id)
+        (callback, project_todo, host_id)
     };
     emit_with_callback(
         &callback,
@@ -201,13 +200,6 @@ pub(crate) fn tool_todo_write(session_id: &str, turn_id: &str, input: &Value) ->
             }),
         );
     }
-    emit_with_callback(
-        &callback,
-        json!({
-            "kind": "sessionSnapshot",
-            "snapshot": snapshot,
-        }),
-    );
     Ok(NativeToolSuccess {
         content: format!("Updated {} todos.", todos.len()),
         raw: json!({ "todos": todos, "projectTodo": project_todo }),
@@ -403,7 +395,7 @@ fn update_project_todo(
         &mut Value,
     ) -> Result<(String, Option<String>), NativeToolFailure>,
 ) -> NativeToolResult {
-    let (callback, snapshot, project_todo, todos, host_id) = {
+    let (callback, project_todo, todos, host_id) = {
         let mut state = state().lock().map_err(|_| {
             NativeToolFailure::new(
                 "runtime_state_unavailable",
@@ -463,7 +455,6 @@ fn update_project_todo(
         persist_project_todo_snapshot(&root, &scope, &project_todo)
             .map_err(native_failure_from_runtime)?;
         touch_session(session);
-        let snapshot = session.snapshot.clone();
         let callback = event_callback();
         state.save_state().map_err(|error| {
             NativeToolFailure::new(
@@ -472,7 +463,7 @@ fn update_project_todo(
                 "Retry after checking runtime storage.",
             )
         })?;
-        (callback, snapshot, project_todo, todos, host_id)
+        (callback, project_todo, todos, host_id)
     };
     emit_with_callback(
         &callback,
@@ -490,13 +481,6 @@ fn update_project_todo(
             "sessionId": host_id,
             "turnId": turn_id,
             "todo": project_todo,
-        }),
-    );
-    emit_with_callback(
-        &callback,
-        json!({
-            "kind": "sessionSnapshot",
-            "snapshot": snapshot,
         }),
     );
     Ok(NativeToolSuccess {
@@ -851,13 +835,6 @@ pub(crate) fn emit_project_todo_events(host_id: &str, snapshot: &Value) {
             }),
         );
     }
-    emit_with_callback(
-        &callback,
-        json!({
-            "kind": "sessionSnapshot",
-            "snapshot": snapshot,
-        }),
-    );
 }
 
 fn current_todo_index(todos: &[Value]) -> usize {

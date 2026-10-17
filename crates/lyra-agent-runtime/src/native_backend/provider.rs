@@ -37,7 +37,6 @@ pub(crate) use protocol_mapping::*;
 pub(crate) use retry_policy::*;
 pub(crate) use usage::*;
 
-const REPEATED_TOOL_ROUND_SOFT_OCCURRENCES: usize = 3;
 const REPEATED_TOOL_ROUND_HARD_OCCURRENCES: usize = 5;
 const MAX_CONTINUATION_RETRIES: u8 = 4;
 /// How many times a streaming turn is replayed after a transport failure that
@@ -50,7 +49,6 @@ const MAX_PROVIDER_IMAGE_TOOL_BYTES: u64 = 8 * 1024 * 1024;
 const MAX_TOKENS_CONTINUATION_PROMPT: &str = "Previous response was cut off by output token limit, not finished. Continue the same response exactly where it stopped. Do not repeat, restart, apologize, or re-introduce. Output only continuation.";
 const MAX_TOKENS_EXHAUSTED_VISIBLE_NOTE: &str =
     "[Auto continuation limit reached. Reply \"continue\" for remaining output.]";
-const PROGRESS_GUARD_WARNING_PROMPT: &str = "Lyra's dynamic progress guard detected repeated identical tool calls with identical provider-visible results. Do not repeat the exact same tool call again unless the page, file, or external state has actually changed. Change strategy, inspect different evidence, use a more specific wait/read_until condition, or produce the final answer/blocker summary from the evidence already gathered.";
 const PROGRESS_GUARD_FINAL_SYNTHESIS_PROMPT: &str = "Lyra's dynamic progress guard detected repeated identical tool calls with no new provider-visible evidence. Do not call more task tools in this response. Produce the best possible final answer from gathered evidence. If task is incomplete, state attempted work, exact blocker, and one next action. Do not ask member to restate the same request. Only exception: if completion truly needs missing member decision, call lyra_clarification_ask. Plain assistant questions r non-blocking and must not be used to wait.";
 
 const PROVIDER_MIN_CONCURRENCY: usize = 1;
@@ -490,8 +488,6 @@ pub(crate) struct ModelLoopResult {
     pub(crate) final_text: Option<String>,
     pub(crate) final_message_id: Option<String>,
     pub(crate) metadata: Option<Value>,
-    pub(crate) provider_transcript: Vec<Value>,
-    pub(crate) provider_replay_items: Vec<Value>,
     pub(crate) ui_text_committed: bool,
 }
 
@@ -501,8 +497,6 @@ impl ModelLoopResult {
             final_text: Some(text),
             final_message_id: None,
             metadata: None,
-            provider_transcript: Vec::new(),
-            provider_replay_items: Vec::new(),
             ui_text_committed: false,
         }
     }
@@ -514,16 +508,6 @@ impl ModelLoopResult {
 
     fn with_final_message_id(mut self, final_message_id: Option<String>) -> Self {
         self.final_message_id = final_message_id.filter(|id| !id.trim().is_empty());
-        self
-    }
-
-    fn with_provider_transcript(mut self, provider_transcript: Vec<Value>) -> Self {
-        self.provider_transcript = provider_transcript;
-        self
-    }
-
-    fn with_provider_replay_items(mut self, provider_replay_items: Vec<Value>) -> Self {
-        self.provider_replay_items = provider_replay_items;
         self
     }
 
@@ -545,27 +529,16 @@ impl ModelLoopResult {
     }
 
     pub(crate) fn session_metadata(&self) -> Option<Value> {
-        let mut metadata = self.metadata.clone().unwrap_or_else(|| json!({}));
-        if !metadata.is_object() {
-            metadata = json!({ "value": metadata });
-        }
-        if !self.provider_transcript.is_empty()
-            && let Some(object) = metadata.as_object_mut()
-        {
-            object.insert(
-                "providerTranscript".to_string(),
-                Value::Array(self.provider_transcript.clone()),
-            );
-        }
-        if !self.provider_replay_items.is_empty()
-            && let Some(object) = metadata.as_object_mut()
-        {
-            object.insert(
-                "openaiResponsesReplay".to_string(),
-                Value::Array(self.provider_replay_items.clone()),
-            );
-        }
-        (!metadata.as_object().is_some_and(Map::is_empty)).then_some(metadata)
+        // Protocol replay state lives in the per-session provider_protocol_log,
+        // not in message metadata; only loop-observable metadata rides here.
+        self.metadata
+            .as_ref()
+            .filter(|metadata| {
+                metadata
+                    .as_object()
+                    .is_some_and(|object| !object.is_empty())
+            })
+            .cloned()
     }
 }
 

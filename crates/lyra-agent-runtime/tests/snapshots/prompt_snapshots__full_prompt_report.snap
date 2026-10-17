@@ -1,6 +1,5 @@
 ---
 source: crates/lyra-agent-runtime/tests/prompt_snapshots.rs
-assertion_line: 129
 expression: pretty(&prompt_projection(&report))
 ---
 {
@@ -8,8 +7,8 @@ expression: pretty(&prompt_projection(&report))
     "contextProjectionVersion": 6,
     "memoryProjectionVersion": 1,
     "promptDeliveryModeVersion": 1,
-    "promptPolicyVersion": 11,
-    "promptTemplateVersion": 64,
+    "promptPolicyVersion": 12,
+    "promptTemplateVersion": 65,
     "retentionPolicyVersion": 1,
     "runtimeContextSchemaVersion": 6,
     "toolDiscoveryContractVersion": 4

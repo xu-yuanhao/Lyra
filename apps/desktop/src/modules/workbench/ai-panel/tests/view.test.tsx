@@ -193,7 +193,6 @@ const sessionSummaryFromSnapshot = (entry: AgentSessionSnapshot) => ({
 const createDesktopApi = () => {
   let listener: ((event: AgentRuntimeEvent) => void) | null = null;
   let readSnapshot = snapshot;
-  let rollbackRestoreSnapshot = snapshot;
   let modelsResponse = agentModels;
   const createSession = vi.fn(async () => readSnapshot);
   const listSessions = vi.fn(async () => ({
@@ -229,7 +228,6 @@ const createDesktopApi = () => {
   const restoreRollback = vi.fn(async (request: { messageId: string; sessionId: string }) => ({
     sessionId: request.sessionId,
     messageId: request.messageId,
-    snapshot: rollbackRestoreSnapshot,
     removedMessageCount: 2,
     restoredFileCount: 1
   }));
@@ -312,9 +310,6 @@ const createDesktopApi = () => {
     },
     setReadSnapshot: (nextSnapshot: AgentSessionSnapshot) => {
       readSnapshot = nextSnapshot;
-    },
-    setRollbackRestoreSnapshot: (nextSnapshot: AgentSessionSnapshot) => {
-      rollbackRestoreSnapshot = nextSnapshot;
     },
     setModelsResponse: (nextModels: typeof agentModels) => {
       modelsResponse = nextModels;
@@ -2636,7 +2631,13 @@ describe("AiPanelSurface", () => {
     expect(screen.queryByText("This turn did not complete. You can send your message again."))
       .not.toBeInTheDocument();
     expect(screen.queryByText("Retry this turn")).not.toBeInTheDocument();
-    expect(await screen.findByText(errorMessage)).toBeInTheDocument();
+    // The settled snapshot replaces the list wholesale (authoritative
+    // refetch), which swaps the streamed message node for the refetched one;
+    // findByText can resolve on the transient detached node. Retry until the
+    // message is actually in the document.
+    await waitFor(() => {
+      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+    });
   });
 
   test("renders Lyra Agent tool transcript as tool UI instead of user result bubbles", async () => {
@@ -2873,7 +2874,7 @@ describe("AiPanelSurface", () => {
   });
 
   test("rolls back files and conversation from the user message undo action", async () => {
-    const { api, setReadSnapshot, setRollbackRestoreSnapshot } = createDesktopApi();
+    const { api, setReadSnapshot, emit } = createDesktopApi();
     setReadSnapshot({
       ...snapshot,
       messages: [
@@ -2902,17 +2903,6 @@ describe("AiPanelSurface", () => {
         }
       ]
     });
-    setRollbackRestoreSnapshot({
-      ...snapshot,
-      messages: [
-        {
-          id: "keep-message",
-          role: "user",
-          text: "keep this context",
-          createdAt: "2026-05-13T00:00:00.000Z"
-        }
-      ]
-    });
     renderPanel(api, undefined, undefined, "zh-CN");
 
     expect(await screen.findByText("change files")).toBeInTheDocument();
@@ -2932,6 +2922,16 @@ describe("AiPanelSurface", () => {
         sessionId: "session-1",
         messageId: "rollback-message",
         mode: "taskAndWorkspace"
+      });
+    });
+    act(() => {
+      emit({
+        kind: "rollbackFinished",
+        sessionId: "session-1",
+        messageId: "rollback-message",
+        removedMessageCount: 2,
+        removedToolCount: 0,
+        restoredFileCount: 1
       });
     });
     expect(screen.getByText("keep this context")).toBeInTheDocument();

@@ -520,25 +520,11 @@ export const useLyraAgentDataProvider = (
       .then(async (snapshot) => {
         if (disposed) return;
         setPermissionPolicy(snapshot);
-
-        // 启动时恢复：full_auto 模式且有 credential ref → 从 safeStorage 解密 → 注入 Rust
-        const ref = snapshot.elevationCredentialRef;
-        if (
-          (snapshot.effectiveMode === "full_auto" || snapshot.effectiveMode === "autonomous")
-          && ref !== undefined
-          && ref !== null
-          && sensitiveValues !== undefined
-          && isLyraSensitiveValueRef(ref)
-        ) {
-          try {
-            const { value } = await sensitiveValues.revealToUser({ ref });
-            if (!disposed && value.length > 0) {
-              await agent.setElevationSecret({ secret: value });
-            }
-          } catch {
-            // safeStorage 解密失败（OS 密钥变更等）— 静默降级，下次 sudo 会报权限错误
-          }
-        }
+        // Elevation secret restore moved to the main process: it re-injects at
+        // every turn start (agent service turnStarted subscription) with named
+        // failures, instead of this fire-once mount effect whose silent catch
+        // let the agent improvise its own sudo plumbing when the unlock lost
+        // the race.
       })
       .catch(() => undefined);
     return () => {
@@ -1139,15 +1125,13 @@ export const useLyraAgentDataProvider = (
 
   const rollbackMessage = useCallback(async (messageId: string): Promise<void> => {
     if (desktopApi?.agent === undefined || state.session === null) return;
-    const response = await desktopApi.agent.restoreRollback({
+    await desktopApi.agent.restoreRollback({
       sessionId: state.session.id,
       messageId,
       mode: "taskAndWorkspace"
     });
-    // Rollback is intentionally destructive to the visible timeline. A normal
-    // snapshot merge preserves local streaming messages, so use a replacement
-    // action here to remove the rolled-back conversation entries as well.
-    dispatch({ type: "replaceSnapshot", snapshot: response.snapshot });
+    // Rollback state reaches the view through the rollbackStarted/
+    // rollbackFinished runtime events, which the session reducer applies.
   }, [desktopApi, state.session]);
 
   const createSessionNow = useCallback(async (): Promise<void> => {

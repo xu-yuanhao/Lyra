@@ -6,6 +6,7 @@ pub(super) fn native_failure_from_tool_fs(error: ToolFsError) -> NativeToolFailu
         message: error.message,
         recommended_next_action: error.recommended_next_action,
         detail: error.detail,
+        cancel_reason: None,
     }
 }
 

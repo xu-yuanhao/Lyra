@@ -260,6 +260,13 @@ pub(crate) struct NativeSession {
     pub(crate) rollback_checkpoints: Vec<RollbackCheckpoint>,
     #[serde(default)]
     pub(crate) file_read_state: HashMap<String, FileReadStateEntry>,
+    /// Independent provider-protocol replay log (codex rollout / opencode
+    /// providerContext shape): one v2 step per record, each carrying its
+    /// `messageId` anchor. Protocol state must not ride inside message
+    /// metadata — the log is the source of truth for resume replay, and the
+    /// renderer never reads it.
+    #[serde(default)]
+    pub(crate) provider_protocol_log: Vec<Value>,
     #[serde(default, skip)]
     pub(crate) dirty: bool,
     #[serde(default, skip)]

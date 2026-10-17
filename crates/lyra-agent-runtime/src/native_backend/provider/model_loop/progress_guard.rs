@@ -81,16 +81,14 @@ impl ModelLoopProgressGuard {
             self.repeated_occurrences = 1;
         }
 
-        let reason = "repeated_identical_tool_round_without_new_evidence";
+        // Mature-guard shape (checked across the reference projects): no
+        // generic mid-turn warning. A fully-identical round either keeps going
+        // or terminates with the synthesis explanation at the hard threshold.
+        // Failure-scoped nudges stay in ToolLoopDetector, which names the tool
+        // and the failure count.
         if self.repeated_occurrences >= REPEATED_TOOL_ROUND_HARD_OCCURRENCES {
             return ModelLoopProgressAction::Synthesize {
-                reason,
-                observed_occurrences: self.repeated_occurrences,
-            };
-        }
-        if self.repeated_occurrences == REPEATED_TOOL_ROUND_SOFT_OCCURRENCES {
-            return ModelLoopProgressAction::Warn {
-                reason,
+                reason: "repeated_identical_tool_round_without_new_evidence",
                 observed_occurrences: self.repeated_occurrences,
             };
         }
@@ -151,6 +149,17 @@ pub(crate) fn tool_round_progress_fingerprint(
 pub(crate) const FAILED_TOOL_ACTIVITY_LABEL: &str =
     "Failed tool activity ID (output explains the failure; it is not proof the task succeeded)";
 
+/// A cancellation is a terminal outcome with a reason, not a failure: it must
+/// not feed consecutive-failure loop detection (a user stop or a superseded
+/// turn says nothing about the tool or the model's strategy).
+pub(crate) fn tool_output_cancelled(output: &Value) -> bool {
+    output.get("cancelled").and_then(Value::as_bool) == Some(true)
+        || output.pointer("/error/code").and_then(Value::as_str) == Some("cancelled")
+}
+
+pub(crate) const CANCELLED_TOOL_ACTIVITY_LABEL: &str =
+    "Cancelled activity ID (the output's reason explains why the call did not run)";
+
 pub(crate) fn tool_output_failed(output: &Value) -> bool {
     output.get("error").is_some_and(|value| !value.is_null())
         || matches!(
@@ -168,7 +177,9 @@ pub(crate) fn provider_visible_tool_result_content(
     max_chars: usize,
 ) -> (String, Option<Value>) {
     let (content, evidence_ref) = guarded_tool_result_content(output, max_chars);
-    let label = if tool_output_failed(output) {
+    let label = if tool_output_cancelled(output) {
+        CANCELLED_TOOL_ACTIVITY_LABEL
+    } else if tool_output_failed(output) {
         FAILED_TOOL_ACTIVITY_LABEL
     } else {
         "Evidence activity ID"
@@ -256,5 +267,39 @@ mod visual_progress_tests {
         assert_eq!(fingerprint("a", 7, "old"), fingerprint("b", 7, "old"));
         assert_ne!(fingerprint("a", 7, "old"), fingerprint("b", 8, "old"));
         assert_ne!(fingerprint("a", 7, "old"), fingerprint("b", 7, "new"));
+    }
+}
+
+#[cfg(test)]
+mod cancellation_classification_tests {
+    use super::*;
+
+    #[test]
+    fn cancelled_outputs_are_recognized_by_flag_or_error_code() {
+        let by_flag = json!({ "content": "cancelled", "cancelled": true });
+        assert!(tool_output_cancelled(&by_flag));
+        let by_code = json!({ "content": "cancelled", "error": { "code": "cancelled", "reason": "user_stop" } });
+        assert!(tool_output_cancelled(&by_code));
+        let timeout = json!({ "error": { "code": "timeout", "message": "budget elapsed" } });
+        assert!(!tool_output_cancelled(&timeout));
+        let completed = json!({ "content": "ok" });
+        assert!(!tool_output_cancelled(&completed));
+    }
+
+    #[test]
+    fn cancelled_outputs_are_not_counted_as_failures() {
+        let cancelled = json!({
+            "content": "Lyra tool call was cancelled.",
+            "error": { "code": "cancelled", "reason": "turn_superseded" },
+            "cancelled": true
+        });
+        // The model-loop sites compute `failed = !cancelled && tool_output_failed`;
+        // tool_output_failed itself still matches (it keys on the error object),
+        // so the negation at the call site is what keeps cancellations out of
+        // the consecutive-failure counter. Pin both halves of that contract.
+        assert!(tool_output_failed(&cancelled));
+        let cancelled = cancelled;
+        assert!(tool_output_cancelled(&cancelled));
+        assert!(!(!tool_output_cancelled(&cancelled) && tool_output_failed(&cancelled)));
     }
 }

@@ -118,6 +118,17 @@ export const mergeRunningSessionSnapshot = (
   if (current.id !== normalizedIncoming.id) return normalizedIncoming;
   if (isOlderSessionSnapshot(current, normalizedIncoming)) return current;
 
+  // Reference invariant (ZCode v4 conversationProjectionStore): a settled
+  // (non-running) snapshot is authoritative — messages AND tools are replaced
+  // wholesale, never merged. Union-merging tools here used to make retained
+  // state grow for the whole session lifetime, which defeated the windowed
+  // read path (last-500-messages, 16KB output previews): the refetch could
+  // never shrink what the renderer held. Only in-flight snapshots merge,
+  // because their purpose is folding live deltas into local state.
+  if (normalizedIncoming.turnStatus !== "running") {
+    return normalizedIncoming;
+  }
+
   const incomingById = new Map(normalizedIncoming.messages.map((message) => [message.id, message]));
   const mergedMessages: AgentMessage[] = [];
   const seen = new Set<string>();
@@ -147,7 +158,7 @@ export const mergeRunningSessionSnapshot = (
 
   return {
     ...normalizedIncoming,
-    messages: normalizedIncoming.turnStatus === "running" ? mergedMessages : normalizedIncoming.messages,
+    messages: mergedMessages,
     tools: [...toolsById.values()]
   };
 };
@@ -402,6 +413,14 @@ export const applyAgentRuntimeEventToSnapshot = (
     };
   }
 
+  if (event.kind === "messageRemoved") {
+    return {
+      ...session,
+      messages: session.messages.filter((message) => message.id !== event.messageId),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
   if (event.kind === "messageDelta") {
     const existing = session.messages.some((message) => message.id === event.messageId);
     const messages = existing
@@ -635,6 +654,20 @@ export const applyAgentRuntimeEventToSnapshot = (
     };
   }
 
+  if (event.kind === "rollbackFinished") {
+    const messageCount = Math.max(session.messages.length - event.removedMessageCount, 0);
+    const toolCount = Math.max(session.tools.length - event.removedToolCount, 0);
+    return {
+      ...session,
+      messages: session.messages.slice(0, messageCount),
+      tools: session.tools.slice(0, toolCount),
+      turnStatus: "idle",
+      activeTurnId: null,
+      follow: { running: false, activity: null },
+      updatedAt: new Date().toISOString()
+    };
+  }
+
   if (event.kind === "browserActivityChanged") {
     const currentMemory = session.memory ?? null;
     const nextTarget = asRecord(event.target);
@@ -670,6 +703,19 @@ export const applyAgentRuntimeEventToSnapshot = (
             ...currentMemory,
             activeClarification: null
           },
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  if (event.kind === "subagentStarted") {
+    const existing = (session.subagents ?? []).some((record) => record.id === event.subagent.id);
+    return {
+      ...session,
+      subagents: existing
+        ? (session.subagents ?? []).map((record) =>
+          record.id === event.subagent.id ? event.subagent : record
+        )
+        : [...(session.subagents ?? []), event.subagent],
       updatedAt: new Date().toISOString()
     };
   }

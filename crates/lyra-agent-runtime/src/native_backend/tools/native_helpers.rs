@@ -177,6 +177,43 @@ pub(crate) fn preserve_raw_timeline_facts(raw: &Value, envelope: &mut Value) {
     }
 }
 
+/// Why a tool call was cancelled. Recorded in the tool result envelope so the
+/// model can distinguish a user stop from a system abort instead of treating
+/// every cancellation as an unexplained failure (ZCode `cancellation.userVisibleMessage`,
+/// hermes recorded-interrupt-reason wording).
+pub(crate) const CANCEL_REASON_TURN_CANCELLED: &str = "turn_cancelled";
+pub(crate) const CANCEL_REASON_TURN_SUPERSEDED: &str = "turn_superseded";
+pub(crate) const CANCEL_REASON_USER_STOP: &str = "user_stop";
+pub(crate) const CANCEL_REASON_BEFORE_EXECUTION: &str = "before_execution";
+pub(crate) const CANCEL_REASON_PERMISSION_WAIT: &str = "permission_wait_cancelled";
+pub(crate) const CANCEL_REASON_SESSION_RECOVERY: &str = "session_recovery";
+
+/// The single cancellation envelope. Cancellation is not a failure: the
+/// content is not prefixed with "Lyra tool failed", and the envelope carries
+/// `error.code = "cancelled"` plus a machine-readable `error.reason` while
+/// keeping the legacy `"cancelled": true` flag that quality_gate,
+/// tool_fs/result and the progress guard key on.
+pub(crate) fn cancelled_tool_output(
+    reason: &str,
+    message: &str,
+    recommended_next_action: &str,
+    detail: Option<Value>,
+) -> Value {
+    json!({
+        "content": message,
+        "error": {
+            "code": "cancelled",
+            "reason": reason,
+            "message": message,
+            "detail": detail,
+        },
+        "cancelled": true,
+        "truncated": false,
+        "artifactRef": Value::Null,
+        "recommendedNextAction": recommended_next_action,
+    })
+}
+
 pub(crate) fn tool_failure_output(
     code: &str,
     message: &str,
@@ -367,10 +404,12 @@ fn resolve_session_absolute_path(
     // Expand `~`/`~/` to the home directory before any Path handling so that
     // `~/Documents/x` resolves to `<home>/Documents/x` instead of being joined
     // onto the workspace root as a literal `~` component.
+    let original_input = raw_path;
     let raw_path = expand_tilde_prefix(raw_path)?;
     let root = session_workspace_root(session_id)?;
     let candidate = PathBuf::from(raw_path.as_ref());
-    let candidate = if candidate.is_absolute() {
+    let input_was_absolute = candidate.is_absolute();
+    let candidate = if input_was_absolute {
         candidate
     } else {
         root.join(normalize_workspace_relative_path(&root, &candidate))
@@ -386,10 +425,25 @@ fn resolve_session_absolute_path(
     } else if allow_missing_leaf {
         resolve_missing_candidate_path(&candidate)?
     } else {
+        // Name the anchor explicitly: a relative input that lands somewhere the
+        // model did not expect is the most common path-tool failure, and the
+        // raw input alone never explains where it was joined onto. Reference
+        // shape: hermes `_path_resolution_warning` reports raw input, resolved
+        // path, and base directory together.
+        let message = if input_was_absolute {
+            format!("path does not exist: {}", candidate.display())
+        } else {
+            format!(
+                "path does not exist: {} (input \"{}\" is relative and was resolved against the session workspace root {})",
+                candidate.display(),
+                original_input,
+                root.display()
+            )
+        };
         return Err(NativeToolFailure::new(
             "path_not_found",
-            format!("path does not exist: {}", candidate.display()),
-            "Retry with an existing path.",
+            message,
+            "Retry with an existing path; relative paths resolve against the workspace root named above, or pass an absolute path.",
         ));
     };
     Ok((root, absolute))
@@ -656,5 +710,52 @@ pub(crate) fn enforce_turn_tool_budget(
             }
         }
         remaining = remaining.saturating_sub(content_len.saturating_sub(TURN_SPILL_PREVIEW_CHARS));
+    }
+}
+
+#[cfg(test)]
+mod cancelled_output_tests {
+    use super::*;
+
+    #[test]
+    fn cancelled_envelope_keeps_flag_and_names_reason() {
+        let output = cancelled_tool_output(
+            CANCEL_REASON_USER_STOP,
+            "Lyra tool call was cancelled by the user.",
+            "Stop this tool call and continue only after a new user turn.",
+            None,
+        );
+        assert_eq!(
+            output.pointer("/error/code").and_then(Value::as_str),
+            Some("cancelled")
+        );
+        assert_eq!(
+            output.pointer("/error/reason").and_then(Value::as_str),
+            Some("user_stop")
+        );
+        assert_eq!(output.get("cancelled").and_then(Value::as_bool), Some(true));
+        assert_eq!(
+            output.get("content").and_then(Value::as_str),
+            Some("Lyra tool call was cancelled by the user.")
+        );
+        assert_eq!(
+            output.get("recommendedNextAction").and_then(Value::as_str),
+            Some("Stop this tool call and continue only after a new user turn.")
+        );
+    }
+
+    #[test]
+    fn cancelled_content_is_not_failure_prefixed() {
+        let output = cancelled_tool_output(
+            CANCEL_REASON_PERMISSION_WAIT,
+            "Lyra tool call was cancelled before permission was resolved.",
+            "Ask the user again in a new turn if the action is still needed.",
+            None,
+        );
+        let content = output
+            .get("content")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        assert!(!content.starts_with("Lyra tool failed"));
     }
 }

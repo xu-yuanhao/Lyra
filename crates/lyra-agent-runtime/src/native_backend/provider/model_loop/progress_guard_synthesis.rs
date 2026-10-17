@@ -5,9 +5,6 @@ pub(crate) async fn synthesize_after_progress_guard_async(
     turn_id: &str,
     request: &ModelRequest,
     mut messages: Vec<Value>,
-    mut provider_transcript: Vec<Value>,
-    mut provider_replay_items: Vec<Value>,
-    mut deferred_provider_protocol_steps: Vec<Value>,
     mut observations: ModelLoopObservations,
     cancellation: &CancellationToken,
     reason: &str,
@@ -50,7 +47,6 @@ pub(crate) async fn synthesize_after_progress_guard_async(
         commit_assistant_text,
         &mut observations,
         &mut attempt_local_overlay_start,
-        &mut deferred_provider_protocol_steps,
     )
     .await?;
     let protocol_id = provider_protocol_id(request);
@@ -59,7 +55,6 @@ pub(crate) async fn synthesize_after_progress_guard_async(
         let response_replay_items = openai_responses_protocol
             .then(|| retained_provider_replay_items(&reply.provider_replay_items, &[]))
             .unwrap_or_default();
-        provider_replay_items.extend(response_replay_items.clone());
         let mut assistant_message = json!({
             "role": "assistant",
             "content": reply.content.clone().unwrap_or_default(),
@@ -68,8 +63,7 @@ pub(crate) async fn synthesize_after_progress_guard_async(
             assistant_message["openaiResponsesShadow"] = Value::Bool(true);
         }
         attach_assistant_replay(&mut assistant_message, &reply);
-        provider_transcript.push(assistant_message);
-        let mut final_protocol_step = provider_protocol_step(
+        let final_protocol_step = provider_protocol_step(
             request,
             turn_id,
             &reply,
@@ -78,28 +72,18 @@ pub(crate) async fn synthesize_after_progress_guard_async(
             Vec::new(),
             Vec::new(),
         );
-        attach_prior_provider_protocol_steps(
-            &mut final_protocol_step,
-            &deferred_provider_protocol_steps,
-        );
-        if let Some(message_id) = reply
-            .ui_message_id
-            .as_ref()
-            .filter(|id| !id.trim().is_empty())
-        {
-            crate::native_backend::turns::persist_provider_protocol_step(
-                session_id,
-                turn_id,
-                message_id,
-                final_protocol_step.clone(),
-            )?;
-        }
+        crate::native_backend::turns::upsert_provider_protocol_log_entry(
+            session_id,
+            turn_id,
+            reply
+                .ui_message_id
+                .as_deref()
+                .filter(|id| !id.trim().is_empty()),
+            final_protocol_step,
+        )?;
         let result = ModelLoopResult::final_text(final_text)
             .with_ui_text_committed(reply.ui_message_id.is_some())
-            .with_final_message_id(reply.ui_message_id.clone())
-            .with_provider_transcript(provider_transcript)
-            .with_provider_replay_items(provider_replay_items)
-            .with_merged_metadata(json!({ "providerProtocol": final_protocol_step }));
+            .with_final_message_id(reply.ui_message_id.clone());
         return Ok(with_model_loop_observations(
             result,
             &observations,
@@ -138,7 +122,6 @@ pub(crate) async fn synthesize_after_progress_guard_async(
         })
         .unwrap_or_default();
     if !response_replay_items.is_empty() {
-        provider_replay_items.extend(response_replay_items.clone());
         messages.extend(response_replay_items.clone());
     }
     let assistant_content = reply.content.clone().unwrap_or_default();
@@ -161,7 +144,6 @@ pub(crate) async fn synthesize_after_progress_guard_async(
     }
     attach_assistant_replay(&mut assistant_message, &reply);
     messages.push(assistant_message.clone());
-    provider_transcript.push(assistant_message);
     let tool_step_message_id = reply.ui_message_id.clone();
     let mut tool_protocol_step = provider_protocol_step(
         request,
@@ -214,11 +196,9 @@ pub(crate) async fn synthesize_after_progress_guard_async(
         tool_message["openaiResponsesShadow"] = Value::Bool(true);
         let output_item =
             openai_responses::function_call_output_item(&tool_call.id, content.clone());
-        provider_replay_items.push(output_item.clone());
         messages.push(output_item);
     }
     messages.push(tool_message.clone());
-    provider_transcript.push(tool_message);
     tool_protocol_step["toolResults"] = json!([{
         "toolCallId": tool_call.id,
         "content": content,
@@ -247,9 +227,6 @@ pub(crate) async fn synthesize_after_progress_guard_async(
         tool_step_message_id.as_deref(),
         &tool_protocol_step,
     )?;
-    if tool_step_message_id.is_none() {
-        deferred_provider_protocol_steps.push(tool_protocol_step);
-    }
     crate::native_backend::turns::clear_active_ui_message_id(session_id, turn_id);
     emit_turn_state(
         session_id,
@@ -273,7 +250,6 @@ pub(crate) async fn synthesize_after_progress_guard_async(
         commit_assistant_text,
         &mut observations,
         &mut attempt_local_overlay_start,
-        &mut deferred_provider_protocol_steps,
     )
     .await?;
     if !final_reply.tool_calls.is_empty() {
@@ -293,7 +269,6 @@ pub(crate) async fn synthesize_after_progress_guard_async(
     let response_replay_items = openai_responses_protocol
         .then(|| retained_provider_replay_items(&final_reply.provider_replay_items, &[]))
         .unwrap_or_default();
-    provider_replay_items.extend(response_replay_items.clone());
     let mut final_assistant = json!({
         "role": "assistant",
         "content": final_reply.content.clone().unwrap_or_default(),
@@ -302,8 +277,7 @@ pub(crate) async fn synthesize_after_progress_guard_async(
         final_assistant["openaiResponsesShadow"] = Value::Bool(true);
     }
     attach_assistant_replay(&mut final_assistant, &final_reply);
-    provider_transcript.push(final_assistant);
-    let mut final_protocol_step = provider_protocol_step(
+    let final_protocol_step = provider_protocol_step(
         request,
         turn_id,
         &final_reply,
@@ -312,28 +286,18 @@ pub(crate) async fn synthesize_after_progress_guard_async(
         Vec::new(),
         Vec::new(),
     );
-    attach_prior_provider_protocol_steps(
-        &mut final_protocol_step,
-        &deferred_provider_protocol_steps,
-    );
-    if let Some(message_id) = final_reply
-        .ui_message_id
-        .as_ref()
-        .filter(|id| !id.trim().is_empty())
-    {
-        crate::native_backend::turns::persist_provider_protocol_step(
-            session_id,
-            turn_id,
-            message_id,
-            final_protocol_step.clone(),
-        )?;
-    }
+    crate::native_backend::turns::upsert_provider_protocol_log_entry(
+        session_id,
+        turn_id,
+        final_reply
+            .ui_message_id
+            .as_deref()
+            .filter(|id| !id.trim().is_empty()),
+        final_protocol_step,
+    )?;
     let result = ModelLoopResult::final_text(final_text)
         .with_ui_text_committed(final_reply.ui_message_id.is_some())
-        .with_final_message_id(final_reply.ui_message_id.clone())
-        .with_provider_transcript(provider_transcript)
-        .with_provider_replay_items(provider_replay_items)
-        .with_merged_metadata(json!({ "providerProtocol": final_protocol_step }));
+        .with_final_message_id(final_reply.ui_message_id.clone());
     Ok(with_model_loop_observations(
         result,
         &observations,
@@ -353,18 +317,13 @@ async fn call_progress_guard_reply_async(
     commit_assistant_text: bool,
     observations: &mut ModelLoopObservations,
     attempt_local_overlay_start: &mut Option<usize>,
-    deferred_provider_protocol_steps: &mut Vec<Value>,
 ) -> AgentRuntimeResult<(ModelReply, String)> {
-    let mut reasoning_only_retries = 0_u8;
-    let mut terminal_empty_retries = 0_u8;
-    let mut truncated_tool_retries = 0_u8;
+    // One shared correction budget, mirroring the main model loop. When no
+    // tools are declared a missing-tool call cannot be corrected, so that
+    // action fails instead of consuming the budget.
+    let mut model_correction_retries = 0_u8;
     let mut continuation_retries = 0_u8;
     let mut truncated_prefix = String::new();
-    let mut missing_tool_retries = if tools.is_empty() {
-        max_missing_tool_retry()
-    } else {
-        0
-    };
     let mut effective_tool_choice = tool_choice.clone();
     loop {
         seal_tool_result_groups(messages);
@@ -386,14 +345,11 @@ async fn call_progress_guard_reply_async(
         observations.observe(&reply);
         checkpoint_model_loop_observations(session_id, turn_id, observations, messages);
         let outcome = classify_attempt_outcome(&reply);
-        let action = recovery_action_for_attempt(
-            outcome,
-            reasoning_only_retries,
-            terminal_empty_retries,
-            truncated_tool_retries,
-            missing_tool_retries,
-            continuation_retries,
-        );
+        let action = if tools.is_empty() && outcome == AttemptOutcome::ToolUseWithoutCall {
+            RecoveryAction::Fail(ProviderProtocolFailureKind::IncompleteToolCall)
+        } else {
+            recovery_action_for_attempt(outcome, model_correction_retries, continuation_retries)
+        };
         if action == RecoveryAction::ContinueVisibleText {
             continuation_retries += 1;
             let segment = reply.content.clone().unwrap_or_default();
@@ -411,15 +367,22 @@ async fn call_progress_guard_reply_async(
             let mut assistant = json!({ "role": "assistant", "content": segment });
             attach_assistant_replay(&mut assistant, &reply);
             messages.push(assistant);
-            deferred_provider_protocol_steps.push(provider_protocol_step(
-                request,
+            // Continuation segments have no surviving UI message; the step
+            // stays unanchored until finish_turn commits the final text.
+            crate::native_backend::turns::upsert_provider_protocol_log_entry(
+                session_id,
                 turn_id,
-                &reply,
-                &[],
-                "complete",
-                Vec::new(),
-                Vec::new(),
-            ));
+                None,
+                provider_protocol_step(
+                    request,
+                    turn_id,
+                    &reply,
+                    &[],
+                    "complete",
+                    Vec::new(),
+                    Vec::new(),
+                ),
+            )?;
             let input_start = messages.len();
             advance_stateful_responses(
                 messages,
@@ -447,7 +410,7 @@ async fn call_progress_guard_reply_async(
             continue;
         }
         if action == RecoveryAction::RetryIncompleteToolCall {
-            truncated_tool_retries += 1;
+            model_correction_retries += 1;
             if let Some(message_id) = reply.ui_message_id.as_ref().filter(|id| !id.is_empty()) {
                 let _ = remove_assistant_message(session_id, message_id);
             } else {
@@ -458,13 +421,13 @@ async fn call_progress_guard_reply_async(
                 session_id,
                 turn_id,
                 "provider_truncated_tool_call_retry",
-                truncated_tool_retries,
+                model_correction_retries,
                 "tool calls were returned with max_tokens; no tool executed",
             );
             continue;
         }
         if action == RecoveryAction::RetryMissingToolCall {
-            missing_tool_retries += 1;
+            model_correction_retries += 1;
             if let Some(message_id) = reply.ui_message_id.as_ref().filter(|id| !id.is_empty()) {
                 let _ = remove_assistant_message(session_id, message_id);
             } else {
@@ -491,30 +454,30 @@ async fn call_progress_guard_reply_async(
                 session_id,
                 turn_id,
                 "provider_missing_tool_call_retry",
-                missing_tool_retries,
+                model_correction_retries,
                 "provider stopped for tool use without a complete structured tool call",
             );
             continue;
         }
         let (recovery_kind, retry_reason, retry_message, retry_prompt, retry_count) = match action {
             RecoveryAction::RetryReasoningOnly => {
-                reasoning_only_retries += 1;
+                model_correction_retries += 1;
                 (
                     "reasoning-only-recovery",
                     "provider_reasoning_only_retry",
                     "provider returned reasoning without final assistant text or tool call",
                     "Finish the current response now. Return normal assistant text, or emit a complete structured tool call if a tool is required. Do not return reasoning alone.",
-                    reasoning_only_retries,
+                    model_correction_retries,
                 )
             }
             RecoveryAction::RetryTerminalEmpty => {
-                terminal_empty_retries += 1;
+                model_correction_retries += 1;
                 (
                     "terminal-empty-recovery",
                     "provider_terminal_empty_retry",
                     "assistant reply contained no visible text or tool call",
                     "The previous response ended without assistant text or a tool call. Complete the same request now with normal assistant text or one complete structured tool call.",
-                    terminal_empty_retries,
+                    model_correction_retries,
                 )
             }
             RecoveryAction::Fail(kind) => {

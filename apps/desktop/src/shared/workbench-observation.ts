@@ -75,6 +75,11 @@ export type WorkbenchTabCloseResult = {
   readonly tabId: string;
   readonly closed: boolean;
   readonly activeTabId: string | null;
+  // ZCode-style receipt: the result is post-mutation and authoritative —
+  // the caller must not re-read workspace state to verify.
+  readonly receipt: string;
+  readonly reason?: "tab_not_found" | "last_tab";
+  readonly title?: string;
 };
 
 export type WorkbenchTabReorderRequest = {
@@ -87,6 +92,7 @@ export type WorkbenchTabReorderResult = {
   readonly targetIndex: number;
   readonly tabIds: readonly string[];
   readonly layout: WorkbenchTabsLayoutSnapshot;
+  readonly receipt: string;
 };
 
 export type WorkbenchTabSplitRequest = {
@@ -98,6 +104,7 @@ export type WorkbenchTabSplitResult = {
   readonly sourceTabId: string;
   readonly targetTabId: string;
   readonly layout: WorkbenchTabsLayoutSnapshot;
+  readonly receipt: string;
 };
 
 export type WorkbenchTabDetachSplitRequest = {
@@ -107,6 +114,7 @@ export type WorkbenchTabDetachSplitRequest = {
 export type WorkbenchTabDetachSplitResult = {
   readonly tabId: string;
   readonly layout: WorkbenchTabsLayoutSnapshot;
+  readonly receipt: string;
 };
 
 export type WorkbenchTerminalMoveRequest = {

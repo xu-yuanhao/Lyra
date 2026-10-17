@@ -84,6 +84,74 @@ pub(super) fn input_schema(operation: &str) -> Value {
     match operation {
         "search" => search_schema(),
         "write" => write_schema(),
+        "review_candidates" => object_schema(
+            [
+                (
+                    "status",
+                    json!({
+                        "type": "string",
+                        "enum": ["pending", "applied", "rejected"],
+                        "description": "Filter by candidate status. Defaults to pending."
+                    }),
+                ),
+                (
+                    "limit",
+                    json!({
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 500,
+                        "description": "Maximum candidates to return (default 50)."
+                    }),
+                ),
+            ],
+            &[],
+        ),
+        "apply_candidate" => object_schema(
+            [(
+                "id",
+                json!({
+                    "type": "string",
+                    "description": "Memory candidate id, as returned by /tools/memory/review_candidates."
+                }),
+            )],
+            &["id"],
+        ),
+        "reject_candidate" => object_schema(
+            [
+                (
+                    "id",
+                    json!({
+                        "type": "string",
+                        "description": "Memory candidate id, as returned by /tools/memory/review_candidates."
+                    }),
+                ),
+                (
+                    "reason",
+                    json!({ "type": "string", "description": "Optional reason for rejecting the candidate." }),
+                ),
+            ],
+            &["id"],
+        ),
+        "explain_injection" => object_schema(
+            [
+                (
+                    "sessionId",
+                    json!({ "type": "string", "description": "Session id whose memory injection should be explained." }),
+                ),
+                (
+                    "turnId",
+                    json!({ "type": "string", "description": "Optional turn id to narrow the explanation." }),
+                ),
+            ],
+            &["sessionId"],
+        ),
+        "read_compressed_context" => object_schema(
+            [(
+                "sessionId",
+                json!({ "type": "string", "description": "Session id whose compressed context should be read." }),
+            )],
+            &["sessionId"],
+        ),
         _ => json!({ "type": "object", "properties": {} }),
     }
 }

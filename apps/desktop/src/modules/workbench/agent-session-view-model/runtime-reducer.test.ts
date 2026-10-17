@@ -532,7 +532,7 @@ describe("applyAgentRuntimeEventToSnapshot", () => {
     ]);
   });
 
-  test("mergeRunningSessionSnapshot keeps streaming tool diff over stale snapshot", () => {
+  test("mergeRunningSessionSnapshot replaces tools wholesale when the incoming snapshot is settled", () => {
     const current = session({
       tools: [{
         id: "tool-1",
@@ -550,6 +550,46 @@ describe("applyAgentRuntimeEventToSnapshot", () => {
       }]
     });
     const incoming = session({
+      tools: [{
+        id: "tool-1",
+        name: "apply_patch",
+        label: "Apply patch",
+        status: "completed",
+        input: { patch: "*** Begin Patch\n*** Update File: src/main.ts\n" },
+        output: {
+          content: "Editing src/main.ts"
+        },
+        startedAt: "2026-06-05T00:00:01.000Z"
+      }]
+    });
+
+    // Settled snapshots are authoritative (reference invariant: never merge).
+    // The local richer output is discarded together with every tool the
+    // snapshot does not carry — otherwise retained state could only grow.
+    const merged = mergeRunningSessionSnapshot(current, incoming);
+    expect(merged.tools).toEqual(incoming.tools);
+  });
+
+  test("mergeRunningSessionSnapshot keeps streaming tool diff over stale snapshot while running", () => {
+    const current = session({
+      turnStatus: "running",
+      tools: [{
+        id: "tool-1",
+        name: "apply_patch",
+        label: "Apply patch",
+        status: "running",
+        input: { patch: "*** Begin Patch\n*** Update File: src/main.ts\n" },
+        output: {
+          raw: {
+            diff: "--- src/main.ts\n+++ src/main.ts\n@@ -0,0 +1,3 @@\n+line1\n+line2\n+line3",
+            preview: true
+          }
+        },
+        startedAt: "2026-06-05T00:00:01.000Z"
+      }]
+    });
+    const incoming = session({
+      turnStatus: "running",
       tools: [{
         id: "tool-1",
         name: "apply_patch",
@@ -825,6 +865,93 @@ describe("applyAgentRuntimeEventToSnapshot", () => {
     });
 
     expect(next.subagents?.[0]?.status).toBe("idle");
+  });
+
+  test("removes a message on messageRemoved", () => {
+    const current = session({
+      messages: [
+        { id: "m-1", role: "user", text: "keep", createdAt: "2026-06-05T00:00:00.000Z" },
+        { id: "m-2", role: "assistant", text: "drop", createdAt: "2026-06-05T00:00:01.000Z" }
+      ]
+    });
+
+    const next = applyAgentRuntimeEventToSnapshot(current, {
+      kind: "messageRemoved",
+      sessionId: "session-1",
+      messageId: "m-2"
+    });
+
+    expect(next.messages.map((message) => message.id)).toEqual(["m-1"]);
+  });
+
+  test("upserts the subagent record on subagentStarted", () => {
+    const existing = session({
+      subagents: [{
+        id: "worker-1",
+        description: "Existing",
+        type: "explore",
+        origin: "spawn",
+        status: "running"
+      }]
+    });
+
+    const appended = applyAgentRuntimeEventToSnapshot(session(), {
+      kind: "subagentStarted",
+      sessionId: "session-1",
+      subagent: {
+        id: "worker-2",
+        description: "New worker",
+        type: "general",
+        origin: "spawn",
+        status: "running"
+      }
+    });
+    expect(appended.subagents?.map((record) => record.id)).toEqual(["worker-2"]);
+
+    const replaced = applyAgentRuntimeEventToSnapshot(existing, {
+      kind: "subagentStarted",
+      sessionId: "session-1",
+      subagent: {
+        id: "worker-1",
+        description: "Existing",
+        type: "explore",
+        origin: "spawn",
+        status: "idle"
+      }
+    });
+    expect(replaced.subagents?.[0]?.status).toBe("idle");
+    expect(replaced.subagents).toHaveLength(1);
+  });
+
+  test("rollbackFinished truncates messages and tools and resets turn state", () => {
+    const current = session({
+      turnStatus: "running",
+      activeTurnId: "turn-1",
+      follow: { running: true, activity: "calling_model" },
+      messages: [
+        { id: "m-1", role: "user", text: "keep", createdAt: "2026-06-05T00:00:00.000Z" },
+        { id: "m-2", role: "assistant", text: "drop", createdAt: "2026-06-05T00:00:01.000Z" }
+      ],
+      tools: [
+        { id: "tool-1", status: "completed" },
+        { id: "tool-2", status: "completed" }
+      ] as unknown as AgentSessionSnapshot["tools"]
+    });
+
+    const next = applyAgentRuntimeEventToSnapshot(current, {
+      kind: "rollbackFinished",
+      sessionId: "session-1",
+      messageId: "m-2",
+      removedMessageCount: 1,
+      removedToolCount: 1,
+      restoredFileCount: 0
+    });
+
+    expect(next.messages.map((message) => message.id)).toEqual(["m-1"]);
+    expect(next.tools.map((tool) => tool.id)).toEqual(["tool-1"]);
+    expect(next.turnStatus).toBe("idle");
+    expect(next.activeTurnId).toBeNull();
+    expect(next.follow.running).toBe(false);
   });
 });
 

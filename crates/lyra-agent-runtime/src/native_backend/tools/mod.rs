@@ -33,7 +33,10 @@ pub(crate) async fn run_exec_tool(payload: Value) -> Value {
             .to_string()
     };
     let arguments = payload.get("arguments").cloned().unwrap_or(Value::Null);
-    native_executor::execute_native_tool_adapter_with_dispatcher(
+    // Served by the exec role process, which holds no turn state: the agent
+    // host already gated cancellation before forwarding, so the forwarded
+    // token is the only cancellation authority here.
+    native_executor::execute_native_tool_adapter_with_runtime(
         &text("sessionId"),
         &text("turnId"),
         &CancellationToken::new(),
@@ -44,6 +47,8 @@ pub(crate) async fn run_exec_tool(payload: Value) -> Value {
         arguments,
         &text("startedAt"),
         None,
+        ToolExecutionRuntime::default(),
+        false,
     )
     .await
 }

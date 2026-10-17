@@ -186,6 +186,61 @@ pub(crate) fn list_long_term_memory(
     search_long_term_memory(root, query)
 }
 
+// Hermes-style recovery: when an id misses, name the closest stored ids so
+// the caller can correct itself from the same tool result instead of guessing.
+pub(super) fn memory_not_found_error(conn: &Connection, id: &str) -> AgentRuntimeError {
+    const HINT_LIMIT: usize = 3;
+    let mut hints: Vec<(i64, String)> = Vec::new();
+    if let Ok(mut statement) =
+        conn.prepare("SELECT id, fact, status FROM memories ORDER BY updated_at DESC LIMIT 500")
+    {
+        if let Ok(rows) = statement.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        }) {
+            let wanted = id.to_ascii_lowercase();
+            let wanted_words: HashSet<&str> = wanted.split(['-', '_', ' ']).collect();
+            for (stored_id, fact, status) in rows.flatten() {
+                let stored_lower = stored_id.to_ascii_lowercase();
+                let mut score = 0i64;
+                if stored_lower == wanted {
+                    score += 8;
+                } else if stored_lower.starts_with(&wanted) || wanted.starts_with(&stored_lower) {
+                    score += 4;
+                } else if stored_lower.contains(&wanted) || wanted.contains(&stored_lower) {
+                    score += 2;
+                }
+                let fact_lower = fact.to_ascii_lowercase();
+                score += fact_lower
+                    .split(['-', '_', ' '])
+                    .filter(|word| wanted_words.contains(*word))
+                    .count() as i64;
+                if score > 0 {
+                    let excerpt: String = fact.chars().take(60).collect();
+                    hints.push((score, format!("{stored_id} [{status}] {excerpt}")));
+                }
+            }
+        }
+    }
+    hints.sort_by(|left, right| right.0.cmp(&left.0));
+    hints.truncate(HINT_LIMIT);
+    if hints.is_empty() {
+        AgentRuntimeError::Core(format!("memory not found: {id}"))
+    } else {
+        AgentRuntimeError::Core(format!(
+            "memory not found: {id}. Closest stored memory ids: {}",
+            hints
+                .into_iter()
+                .map(|(_, hint)| hint)
+                .collect::<Vec<_>>()
+                .join("; ")
+        ))
+    }
+}
+
 pub(crate) fn update_long_term_memory(
     root: &Path,
     mutation: MemoryMutation,
@@ -208,8 +263,8 @@ pub(crate) fn update_long_term_memory(
         .to_string();
     let conn = open_memory_connection(root)?;
     init_memory_schema(&conn)?;
-    let mut record = load_memory_record(&conn, &id)?
-        .ok_or_else(|| AgentRuntimeError::Core(format!("memory not found: {id}")))?;
+    let mut record =
+        load_memory_record(&conn, &id)?.ok_or_else(|| memory_not_found_error(&conn, &id))?;
     validate_revision_cas(&record, mutation.revision)?;
     apply_memory_mutation(&mut record, mutation);
     record.updated_at = now();
@@ -249,8 +304,7 @@ pub(crate) fn forget_long_term_memory(
 ) -> AgentRuntimeResult<Value> {
     let conn = open_memory_connection(root)?;
     init_memory_schema(&conn)?;
-    let record = load_memory_record(&conn, id)?
-        .ok_or_else(|| AgentRuntimeError::Core(format!("memory not found: {id}")))?;
+    let record = load_memory_record(&conn, id)?.ok_or_else(|| memory_not_found_error(&conn, id))?;
     let normalized_mode = match mode {
         "hard_delete" => "hard_delete",
         "tombstone" => "tombstone",
@@ -329,14 +383,10 @@ pub(crate) fn link_long_term_memory(
     let source_exists = load_memory_record(&conn, source_id)?.is_some();
     let target_exists = load_memory_record(&conn, target_id)?.is_some();
     if !source_exists {
-        return Err(AgentRuntimeError::Core(format!(
-            "memory not found: {source_id}"
-        )));
+        return Err(memory_not_found_error(&conn, source_id));
     }
     if !target_exists {
-        return Err(AgentRuntimeError::Core(format!(
-            "memory not found: {target_id}"
-        )));
+        return Err(memory_not_found_error(&conn, target_id));
     }
     let relation = MemoryRelation {
         source_id: source_id.to_string(),

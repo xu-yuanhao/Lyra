@@ -19,6 +19,12 @@ pub const RUNTIME_DATA_SCHEMA_NAME: &str = "lyra.runtime";
 pub const RUNTIME_DATA_SCHEMA_VERSION: u32 = 1;
 pub const DAEMON_CAPABILITIES: &[&str] = &["agent.import.v2", "lsp.upsert", "files.read_home"];
 pub const PRIMARY_HOST_EXISTS_CODE: &str = "RUNTIME_PRIMARY_HOST_EXISTS";
+// Byte cap for one response frame. The desktop runtime client enforces the
+// hard transport limit at 8 MiB (apps/desktop/src/main/runtime-client.ts
+// MAX_RUNTIME_FRAME_BYTES) and destroys the connection above it, so hosts must
+// keep responses under this softer limit and fail the single request with
+// RUNTIME_RESPONSE_TOO_LARGE instead of poisoning the bridge.
+pub const RUNTIME_MAX_RESPONSE_FRAME_BYTES: usize = 7 * 1024 * 1024;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

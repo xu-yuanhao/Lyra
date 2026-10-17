@@ -30,8 +30,8 @@ pub(crate) async fn execute_plan_tool_adapter(
         None,
     );
     if cancellation.is_cancelled() || turn_was_cancelled(session_id, turn_id) {
-        let output = tool_failure_output(
-            "cancelled",
+        let output = cancelled_tool_output(
+            CANCEL_REASON_TURN_CANCELLED,
             "Plan tool call was cancelled.",
             "Stop this tool call and continue only after a new user turn.",
             None,
@@ -263,7 +263,7 @@ pub(crate) fn tool_plan_begin(session_id: &str, turn_id: &str, input: &Value) ->
     let title = string_field(input, "title")?;
     let reason = optional_string_field(input, "reason");
     let scope = optional_string_field(input, "scope");
-    let (callback, snapshot, plan) = update_session_plan(session_id, |session, root| {
+    let (callback, plan) = update_session_plan(session_id, |session, root| {
         if session
             .snapshot
             .pointer("/plan/phase")
@@ -309,14 +309,7 @@ pub(crate) fn tool_plan_begin(session_id: &str, turn_id: &str, input: &Value) ->
             .map_err(native_failure_from_runtime)?;
         Ok(plan)
     })?;
-    emit_plan_events(
-        &callback,
-        session_id,
-        turn_id,
-        plan.clone(),
-        None,
-        Some(snapshot),
-    );
+    emit_plan_events(&callback, session_id, turn_id, plan.clone(), None);
     Ok(NativeToolSuccess {
         content: format!(
             "Started plan: {}",
@@ -353,7 +346,7 @@ pub(crate) fn tool_plan_write(session_id: &str, turn_id: &str, input: &Value) ->
         .get("replace")
         .and_then(Value::as_bool)
         .unwrap_or(false);
-    let (callback, snapshot, (plan, diff)) = update_session_plan(session_id, |session, root| {
+    let (callback, (plan, diff)) = update_session_plan(session_id, |session, root| {
         let mut plan = match current_plan(session) {
             Ok(plan) => plan,
             Err(_) => {
@@ -407,14 +400,7 @@ pub(crate) fn tool_plan_write(session_id: &str, turn_id: &str, input: &Value) ->
             crate::native_backend::tools::diff_text("Plan.md", &old, &updated),
         ))
     })?;
-    emit_plan_events(
-        &callback,
-        session_id,
-        turn_id,
-        plan.clone(),
-        None,
-        Some(snapshot),
-    );
+    emit_plan_events(&callback, session_id, turn_id, plan.clone(), None);
     Ok(NativeToolSuccess {
         content: "Updated plan draft.".to_string(),
         raw: plan_raw(
@@ -437,7 +423,7 @@ pub(crate) fn tool_plan_finalize(
     input: &Value,
 ) -> NativeToolResult {
     let summary = optional_string_field(input, "summary");
-    let (callback, snapshot, plan) = update_session_plan(session_id, |session, root| {
+    let (callback, plan) = update_session_plan(session_id, |session, root| {
         let mut plan = current_plan(session)?;
         let markdown = plan
             .get("markdown")
@@ -477,14 +463,7 @@ pub(crate) fn tool_plan_finalize(
         "title": plan.get("title").cloned().unwrap_or(Value::String("Plan".to_string())),
         "summary": summary,
     }));
-    emit_plan_events(
-        &callback,
-        session_id,
-        turn_id,
-        plan.clone(),
-        review_event,
-        Some(snapshot),
-    );
+    emit_plan_events(&callback, session_id, turn_id, plan.clone(), review_event);
     Ok(NativeToolSuccess {
         content: "Plan finalized for review.".to_string(),
         raw: plan_raw(
@@ -510,7 +489,7 @@ fn tool_plan_revise(session_id: &str, turn_id: &str, input: &Value) -> NativeToo
         .get("annotations")
         .filter(|value| value.is_array())
         .cloned();
-    let (callback, snapshot, (plan, diff)) = update_session_plan(session_id, |session, root| {
+    let (callback, (plan, diff)) = update_session_plan(session_id, |session, root| {
         let mut plan = current_plan(session)?;
         let old = plan
             .get("markdown")
@@ -535,14 +514,7 @@ fn tool_plan_revise(session_id: &str, turn_id: &str, input: &Value) -> NativeToo
             crate::native_backend::tools::diff_text("Plan.md", &old, &updated),
         ))
     })?;
-    emit_plan_events(
-        &callback,
-        session_id,
-        turn_id,
-        plan.clone(),
-        None,
-        Some(snapshot),
-    );
+    emit_plan_events(&callback, session_id, turn_id, plan.clone(), None);
     Ok(NativeToolSuccess {
         content: "Revised plan draft.".to_string(),
         raw: plan_raw(
@@ -560,7 +532,7 @@ fn tool_plan_revise(session_id: &str, turn_id: &str, input: &Value) -> NativeToo
 fn update_session_plan<T>(
     session_id: &str,
     f: impl FnOnce(&mut NativeSession, &Path) -> Result<T, NativeToolFailure>,
-) -> Result<(Option<Arc<EventCallback>>, Value, T), NativeToolFailure> {
+) -> Result<(Option<Arc<EventCallback>>, T), NativeToolFailure> {
     let mut state = state().lock().map_err(|_| {
         NativeToolFailure::new(
             "runtime_state_unavailable",
@@ -577,7 +549,6 @@ fn update_session_plan<T>(
         )
     })?;
     let result = f(session, &root)?;
-    let snapshot = session.snapshot.clone();
     let callback = event_callback();
     state.save_state().map_err(|error| {
         NativeToolFailure::new(
@@ -586,7 +557,7 @@ fn update_session_plan<T>(
             "Retry after checking runtime storage.",
         )
     })?;
-    Ok((callback, snapshot, result))
+    Ok((callback, result))
 }
 
 fn emit_plan_events(
@@ -595,7 +566,6 @@ fn emit_plan_events(
     turn_id: &str,
     plan: Value,
     review_event: Option<Value>,
-    snapshot: Option<Value>,
 ) {
     emit_with_callback(
         callback,
@@ -633,15 +603,6 @@ fn emit_plan_events(
                 turn_id,
                 plan,
             ),
-        );
-    }
-    if let Some(snapshot) = snapshot {
-        emit_with_callback(
-            callback,
-            json!({
-                "kind": "sessionSnapshot",
-                "snapshot": snapshot,
-            }),
         );
     }
 }

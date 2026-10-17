@@ -42,7 +42,7 @@ const EAGER_DEFERRED_EXCLUSIONS: &[&str] = &[
 
 const TOOL_SEARCH_PROMPT_HEAD: &str =
     "Fetches full schema definitions for deferred tools so they can be called.";
-const TOOL_SEARCH_PROMPT_TAIL: &str = " Tools whose schemas are already in this request can be called directly; do not search for them again. browser_map, browser_read and browser_navigate are always available. An attached browser map also makes browser_act, browser_type, browser_press, browser_wait, browser_upload, browser_drag, browser_dialog, browser_see and browser_vact available. Query forms for other tools:\n- \"select:browser_scroll,computer_map\" — fetch these exact tools by name\n- \"notebook jupyter\" — keyword search, up to max_results best matches";
+const TOOL_SEARCH_PROMPT_TAIL: &str = " Tools whose schemas are already in this request can be called directly; do not search for them again. browser_map, browser_read and browser_navigate are always available. An attached browser map also makes browser_act, browser_type, browser_press, browser_wait, browser_upload, browser_drag, browser_dialog, browser_see and browser_vact available. Query forms for other tools:\n- \"select:browser_scroll,computer_map\" — fetch these exact tools by name\n- \"notebook jupyter\" — keyword search, up to max_results best matches. Loaded results embed each tool's full parameter schema; read them before calling.";
 
 #[derive(Clone, Debug)]
 pub(crate) struct DeferredTool {
@@ -738,6 +738,22 @@ pub(crate) fn execute_tool_search(
     } else {
         matches.into_iter().take(3).collect::<Vec<_>>()
     };
+    // Reference pattern (codex/opencode): embed each loaded tool's full
+    // parameter schema in the search result itself. The provider only sees
+    // this result's `content`, so the schemas must live there — not just in
+    // raw — or the model still has to guess arguments before the next turn.
+    const EMBEDDED_SCHEMA_CAP: usize = 12;
+    let tool_schemas = matches
+        .iter()
+        .filter_map(|name| {
+            deferred
+                .iter()
+                .find(|tool| &tool.name == name)
+                .map(|tool| tool.schema.clone())
+        })
+        .take(EMBEDDED_SCHEMA_CAP)
+        .collect::<Vec<_>>();
+    let embedded_schemas_json = serde_json::to_string(&tool_schemas).unwrap_or_default();
     record_discovered_tool_names(session_id, &matches);
     let mut raw = json!({
         "matches": matches,
@@ -749,6 +765,7 @@ pub(crate) fn execute_tool_search(
     });
     let (_, diagnostics) = tool_fs::software_catalog::software_catalog(dispatcher, false);
     raw["catalogDiagnostics"] = json!(diagnostics);
+    raw["toolSchemas"] = json!(tool_schemas);
     let content = if candidates.is_empty() && already_available.is_empty() {
         let mut sources = std::collections::BTreeMap::<&str, usize>::new();
         for tool in &deferred {
@@ -800,6 +817,13 @@ pub(crate) fn execute_tool_search(
         )
     } else {
         content
+    };
+    let content = if tool_schemas.is_empty() {
+        content
+    } else {
+        format!(
+            "{content}\n\nFull parameter schemas for the loaded tools (call them by name on the next turn):\n{embedded_schemas_json}"
+        )
     };
     let output = json!({
         "content": content,
@@ -953,6 +977,31 @@ mod tests {
         );
         assert_eq!(output["raw"]["matches"], json!(["browser_scroll"]));
         assert!(!output["content"].as_str().unwrap().contains("No matching"));
+    }
+
+    #[test]
+    fn tool_search_result_embeds_loaded_parameter_schemas() {
+        let session = SearchSession::new();
+        let output = execute_tool_search(
+            &session.0,
+            "no-turn",
+            None,
+            &ModelToolCall {
+                id: "search-schema-embed".to_string(),
+                name: TOOL_SEARCH_TOOL_NAME.to_string(),
+                arguments: json!({"query":"select:browser_scroll"}),
+            },
+            "2026-10-15T00:00:00Z",
+        );
+        let schemas = output["raw"]["toolSchemas"].as_array().unwrap();
+        assert_eq!(schemas.len(), 1);
+        assert_eq!(schemas[0]["function"]["name"], "browser_scroll");
+        assert!(schemas[0]["function"]["parameters"].is_object());
+        // The provider only sees `content`, so the schema must be there too.
+        let content = output["content"].as_str().unwrap();
+        assert!(content.contains("Full parameter schemas"));
+        assert!(content.contains("\"browser_scroll\""));
+        assert!(content.contains("parameters"));
     }
 
     #[test]

@@ -1963,6 +1963,41 @@ fn input_schema_for(path: &str, domain: &str, operation: &str) -> Value {
             ],
             &[],
         ),
+        ("skills", "list") => object_schema([], &[]),
+        ("skills", "inspect" | "activate" | "deactivate" | "install_store" | "uninstall") => {
+            object_schema(
+                [(
+                    "skillId",
+                    string("Lyra skill id, as returned by /tools/skills/list."),
+                )],
+                &["skillId"],
+            )
+        }
+        ("skills", "install_local") => object_schema(
+            [(
+                "sourcePath",
+                string("Absolute path to a skill folder, SKILL.md file, or zip archive."),
+            )],
+            &["sourcePath"],
+        ),
+        ("skills", "install_git") => object_schema(
+            [
+                ("url", string("Git repository URL containing the skill.")),
+                ("ref", string("Optional Git ref (branch, tag, or commit).")),
+                (
+                    "subdir",
+                    string("Optional subdirectory inside the repository."),
+                ),
+            ],
+            &["url"],
+        ),
+        ("workbench", "extract_tab_text") => object_schema(
+            [(
+                "tabId",
+                string("Workbench tab id, as returned by /tools/workbench/list_tabs."),
+            )],
+            &["tabId"],
+        ),
         _ => json!({ "type": "object", "properties": {} }),
     };
     attach_schema_id(path, schema)
@@ -1996,6 +2031,7 @@ Do not flatten these into interchangeable tools: map the visible surface before 
 #[cfg(test)]
 mod tests {
     use super::input_schema_for;
+    use super::{ToolManifest, builtin_manifests};
 
     #[test]
     fn mcp_tools_expose_the_server_and_tool_fields() {
@@ -2009,6 +2045,63 @@ mod tests {
                 || execute["properties"]["toolName"].is_object()
         );
         assert_eq!(execute["required"][0], "toolName");
+    }
+
+    #[test]
+    fn skills_tools_name_their_parameters() {
+        let activate = input_schema_for("/tools/skills/activate", "skills", "activate");
+        assert_eq!(activate["required"][0], "skillId");
+        let install_git = input_schema_for("/tools/skills/install_git", "skills", "install_git");
+        assert_eq!(install_git["required"][0], "url");
+        assert!(install_git["properties"]["subdir"].is_object());
+        let list = input_schema_for("/tools/skills/list", "skills", "list");
+        assert_eq!(
+            list["properties"],
+            serde_json::json!({}),
+            "skills/list is genuinely argless"
+        );
+    }
+
+    #[test]
+    fn no_builtin_manifest_advertises_an_empty_parameter_schema_accidentally() {
+        // An empty properties schema combined with the provider-level
+        // additionalProperties:false closure tells the model the tool takes no
+        // arguments — validation then rejects whatever it sends. Every builtin
+        // manifest must either declare its parameters or be explicitly argless.
+        // The allowlist below is snapshot/list tools that genuinely accept no
+        // arguments; everything else must declare its parameters.
+        let explicitly_argless = [
+            "/tools/skills/list",
+            "/tools/workbench/list_tabs",
+            "/tools/workbench/read_workspace",
+            "/tools/workbench/list_terminals",
+            "/tools/workbench/list_favorites",
+            "/tools/software/list_capabilities",
+            "/tools/computer/observe",
+            "/tools/network/status",
+            "/tools/todo/read",
+            "/tools/mcp/server_list",
+        ];
+        let manifests = builtin_manifests();
+        let forgotten: Vec<&ToolManifest> = manifests
+            .iter()
+            .filter(|manifest| {
+                let properties_empty = manifest
+                    .input_schema
+                    .get("properties")
+                    .and_then(serde_json::Value::as_object)
+                    .is_none_or(|properties| properties.is_empty());
+                properties_empty && !explicitly_argless.contains(&manifest.path.as_str())
+            })
+            .collect();
+        assert!(
+            forgotten.is_empty(),
+            "manifests with empty input schemas (add real parameter schemas): {:?}",
+            forgotten
+                .iter()
+                .map(|manifest| manifest.path.as_str())
+                .collect::<Vec<_>>()
+        );
     }
 }
 

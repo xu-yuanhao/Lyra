@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-pub const PROMPT_POLICY_VERSION: u32 = 11;
-pub const PROMPT_TEMPLATE_VERSION: u32 = 64;
+pub const PROMPT_POLICY_VERSION: u32 = 12;
+pub const PROMPT_TEMPLATE_VERSION: u32 = 65;
 pub const MEMORY_PROJECTION_VERSION: u32 = 1;
 pub const CONTEXT_PROJECTION_VERSION: u32 = 6;
 pub const RETENTION_POLICY_VERSION: u32 = 1;

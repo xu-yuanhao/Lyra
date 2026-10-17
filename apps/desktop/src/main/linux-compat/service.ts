@@ -27,6 +27,10 @@ import type {
 } from "./types";
 
 const CONFIG_FILE = "config.v1.json";
+
+// Env vars Chromium reads during display/GPU initialization; correcting them
+// after exec requires a relaunch, not an in-place `process.env` write.
+const DISPLAY_ENV_KEYS = ["DISPLAY", "GBM_BACKEND", "__GLX_VENDOR_LIBRARY_NAME"] as const;
 const RUNTIME_STATE_FILE = "runtime-state.v1.json";
 const HEALTH_FILE = "launch-health.json";
 
@@ -404,6 +408,12 @@ const detectEnvironmentFacts = (input: {
     input.env.DISPLAY,
     input.x11Sockets ?? readX11Sockets()
   );
+  const x11DisplaySource =
+    x11Display === null
+      ? null
+      : (input.env.DISPLAY?.trim().length ?? 0) > 0
+        ? "env"
+        : "socket-scan";
   const osRelease = parseOsRelease(input.osReleaseText);
   const target = resolveDesktopTarget({
     platform: input.platform,
@@ -424,6 +434,7 @@ const detectEnvironmentFacts = (input: {
     packageType: detectPackageType(input.env),
     waylandDisplay: waylandDisplay !== undefined && waylandDisplay.length > 0 ? waylandDisplay : null,
     x11Display,
+    x11DisplaySource,
     isContainer: detectContainer(input.env),
     isRoot: typeof process.getuid === "function" ? process.getuid() === 0 : false,
     gpu: input.gpu ?? detectGpuFacts(input.env)
@@ -589,6 +600,20 @@ const resolveBackend = (
     return { backend: "x11", source: "recovery" };
   }
   if (profile === "reliable") {
+    if (facts.x11Display !== null && facts.x11DisplaySource === "socket-scan") {
+      // A scanned X11 socket is not proof of a usable X11 session: under a
+      // Wayland compositor it is usually XWayland, which the browser process
+      // launched for Wayland cannot reliably attach to. Prefer the session the
+      // app was actually launched into and only fall back to the scanned
+      // display when no Wayland session exists.
+      if (facts.waylandDisplay !== null) {
+        return { backend: "wayland", source: "auto" };
+      }
+      return {
+        backend: "x11",
+        source: recovery.previousFailureReason === null ? "auto" : "history"
+      };
+    }
     if (facts.x11Display !== null) {
       return {
         backend: "x11",
@@ -728,6 +753,7 @@ const resolveWarnings = (
 
 const toAppliedEnv = (
   recovery: LinuxCompatRecoveryStatus,
+  backend: LinuxGraphicsBackend,
   facts: LinuxEnvironmentFacts,
   env: NodeJS.ProcessEnv,
   gpuMode: LinuxGpuMode
@@ -739,7 +765,13 @@ const toAppliedEnv = (
   if (recovery.active) {
     result.LYRA_LINUX_RECOVERY = "1";
   }
-  if (facts.x11Display !== null && (env.DISPLAY === undefined || env.DISPLAY.trim().length === 0)) {
+  if (
+    backend === "x11"
+    && facts.x11Display !== null
+    && (env.DISPLAY === undefined || env.DISPLAY.trim().length === 0)
+  ) {
+    // Only meaningful for the x11 backend: injecting DISPLAY under Wayland
+    // would flip the detected display sources on a correction relaunch.
     result.DISPLAY = facts.x11Display;
   }
   if (
@@ -883,6 +915,15 @@ export const resolveLinuxCompatPlan = (input: {
   if (facts.isContainer) {
     notes.push("containerized runtime detected; desktop integration may depend on host portals");
   }
+  if (
+    backendResolved.backend === "wayland"
+    && facts.x11Display !== null
+    && facts.x11DisplaySource === "socket-scan"
+  ) {
+    notes.push(
+      "selected the Wayland backend; the detected X11 display comes from a socket scan (likely XWayland), not from the launch environment"
+    );
+  }
 
   return {
     enabled: true,
@@ -896,7 +937,7 @@ export const resolveLinuxCompatPlan = (input: {
     gpuSource: gpuResolved.source,
     warnings,
     notes,
-    appliedEnv: toAppliedEnv(recovery, facts, input.env, gpuResolved.gpuMode),
+    appliedEnv: toAppliedEnv(recovery, backendResolved.backend, facts, input.env, gpuResolved.gpuMode),
     appliedSwitches: toAppliedSwitches(
       backendResolved.backend,
       gpuResolved.gpuMode,
@@ -980,15 +1021,20 @@ export const createLinuxCompatBridge = (input: {
   readonly argv: readonly string[];
   readonly env: NodeJS.ProcessEnv;
   readonly storageRoot?: string;
+  readonly x11Sockets?: readonly string[];
 }): LinuxCompatBridge => {
   let config = readLinuxCompatConfig(input.storageRoot);
   const runtimeState = readRuntimeState(input.storageRoot);
+  // Snapshot before anything mutates `process.env`; the correction relaunch
+  // must compare against the environment the process actually started with.
+  const launchEnv = { ...input.env };
   const plan = resolveLinuxCompatPlan({
     platform: input.platform,
     argv: input.argv,
     env: input.env,
     config,
-    runtimeState
+    runtimeState,
+    ...(input.x11Sockets === undefined ? {} : { x11Sockets: input.x11Sockets })
   });
   let status = buildStatus(input.platform, plan);
 
@@ -1060,6 +1106,44 @@ export const createLinuxCompatBridge = (input: {
       applySwitches(app, plan.appliedSwitches);
       if (plan.disableHardwareAcceleration) {
         app.disableHardwareAcceleration();
+      }
+    },
+    requestEnvCorrectionRelaunch: (app: Electron.App): LinuxCompatRestartResponse => {
+      try {
+        if (plan.enabled === false) {
+          return { ok: true };
+        }
+        // Env written via `process.env` after exec is not reliably visible to
+        // Chromium's display initialization, so a corrected DISPLAY must reach
+        // a fresh process instead of being patched in place.
+        const correctionKeys = DISPLAY_ENV_KEYS.filter(
+          (name) => name in plan.appliedEnv && launchEnv[name] !== plan.appliedEnv[name]
+        );
+        if (correctionKeys.length === 0) {
+          return { ok: true };
+        }
+        if (parseTruthy(input.env.LYRA_LINUX_ENV_CORRECTION)) {
+          return {
+            ok: false,
+            error: `display environment correction was already attempted this launch chain (remaining: ${correctionKeys.join(", ")})`
+          };
+        }
+        for (const name of correctionKeys) {
+          process.env[name] = plan.appliedEnv[name];
+        }
+        process.env.LYRA_LINUX_ENV_CORRECTION = "1";
+        if (input.storageRoot !== undefined) {
+          writeRuntimeState(input.storageRoot, {
+            ...readRuntimeState(input.storageRoot),
+            version: 1,
+            lastRestartReason: "display-env-correction"
+          });
+        }
+        app.relaunch({ args: createRelaunchArgs(input.argv, "display-env-correction", false) });
+        app.exit(0);
+        return { ok: true };
+      } catch (error: unknown) {
+        return { ok: false, error: String(error) };
       }
     },
     markWindowReady: () => {
@@ -1135,6 +1219,9 @@ export const createLinuxCompatBridge = (input: {
           delete process.env.LYRA_LINUX_RECOVERY;
           delete process.env.LYRA_LINUX_AUTO_RESTART;
         }
+        // A requested restart starts a new launch chain: allow a future
+        // display env correction instead of inheriting the stale marker.
+        delete process.env.LYRA_LINUX_ENV_CORRECTION;
         if (input.storageRoot !== undefined) {
           writeRuntimeState(input.storageRoot, {
             ...readRuntimeState(input.storageRoot),

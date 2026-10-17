@@ -5,7 +5,11 @@ import type {
 
 export type VisualEvidenceTarget =
   | { readonly mode: "active_tab"; readonly tabId: string }
-  | { readonly mode: "workspace_window" };
+  | { readonly mode: "workspace_window" }
+  // An explicit tabId that no longer matches any listed tab: the reference
+  // is stale and must fail with a named error instead of being passed
+  // deeper (hermes/ZCode: "ref is stale, take a fresh snapshot").
+  | { readonly mode: "unresolved_tab"; readonly requestedTabId: string };
 
 const isBrowserPageTab = (tab: WorkbenchObservedTabDescriptor): boolean =>
   tab.pageKind === "page" || tab.observationKind === "page";
@@ -82,10 +86,11 @@ export const resolveVisualEvidenceTarget = (
   const browserTab = findBrowserTab(listed.tabs, listed.activeTabId, requestedTabId);
   if (scope === "active_tab") {
     if (requestedTabId !== null) {
-      return {
-        mode: "active_tab",
-        tabId: resolveTabId(requestedTabId, listed.tabs) ?? requestedTabId
-      };
+      const resolvedId = resolveTabId(requestedTabId, listed.tabs);
+      if (resolvedId === null) {
+        return { mode: "unresolved_tab", requestedTabId };
+      }
+      return { mode: "active_tab", tabId: resolvedId };
     }
     if (browserTab !== null) {
       return { mode: "active_tab", tabId: browserTab.tabId };

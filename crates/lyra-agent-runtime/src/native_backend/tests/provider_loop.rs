@@ -2004,9 +2004,25 @@ fn mimo_tool_loop_replays_reasoning_content_with_assistant_tool_calls() {
         result.final_text.as_deref(),
         Some("Checked the current tabs.")
     );
+    let log = state()
+        .lock()
+        .expect("state lock")
+        .sessions
+        .get(&session_id)
+        .map(|session| session.provider_protocol_log.clone())
+        .unwrap_or_default();
+    assert_eq!(log.len(), 2);
     assert_eq!(
-        result.provider_transcript[0]["reasoning_content"],
+        log[0]["step"]["assistant"]["reasoning"],
         "I should inspect the current tabs before answering."
+    );
+    assert_eq!(
+        log[0]["step"]["assistant"]["toolCalls"][0]["id"],
+        "call-tabs"
+    );
+    assert_eq!(
+        log[1]["step"]["assistant"]["reasoning"],
+        "The tab evidence is enough to finish."
     );
     let requests = request_rx.try_iter().collect::<Vec<_>>();
     assert_eq!(requests.len(), 2);
@@ -2274,9 +2290,21 @@ fn mimo_anthropic_tool_loop_replays_thinking_blocks_with_assistant_tool_calls() 
         result.final_text.as_deref(),
         Some("Checked the current tabs.")
     );
+    let log = state()
+        .lock()
+        .expect("state lock")
+        .sessions
+        .get(&session_id)
+        .map(|session| session.provider_protocol_log.clone())
+        .unwrap_or_default();
+    assert_eq!(log.len(), 2);
     assert_eq!(
-        result.provider_transcript[0]["reasoning_content"],
+        log[0]["step"]["assistant"]["reasoning"],
         "I should inspect the current tabs before answering."
+    );
+    assert_eq!(
+        log[0]["step"]["assistant"]["toolCalls"][0]["id"],
+        "call-tabs"
     );
     let requests = request_rx.try_iter().collect::<Vec<_>>();
     assert_eq!(requests.len(), 2);
@@ -2407,19 +2435,96 @@ fn openai_responses_tool_loop_replays_native_items_and_function_outputs() {
         result.final_text.as_deref(),
         Some("Checked the current tabs.")
     );
-    assert!(result.provider_replay_items.iter().any(|item| {
+    let (saved_messages, log) = state()
+        .lock()
+        .expect("state lock")
+        .sessions
+        .get(&session_id)
+        .map(|session| {
+            (
+                session.snapshot["messages"]
+                    .as_array()
+                    .cloned()
+                    .unwrap_or_default(),
+                session.provider_protocol_log.clone(),
+            )
+        })
+        .unwrap_or((Vec::new(), Vec::new()));
+    assert_eq!(log.len(), 2);
+    let round_one_items = log[0]["step"]["replay"]["items"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    assert!(round_one_items.iter().any(|item| {
         item.get("type").and_then(Value::as_str) == Some("reasoning")
             && item.get("encrypted_content").and_then(Value::as_str) == Some("encrypted-reasoning")
     }));
-    assert!(result.provider_replay_items.iter().any(|item| {
-        item.get("type").and_then(Value::as_str) == Some("function_call_output")
+    assert!(round_one_items.iter().any(|item| {
+        item.get("type").and_then(Value::as_str) == Some("function_call")
             && item.get("call_id").and_then(Value::as_str) == Some("call-tabs")
     }));
-    assert!(result.provider_replay_items.iter().any(|item| {
+    assert!(
+        log[0]["step"]["toolResults"]
+            .as_array()
+            .is_some_and(|results| {
+                results.iter().any(|result| {
+                    result.get("toolCallId").and_then(Value::as_str) == Some("call-tabs")
+                })
+            })
+    );
+    let round_two_items = log[1]["step"]["replay"]["items"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    assert!(round_two_items.iter().any(|item| {
         item.get("type").and_then(Value::as_str) == Some("message")
             && item.pointer("/content/0/text").and_then(Value::as_str)
                 == Some("Checked the current tabs.")
     }));
+    // Resume replay: the saved timeline plus the log rebuild the native
+    // provider transcript — items, tool calls, and tool outputs. Unanchored
+    // steps are backfilled to the committed message the way finish_turn does.
+    let mut protocol_log = log;
+    let replay_message_id = result
+        .final_message_id
+        .clone()
+        .expect("committed final message id");
+    for entry in protocol_log.iter_mut() {
+        if entry
+            .get("messageId")
+            .and_then(Value::as_str)
+            .filter(|id| !id.is_empty())
+            .is_none()
+        {
+            entry["messageId"] = json!(replay_message_id.clone());
+        }
+    }
+    let replayed = ContextBuilder::default().build_provider_context(
+        "system".to_string(),
+        saved_messages,
+        ProviderContextOptions {
+            protocol_log,
+            provider_id: Some("openai".to_string()),
+            route_id: Some("openai".to_string()),
+            protocol_id: Some("openai_responses".to_string()),
+            model: Some("gpt-5-mini".to_string()),
+            ..ProviderContextOptions::default()
+        },
+    );
+    let item_types: Vec<&str> = replayed
+        .messages
+        .iter()
+        .filter_map(|message| message.get("type").and_then(Value::as_str))
+        .collect();
+    assert_eq!(
+        item_types,
+        vec![
+            "reasoning",
+            "function_call",
+            "function_call_output",
+            "message"
+        ]
+    );
     let requests = request_rx.try_iter().collect::<Vec<_>>();
     assert_eq!(requests.len(), 2);
     server.join().expect("server join");
@@ -4035,6 +4140,7 @@ mod model_discovery;
 mod reasoning_replay;
 mod refresh_and_runtime;
 mod reply_protocol;
+mod steer;
 
 #[test]
 fn transient_provider_retry_replays_the_same_request_and_has_a_finite_budget() {

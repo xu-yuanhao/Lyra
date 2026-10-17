@@ -75,8 +75,17 @@ pub(crate) fn rollback_restore(payload: Value) -> AgentRuntimeResult<Value> {
                 ))
             })?
     };
+    let callback = event_callback();
+    emit_with_callback(
+        &callback,
+        json!({
+            "kind": "rollbackStarted",
+            "sessionId": session_id,
+            "messageId": message_id,
+        }),
+    );
     let restore = restore_checkpoint_files(&checkpoint);
-    let (callback, snapshot) = {
+    let (removed_message_count, removed_tool_count) = {
         let mut state = state()
             .lock()
             .map_err(|_| AgentRuntimeError::Core("agent runtime state lock failed".to_string()))?;
@@ -94,6 +103,12 @@ pub(crate) fn rollback_restore(payload: Value) -> AgentRuntimeResult<Value> {
         } else {
             checkpoint.before_tools.len()
         };
+        let removed_message_count = snapshot_array(&session.snapshot, "messages")
+            .len()
+            .saturating_sub(message_count) as u64;
+        let removed_tool_count = snapshot_array(&session.snapshot, "tools")
+            .len()
+            .saturating_sub(tool_count) as u64;
         if let Some(messages) = session
             .snapshot
             .get_mut("messages")
@@ -101,6 +116,27 @@ pub(crate) fn rollback_restore(payload: Value) -> AgentRuntimeResult<Value> {
         {
             messages.truncate(message_count);
         }
+        // Protocol log entries are anchored to timeline messages; entries
+        // anchored to removed messages (and unanchored leftovers of the dead
+        // turn) are no longer reachable replay state.
+        let retained_ids: HashSet<String> = session
+            .snapshot
+            .get("messages")
+            .and_then(Value::as_array)
+            .map(|messages| {
+                messages
+                    .iter()
+                    .filter_map(|message| message.get("id").and_then(Value::as_str))
+                    .map(str::to_string)
+                    .collect()
+            })
+            .unwrap_or_default();
+        session.provider_protocol_log.retain(|entry| {
+            entry
+                .get("messageId")
+                .and_then(Value::as_str)
+                .is_some_and(|id| retained_ids.contains(id))
+        });
         mark_dialog_dirty_from(session, message_count);
         if let Some(tools) = session
             .snapshot
@@ -116,14 +152,19 @@ pub(crate) fn rollback_restore(payload: Value) -> AgentRuntimeResult<Value> {
             .rollback_checkpoints
             .retain(|item| item.id != checkpoint.id);
         touch_session(session);
-        let snapshot = session.snapshot.clone();
-        let callback = event_callback();
         state.save_state()?;
-        (callback, snapshot)
+        (removed_message_count, removed_tool_count)
     };
     emit_with_callback(
         &callback,
-        json!({ "kind": "sessionSnapshot", "snapshot": snapshot }),
+        json!({
+            "kind": "rollbackFinished",
+            "sessionId": session_id,
+            "messageId": message_id,
+            "removedMessageCount": removed_message_count,
+            "removedToolCount": removed_tool_count,
+            "restoredFileCount": restore.restored_file_count as u64,
+        }),
     );
     Ok(json!({
         "sessionId": session_id,
@@ -131,7 +172,6 @@ pub(crate) fn rollback_restore(payload: Value) -> AgentRuntimeResult<Value> {
         "checkpointId": checkpoint.id,
         "restoredFileCount": restore.restored_file_count,
         "errors": restore.errors,
-        "snapshot": snapshot,
     }))
 }
 

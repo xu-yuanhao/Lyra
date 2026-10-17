@@ -24,12 +24,12 @@
 #![cfg(all(target_os = "linux", feature = "linux-atspi"))]
 
 use async_io::block_on;
-use atspi::Role;
-use atspi::State;
 use atspi::connection::AccessibilityConnection;
 use atspi::proxy::accessible::{AccessibleProxy, ObjectRefExt};
 use atspi::proxy::proxy_ext::ProxyExt;
 use atspi::zbus;
+use atspi::Role;
+use atspi::State;
 
 use crate::backend::ComputerBackend;
 use crate::model::{
@@ -187,9 +187,15 @@ async fn traverse(
         return;
     }
     let node = node_for_proxy(proxy, path).await;
+    // Unnamed non-window nodes are noise in a text map: the Agent cannot
+    // address them (no name, no targetRef context), and `_ => "group"` roles
+    // flooded the interactive map. Keep them out of both strategies.
+    let nameable = !node.name.trim().is_empty();
     let keep = match request.strategy {
-        MapStrategy::Interactive => is_actionable(&node.role) || node.role == "window",
-        MapStrategy::Document => !node.name.is_empty() || node.role == "window",
+        MapStrategy::Interactive => {
+            node.role == "window" || (nameable && is_actionable(&node.role))
+        }
+        MapStrategy::Document => nameable || node.role == "window",
     };
     if keep {
         nodes.push(node);
@@ -363,6 +369,99 @@ fn sway_criteria_string(value: &str) -> String {
 
 fn sway_focus_command(title: &str) -> String {
     format!("[title=\"^{}$\"] focus", sway_criteria_string(title))
+}
+
+/// Hyprland sessions expose HYPRLAND_INSTANCE_SIGNATURE; its presence does not
+/// guarantee the `hyprctl` binary, so a missing binary stays a named failure
+/// rather than silently degrading to AT-SPI.
+fn hyprland_session_present() -> bool {
+    std::env::var("HYPRLAND_INSTANCE_SIGNATURE")
+        .ok()
+        .is_some_and(|value| !value.trim().is_empty())
+}
+
+/// Compositor-level Hyprland focus with verification, mirroring the Sway
+/// path: dispatch, then read the compositor's actually-focused window.
+fn hyprland_focus_verified(title: &str) -> Result<(), BackendError> {
+    // hyprctl's `title:` matcher is a regular expression, same as Sway's.
+    let pattern = format!("title:^{}$", sway_criteria_string(title));
+    let dispatch = std::process::Command::new("hyprctl")
+        .args(["dispatch", "focuswindow", &pattern])
+        .output();
+    let Ok(dispatch) = dispatch else {
+        return Err(BackendError::new(
+            "focusFailed",
+            "hyprctl could not be started; install it or focus by windowRef.",
+        ));
+    };
+    if !dispatch.status.success() {
+        return Err(BackendError::new(
+            "focusFailed",
+            format!("Hyprland did not focus {title:?}."),
+        ));
+    }
+    let verified = std::process::Command::new("hyprctl")
+        .args(["activewindow", "-j"])
+        .output()
+        .ok()
+        .filter(|output| output.status.success())
+        .and_then(|output| serde_json::from_slice::<serde_json::Value>(&output.stdout).ok())
+        .and_then(|value| {
+            value
+                .get("title")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_string)
+        });
+    match verified {
+        Some(active) if active == title => Ok(()),
+        other => Err(BackendError::new(
+            "focusFailed",
+            format!(
+                "Hyprland focused {:?} instead of {title:?}.",
+                other.as_deref().unwrap_or("(unknown)")
+            ),
+        )),
+    }
+}
+
+/// X11/XWayland fallback: `wmctrl -a` activates by title substring and its
+/// exit code only succeeds when a window matched. xdotool verification runs
+/// when available; without it, wmctrl's own success is accepted.
+fn x11_focus_available() -> bool {
+    std::env::var("DISPLAY")
+        .ok()
+        .is_some_and(|value| !value.trim().is_empty())
+}
+
+fn wmctrl_focus_verified(title: &str) -> Result<(), BackendError> {
+    let Ok(output) = std::process::Command::new("wmctrl")
+        .args(["-a", title])
+        .output()
+    else {
+        return Err(BackendError::new(
+            "focusFailed",
+            "wmctrl could not be started; install it or focus by windowRef.",
+        ));
+    };
+    if !output.status.success() {
+        return Err(BackendError::new(
+            "focusFailed",
+            format!("No X11 window matching {title:?} could be activated."),
+        ));
+    }
+    let active = std::process::Command::new("xdotool")
+        .args(["getactivewindow", "getwindowname"])
+        .output()
+        .ok()
+        .filter(|verify| verify.status.success())
+        .map(|verify| String::from_utf8_lossy(&verify.stdout).trim().to_string());
+    if active.as_ref().is_some_and(|name| name != title) {
+        return Err(BackendError::new(
+            "focusFailed",
+            format!("X11 focused {active:?} instead of {title:?}."),
+        ));
+    }
+    Ok(())
 }
 
 fn sway_command(socket: &std::path::Path, args: &[&str]) -> Option<std::process::Output> {
@@ -839,19 +938,36 @@ impl ComputerBackend for LinuxBackend {
     fn focus(&self, request: &ComputerFocusRequest) -> Result<(), BackendError> {
         block_on(async {
             let connection = connect().await?;
+            // Compositor-first focus (hermes cua-driver pattern): verify the
+            // focus at the compositor level before trusting AT-SPI grab_focus,
+            // which can return true without the compositor following and whose
+            // Component interface is frequently missing on Wayland.
+            let resolved_title = focus_title_for_sway(&connection, request).await;
             if let Some(socket) = sway_socket() {
                 // grab_focus can return true for an accessible that never
                 // becomes the compositor's focused window. On Sway that is a
                 // false success, so a failed swaymsg stays a failure.
-                let title = focus_title_for_sway(&connection, request)
-                    .await
-                    .ok_or_else(|| {
-                        BackendError::new(
-                            "windowNotFound",
-                            "No window title could be resolved for Sway focus.",
-                        )
-                    })?;
+                let title = resolved_title.clone().ok_or_else(|| {
+                    BackendError::new(
+                        "windowNotFound",
+                        "No window title could be resolved for Sway focus.",
+                    )
+                })?;
                 return focus_verified(&socket, &sway_focus_command(&title), &title);
+            }
+            if hyprland_session_present() {
+                let title = resolved_title.clone().ok_or_else(|| {
+                    BackendError::new(
+                        "windowNotFound",
+                        "No window title could be resolved for Hyprland focus.",
+                    )
+                })?;
+                return hyprland_focus_verified(&title);
+            }
+            if x11_focus_available() {
+                if let Some(title) = resolved_title.clone() {
+                    return wmctrl_focus_verified(&title);
+                }
             }
             if request.bundle_id.is_some() || request.pid.is_some() {
                 return Err(BackendError::new(

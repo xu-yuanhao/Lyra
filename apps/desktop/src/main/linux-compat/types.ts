@@ -71,6 +71,7 @@ export type LinuxEnvironmentFacts = {
   readonly packageType: LinuxPackageType;
   readonly waylandDisplay: string | null;
   readonly x11Display: string | null;
+  readonly x11DisplaySource: "env" | "socket-scan" | null;
   readonly isContainer: boolean;
   readonly isRoot: boolean;
   readonly gpu: LinuxGpuFacts;
@@ -152,6 +153,7 @@ export type LinuxCompatBridge = {
   readonly updateConfig: (request: LinuxCompatUpdateConfigRequest) => LinuxCompatUpdateConfigResponse;
   readonly applyToProcessEnv: () => void;
   readonly applyToElectronApp: (app: Electron.App) => void;
+  readonly requestEnvCorrectionRelaunch: (app: Electron.App) => LinuxCompatRestartResponse;
   readonly markWindowReady: () => void;
   readonly recordRendererGone: (details: Electron.RenderProcessGoneDetails) => void;
   readonly recordChildProcessGone: (details: Electron.Details) => void;

@@ -4,7 +4,8 @@ import type { BrowserWindow } from "electron";
 import { LYRA_CHANNELS } from "../../shared/desktop-bridge";
 import type {
   AgentPokeResponse,
-  AgentRuntimeEvent
+  AgentRuntimeEvent,
+  AgentSessionSnapshot
 } from "../../shared/agent";
 import type {
   TerminalEvent,
@@ -30,6 +31,174 @@ const TERMINAL_RUNTIME_EVENT_NAME = "terminal.runtime";
 // paints; the queue still preserves ordering while merging adjacent chunks.
 const AGENT_EVENT_THROTTLE_MS = 16;
 const AGENT_EVENT_MAX_QUEUE_SIZE = 512;
+
+// Non-running sessionSnapshot events carry the runtime's whole in-memory
+// session — every message, every full tool output — and are emitted at every
+// permission/clarification/plan/memory boundary, so a permission-heavy run
+// re-shipped the entire transcript per boundary. The transcript the renderer
+// can serve comes from the windowed read path anyway (last 200 messages,
+// 8KB output previews — sessions.rs read_session_window), so the publisher
+// windows the payload to the same shape instead of reshipping O(session)
+// deep copies. Reference shape: ZCode truncates its snapshot at the publisher
+// (snapshotTailWindowRows); opencode ships no snapshot at all and lets the
+// client refetch a window.
+//
+// Caps mirror sessions.rs and are byte-based with fixed counts, so the worst
+// case is computable and fits the runtime client's 8MB frame cap by
+// construction (200 × (16KiB text + ~1KiB blocks) + 200 × (8KiB preview)
+// ≈ 5MiB). No runtime shrink-to-fit loop: none of the reference projects
+// (codex/opencode/ZCode/pi/claw-code) adapts payload content to a budget —
+// they bound per item and fail closed on the rare overflow.
+const SESSION_SNAPSHOT_WINDOW_MESSAGES = 200;
+const SESSION_SNAPSHOT_TOOL_OUTPUT_CAP_BYTES = 8 * 1024;
+const SESSION_SNAPSHOT_MESSAGE_TEXT_CAP_BYTES = 16 * 1024;
+
+const textEncoder = new TextEncoder();
+const utf8Decoder = new TextDecoder("utf-8", { fatal: false });
+
+// One UTF-16 code unit encodes to at most 3 UTF-8 bytes, so a cheap length
+// check can prove "under the cap" without encoding; otherwise measure.
+const exceedsUtf8Bytes = (value: string, maxBytes: number): boolean => {
+  if (value.length <= Math.floor(maxBytes / 3)) {
+    return false;
+  }
+  return textEncoder.encode(value).length > maxBytes;
+};
+
+const truncateUtf8Bytes = (value: string, maxBytes: number): string => {
+  const bytes = textEncoder.encode(value).subarray(0, maxBytes);
+  return `${utf8Decoder.decode(bytes)}…[truncated ${textEncoder.encode(value).length - bytes.length} bytes]`;
+};
+
+const capToolOutputContent = (
+  tools: AgentSessionSnapshot["tools"]
+): AgentSessionSnapshot["tools"] => {
+  let changed = false;
+  const capped = (tools ?? []).map((tool) => {
+    const output = tool.output;
+    if (!isRecord(output)) {
+      return tool;
+    }
+    const content = output.content;
+    if (typeof content !== "string" || !exceedsUtf8Bytes(content, SESSION_SNAPSHOT_TOOL_OUTPUT_CAP_BYTES)) {
+      return tool;
+    }
+    changed = true;
+    return {
+      ...tool,
+      output: {
+        ...output,
+        content: truncateUtf8Bytes(content, SESSION_SNAPSHOT_TOOL_OUTPUT_CAP_BYTES)
+      }
+    };
+  });
+  return changed ? capped : tools;
+};
+
+const capMessageText = (
+  messages: AgentSessionSnapshot["messages"]
+): AgentSessionSnapshot["messages"] => {
+  let changed = false;
+  const capped = (messages ?? []).map((message) => {
+    const text = message.text;
+    if (
+      typeof text !== "string"
+      || !exceedsUtf8Bytes(text, SESSION_SNAPSHOT_MESSAGE_TEXT_CAP_BYTES)
+    ) {
+      return message;
+    }
+    changed = true;
+    return {
+      ...message,
+      text: truncateUtf8Bytes(text, SESSION_SNAPSHOT_MESSAGE_TEXT_CAP_BYTES)
+    };
+  });
+  return changed ? capped : messages;
+};
+
+// Provider replay state (providerProtocol / providerTranscript /
+// openaiResponsesReplay) is runtime-internal resume data: the runtime persists
+// it in session state and protocol checkpoints, and no renderer code reads
+// these keys. Drop it on the event path the same way the runtime's windowed
+// read (sessions.rs read_session_window) does, so one turn's replay copy
+// (transcript + protocol steps, including base64 captures) cannot ride into
+// the renderer inside message metadata.
+const RUNTIME_INTERNAL_METADATA_KEYS = new Set([
+  "providerProtocol",
+  "providerTranscript",
+  "openaiResponsesReplay"
+]);
+
+const stripMessageMetadata = (
+  messages: AgentSessionSnapshot["messages"]
+): AgentSessionSnapshot["messages"] => {
+  let changed = false;
+  const stripped = (messages ?? []).map((message) => {
+    const metadata = message.metadata;
+    if (!isRecord(metadata)) {
+      return message;
+    }
+    const entries = Object.entries(metadata).filter(
+      ([key]) => !RUNTIME_INTERNAL_METADATA_KEYS.has(key)
+    );
+    if (entries.length === Object.keys(metadata).length) {
+      return message;
+    }
+    changed = true;
+    return { ...message, metadata: Object.fromEntries(entries) };
+  });
+  return changed ? stripped : messages;
+};
+
+export const windowSessionSnapshot = (snapshot: AgentSessionSnapshot): AgentSessionSnapshot => {
+  const messages = Array.isArray(snapshot.messages) ? snapshot.messages : [];
+  const tools = Array.isArray(snapshot.tools) ? snapshot.tools : [];
+  const retainedMessages = messages.length > SESSION_SNAPSHOT_WINDOW_MESSAGES
+    ? messages.slice(-SESSION_SNAPSHOT_WINDOW_MESSAGES)
+    : messages;
+
+  const referencedToolIds = new Set<string>();
+  for (const message of retainedMessages) {
+    for (const block of message.blocks ?? []) {
+      if (block.type === "tool" && typeof block.toolId === "string") {
+        referencedToolIds.add(block.toolId);
+      }
+    }
+  }
+
+  let toolsBounded = false;
+  const retainedTools = tools.filter((tool) => {
+    if (referencedToolIds.has(tool.id) || tool.status === "running") {
+      return true;
+    }
+    // Background subagent updates can stay addressable before their tool
+    // block is linked into a message; dropping them would hide live state.
+    const raw = tool.output;
+    return isRecord(raw) && raw.background === true;
+  });
+  if (retainedTools.length !== tools.length) {
+    toolsBounded = true;
+  }
+
+  const cappedTools = capToolOutputContent(retainedTools);
+  const strippedMessages = stripMessageMetadata(retainedMessages);
+  const cappedMessages = capMessageText(strippedMessages);
+  const messagesBounded = cappedMessages !== strippedMessages || strippedMessages !== retainedMessages;
+
+  if (
+    retainedMessages.length === messages.length
+    && !toolsBounded
+    && !messagesBounded
+    && cappedTools === retainedTools
+  ) {
+    return snapshot;
+  }
+  return {
+    ...snapshot,
+    messages: cappedMessages,
+    tools: cappedTools
+  };
+};
 
 type RequestRuntime = <T>(method: string, payload?: object) => Promise<T>;
 
@@ -214,6 +383,9 @@ export const createRuntimeEventForwarder = ({
       // dominant Rust -> Electron traffic source and retained duplicate trees.
       return;
     }
+    const forwardEvent = event.kind === "sessionSnapshot"
+      ? { ...event, snapshot: windowSessionSnapshot(event.snapshot) }
+      : event;
     if (event.kind === "messageReasoningDelta") {
       rememberAgentCursorThought(event.blockId ?? "", event.delta);
     } else if (
@@ -249,7 +421,7 @@ export const createRuntimeEventForwarder = ({
         });
       }
     }
-    eventSender.enqueue(event);
+    eventSender.enqueue(forwardEvent);
   });
 
   return {

@@ -49,10 +49,12 @@ pub(crate) async fn execute_model_tool_with_runtime(
 ) -> Value {
     let started_at = now();
     if cancellation.is_cancelled() {
-        return json!({
-            "content": "Lyra tool call was cancelled before execution.",
-            "cancelled": true,
-        });
+        return cancelled_tool_output(
+            CANCEL_REASON_BEFORE_EXECUTION,
+            "Lyra tool call was cancelled before execution.",
+            "Retry the tool call in a new turn if it is still needed.",
+            None,
+        );
     }
     if call.name == TOOL_SEARCH_TOOL_NAME {
         return execute_tool_search(session_id, turn_id, dispatcher.as_ref(), &call, &started_at);
@@ -445,7 +447,7 @@ async fn execute_deferred_named_tool(
         args = json!({ "arguments": args });
     }
     let Some(manifest) = &deferred.manifest else {
-            return schema_not_sent_hint(&call.name);
+        return schema_not_sent_hint(&call.name);
     };
     let mut run_arguments = json!({
         "args": args,
@@ -635,10 +637,12 @@ pub(crate) struct ToolFsTargetExecution<'a> {
 pub(crate) async fn execute_tool_fs_target(context: ToolFsTargetExecution<'_>) -> Value {
     let started_at = now();
     if context.cancellation.is_cancelled() {
-        return json!({
-            "content": "Lyra tool call was cancelled before execution.",
-            "cancelled": true,
-        });
+        return cancelled_tool_output(
+            CANCEL_REASON_BEFORE_EXECUTION,
+            "Lyra tool call was cancelled before execution.",
+            "Retry the tool call in a new turn if it is still needed.",
+            None,
+        );
     }
     let manifest = context.manifest;
     let Some(target) = tool_fs::runtime_target_for_manifest(manifest) else {
@@ -885,6 +889,7 @@ pub(crate) async fn execute_tool_fs_target(context: ToolFsTargetExecution<'_>) -
                         &started_at,
                         context.dispatcher.as_ref(),
                         context.runtime,
+                        true,
                     )
                     .await
                 }
@@ -940,12 +945,21 @@ fn execute_session_read_message_model_tool(
         "toolStarted",
     );
     if cancellation.is_cancelled() || turn_was_cancelled(session_id, turn_id) {
-        let output = tool_failure_output(
-            "cancelled",
-            "Lyra tool call was cancelled.",
-            "Stop this tool call and continue only after a new user turn.",
-            None,
-        );
+        let output = if cancellation.is_cancelled() {
+            cancelled_tool_output(
+                CANCEL_REASON_TURN_CANCELLED,
+                "Lyra tool call was cancelled.",
+                "Stop this tool call and continue only after a new user turn.",
+                None,
+            )
+        } else {
+            cancelled_tool_output(
+                CANCEL_REASON_TURN_SUPERSEDED,
+                "This tool call was cancelled because its turn is no longer active.",
+                "Stop this tool call and continue only after a new user turn.",
+                None,
+            )
+        };
         record_tool_activity(
             session_id,
             turn_id,

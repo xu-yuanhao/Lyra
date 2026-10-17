@@ -22,7 +22,8 @@ impl StreamContinuation {
             .lock()
             .ok()
             .and_then(|state| {
-                let message = state.sessions.get(session_id)?.snapshot["messages"]
+                let session = state.sessions.get(session_id)?;
+                let message = session.snapshot["messages"]
                     .as_array()?
                     .iter()
                     .find(|message| message["id"] == id)?;
@@ -33,10 +34,7 @@ impl StreamContinuation {
                         || message["reasoningContent"]
                             .as_str()
                             .is_some_and(|text| !text.is_empty())
-                        || message
-                            .pointer("/metadata/providerProtocol/assistant/toolCalls")
-                            .and_then(Value::as_array)
-                            .is_some_and(|calls| !calls.is_empty()),
+                        || turns::anchored_protocol_step_has_tool_calls(session, &id),
                 )
             })
             .unwrap_or(false)
@@ -64,17 +62,14 @@ impl StreamContinuation {
         }
         let prefix = {
             let state = state().lock().ok()?;
-            let messages = state.sessions.get(session_id)?.snapshot["messages"].as_array()?;
+            let session = state.sessions.get(session_id)?;
+            let messages = session.snapshot["messages"].as_array()?;
             let message = messages
                 .iter()
                 .find(|message| message["id"] == message_id)?;
             // Early tools remain in their durable protocol step. A text-only
             // continuation must not discard or resample that executed work.
-            if message
-                .pointer("/metadata/providerProtocol/assistant/toolCalls")
-                .and_then(Value::as_array)
-                .is_some_and(|calls| !calls.is_empty())
-            {
+            if turns::anchored_protocol_step_has_tool_calls(session, &message_id) {
                 return None;
             }
             message["text"].as_str()?.to_string()

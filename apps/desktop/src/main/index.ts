@@ -322,6 +322,10 @@ const linuxCompatBridge = createLinuxCompatBridge({
 
 linuxCompatBridge.applyToProcessEnv();
 linuxCompatBridge.applyToElectronApp(app);
+const envCorrectionRelaunch = linuxCompatBridge.requestEnvCorrectionRelaunch(app);
+if (envCorrectionRelaunch.ok === false) {
+  console.error(`[lyra] linux-compat display env correction failed: ${envCorrectionRelaunch.error}`);
+}
 configureLinuxSecretStore(app);
 configureBrowserIdentityCompatibility(app);
 
@@ -1272,6 +1276,7 @@ const registerIpcHandlers = async (): Promise<void> => {
     workbenchState: workbenchStateBridge,
     addAllowedPreviewRoot: lyraFileAccess.addAllowedRoot,
     resolveSensitiveValueForFill: sensitiveValuesBridge.resolveForAgentFill,
+    revealSensitiveValue: (ref) => sensitiveValuesBridge.revealToUser({ ref }),
     storeSensitiveValue: sensitiveValuesBridge.store
   });
   disposeAgentBridge = agentBridge.dispose;

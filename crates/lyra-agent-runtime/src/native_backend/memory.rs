@@ -116,7 +116,7 @@ pub(crate) fn memory_audit(payload: Value) -> AgentRuntimeResult<Value> {
 }
 
 pub(crate) fn recover_memory(payload: Value) -> AgentRuntimeResult<Value> {
-    let (session_id, callback, projection, snapshot, recovered_turn_id, reason) = {
+    let (session_id, callback, projection, recovered_turn_id, reason) = {
         let mut state = state()
             .lock()
             .map_err(|_| AgentRuntimeError::Core("agent runtime state lock failed".to_string()))?;
@@ -160,7 +160,12 @@ pub(crate) fn recover_memory(payload: Value) -> AgentRuntimeResult<Value> {
                 session,
                 turn_id,
                 "cancelled",
-                json!({ "content": "Lyra tool call was cancelled during session recovery." }),
+                cancelled_tool_output(
+                    CANCEL_REASON_SESSION_RECOVERY,
+                    "Lyra tool call was cancelled during session recovery.",
+                    "Retry the tool call in a new turn if it is still needed.",
+                    None,
+                ),
             );
             update_runtime_turn_state(
                 session,
@@ -181,17 +186,9 @@ pub(crate) fn recover_memory(payload: Value) -> AgentRuntimeResult<Value> {
         });
         session.snapshot["memory"] = projection.clone();
         touch_session(session);
-        let snapshot = session.snapshot.clone();
         let callback = event_callback();
         state.save_state()?;
-        (
-            session_id,
-            callback,
-            projection,
-            snapshot,
-            active_turn_id,
-            reason,
-        )
+        (session_id, callback, projection, active_turn_id, reason)
     };
     emit_with_callback(
         &callback,
@@ -207,10 +204,6 @@ pub(crate) fn recover_memory(payload: Value) -> AgentRuntimeResult<Value> {
             json!({ "kind": "turnInterrupted", "sessionId": session_id, "turnId": turn_id, "reason": reason }),
         );
     }
-    emit_with_callback(
-        &callback,
-        json!({ "kind": "sessionSnapshot", "snapshot": snapshot }),
-    );
     Ok(json!({
         "sessionId": session_id,
         "recovered": recovered_turn_id.is_some(),

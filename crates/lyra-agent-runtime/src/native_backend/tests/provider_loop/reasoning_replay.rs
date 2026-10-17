@@ -201,6 +201,7 @@ fn reasoning_replay_stream_tool_loop_survives_sqlite_reload_and_automatic_resume
         "system".into(),
         messages,
         ProviderContextOptions {
+            protocol_log: saved.provider_protocol_log.clone(),
             provider_id: Some("deepseek".into()),
             route_id: Some("deepseek".into()),
             protocol_id: Some("openai_chat_completions".into()),
@@ -290,9 +291,6 @@ fn reasoning_replay_preserves_each_max_tokens_segment_in_normal_and_guard_loops(
                 &turn_id,
                 &request,
                 messages,
-                vec![],
-                vec![],
-                vec![],
                 ModelLoopObservations::default(),
                 &CancellationToken::new(),
                 "test",
@@ -312,12 +310,44 @@ fn reasoning_replay_preserves_each_max_tokens_segment_in_normal_and_guard_loops(
                 .iter()
                 .any(|message| message["reasoning_content"] == "first thought")
         );
+        // Replay the committed log the way finish_turn would: anchor the
+        // turn's unanchored steps to the final assistant message.
+        let mut protocol_log = state()
+            .lock()
+            .expect("state lock")
+            .sessions
+            .get(session_id)
+            .map(|session| session.provider_protocol_log.clone())
+            .unwrap_or_default();
+        let replay_message_id = protocol_log
+            .iter()
+            .rev()
+            .find_map(|entry| {
+                entry
+                    .get("messageId")
+                    .and_then(Value::as_str)
+                    .filter(|id| !id.is_empty())
+                    .map(str::to_string)
+            })
+            .unwrap_or_else(|| "message-final".to_string());
+        for entry in protocol_log.iter_mut() {
+            if entry
+                .get("messageId")
+                .and_then(Value::as_str)
+                .filter(|id| !id.is_empty())
+                .is_none()
+            {
+                entry["messageId"] = json!(replay_message_id.clone());
+            }
+        }
         let context = ContextBuilder::default().build_provider_context(
             "system".into(),
             vec![json!({
-                "role":"assistant","text":result.final_text,"metadata":result.session_metadata()
+                "id": replay_message_id,
+                "role":"assistant","text":result.final_text
             })],
             ProviderContextOptions {
+                protocol_log,
                 provider_id: Some("deepseek".into()),
                 route_id: Some("deepseek".into()),
                 protocol_id: Some("openai_chat_completions".into()),

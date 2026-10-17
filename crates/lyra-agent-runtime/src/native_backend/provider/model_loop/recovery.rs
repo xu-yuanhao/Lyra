@@ -76,20 +76,12 @@ pub(super) fn persist_tool_protocol_checkpoint(
     message_id: Option<&str>,
     provider_protocol: &Value,
 ) -> AgentRuntimeResult<()> {
-    if let Some(message_id) = message_id.filter(|id| !id.trim().is_empty()) {
-        crate::native_backend::turns::persist_provider_protocol_step(
-            session_id,
-            turn_id,
-            message_id,
-            provider_protocol.clone(),
-        )
-    } else {
-        crate::native_backend::turns::persist_provider_protocol_checkpoint(
-            session_id,
-            turn_id,
-            provider_protocol.clone(),
-        )
-    }
+    crate::native_backend::turns::upsert_provider_protocol_log_entry(
+        session_id,
+        turn_id,
+        message_id.filter(|id| !id.trim().is_empty()),
+        provider_protocol.clone(),
+    )
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -157,32 +149,30 @@ pub(super) fn classify_attempt_outcome(reply: &ModelReply) -> AttemptOutcome {
 
 pub(super) fn recovery_action_for_attempt(
     outcome: AttemptOutcome,
-    reasoning_only_retries: u8,
-    terminal_empty_retries: u8,
-    truncated_tool_retries: u8,
-    missing_tool_retries: u8,
+    model_correction_retries: u8,
     continuation_retries: u8,
 ) -> RecoveryAction {
+    let corrections_exhausted = model_correction_retries >= max_model_correction_retry();
     match outcome {
-        AttemptOutcome::ReasoningOnly if reasoning_only_retries < 1 => {
+        AttemptOutcome::ReasoningOnly if !corrections_exhausted => {
             RecoveryAction::RetryReasoningOnly
         }
         AttemptOutcome::ReasoningOnly => {
             RecoveryAction::Fail(ProviderProtocolFailureKind::ReasoningOnlyResponse)
         }
-        AttemptOutcome::TerminalEmpty if terminal_empty_retries < 1 => {
+        AttemptOutcome::TerminalEmpty if !corrections_exhausted => {
             RecoveryAction::RetryTerminalEmpty
         }
         AttemptOutcome::TerminalEmpty => {
             RecoveryAction::Fail(ProviderProtocolFailureKind::EmptyAssistantResponse)
         }
-        AttemptOutcome::MaxTokensWithToolCalls if truncated_tool_retries < 1 => {
+        AttemptOutcome::MaxTokensWithToolCalls if !corrections_exhausted => {
             RecoveryAction::RetryIncompleteToolCall
         }
         AttemptOutcome::MaxTokensWithToolCalls => {
             RecoveryAction::Fail(ProviderProtocolFailureKind::IncompleteToolCall)
         }
-        AttemptOutcome::ToolUseWithoutCall if missing_tool_retries < max_missing_tool_retry() => {
+        AttemptOutcome::ToolUseWithoutCall if !corrections_exhausted => {
             RecoveryAction::RetryMissingToolCall
         }
         AttemptOutcome::ToolUseWithoutCall => {
@@ -260,33 +250,37 @@ mod attempt_recovery_tests {
     }
 
     #[test]
-    fn semantic_recovery_budgets_are_independent_and_bounded() {
+    fn semantic_recovery_shares_one_bounded_correction_budget() {
         assert_eq!(
-            recovery_action_for_attempt(AttemptOutcome::ReasoningOnly, 0, 1, 1, 1, 4),
+            recovery_action_for_attempt(AttemptOutcome::ReasoningOnly, 0, 4),
             RecoveryAction::RetryReasoningOnly
         );
         assert_eq!(
-            recovery_action_for_attempt(AttemptOutcome::ReasoningOnly, 1, 0, 0, 0, 0),
+            recovery_action_for_attempt(AttemptOutcome::ReasoningOnly, 3, 0),
             RecoveryAction::Fail(ProviderProtocolFailureKind::ReasoningOnlyResponse)
         );
         assert_eq!(
-            recovery_action_for_attempt(AttemptOutcome::TerminalEmpty, 1, 0, 1, 1, 4),
+            recovery_action_for_attempt(AttemptOutcome::TerminalEmpty, 2, 4),
             RecoveryAction::RetryTerminalEmpty
         );
         assert_eq!(
-            recovery_action_for_attempt(AttemptOutcome::MaxTokensWithToolCalls, 0, 0, 0, 0, 0),
+            recovery_action_for_attempt(AttemptOutcome::TerminalEmpty, 3, 0),
+            RecoveryAction::Fail(ProviderProtocolFailureKind::EmptyAssistantResponse)
+        );
+        assert_eq!(
+            recovery_action_for_attempt(AttemptOutcome::MaxTokensWithToolCalls, 0, 0),
             RecoveryAction::RetryIncompleteToolCall
         );
         assert_eq!(
-            recovery_action_for_attempt(AttemptOutcome::MaxTokensWithToolCalls, 0, 0, 1, 0, 0),
+            recovery_action_for_attempt(AttemptOutcome::MaxTokensWithToolCalls, 3, 0),
             RecoveryAction::Fail(ProviderProtocolFailureKind::IncompleteToolCall)
         );
         assert_eq!(
-            recovery_action_for_attempt(AttemptOutcome::MaxTokensWithText, 0, 0, 0, 0, 3),
+            recovery_action_for_attempt(AttemptOutcome::MaxTokensWithText, 0, 3),
             RecoveryAction::ContinueVisibleText
         );
         assert_eq!(
-            recovery_action_for_attempt(AttemptOutcome::MaxTokensWithText, 0, 0, 0, 0, 4),
+            recovery_action_for_attempt(AttemptOutcome::MaxTokensWithText, 0, 4),
             RecoveryAction::Accept
         );
     }
@@ -323,6 +317,12 @@ pub(crate) fn provider_protocol_step(
         "status": status,
         "assistant": {
             "content": reply.content.clone().unwrap_or_default(),
+            "reasoning": reply.reasoning_content.as_deref().map(|text| {
+                crate::native_backend::activity::truncate_bytes(
+                    text,
+                    crate::native_backend::activity::PROVIDER_TRANSCRIPT_TEXT_MAX_BYTES,
+                )
+            }).unwrap_or_default(),
             "toolCalls": tool_calls.iter().map(|call| json!({
                 "id": call.id,
                 "name": call.name,
@@ -352,18 +352,6 @@ pub(super) fn attach_assistant_replay(message: &mut Value, reply: &ModelReply) {
     }
 }
 
-pub(super) fn attach_prior_provider_protocol_steps(step: &mut Value, prior_steps: &[Value]) {
-    if !prior_steps.is_empty() {
-        step["priorSteps"] = Value::Array(prior_steps.to_vec());
-    }
-}
-
-pub(super) fn combined_provider_protocol_steps(mut steps: Vec<Value>) -> Option<Value> {
-    let mut final_step = steps.pop()?;
-    attach_prior_provider_protocol_steps(&mut final_step, &steps);
-    Some(final_step)
-}
-
 pub(super) fn take_provider_protocol_auxiliary_messages(
     provider_transcript: &[Value],
     cursor: &mut usize,
@@ -387,7 +375,7 @@ pub(super) fn take_provider_protocol_auxiliary_messages(
             if let Some(meta) = message.get("lyraVisualEvidence") {
                 persisted["lyraVisualEvidence"] = meta.clone();
             }
-            persisted
+            crate::native_backend::activity::bound_provider_transcript_message(&persisted)
         })
         .collect()
 }

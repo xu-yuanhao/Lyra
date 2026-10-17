@@ -1069,11 +1069,24 @@ fn model_loop_progress_guard_allows_structured_clarification_only() {
             .as_deref()
             .is_some_and(|id| !id.is_empty())
     );
-    let provider_protocol = result
-        .metadata
-        .as_ref()
-        .and_then(|metadata| metadata.get("providerProtocol"))
-        .expect("final provider protocol");
+    let final_message_id = result.final_message_id.clone().expect("final message id");
+    let provider_protocol = state()
+        .lock()
+        .expect("state lock")
+        .sessions
+        .get(&session_id)
+        .and_then(|session| {
+            session
+                .provider_protocol_log
+                .iter()
+                .rev()
+                .find(|entry| {
+                    entry.get("messageId").and_then(Value::as_str)
+                        == Some(final_message_id.as_str())
+                })
+                .map(|entry| entry["step"].clone())
+        })
+        .expect("final provider protocol step");
     assert_eq!(provider_protocol["version"], 2);
     assert_eq!(provider_protocol["status"], "complete");
     assert_eq!(
@@ -1125,30 +1138,22 @@ fn model_loop_progress_guard_allows_structured_clarification_only() {
     }));
     let state = state().lock().expect("state lock");
     let session = state.sessions.get(&session_id).expect("session");
-    let clarification_message = session
-        .snapshot
-        .get("messages")
-        .and_then(Value::as_array)
-        .and_then(|messages| {
-            messages.iter().find(|message| {
-                message
-                    .pointer("/metadata/providerProtocol/assistant/toolCalls/0/name")
-                    .and_then(Value::as_str)
-                    == Some(LYRA_CLARIFICATION_ASK_TOOL)
-            })
+    let clarification_step = session
+        .provider_protocol_log
+        .iter()
+        .rev()
+        .filter(|entry| entry.get("turnId").and_then(Value::as_str) == Some(turn_id.as_str()))
+        .find(|entry| {
+            entry
+                .pointer("/step/assistant/toolCalls/0/name")
+                .and_then(Value::as_str)
+                == Some(LYRA_CLARIFICATION_ASK_TOOL)
         })
+        .map(|entry| entry["step"].clone())
         .expect("persisted clarification protocol step");
+    assert_eq!(clarification_step["status"].as_str(), Some("complete"));
     assert_eq!(
-        clarification_message
-            .pointer("/metadata/providerProtocol/status")
-            .and_then(Value::as_str),
-        Some("complete")
-    );
-    assert_eq!(
-        clarification_message
-            .pointer("/metadata/providerProtocol/toolResults")
-            .and_then(Value::as_array)
-            .map(Vec::len),
+        clarification_step["toolResults"].as_array().map(Vec::len),
         Some(1)
     );
     let runtime_turn = session
@@ -1280,10 +1285,10 @@ fn cancelled_turn_does_not_commit_late_assistant_message() {
 }
 
 #[test]
-fn soft_interrupt_marks_old_turn_and_keeps_new_user_intent() {
+fn mid_turn_send_steers_the_running_turn_instead_of_interrupting_it() {
     let backend = LyraAgentBackend;
     let created = backend
-        .call_agent_method("agent.session.create", json!({ "title": "Interrupt Test" }))
+        .call_agent_method("agent.session.create", json!({ "title": "Steer Test" }))
         .expect("create session");
     let session_id = created["id"].as_str().expect("session id").to_string();
     let old_turn_id = format!("turn-{}", Uuid::new_v4());
@@ -1360,7 +1365,7 @@ fn soft_interrupt_marks_old_turn_and_keeps_new_user_intent() {
             "agent.turn.send",
             json!({ "sessionId": session_id, "text": "新的优先任务" }),
         )
-        .expect("send interrupting turn");
+        .expect("send mid-turn message");
     let read = backend
         .call_agent_method("agent.session.read", json!({ "sessionId": session_id }))
         .expect("read session");
@@ -1376,32 +1381,41 @@ fn soft_interrupt_marks_old_turn_and_keeps_new_user_intent() {
         .cloned()
         .expect("old turn");
 
-    assert_eq!(old_turn["state"], "interrupted");
+    // The live turn keeps its identity: no interruption, no replacement turn.
+    assert_eq!(sent["status"], "steered");
+    assert_eq!(sent["turnId"], old_turn_id.as_str());
+    assert_eq!(old_turn["state"], "calling_model");
+    // In-flight permission and clarification requests stay answerable — a
+    // steer never aborts anything mid-flight (reference semantics).
     assert!(
         read["tools"]
             .as_array()
             .expect("tools")
             .iter()
-            .any(|tool| tool["id"] == "tool-soft-interrupt" && tool["status"] == "cancelled")
+            .any(|tool| tool["id"] == "tool-soft-interrupt" && tool["status"] == "running")
     );
     let state = state().lock().expect("state lock");
     assert!(
-        !state
+        state
             .pending_permissions
             .values()
             .any(|request| request.turn_id == old_turn_id)
     );
     assert!(
-        !state
+        state
             .pending_clarifications
             .values()
             .any(|request| request.turn_id == old_turn_id)
     );
-    drop(state);
-    assert!(
-        read["activeTurnId"].is_null() || read["activeTurnId"] == sent["turnId"],
-        "new turn may still be running or may already have completed"
+    // The message is queued for injection at the live turn's next boundary.
+    assert_eq!(
+        session_runtime::pending_steer_count(&session_id),
+        1,
+        "steer queued for the running turn"
     );
+    drop(state);
+    assert_eq!(read["activeTurnId"], old_turn_id.as_str());
+    assert_eq!(read["turnStatus"], "running");
     assert!(
         serde_json::to_string(&read["messages"])
             .expect("messages json")

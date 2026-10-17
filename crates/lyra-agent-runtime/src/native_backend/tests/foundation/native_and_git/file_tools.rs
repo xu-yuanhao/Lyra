@@ -113,6 +113,19 @@ fn native_file_tools_enforce_policy_budgets_edits_and_patch_artifacts() {
     )
     .expect_err("missing file");
     assert_eq!(missing.code, "path_not_found");
+    // The error must name the workspace-root anchor so a relative input that
+    // resolved somewhere unexpected is diagnosable (hermes three-element form:
+    // raw input + resolved path + base directory).
+    assert!(
+        missing.message.contains(&temp.path().display().to_string()),
+        "path_not_found message must name the workspace root, got: {}",
+        missing.message
+    );
+    assert!(
+        missing.message.contains("missing.txt"),
+        "path_not_found message must echo the raw input, got: {}",
+        missing.message
+    );
     let large = tool_file_read(
         &session_id,
         &turn_id,
@@ -576,5 +589,37 @@ fn grep_accepts_a_file_path_without_enotdir() {
         grepped.content.contains("1:") || grepped.content.contains("main.rs"),
         "file grep should include a line number or filename: {}",
         grepped.content
+    );
+}
+
+#[test]
+fn glob_recursive_prefix_matches_root_level_files() {
+    // glob-0.3 Pattern::matches cannot match `**/` against zero directories,
+    // so `**/*.rs` used to silently miss files at the workspace root.
+    let temp = tempfile::tempdir().unwrap();
+    fs::write(temp.path().join("root.rs"), "fn main() {}\n").unwrap();
+    fs::create_dir_all(temp.path().join("src")).unwrap();
+    fs::write(temp.path().join("src/lib.rs"), "").unwrap();
+    let created = LyraAgentBackend
+        .call_agent_method(
+            "agent.session.create",
+            json!({"workingDir": temp.path().display().to_string()}),
+        )
+        .unwrap();
+    let session_id = created["id"].as_str().unwrap();
+    let result = tool_file_glob(session_id, &json!({ "pattern": "**/*.rs" })).unwrap();
+    let paths: Vec<String> = result.raw["matches"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|item| item["path"].as_str().map(str::to_string))
+        .collect();
+    assert!(
+        paths.iter().any(|path| path == "root.rs"),
+        "**/ must match root-level files: {paths:?}"
+    );
+    assert!(
+        paths.iter().any(|path| path == "src/lib.rs"),
+        "nested files must still match: {paths:?}"
     );
 }

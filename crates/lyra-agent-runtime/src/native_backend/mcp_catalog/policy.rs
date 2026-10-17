@@ -115,29 +115,50 @@ pub(crate) fn execute(
         return mcp_server_remove(payload.clone());
     }
     if name == "mcp_server_disconnect" {
-        let ids = server_ids_for_operation(payload, &read_registry().servers);
         if !payload_names_a_server(payload) {
             return Err(AgentRuntimeError::Core(
                 "serverId or serverUrl is required".into(),
             ));
         }
+        let registry = read_registry();
+        let ids = server_ids_for_operation(payload, &registry.servers);
         if ids.is_empty() {
-            return Err(AgentRuntimeError::Core(
-                "MCP server is not in this session".into(),
-            ));
+            // Zero hits are a named error that echoes the request and the
+            // acceptable ids — never a silent "0 updated".
+            let requested = string_field(
+                payload,
+                &["serverId", "id", "name", "serverUrl", "url", "endpoint"],
+            )
+            .unwrap_or_else(|| "<unnamed>".to_string());
+            let known = registry
+                .servers
+                .iter()
+                .map(|server| server.id.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(AgentRuntimeError::Core(format!(
+                "MCP server \"{requested}\" is not configured. Known server ids: {}",
+                if known.is_empty() {
+                    "(none)"
+                } else {
+                    known.as_str()
+                }
+            )));
         }
-        if let Some(root) = root
-            && projects::for_root(Some(root))?.is_some()
-        {
-            for id in &ids {
+        let mut servers = Vec::new();
+        let project_override = projects::for_root(root)?.is_some();
+        for id in &ids {
+            if project_override && let Some(root) = root {
                 projects::set_override(root, "mcp", id, Some(false))?;
-            }
-        } else {
-            for id in &ids {
+            } else {
                 set_enabled(json!({"serverId": id, "enabled": false}))?;
             }
+            // Echo the entity with its new state (ZCode/opencode convention).
+            if let Some(server) = read_registry().servers.iter().find(|s| &s.id == id) {
+                servers.push(server_value(server));
+            }
         }
-        return Ok(json!({ "serverIds": ids, "enabled": false }));
+        return Ok(json!({ "serverIds": ids, "enabled": false, "servers": servers }));
     }
     if name == "mcp_server_connect" && connect_needs_http_install(payload, &read_registry().servers)
     {

@@ -260,6 +260,7 @@ pub(super) fn validate_workspace_scope_for_manifest(
                 message: failure.message,
                 recommended_next_action: failure.recommended_next_action,
                 detail: Some(detail),
+                cancel_reason: None,
             }
         })
 }

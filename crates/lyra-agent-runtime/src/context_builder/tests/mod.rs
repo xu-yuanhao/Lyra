@@ -355,43 +355,56 @@ fn provider_context_trims_large_tool_output_and_reports_evidence_ref() {
 }
 
 #[test]
-fn legacy_provider_transcript_keeps_tool_pairs_but_strips_opaque_reasoning() {
+fn provider_protocol_log_keeps_frozen_spawn_placeholder() {
     let context = ContextBuilder::default().build_provider_context(
         "system".to_string(),
         vec![json!({
-            "id": "message-assistant",
+            "id": "message-final",
             "role": "assistant",
-            "text": "Done.",
-            "metadata": {
-                "providerTranscript": [
-                    {
-                        "role": "assistant",
-                        "content": "",
-                        "reasoning_content": "I need to inspect the workspace.",
-                        "tool_calls": [{
-                            "id": "call-1",
-                            "type": "function",
-                            "function": {
-                                "name": "tool_fs_run",
-                                "arguments": "{\"path\":\"/tools/workbench/list_tabs\",\"args\":{}}"
-                            }
+            "text": "Hiring. Waiting on the worker."
+        })],
+        ProviderContextOptions {
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-final",
+                "step": {
+                    "version": 2,
+                    "turnId": "turn-1",
+                    "origin": {},
+                    "status": "complete",
+                    "assistant": {
+                        "content": "Hiring. Waiting on the worker.",
+                        "toolCalls": [{
+                            "id": "call-agent",
+                            "name": "Agent",
+                            "arguments": {}
                         }]
                     },
-                    {
-                        "role": "tool",
-                        "tool_call_id": "call-1",
-                        "content": "tabs: settings"
-                    }
-                ]
-            }
-        })],
-        ProviderContextOptions::default(),
+                    "toolResults": [{
+                        "toolCallId": "call-agent",
+                        "content": "Started worker (explore) in the background. subagent_id=session-child",
+                        "status": "completed"
+                    }],
+                    "replay": null
+                }
+            })],
+            ..ProviderContextOptions::default()
+        },
     );
 
-    let serialized = serde_json::to_string(&context.messages).unwrap();
-    assert!(!serialized.contains("I need to inspect the workspace."));
-    assert_eq!(context.messages[2]["tool_call_id"], "call-1");
-    assert_eq!(context.messages[3]["content"], "Done.");
+    let serialized = serde_json::to_string(&context.messages).expect("serialize");
+    assert!(
+        serialized.contains("Started worker (explore) in the background"),
+        "frozen spawn placeholder survives in the protocol log: {serialized}"
+    );
+    assert!(
+        !serialized.contains("## finished report"),
+        "the worker report body must not leak into the request: {serialized}"
+    );
+    assert!(
+        serialized.contains("Waiting on the worker."),
+        "the recorded assistant prose replays from the log step"
+    );
 }
 
 #[test]
@@ -399,48 +412,51 @@ fn provider_context_v2_replays_opaque_state_only_for_exact_origin() {
     let message = json!({
         "id": "message-assistant",
         "role": "assistant",
-        "text": "Inspecting.",
-        "metadata": {
-            "providerProtocol": {
-                "version": 2,
-                "turnId": "turn-1",
-                "origin": {
-                    "providerId": "provider-a",
-                    "routeId": "custom-openai",
-                    "protocolId": "openai_chat_completions",
-                    "model": "deepseek-v4-flash-free"
-                },
-                "status": "complete",
-                "assistant": {
-                    "content": "Inspecting.",
-                    "toolCalls": [{
-                        "id": "call-1",
-                        "name": "tool_fs_run",
-                        "arguments": {
-                            "path": "/tools/workbench/list_tabs",
-                            "args": {}
-                        }
-                    }]
-                },
-                "toolResults": [{
-                    "toolCallId": "call-1",
-                    "content": "tabs: settings",
-                    "status": "completed"
-                }],
-                "replay": {
-                    "protocol": "openai_chat_completions",
-                    "items": [{
-                        "field": "reasoning_content",
-                        "value": "opaque-thought"
-                    }]
-                }
+        "text": "Inspecting."
+    });
+    let protocol_log = vec![json!({
+        "turnId": "turn-1",
+        "messageId": "message-assistant",
+        "step": {
+            "version": 2,
+            "turnId": "turn-1",
+            "origin": {
+                "providerId": "provider-a",
+                "routeId": "custom-openai",
+                "protocolId": "openai_chat_completions",
+                "model": "deepseek-v4-flash-free"
+            },
+            "status": "complete",
+            "assistant": {
+                "content": "Inspecting.",
+                "toolCalls": [{
+                    "id": "call-1",
+                    "name": "tool_fs_run",
+                    "arguments": {
+                        "path": "/tools/workbench/list_tabs",
+                        "args": {}
+                    }
+                }]
+            },
+            "toolResults": [{
+                "toolCallId": "call-1",
+                "content": "tabs: settings",
+                "status": "completed"
+            }],
+            "replay": {
+                "protocol": "openai_chat_completions",
+                "items": [{
+                    "field": "reasoning_content",
+                    "value": "opaque-thought"
+                }]
             }
         }
-    });
+    })];
     let exact = ContextBuilder::default().build_provider_context(
         "system".to_string(),
         vec![message.clone()],
         ProviderContextOptions {
+            protocol_log: protocol_log.clone(),
             provider_id: Some("provider-a".to_string()),
             route_id: Some("custom-openai".to_string()),
             protocol_id: Some("openai_chat_completions".to_string()),
@@ -459,6 +475,7 @@ fn provider_context_v2_replays_opaque_state_only_for_exact_origin() {
         "system".to_string(),
         vec![message],
         ProviderContextOptions {
+            protocol_log,
             provider_id: Some("provider-a".to_string()),
             route_id: Some("custom-openai".to_string()),
             protocol_id: Some("openai_chat_completions".to_string()),
@@ -475,24 +492,20 @@ fn provider_context_v2_replays_opaque_state_only_for_exact_origin() {
 }
 
 #[test]
-fn provider_context_v2_replays_prior_steps_in_tool_call_order() {
+fn provider_context_v2_replays_log_entries_in_tool_call_order() {
     let context = ContextBuilder::default().build_provider_context(
         "system".to_string(),
         vec![json!({
             "id": "message-assistant",
             "role": "assistant",
-            "text": "Final answer.",
-            "metadata": {
-                "providerProtocol": {
-                    "version": 2,
-                    "origin": {
-                        "providerId": "provider-a",
-                        "routeId": "custom-openai",
-                        "protocolId": "openai_chat_completions",
-                        "model": "model-a"
-                    },
-                    "status": "complete",
-                    "priorSteps": [{
+            "text": "Final answer."
+        })],
+        ProviderContextOptions {
+            protocol_log: vec![
+                json!({
+                    "turnId": "turn-1",
+                    "messageId": "message-assistant",
+                    "step": {
                         "version": 2,
                         "origin": {
                             "providerId": "provider-a",
@@ -514,16 +527,28 @@ fn provider_context_v2_replays_prior_steps_in_tool_call_order() {
                             "content": "first result",
                             "status": "completed"
                         }]
-                    }],
-                    "assistant": {
-                        "content": "Final answer.",
-                        "toolCalls": []
-                    },
-                    "toolResults": []
-                }
-            }
-        })],
-        ProviderContextOptions {
+                    }
+                }),
+                json!({
+                    "turnId": "turn-1",
+                    "messageId": "message-assistant",
+                    "step": {
+                        "version": 2,
+                        "origin": {
+                            "providerId": "provider-a",
+                            "routeId": "custom-openai",
+                            "protocolId": "openai_chat_completions",
+                            "model": "model-a"
+                        },
+                        "status": "complete",
+                        "assistant": {
+                            "content": "Final answer.",
+                            "toolCalls": []
+                        },
+                        "toolResults": []
+                    }
+                }),
+            ],
             provider_id: Some("provider-a".to_string()),
             route_id: Some("custom-openai".to_string()),
             protocol_id: Some("openai_chat_completions".to_string()),
@@ -545,9 +570,13 @@ fn provider_context_v2_preserves_auxiliary_messages_in_protocol_order() {
         vec![json!({
             "id": "message-assistant",
             "role": "assistant",
-            "text": "Done.",
-            "metadata": {
-                "providerProtocol": {
+            "text": "Done."
+        })],
+        ProviderContextOptions {
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-assistant",
+                "step": {
                     "version": 2,
                     "turnId": "turn-1",
                     "origin": {
@@ -581,9 +610,7 @@ fn provider_context_v2_preserves_auxiliary_messages_in_protocol_order() {
                     }],
                     "replay": null
                 }
-            }
-        })],
-        ProviderContextOptions {
+            })],
             provider_id: Some("provider-a".to_string()),
             route_id: Some("custom-openai".to_string()),
             protocol_id: Some("openai_chat_completions".to_string()),
@@ -609,9 +636,13 @@ fn provider_context_v2_preserves_interrupted_visible_text() {
         vec![json!({
             "id": "message-assistant",
             "role": "assistant",
-            "text": "Keep this recorded prefix.",
-            "metadata": {
-                "providerProtocol": {
+            "text": "Keep this recorded prefix."
+        })],
+        ProviderContextOptions {
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-assistant",
+                "step": {
                     "version": 2,
                     "turnId": "turn-1",
                     "origin": {
@@ -628,9 +659,7 @@ fn provider_context_v2_preserves_interrupted_visible_text() {
                     "toolResults": [],
                     "replay": null
                 }
-            }
-        })],
-        ProviderContextOptions {
+            })],
             provider_id: Some("provider-a".to_string()),
             route_id: Some("custom-openai".to_string()),
             protocol_id: Some("openai_chat_completions".to_string()),
@@ -651,9 +680,13 @@ fn provider_context_v2_replays_openai_responses_items_and_tool_output() {
         vec![json!({
             "id": "message-assistant",
             "role": "assistant",
-            "text": "",
-            "metadata": {
-                "providerProtocol": {
+            "text": ""
+        })],
+        ProviderContextOptions {
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-assistant",
+                "step": {
                     "version": 2,
                     "turnId": "turn-1",
                     "origin": {
@@ -693,10 +726,7 @@ fn provider_context_v2_replays_openai_responses_items_and_tool_output() {
                         ]
                     }
                 }
-            }
-        })],
-        ProviderContextOptions {
-            openai_responses_replay: true,
+            })],
             provider_id: Some("openai".to_string()),
             route_id: Some("openai-responses".to_string()),
             protocol_id: Some("openai_responses".to_string()),
@@ -724,42 +754,7 @@ fn provider_context_keeps_frozen_spawn_placeholder_and_reads_completion_envelope
             json!({
                 "id": "message-assistant",
                 "role": "assistant",
-                "text": "",
-                "metadata": {
-                    "providerProtocol": {
-                        "version": 2,
-                        "turnId": "turn-1",
-                        "origin": {
-                            "providerId": "openai",
-                            "routeId": "openai-responses",
-                            "protocolId": "openai_responses",
-                            "model": "o4-mini"
-                        },
-                        "status": "complete",
-                        "assistant": {
-                            "content": "Hired.",
-                            "toolCalls": [{
-                                "id": "call-agent",
-                                "name": "Agent",
-                                "arguments": { "description": "调研Lyra Rust后端结构" }
-                            }]
-                        },
-                        "toolResults": [{
-                            "toolCallId": "call-agent",
-                            "content": started,
-                            "status": "completed"
-                        }],
-                        "replay": {
-                            "protocol": "openai_responses",
-                            "items": [{
-                                "type": "function_call",
-                                "call_id": "call-agent",
-                                "name": "Agent",
-                                "arguments": "{}"
-                            }]
-                        }
-                    }
-                }
+                "text": ""
             }),
             json!({
                 "id": "message-complete",
@@ -773,7 +768,43 @@ fn provider_context_keeps_frozen_spawn_placeholder_and_reads_completion_envelope
             }),
         ],
         ProviderContextOptions {
-            openai_responses_replay: true,
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-assistant",
+                "step": {
+                    "version": 2,
+                    "turnId": "turn-1",
+                    "origin": {
+                        "providerId": "openai",
+                        "routeId": "openai-responses",
+                        "protocolId": "openai_responses",
+                        "model": "o4-mini"
+                    },
+                    "status": "complete",
+                    "assistant": {
+                        "content": "Hired.",
+                        "toolCalls": [{
+                            "id": "call-agent",
+                            "name": "Agent",
+                            "arguments": { "description": "调研Lyra Rust后端结构" }
+                        }]
+                    },
+                    "toolResults": [{
+                        "toolCallId": "call-agent",
+                        "content": started,
+                        "status": "completed"
+                    }],
+                    "replay": {
+                        "protocol": "openai_responses",
+                        "items": [{
+                            "type": "function_call",
+                            "call_id": "call-agent",
+                            "name": "Agent",
+                            "arguments": "{}"
+                        }]
+                    }
+                }
+            })],
             provider_id: Some("openai".to_string()),
             route_id: Some("openai-responses".to_string()),
             protocol_id: Some("openai_responses".to_string()),
@@ -810,15 +841,7 @@ fn provider_context_keeps_completion_envelope_when_spawn_placeholder_is_excluded
                 "role": "assistant",
                 "text": "",
                 "metadata": {
-                    "excludeFromProviderContext": true,
-                    "providerProtocol": {
-                        "version": 2,
-                        "toolResults": [{
-                            "toolCallId": "call-agent",
-                            "content": "Started survey (explore) in the background. subagent_id=session-child",
-                            "status": "completed"
-                        }]
-                    }
+                    "excludeFromProviderContext": true
                 }
             }),
             json!({
@@ -832,7 +855,21 @@ fn provider_context_keeps_completion_envelope_when_spawn_placeholder_is_excluded
                 }
             }),
         ],
-        ProviderContextOptions::default(),
+        ProviderContextOptions {
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-assistant",
+                "step": {
+                    "version": 2,
+                    "toolResults": [{
+                        "toolCallId": "call-agent",
+                        "content": "Started survey (explore) in the background. subagent_id=session-child",
+                        "status": "completed"
+                    }]
+                }
+            })],
+            ..ProviderContextOptions::default()
+        },
     );
     let serialized = serde_json::to_string(&context.messages).expect("serialize");
     assert!(
@@ -846,54 +883,19 @@ fn provider_context_keeps_completion_envelope_when_spawn_placeholder_is_excluded
 }
 
 #[test]
-fn provider_transcript_keeps_frozen_spawn_placeholder() {
-    let context = ContextBuilder::default().build_provider_context(
-        "system".to_string(),
-        vec![json!({
-            "id": "message-final",
-            "role": "assistant",
-            "text": "Waiting on the worker.",
-            "blocks": [{ "type": "text", "id": "text-0", "text": "Waiting on the worker." }],
-            "metadata": {
-                "providerTranscript": [
-                    {
-                        "role": "assistant",
-                        "content": "Hiring.",
-                        "tool_calls": [{
-                            "id": "call-agent",
-                            "type": "function",
-                            "function": { "name": "Agent", "arguments": "{}" }
-                        }]
-                    },
-                    {
-                        "role": "tool",
-                        "tool_call_id": "call-agent",
-                        "content": "Started worker (explore) in the background. subagent_id=session-child"
-                    },
-                    {
-                        "role": "assistant",
-                        "content": "Waiting on the worker."
-                    }
-                ]
-            }
-        })],
-        ProviderContextOptions::default(),
-    );
-    let serialized = serde_json::to_string(&context.messages).expect("serialize");
-    assert!(serialized.contains("Started worker (explore) in the background"));
-    assert!(!serialized.contains("## finished report"));
-}
-
-#[test]
 fn provider_context_v2_does_not_replace_ordinary_tool_results_with_session_summary() {
     let context = ContextBuilder::default().build_provider_context(
         "system".to_string(),
         vec![json!({
             "id": "message-assistant",
             "role": "assistant",
-            "text": "Done.",
-            "metadata": {
-                "providerProtocol": {
+            "text": "Done."
+        })],
+        ProviderContextOptions {
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-assistant",
+                "step": {
                     "version": 2,
                     "origin": {
                         "providerId": "provider-a",
@@ -916,9 +918,7 @@ fn provider_context_v2_does_not_replace_ordinary_tool_results_with_session_summa
                         "status": "completed"
                     }]
                 }
-            }
-        })],
-        ProviderContextOptions {
+            })],
             provider_id: Some("provider-a".to_string()),
             route_id: Some("custom-openai".to_string()),
             protocol_id: Some("openai_chat_completions".to_string()),
@@ -959,28 +959,43 @@ fn provider_context_keeps_prose_but_does_not_invent_tool_protocol_from_blocks() 
 }
 
 #[test]
-fn provider_context_uses_openai_responses_replay_without_duplicate_visible_text() {
+fn provider_context_replays_openai_responses_items_without_duplicate_visible_text() {
     let context = ContextBuilder::default().build_provider_context(
         "system".to_string(),
         vec![json!({
             "id": "message-assistant",
             "role": "assistant",
-            "text": "Done.",
-            "metadata": {
-                "openaiResponsesState": {
-                    "providerId": "openai",
-                    "routeId": "openai-responses",
-                    "model": "gpt-5"
-                },
-                "openaiResponsesReplay": [{
-                    "type": "message",
-                    "role": "assistant",
-                    "content": [{ "type": "output_text", "text": "Done." }]
-                }]
-            }
+            "text": "Done."
         })],
         ProviderContextOptions {
-            openai_responses_replay: true,
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-assistant",
+                "step": {
+                    "version": 2,
+                    "turnId": "turn-1",
+                    "origin": {
+                        "providerId": "openai",
+                        "routeId": "openai-responses",
+                        "protocolId": "openai_responses",
+                        "model": "gpt-5"
+                    },
+                    "status": "complete",
+                    "assistant": {
+                        "content": "Done.",
+                        "toolCalls": []
+                    },
+                    "toolResults": [],
+                    "replay": {
+                        "protocol": "openai_responses",
+                        "items": [{
+                            "type": "message",
+                            "role": "assistant",
+                            "content": [{ "type": "output_text", "text": "Done." }]
+                        }]
+                    }
+                }
+            })],
             provider_id: Some("openai".to_string()),
             route_id: Some("openai-responses".to_string()),
             protocol_id: Some("openai_responses".to_string()),
@@ -1007,47 +1022,50 @@ fn provider_context_uses_openai_responses_replay_without_duplicate_visible_text(
 }
 
 #[test]
-fn legacy_openai_responses_replay_is_not_used_after_model_switch() {
+fn provider_protocol_replay_is_not_used_after_model_switch() {
     let context = ContextBuilder::default().build_provider_context(
         "system".to_string(),
         vec![json!({
             "id": "message-assistant",
             "role": "assistant",
-            "text": "Done.",
-            "metadata": {
-                "openaiResponsesState": {
-                    "providerId": "openai",
-                    "routeId": "openai-responses",
-                    "model": "model-a"
-                },
-                "openaiResponsesReplay": [{
-                    "type": "reasoning",
-                    "encrypted_content": "opaque-state"
-                }],
-                "providerTranscript": [
-                    {
-                        "role": "assistant",
-                        "content": "",
-                        "reasoning_content": "hidden-reasoning",
-                        "tool_calls": [{
-                            "id": "call-1",
-                            "type": "function",
-                            "function": {
-                                "name": "inspect",
-                                "arguments": "{}"
-                            }
-                        }]
-                    },
-                    {
-                        "role": "tool",
-                        "tool_call_id": "call-1",
-                        "content": "visible result"
-                    }
-                ]
-            }
+            "text": "Done."
         })],
         ProviderContextOptions {
-            openai_responses_replay: true,
+            protocol_log: vec![json!({
+                "turnId": "turn-1",
+                "messageId": "message-assistant",
+                "step": {
+                    "version": 2,
+                    "turnId": "turn-1",
+                    "origin": {
+                        "providerId": "openai",
+                        "routeId": "openai-responses",
+                        "protocolId": "openai_responses",
+                        "model": "model-a"
+                    },
+                    "status": "complete",
+                    "assistant": {
+                        "content": "Done.",
+                        "toolCalls": [{
+                            "id": "call-1",
+                            "name": "inspect",
+                            "arguments": {}
+                        }]
+                    },
+                    "toolResults": [{
+                        "toolCallId": "call-1",
+                        "content": "visible result",
+                        "status": "completed"
+                    }],
+                    "replay": {
+                        "protocol": "openai_responses",
+                        "items": [{
+                            "type": "reasoning",
+                            "encrypted_content": "opaque-state"
+                        }]
+                    }
+                }
+            })],
             provider_id: Some("openai".to_string()),
             route_id: Some("openai-responses".to_string()),
             protocol_id: Some("openai_responses".to_string()),
@@ -1372,88 +1390,6 @@ fn interrupted_legacy_tool_blocks_preserve_prose_without_inventing_calls() {
 }
 
 #[test]
-fn intermediate_tool_call_message_skipped_when_transcript_on_later_message() {
-    let messages = vec![
-        json!({
-            "id": "msg-intermediate",
-            "role": "assistant",
-            "text": "Let me search for that.",
-            "blocks": [
-                { "type": "text", "id": "text-0", "text": "Let me search for that." },
-                { "type": "tool", "id": "tool-0", "toolId": "call-1" }
-            ]
-        }),
-        json!({
-            "id": "msg-final",
-            "role": "assistant",
-            "text": "Here are the results.",
-            "blocks": [
-                { "type": "text", "id": "text-0", "text": "Here are the results." }
-            ],
-            "metadata": {
-                "providerTranscript": [
-                    {
-                        "role": "assistant",
-                        "content": "Let me search for that.",
-                        "tool_calls": [{
-                            "id": "call-1",
-                            "type": "function",
-                            "function": {
-                                "name": "search",
-                                "arguments": "{\"query\": \"test\"}"
-                            }
-                        }]
-                    },
-                    {
-                        "role": "tool",
-                        "tool_call_id": "call-1",
-                        "content": "Search results found."
-                    },
-                    {
-                        "role": "assistant",
-                        "content": "Here are the results."
-                    }
-                ]
-            }
-        }),
-    ];
-
-    let context = ContextBuilder::default().build_provider_context(
-        "system".to_string(),
-        messages,
-        ProviderContextOptions::default(),
-    );
-
-    let serialized = serde_json::to_string(&context.messages).unwrap();
-
-    // The transcript's tool call is present with proper structure.
-    assert!(
-        serialized.contains("\"tool_calls\""),
-        "transcript should contain proper tool_calls"
-    );
-    assert!(
-        serialized.contains("\"tool_call_id\":\"call-1\""),
-        "transcript should contain proper tool result with tool_call_id"
-    );
-
-    // The intermediate message's tool block should NOT emit tool output as
-    // plain text — it must be skipped because the transcript covers it.
-    // Verify by counting assistant messages: with the fix, the intermediate
-    // message is skipped, so only 2 assistant messages remain (the transcript's
-    // tool-call assistant + the final text content). Without the fix there
-    // would be 3 (intermediate + transcript + final).
-    let assistant_count = context
-        .messages
-        .iter()
-        .filter(|m| m.get("role").and_then(Value::as_str) == Some("assistant"))
-        .count();
-    assert_eq!(
-        assistant_count, 3,
-        "intermediate tool-call assistant should be skipped when transcript covers it (2 from transcript + 1 from final content)"
-    );
-}
-
-#[test]
 fn provider_context_repeats_user_query_once_for_prefill() {
     let context = ContextBuilder::default().build_provider_context(
         "system".to_string(),
@@ -1641,40 +1577,46 @@ fn openai_responses_replay_demotes_old_function_call_output() {
             json!({
                 "id": format!("message-assistant-{index}"),
                 "role": "assistant",
-                "text": "",
-                "metadata": {
-                    "providerProtocol": {
-                        "version": 2,
-                        "turnId": format!("turn-{index}"),
-                        "origin": {
-                            "providerId": "openai",
-                            "routeId": "openai-responses",
-                            "protocolId": "openai_responses",
-                            "model": "o4-mini"
-                        },
-                        "status": "complete",
-                        "assistant": {
-                            "content": "",
-                            "toolCalls": [{
-                                "id": format!("call-{index}"),
-                                "name": "web_fetch",
-                                "arguments": "{}"
-                            }]
-                        },
-                        "toolResults": [{
-                            "toolCallId": format!("call-{index}"),
-                            "content": oversized_tool_body(index),
-                            "status": "completed"
-                        }],
-                        "replay": {
-                            "protocol": "openai_responses",
-                            "items": [{
-                                "type": "function_call",
-                                "call_id": format!("call-{index}"),
-                                "name": "web_fetch",
-                                "arguments": "{}"
-                            }]
-                        }
+                "text": ""
+            })
+        })
+        .collect();
+    let protocol_log = (0..6)
+        .map(|index| {
+            json!({
+                "turnId": format!("turn-{index}"),
+                "messageId": format!("message-assistant-{index}"),
+                "step": {
+                    "version": 2,
+                    "turnId": format!("turn-{index}"),
+                    "origin": {
+                        "providerId": "openai",
+                        "routeId": "openai-responses",
+                        "protocolId": "openai_responses",
+                        "model": "o4-mini"
+                    },
+                    "status": "complete",
+                    "assistant": {
+                        "content": "",
+                        "toolCalls": [{
+                            "id": format!("call-{index}"),
+                            "name": "web_fetch",
+                            "arguments": "{}"
+                        }]
+                    },
+                    "toolResults": [{
+                        "toolCallId": format!("call-{index}"),
+                        "content": oversized_tool_body(index),
+                        "status": "completed"
+                    }],
+                    "replay": {
+                        "protocol": "openai_responses",
+                        "items": [{
+                            "type": "function_call",
+                            "call_id": format!("call-{index}"),
+                            "name": "web_fetch",
+                            "arguments": "{}"
+                        }]
                     }
                 }
             })
@@ -1684,7 +1626,7 @@ fn openai_responses_replay_demotes_old_function_call_output() {
         "system".to_string(),
         messages,
         ProviderContextOptions {
-            openai_responses_replay: true,
+            protocol_log,
             provider_id: Some("openai".to_string()),
             route_id: Some("openai-responses".to_string()),
             protocol_id: Some("openai_responses".to_string()),
@@ -1722,18 +1664,24 @@ fn openai_responses_replay_demotes_old_function_call_output() {
 #[test]
 fn interrupted_protocol_step_preserves_completed_tools_and_closes_unfinished_calls() {
     let context = ContextBuilder::default().build_provider_context("system".into(), vec![json!({
-        "role":"assistant", "id":"partial", "text":"Recorded visible prefix.",
-        "metadata":{"providerProtocol":{
-            "version":2, "status":"awaitingToolResults", "origin":{},
-            "assistant":{"content":"Older checkpoint text.", "toolCalls":[
-                {"id":"read-1", "name":"read_file", "arguments":{"path":"done.txt"}},
-                {"id":"write-1", "name":"apply_patch", "arguments":{"patch":"complete input"}},
-                {"id":"invalid", "name":"exec_command", "arguments":"{\"command\":"}
-            ]},
-            "toolResults":[{"toolCallId":"read-1", "content":"Completed evidence", "status":"completed"}],
-            "replay":{"protocol":"openai_responses", "items":[{"type":"reasoning", "id":"unfinished"}]}
-        }}
-    })], ProviderContextOptions::default());
+        "role":"assistant", "id":"partial", "text":"Recorded visible prefix."
+    })], ProviderContextOptions {
+        protocol_log: vec![json!({
+            "turnId": "turn-1",
+            "messageId": "partial",
+            "step": {
+                "version":2, "turnId":"turn-1", "status":"awaitingToolResults", "origin":{},
+                "assistant":{"content":"Older checkpoint text.", "toolCalls":[
+                    {"id":"read-1", "name":"read_file", "arguments":{"path":"done.txt"}},
+                    {"id":"write-1", "name":"apply_patch", "arguments":{"patch":"complete input"}},
+                    {"id":"invalid", "name":"exec_command", "arguments":"{\"command\":"}
+                ]},
+                "toolResults":[{"toolCallId":"read-1", "content":"Completed evidence", "status":"completed"}],
+                "replay":{"protocol":"openai_responses", "items":[{"type":"reasoning", "id":"unfinished"}]}
+            }
+        })],
+        ..ProviderContextOptions::default()
+    });
     assert_eq!(context.messages.len(), 4);
     assert_eq!(context.messages[1]["content"], "Recorded visible prefix.");
     assert_eq!(

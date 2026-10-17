@@ -120,6 +120,7 @@ fn memory_projection_splits_shared_and_frozen_facts() {
         runtime_turns: Vec::new(),
         rollback_checkpoints: Vec::new(),
         file_read_state: HashMap::new(),
+        provider_protocol_log: vec![],
     };
     let shared = vec![LongTermMemoryRecord {
         id: "memory-shared".to_string(),

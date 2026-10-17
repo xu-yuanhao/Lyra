@@ -1,5 +1,6 @@
 ---
 source: crates/lyra-tool-fs-core/tests/tool_discovery_snapshots.rs
+assertion_line: 97
 expression: pretty(&snapshot)
 ---
 {
@@ -107,8 +108,14 @@ expression: pretty(&snapshot)
         "matchedFields": [
           "bm25"
         ],
-        "miniSchemaParameterNames": [],
-        "miniSchemaRequired": [],
+        "miniSchemaParameterNames": [
+          "url",
+          "ref",
+          "subdir"
+        ],
+        "miniSchemaRequired": [
+          "url"
+        ],
         "operation": "install_git",
         "path": "/tools/skills/install_git",
         "runHint": "tool_fs_run with path: /tools/skills/install_git; operation: install_git; provide args matching miniSchema.",

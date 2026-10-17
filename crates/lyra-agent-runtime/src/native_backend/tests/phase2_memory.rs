@@ -79,6 +79,7 @@ fn pinned_todo_surfaces_in_context_window_plan() {
         runtime_turns: Vec::new(),
         rollback_checkpoints: Vec::new(),
         file_read_state: HashMap::new(),
+        provider_protocol_log: vec![],
         dirty: true,
         dialog_dirty_from: Some(0),
         persisted_dialog_len: 0,

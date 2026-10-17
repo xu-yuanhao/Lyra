@@ -165,6 +165,17 @@ fn main() {
         std::process::exit(code);
     }
 
+    // Bind the daemon's life to its spawner (the Electron main process) before
+    // entering the accept loop. Without this, a frozen or force-killed desktop
+    // left lyrad — and every PTY session it hosted — running for hours; the
+    // zombie http.server that held port 8765 across sessions was born exactly
+    // here. Watcher (--watch-parent) and elevated-helper modes return earlier
+    // and must not arm the signal: the watcher's job is to outlive long enough
+    // to kill its target after the parent dies. Reference shape: codex arms
+    // PR_SET_PDEATHSIG on every spawned daemon child.
+    let _ = lyra_process_lifecycle_core::install_linux_parent_death_signal(
+        lyra_process_lifecycle_core::PARENT_DEATH_SIGNAL,
+    );
     run();
 }
 
@@ -788,6 +799,27 @@ async fn run_unix_runtime() {
 
     let sessions = DaemonSessionManager::default();
     register_runtime_hooks(&sessions);
+    // PR_SET_PDEATHSIG delivers SIGTERM when the desktop dies. Run the same
+    // module shutdown as the accept-failure path so every terminal session goes
+    // through the close ladder (terminate_process_tree) instead of relying on
+    // PTY-master fd close to HUP grandchildren.
+    tokio::spawn(async move {
+        let mut termination =
+            match tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+                Ok(signal) => signal,
+                Err(error) => {
+                    eprintln!("failed to install SIGTERM handler: {error}");
+                    return;
+                }
+            };
+        termination.recv().await;
+        eprintln!(
+            "{} received SIGTERM; shutting down runtime modules",
+            RUNTIME_NAME
+        );
+        shutdown_runtime_modules();
+        std::process::exit(0);
+    });
     loop {
         match listener.accept().await {
             Ok((stream, _addr)) => {
@@ -1153,10 +1185,11 @@ async fn handle_request_envelope(
             Ok(lyra_agent_runtime::run_exec_tool(payload).await)
         }
     } else if method.starts_with("performance.") {
+        let method_for_blocking = method.clone();
         let _permit = connection.performance_requests.enter().await;
         match _permit {
             Ok(_permit) => tokio::task::spawn_blocking(move || {
-                router::handle_runtime_request(&method, payload)
+                router::handle_runtime_request(&method_for_blocking, payload)
             })
             .await
             .map_err(|error| router::runtime_error("TASK_JOIN_FAILED", error.to_string()))
@@ -1164,24 +1197,56 @@ async fn handle_request_envelope(
             Err(error) => Err(error),
         }
     } else {
-        tokio::task::spawn_blocking(move || router::handle_runtime_request(&method, payload))
-            .await
-            .map_err(|error| router::runtime_error("TASK_JOIN_FAILED", error.to_string()))
-            .and_then(|result| result)
+        let method_for_blocking = method.clone();
+        tokio::task::spawn_blocking(move || {
+            router::handle_runtime_request(&method_for_blocking, payload)
+        })
+        .await
+        .map_err(|error| router::runtime_error("TASK_JOIN_FAILED", error.to_string()))
+        .and_then(|result| result)
     };
-    let response = runtime_response(id, result);
+    let response = runtime_response(&method, id, result);
     let _ = outgoing.send(response).await;
 }
 
 #[cfg(any(unix, windows))]
-fn runtime_response(id: String, result: Result<Value, RuntimeError>) -> RuntimeEnvelope {
+fn runtime_response(
+    method: &str,
+    id: String,
+    result: Result<Value, RuntimeError>,
+) -> RuntimeEnvelope {
     match result {
-        Ok(result) => RuntimeEnvelope::Response {
-            id,
-            ok: true,
-            result: Some(result),
-            error: None,
-        },
+        Ok(result) => {
+            // Wire guard: the desktop runtime client destroys the whole
+            // connection when any frame exceeds its transport cap, which turns
+            // one oversized response into every pending request failing at
+            // once (the session-ce6240e2-era startup outage). A response that
+            // cannot fit must fail that request alone, with a named error, so
+            // the bridge survives and the oversized method is diagnosable.
+            // Reference shape: ZCode's projection gate rejects only the single
+            // oversize payload; the connection and other subscribers live on.
+            let bytes = serde_json::to_vec(&result).map_or(0, |data| data.len());
+            if bytes > lyra_runtime_protocol::RUNTIME_MAX_RESPONSE_FRAME_BYTES {
+                return RuntimeEnvelope::Response {
+                    id,
+                    ok: false,
+                    result: None,
+                    error: Some(router::runtime_error(
+                        "RUNTIME_RESPONSE_TOO_LARGE",
+                        format!(
+                            "response for {method} is {bytes} bytes, above the {} byte transport frame cap; narrow the request (e.g. messageLimit/toolOutputPreviewChars) or fetch the specific item instead",
+                            lyra_runtime_protocol::RUNTIME_MAX_RESPONSE_FRAME_BYTES
+                        ),
+                    )),
+                };
+            }
+            RuntimeEnvelope::Response {
+                id,
+                ok: true,
+                result: Some(result),
+                error: None,
+            }
+        }
         Err(error) => RuntimeEnvelope::Response {
             id,
             ok: false,
@@ -1268,12 +1333,13 @@ where
                                 })
                         };
                         handshake_complete = result.is_ok();
-                        let _ = outgoing.send(runtime_response(id, result)).await;
+                        let _ = outgoing.send(runtime_response(&method, id, result)).await;
                         continue;
                     }
                     if !handshake_complete {
                         let _ = outgoing
                             .send(runtime_response(
+                                &method,
                                 id,
                                 Err(router::runtime_error(
                                     "RUNTIME_HANDSHAKE_REQUIRED",

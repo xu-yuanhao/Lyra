@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import type {
@@ -162,5 +162,50 @@ export const materializeQrCropCapture = async (
       path: filePath
     }
   };
+};
+
+// Agent captures (screenshots under lumen-evidence/) are write-once evidence
+// referenced from transcript rows, but nothing records ownership, so the
+// directory grows without bound. Prune it by age, matching the mtime-TTL
+// housekeeping shape of the reference projects (hermes sweeps media caches
+// hourly at a 24h TTL; opencode sweeps tool-output spill files at 7d). 7d
+// keeps recent-session screenshots viewable while bounding disk growth.
+const LUMEN_EVIDENCE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const LUMEN_EVIDENCE_SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+
+export const sweepLumenEvidence = async (
+  storageRoot: string,
+  now = Date.now()
+): Promise<number> => {
+  const directory = join(storageRoot, "lumen-evidence");
+  let entries: string[];
+  try {
+    entries = await readdir(directory);
+  } catch {
+    return 0; // nothing captured yet — directory absent
+  }
+  let removed = 0;
+  for (const entry of entries) {
+    try {
+      const filePath = join(directory, entry);
+      const stats = await stat(filePath);
+      if (!stats.isFile() || now - stats.mtimeMs <= LUMEN_EVIDENCE_TTL_MS) {
+        continue;
+      }
+      await unlink(filePath);
+      removed += 1;
+    } catch {
+      // Best effort: the file may vanish or be rewritten concurrently.
+    }
+  }
+  return removed;
+};
+
+export const startLumenEvidenceSweeper = (storageRoot: string): void => {
+  void sweepLumenEvidence(storageRoot);
+  const timer = setInterval(() => {
+    void sweepLumenEvidence(storageRoot);
+  }, LUMEN_EVIDENCE_SWEEP_INTERVAL_MS);
+  timer.unref();
 };
 

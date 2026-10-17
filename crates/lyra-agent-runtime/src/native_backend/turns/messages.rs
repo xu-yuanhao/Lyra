@@ -391,7 +391,7 @@ pub(crate) fn emit_assistant_message_placeholder(
             if session.snapshot.get("activeTurnId").and_then(Value::as_str) != Some(turn_id) {
                 return None;
             }
-            let mut message = assistant_message_with_id(message_id.clone(), String::new());
+            let message = assistant_message_with_id(message_id.clone(), String::new());
             push_session_message(session, message.clone());
             if !session.ephemeral {
                 let encoded = serde_json::to_string(&message).ok()?;
@@ -722,10 +722,22 @@ pub(crate) fn attach_metadata_to_active_assistant_message(
     Some(committed_message)
 }
 
-pub(crate) fn persist_provider_protocol_step(
+/// Upsert one provider-protocol step into the session's independent replay
+/// log (codex rollout / opencode providerContext shape). Anchored entries
+/// (committed `messageId`) are matched by `(turnId, messageId)` so a
+/// streaming round rewrites the same record as its step evolves. Unanchored
+/// entries (no committed message yet — truncated segments, non-streaming
+/// rounds) have no stable id: they evolve the latest still-open unanchored
+/// entry of the turn and append otherwise, so each round owns exactly one
+/// record, like the old deferred chain. finish_turn backfills unanchored
+/// entries with the committed assistant message id via
+/// `anchor_provider_protocol_log`. Protocol state must not ride inside
+/// message metadata — the log is the source of truth for resume replay, and
+/// the renderer never reads it.
+pub(crate) fn upsert_provider_protocol_log_entry(
     session_id: &str,
     turn_id: &str,
-    message_id: &str,
+    message_id: Option<&str>,
     provider_protocol: Value,
 ) -> AgentRuntimeResult<()> {
     let _timing = super::super::session_runtime::LocalPhaseTimer::start(
@@ -733,80 +745,128 @@ pub(crate) fn persist_provider_protocol_step(
         turn_id,
         "protocolCheckpoint",
     );
-    let (callback, committed_message) = {
-        let mut state = state()
-            .lock()
-            .map_err(|_| AgentRuntimeError::Core("agent runtime state lock failed".to_string()))?;
-        let callback = event_callback();
-        let session = state.sessions.get_mut(session_id).ok_or_else(|| {
-            AgentRuntimeError::Core(format!(
-                "session not found while persisting tool step: {session_id}"
-            ))
-        })?;
-        if session.snapshot.get("activeTurnId").and_then(Value::as_str) != Some(turn_id) {
-            return Err(AgentRuntimeError::Core(format!(
-                "turn is no longer active while persisting tool step: {turn_id}"
-            )));
-        }
-        let committed_message = attach_metadata_to_assistant_message(
-            &mut session.snapshot,
-            message_id,
-            json!({ "providerProtocol": provider_protocol }),
-        )
-        .ok_or_else(|| {
-            AgentRuntimeError::Core(format!(
-                "assistant message not found while persisting tool step: {message_id}"
-            ))
-        })?;
-        mark_dialog_message_dirty(session, message_id);
-        state.save_state()?;
-        (callback, committed_message)
-    };
-
-    // Tool calls may have irreversible side effects. Do not dispatch one until
-    // the matching assistant/tool-call step is durably recoverable.
-    flush_state()?;
-    emit_with_callback(
-        &callback,
-        json!({
-            "kind": "messageCommitted",
-            "sessionId": session_id,
-            "message": committed_message,
-        }),
-    );
-    Ok(())
-}
-
-pub(crate) fn persist_provider_protocol_checkpoint(
-    execution_session_id: &str,
-    turn_id: &str,
-    provider_protocol: Value,
-) -> AgentRuntimeResult<()> {
+    let message_id = message_id.filter(|id| !id.trim().is_empty());
     {
         let mut state = state()
             .lock()
             .map_err(|_| AgentRuntimeError::Core("agent runtime state lock failed".to_string()))?;
-        let session = state
-            .sessions
-            .get_mut(execution_session_id)
-            .ok_or_else(|| {
-                AgentRuntimeError::Core(format!(
-                    "session not found while persisting provider step: {execution_session_id}"
-                ))
-            })?;
+        let session = state.sessions.get_mut(session_id).ok_or_else(|| {
+            AgentRuntimeError::Core(format!(
+                "session not found while persisting protocol step: {session_id}"
+            ))
+        })?;
         if session.snapshot.get("activeTurnId").and_then(Value::as_str) != Some(turn_id) {
             return Err(AgentRuntimeError::Core(format!(
-                "turn is no longer active while persisting provider step: {turn_id}"
+                "turn is no longer active while persisting protocol step: {turn_id}"
             )));
         }
-        session.snapshot["providerProtocolCheckpoint"] = json!({
-            "turnId": turn_id,
-            "providerProtocol": provider_protocol,
-        });
-        touch_session(session);
+        let entry = match message_id {
+            Some(message_id) => json!({
+                "turnId": turn_id,
+                "messageId": message_id,
+                "step": provider_protocol,
+            }),
+            None => json!({
+                "turnId": turn_id,
+                "step": provider_protocol,
+            }),
+        };
+        let existing = match message_id {
+            Some(message_id) => session.provider_protocol_log.iter_mut().find(|entry| {
+                entry.get("turnId").and_then(Value::as_str) == Some(turn_id)
+                    && entry.get("messageId").and_then(Value::as_str) == Some(message_id)
+            }),
+            None => session
+                .provider_protocol_log
+                .iter_mut()
+                .rev()
+                .find(|entry| {
+                    entry.get("turnId").and_then(Value::as_str) == Some(turn_id)
+                        && entry
+                            .get("messageId")
+                            .and_then(Value::as_str)
+                            .filter(|id| !id.is_empty())
+                            .is_none()
+                        && entry.pointer("/step/status").and_then(Value::as_str) != Some("complete")
+                }),
+        };
+        if let Some(existing) = existing {
+            *existing = entry;
+        } else {
+            session.provider_protocol_log.push(entry);
+        }
+        // save_state only writes sessions it considers dirty; the log is not
+        // dialog content, so nothing else marks this mutation. Without this the
+        // checkpoint can be lost whenever the last save already cleared the
+        // dirty flag (e.g. a final streamed message committed just before).
+        session.dirty = true;
         state.save_state()?;
     }
+
+    // Tool calls may have irreversible side effects. Do not dispatch one until
+    // the matching assistant/tool-call step is durably recoverable.
     flush_state()
+}
+
+/// Backfill unanchored protocol log entries of a finished turn with the
+/// committed assistant message id, so resume replay finds them at that
+/// message's timeline position — the position the old `priorSteps`
+/// ride-along used to occupy.
+pub(crate) fn anchor_provider_protocol_log(
+    session: &mut NativeSession,
+    turn_id: &str,
+    message_id: &str,
+) {
+    for entry in session.provider_protocol_log.iter_mut() {
+        if entry.get("turnId").and_then(Value::as_str) == Some(turn_id)
+            && entry
+                .get("messageId")
+                .and_then(Value::as_str)
+                .filter(|id| !id.is_empty())
+                .is_none()
+        {
+            entry["messageId"] = json!(message_id);
+        }
+    }
+}
+
+/// After a turn ends (or is interrupted) no entry can gain an anchor anymore;
+/// unanchored leftovers would be unreachable garbage in the replay log.
+pub(crate) fn drop_unanchored_provider_protocol_log_entries(
+    session: &mut NativeSession,
+    turn_id: &str,
+) {
+    session.provider_protocol_log.retain(|entry| {
+        entry.get("turnId").and_then(Value::as_str) != Some(turn_id)
+            || entry
+                .get("messageId")
+                .and_then(Value::as_str)
+                .is_some_and(|id| !id.is_empty())
+    });
+}
+
+/// Durable protocol step anchored to a committed assistant message, if any.
+/// Replaces the former `metadata.providerProtocol` read path.
+pub(crate) fn anchored_provider_protocol_step<'a>(
+    session: &'a NativeSession,
+    message_id: &str,
+) -> Option<&'a Value> {
+    session
+        .provider_protocol_log
+        .iter()
+        .rev()
+        .find(|entry| entry.get("messageId").and_then(Value::as_str) == Some(message_id))
+        .and_then(|entry| entry.get("step"))
+}
+
+pub(crate) fn anchored_protocol_step_has_tool_calls(
+    session: &NativeSession,
+    message_id: &str,
+) -> bool {
+    anchored_provider_protocol_step(session, message_id)
+        .and_then(|step| step.pointer("/assistant/toolCalls"))
+        .and_then(Value::as_array)
+        .is_some_and(|calls| !calls.is_empty())
 }
 
 pub(crate) fn remove_assistant_message(session_id: &str, message_id: &str) -> bool {
@@ -831,6 +891,11 @@ pub(crate) fn remove_assistant_message(session_id: &str, message_id: &str) -> bo
                 .retain(|message| message.get("id").and_then(Value::as_str) != Some(message_id));
             let removed = messages.len() < original_len;
             if removed {
+                // The replay log anchors steps to message ids; a removed
+                // message takes its protocol steps with it.
+                session.provider_protocol_log.retain(|entry| {
+                    entry.get("messageId").and_then(Value::as_str) != Some(message_id)
+                });
                 mark_dialog_dirty_from(session, removed_index.unwrap_or(0));
                 let _ = state.save_state();
             }
@@ -843,17 +908,9 @@ pub(crate) fn remove_assistant_message(session_id: &str, message_id: &str) -> bo
         emit_with_callback(
             &callback,
             json!({
-                "kind": "sessionSnapshot",
-                "snapshot": state()
-                    .lock()
-                    .ok()
-                    .and_then(|state| {
-                        state
-                            .sessions
-                            .get(session_id)
-                            .map(|session| session.snapshot.clone())
-                    })
-                    .unwrap_or(Value::Null),
+                "kind": "messageRemoved",
+                "sessionId": session_id,
+                "messageId": message_id,
             }),
         );
     }
@@ -903,14 +960,23 @@ pub(crate) fn assistant_message_has_visible_timeline_content(message: &Value) ->
     false
 }
 
-pub(crate) fn assistant_message_has_provider_protocol_checkpoint(message: &Value) -> bool {
-    message
-        .pointer("/metadata/providerProtocol/version")
-        .and_then(Value::as_u64)
-        == Some(2)
-}
-
 pub(crate) fn prune_empty_assistant_messages(session: &mut NativeSession) -> usize {
+    let anchored: std::collections::HashSet<&str> = session
+        .provider_protocol_log
+        .iter()
+        .filter_map(|entry| {
+            entry
+                .get("messageId")
+                .and_then(Value::as_str)
+                .filter(|id| !id.is_empty())
+        })
+        .collect();
+    let keeps_replay_anchor = |message: &Value| {
+        message
+            .get("id")
+            .and_then(Value::as_str)
+            .is_some_and(|id| anchored.contains(id))
+    };
     let Some(messages) = session
         .snapshot
         .get_mut("messages")
@@ -921,13 +987,13 @@ pub(crate) fn prune_empty_assistant_messages(session: &mut NativeSession) -> usi
     let first_removed = messages.iter().position(|message| {
         message.get("role").and_then(Value::as_str) == Some("assistant")
             && !assistant_message_has_visible_timeline_content(message)
-            && !assistant_message_has_provider_protocol_checkpoint(message)
+            && !keeps_replay_anchor(message)
     });
     let original_len = messages.len();
     messages.retain(|message| {
         message.get("role").and_then(Value::as_str) != Some("assistant")
             || assistant_message_has_visible_timeline_content(message)
-            || assistant_message_has_provider_protocol_checkpoint(message)
+            || keeps_replay_anchor(message)
     });
     let removed = original_len.saturating_sub(messages.len());
     if let Some(index) = first_removed {

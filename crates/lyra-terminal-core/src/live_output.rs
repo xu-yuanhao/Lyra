@@ -187,8 +187,7 @@ pub(crate) fn live_output_projection(
     {
         end_offset -= 1;
     }
-    let output =
-        String::from_utf8_lossy(&state.text_buffer[start_offset..end_offset]).to_string();
+    let output = String::from_utf8_lossy(&state.text_buffer[start_offset..end_offset]).to_string();
     let cursor = state.text_retained_start.saturating_add(end_offset as u64);
     let truncated = requested_cursor < state.text_retained_start || cursor < state.total_text_bytes;
     (cursor, output, truncated)

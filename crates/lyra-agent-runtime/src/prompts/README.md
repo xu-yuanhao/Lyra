@@ -1,7 +1,7 @@
 # Prompt Templates
 
 MiniJinja templates embedded at compile time by `prompt_templates.rs`.
-17 templates, assembled by `prompt_policy.rs` into a stable provider prefix and an append-only per-turn context tail.
+18 templates, assembled by `prompt_policy.rs` into a stable provider prefix and an append-only per-turn context tail.
 
 ## Architecture
 
@@ -14,6 +14,7 @@ Two delivery modes remain: `full` (default) and `lean-experimental`. They may ha
 |-------|----------|----------|------|
 | P0 | `kernel.md.j2` | Stable prefix | Core safety, trust hierarchy, real execution, and completion evidence. Always on. |
 | P0 | `design_scene.md.j2` | Stable prefix | References, reuse, consistency, and the design tools. Always on, including work that is not a UI task. |
+| P1 | `project_instructions.md.j2` | Stable prefix | Project instruction files (`AGENTS.override.md` > `AGENTS.md` > `CLAUDE.md`) discovered from the working directory to the git root, nearest first, under a shared 32 KiB character budget. Always on; absent when no files are found or the session is home-bound. |
 | P1 | `interaction_contract.md.j2` | Stable prefix | Blocking clarification and approval protocol. Always on. |
 | P1 | `compact_contract.md.j2` | Stable prefix | Frozen observable, shared root cause, no fake delivery, LSP-first. Always on. |
 | P2 | `plan_mode.md.j2` | Stable prefix | When to open Plan; Goal continuation and host-owned todos. Always on. Tool schemas and plan_gate own the rest. |
@@ -133,7 +134,7 @@ Before moving any instruction out of always-on prompt, confirm one of these is t
 
 If a prompt change depends on context trimming, memory projection, session snapshots, provider state, or tool catalog behavior — bump the relevant version or add a valid audit ack.
 
-Current: `PROMPT_POLICY_VERSION=11`, `PROMPT_TEMPLATE_VERSION=63`, `TOOL_DISCOVERY_CONTRACT_VERSION=4`, `CONTEXT_PROJECTION_VERSION=6`, `RUNTIME_CONTEXT_SCHEMA_VERSION=6`.
+Current: `PROMPT_POLICY_VERSION=12`, `PROMPT_TEMPLATE_VERSION=65`, `TOOL_DISCOVERY_CONTRACT_VERSION=4`, `CONTEXT_PROJECTION_VERSION=6`, `RUNTIME_CONTEXT_SCHEMA_VERSION=6`. Policy 12 / template 65 add the `P1.projectInstructions` section: instruction files discovered per request by `native_backend/project_instructions.rs`, passed to the policy layer as a plain string (a changed file rotates the stable prefix once on the next request).
 
 ## MiniJinja Rules
 

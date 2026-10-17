@@ -564,6 +564,13 @@ export const createWorkbenchObservationAdapter = ({
         }
         : await service.listTabs({ scope: "all", includeUnsupported: true });
       const target = resolveVisualEvidenceTarget(request, listed);
+      if (target.mode === "unresolved_tab") {
+        throw new Error(
+          `Stale tab reference: tabId "${target.requestedTabId}" does not match any current workbench tab. Take a fresh snapshot with workbench.listTabs and retry with a listed tabId. Current tab ids: ${
+            listed.tabs.map((tab) => tab.tabId).join(", ") || "(none)"
+          }`
+        );
+      }
       const capture = target.mode === "active_tab"
         ? await (async () => {
           if (service === null) {

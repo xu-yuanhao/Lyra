@@ -87,6 +87,7 @@ mod pinned_context;
 mod plan_actions;
 mod plan_store;
 mod poke;
+mod project_instructions;
 mod projections;
 mod projects;
 mod prompt_cache;
@@ -94,7 +95,7 @@ mod provider;
 mod provider_config;
 mod providers;
 pub(crate) use providers::protocol::openai_common::{
-    reasoning_replay_items, replay_reasoning_value, valid_reasoning_value,
+    reasoning_replay_items, valid_reasoning_value,
 };
 mod rollback;
 mod secret_guard;
@@ -222,6 +223,7 @@ impl AgentRuntimeBackend for LyraAgentBackend {
             "agent.permissionPolicy.setMode" => set_permission_policy_mode(payload),
             "agent.elevation.setSecret" => set_elevation_secret(payload),
             "agent.elevation.clear" => clear_elevation_secret(),
+            "agent.elevation.status" => elevation_status(),
             "agent.elevation.validate" => validate_sudo_password(payload),
             "agent.clarification.respond" => respond_clarification(payload),
             "agent.userGate.list" => list_user_gates(payload),

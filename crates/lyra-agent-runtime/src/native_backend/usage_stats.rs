@@ -339,6 +339,7 @@ mod tests {
             runtime_turns: turns,
             rollback_checkpoints: Vec::new(),
             file_read_state: HashMap::new(),
+            provider_protocol_log: vec![],
             dirty: false,
             dialog_dirty_from: None,
             persisted_dialog_len: 0,

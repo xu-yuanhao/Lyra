@@ -68,3 +68,33 @@ describe("resolveVisualEvidenceTarget", () => {
     ).toEqual({ mode: "workspace_window" });
   });
 });
+
+describe("resolveVisualEvidenceTarget stale references", () => {
+  test("an explicit tabId that matches nothing reports unresolved instead of passing a dead id", () => {
+    expect(
+      resolveVisualEvidenceTarget(
+        { scope: "active_tab", tabId: "gone-tab" },
+        {
+          activeTabId: "browser-tab-1",
+          visibleTabIds: ["browser-tab-1"],
+          layout: { layoutMode: "single", splitGroupTabIds: [], focusedSplitTabId: null },
+          tabs: [browserTab()]
+        }
+      )
+    ).toEqual({ mode: "unresolved_tab", requestedTabId: "gone-tab" });
+  });
+
+  test("suffix and browser-tab mappings still resolve live references", () => {
+    expect(
+      resolveVisualEvidenceTarget(
+        { scope: "active_tab", tabId: "1" },
+        {
+          activeTabId: "browser-tab-1",
+          visibleTabIds: ["browser-tab-1"],
+          layout: { layoutMode: "single", splitGroupTabIds: [], focusedSplitTabId: null },
+          tabs: [browserTab()]
+        }
+      )
+    ).toEqual({ mode: "active_tab", tabId: "browser-tab-1" });
+  });
+});

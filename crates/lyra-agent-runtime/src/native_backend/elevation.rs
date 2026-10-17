@@ -223,8 +223,30 @@ fn ready_file_path(pipe_name: &str) -> std::path::PathBuf {
 
 /// 生成注入 prompt context 的 elevation 区块（只含 ref 元数据，不含明文）。
 /// 系统感知：根据 OS 类型生成不同的自然语言描述。
+pub(crate) fn elevation_status() -> AgentRuntimeResult<Value> {
+    Ok(json!({ "available": has_elevation_secret() }))
+}
+
 pub(crate) fn elevation_context_block() -> Value {
-    if !has_elevation_secret() {
+    // The block must render in every elevated-mode turn, not only when the
+    // secret is already in memory. A missing block is what pushed the model to
+    // improvise its own sudo plumbing from the sensitive-values catalog (10
+    // source-reading calls in session-fbdca3f1 before it could run one
+    // upgrade): absence of the mechanism must be a named state, not silence.
+    let elevated_mode = read_permission_policy()
+        .ok()
+        .and_then(|value| {
+            value
+                .get("effectiveMode")
+                .and_then(Value::as_str)
+                .map(|mode| mode == "full_auto" || mode == "autonomous")
+        })
+        .unwrap_or(false);
+    elevation_context_block_for(elevated_mode, has_elevation_secret())
+}
+
+fn elevation_context_block_for(elevated_mode: bool, secret_available: bool) -> Value {
+    if !elevated_mode {
         return Value::Null;
     }
 
@@ -240,6 +262,16 @@ pub(crate) fn elevation_context_block() -> Value {
 
     #[cfg(target_os = "windows")]
     {
+        if !secret_available {
+            return json!({
+                "available": false,
+                "status": "pending_unlock",
+                "description": format!(
+                    "Elevation mode is enabled, but the {os_label} elevated helper is not running in this runtime process yet. It is restored automatically at turn start."
+                ),
+                "rule": "Do not build your own elevation path. If a command fails with a permission error, tell the user the elevated helper needs to be re-enabled."
+            });
+        }
         json!({
             "available": true,
             "kind": "lyra-sensitive-value-ref",
@@ -253,6 +285,16 @@ pub(crate) fn elevation_context_block() -> Value {
     }
     #[cfg(not(target_os = "windows"))]
     {
+        if !secret_available {
+            return json!({
+                "available": false,
+                "status": "pending_unlock",
+                "description": format!(
+                    "Elevation mode is enabled and an administrator credential is stored, but the {os_label} sudo password is not unlocked in this runtime process yet. The desktop re-injects it automatically at turn start."
+                ),
+                "rule": "Do not assemble your own sudo password piping and do not read the admin credential's value. If a sudo command fails with a password error anyway, tell the user the elevation unlock failed instead of retrying with manual credentials."
+            });
+        }
         json!({
             "available": true,
             "kind": "lyra-sensitive-value-ref",
@@ -261,7 +303,48 @@ pub(crate) fn elevation_context_block() -> Value {
             "description": format!(
                 "Your {os_label} sudo password is available. When a command needs elevation, it will be provided automatically — u don't need to type or reference the password urself."
             ),
-            "rule": "Never attempt to reveal, print, or store the elevation password. It is resolved host-side only."
+            "rule": "Never attempt to reveal, print, or store the elevation password. It is resolved host-side only. Do not pass -n to sudo — the password is injected via stdin and -n suppresses stdin reading. If a sudo command still fails with a password error, tell the user the stored elevation password was rejected instead of investigating the runtime."
         })
+    }
+}
+
+#[cfg(test)]
+mod elevation_context_tests {
+    use super::*;
+
+    #[test]
+    fn block_is_absent_outside_elevated_modes() {
+        assert_eq!(elevation_context_block_for(false, false), Value::Null);
+        assert_eq!(elevation_context_block_for(false, true), Value::Null);
+    }
+
+    #[test]
+    fn elevated_mode_names_pending_unlock_when_secret_is_missing() {
+        // Regression: with elevation mode enabled but the secret not yet
+        // injected, the block used to vanish entirely, so the model improvised
+        // its own sudo password piping from the sensitive-values catalog.
+        let block = elevation_context_block_for(true, false);
+        assert_eq!(block["available"], false);
+        assert_eq!(block["status"], "pending_unlock");
+        let rule = block["rule"].as_str().unwrap();
+        assert!(rule.contains("Do not assemble your own sudo password piping"));
+        assert!(rule.contains("tell the user"));
+    }
+
+    #[test]
+    fn elevated_mode_reports_available_secret_without_exposing_it() {
+        let block = elevation_context_block_for(true, true);
+        assert_eq!(block["available"], true);
+        assert_eq!(block["modelVisibility"], "metadata_only");
+        let rule = block["rule"].as_str().unwrap();
+        // Regression: session-ce6240e2's model probed with `sudo -n`, which
+        // suppresses stdin password reading, misread the failure as "elevation
+        // is broken" and spent 18 tool calls reading the runtime source. The
+        // rule must name both the -n trap and the correct failure response.
+        assert!(rule.contains("Do not pass -n to sudo"));
+        assert!(rule.contains("stored elevation password was rejected"));
+        let text = block.to_string();
+        assert!(!text.contains("password is available. When") || block["description"].is_string());
+        assert!(!text.contains("hunter2"));
     }
 }

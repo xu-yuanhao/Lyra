@@ -1,7 +1,7 @@
 use super::*;
 use rusqlite::{Connection, params};
 
-pub(crate) const SESSION_SCHEMA_VERSION: i64 = 4;
+pub(crate) const SESSION_SCHEMA_VERSION: i64 = 5;
 
 pub(crate) fn open_connection(path: &Path) -> AgentRuntimeResult<Connection> {
     if let Some(parent) = path.parent() {
@@ -96,6 +96,12 @@ pub(crate) fn init_schema(conn: &Connection) -> AgentRuntimeResult<()> {
                 "stream_journal_sequence",
                 "INTEGER NOT NULL DEFAULT 0",
             )?,
+            5 => ensure_column(
+                &tx,
+                "session_bundle",
+                "provider_protocol_json",
+                "TEXT NOT NULL DEFAULT '[]'",
+            )?,
             _ => {
                 return Err(AgentRuntimeError::Core(format!(
                     "Missing session migration {next}"
@@ -167,7 +173,8 @@ fn create_tables(conn: &Connection) -> AgentRuntimeResult<()> {
           runtime_turns_json TEXT NOT NULL,
           rollback_checkpoints_json TEXT NOT NULL,
           file_read_state_json TEXT NOT NULL,
-          stream_journal_sequence INTEGER NOT NULL DEFAULT 0
+          stream_journal_sequence INTEGER NOT NULL DEFAULT 0,
+          provider_protocol_json TEXT NOT NULL DEFAULT '[]'
         );
 
         CREATE TABLE IF NOT EXISTS stream_deltas (
