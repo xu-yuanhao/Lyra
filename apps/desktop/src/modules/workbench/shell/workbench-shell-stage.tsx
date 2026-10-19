@@ -381,20 +381,46 @@ export const WorkbenchShellStage = ({
     }),
     [t]
   );
+  const fileManagerNavigationInstanceId =
+    activeTab?.pageKind === "app" && activeTab.appId === "file-manager"
+      ? activeTab.appInstanceId
+      : undefined;
+  const navigationCanGoBack = fileManagerNavigationInstanceId === undefined
+    ? pageNavigationState.canGoBack
+    : (activeFileManagerState?.historyIndex ?? 0) > 0;
+  const navigationCanGoForward = fileManagerNavigationInstanceId === undefined
+    ? pageNavigationState.canGoForward
+    : activeFileManagerState !== null
+      && activeFileManagerState !== undefined
+      && activeFileManagerState.historyIndex >= 0
+      && activeFileManagerState.historyIndex < activeFileManagerState.history.length - 1;
+  const navigationGoBack = useCallback((): void => {
+    if (fileManagerNavigationInstanceId === undefined) {
+      onGoBack();
+      return;
+    }
+    void fileManagerModel.goBack(fileManagerNavigationInstanceId);
+  }, [fileManagerModel, fileManagerNavigationInstanceId, onGoBack]);
+  const navigationGoForward = useCallback((): void => {
+    if (fileManagerNavigationInstanceId === undefined) {
+      onGoForward();
+      return;
+    }
+    void fileManagerModel.goForward(fileManagerNavigationInstanceId);
+  }, [fileManagerModel, fileManagerNavigationInstanceId, onGoForward]);
   const workspaceTabsProps = useWorkbenchWorkspaceTabsProps({
     tabsModel,
     terminalIdentityByTabId,
     workspaceAppIdentityByTabId,
-    activeTabPageKind,
-    canGoBack: pageNavigationState.canGoBack,
-    canGoForward: pageNavigationState.canGoForward,
+    canGoBack: navigationCanGoBack,
+    canGoForward: navigationCanGoForward,
     labels: workspaceTabsLabels,
     splitTriggerMode: preferencesModel.preferences.splitTriggerMode,
     interactionPolicy: uiRuntime.interactions.workspaceTabs,
     terminalWorkspaceActions,
     workbenchActions,
-    onGoBack,
-    onGoForward
+    onGoBack: navigationGoBack,
+    onGoForward: navigationGoForward
   });
   const notificationTopbarProps = useMemo(
     () => ({

@@ -287,7 +287,9 @@ export const readObservedLocalTab = (
                 ...(state.currentLocation.path === undefined ? {} : { path: state.currentLocation.path }),
                 ...(state.currentLocation.title === undefined ? {} : { title: state.currentLocation.title })
               },
-        ...(state.selectedEntryId === undefined ? {} : { selectedEntryId: state.selectedEntryId }),
+        ...(state.selectedEntryIds.length === 0
+          ? {}
+          : { selectedEntryId: state.selectedEntryIds[state.selectedEntryIds.length - 1] }),
         entries: summarizeEntries(state.entries, maxEntries),
         truncated: state.entries.length > maxEntries
       }

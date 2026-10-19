@@ -118,7 +118,7 @@ export const FileManagerSurface = ({
 
   useEffect(() => {
     setPageKindOverride(null);
-  }, [state?.instanceId]);
+  }, [state?.historyIndex, state?.instanceId]);
 
   if (state === null || renderModel === null || actions === null) {
     return null;

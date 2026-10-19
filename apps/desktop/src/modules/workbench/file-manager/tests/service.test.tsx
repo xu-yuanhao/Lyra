@@ -61,6 +61,7 @@ const labels: FileManagerSurfaceLabels = {
   createConfirm: "确认",
   createCancel: "取消",
   contextOpen: "打开",
+  contextOpenInTerminal: "在终端打开",
   contextMountDevice: "挂载",
   contextMoveToTrash: "移到回收站",
   contextRestore: "恢复",
@@ -695,6 +696,62 @@ describe("file manager model", () => {
       title: "Documents",
       iconKey: "file-manager-directory-non-empty",
       filePath: "/home/lyra/Documents"
+    });
+  });
+
+  test("supports ctrl toggle and shift range selection", async () => {
+    const desktop = createDesktopApi();
+    const moveToTrash = vi.spyOn(desktop.api.files, "moveToTrash");
+    const { result } = renderHook(() =>
+      useFileManagerModel({
+        desktopApi: desktop.api,
+        contextMenuModel: createContextMenuModel(),
+        labels,
+        onMetaChange: vi.fn()
+      })
+    );
+
+    let appInstanceId = "";
+    act(() => {
+      appInstanceId = result.current.createInstance().appInstanceId;
+    });
+    await act(async () => {
+      await result.current.openDirectory(appInstanceId, "/home/lyra/Documents");
+    });
+
+    act(() => {
+      result.current.selectEntry(appInstanceId, "projects-dir");
+    });
+    expect(result.current.getState(appInstanceId)?.selectedEntryIds).toEqual([
+      "projects-dir"
+    ]);
+
+    act(() => {
+      result.current.selectEntry(appInstanceId, "readme-file", "range");
+    });
+    expect(result.current.getState(appInstanceId)?.selectedEntryIds).toEqual([
+      "projects-dir",
+      "readme-file"
+    ]);
+
+    act(() => {
+      result.current.selectEntry(appInstanceId, "projects-dir", "toggle");
+    });
+    expect(result.current.getState(appInstanceId)?.selectedEntryIds).toEqual([
+      "readme-file"
+    ]);
+
+    act(() => {
+      result.current.selectEntry(appInstanceId, "projects-dir", "toggle");
+    });
+    await act(async () => {
+      await result.current.moveSelectionToTrash(appInstanceId);
+    });
+    expect(moveToTrash).toHaveBeenCalledWith({
+      paths: [
+        "/home/lyra/Documents/README.md",
+        "/home/lyra/Documents/Projects"
+      ]
     });
   });
 

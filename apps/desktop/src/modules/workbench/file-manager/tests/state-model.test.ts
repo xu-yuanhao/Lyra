@@ -84,7 +84,8 @@ describe("file manager state model", () => {
   test("builds sorted directory state and resets transient selection", () => {
     const current = {
       ...createInitialState("file-manager-test", labels),
-      selectedEntryId: "old-entry",
+      selectedEntryIds: ["old-entry"],
+      selectionAnchorId: "old-entry",
       createDraft: {
         kind: "file" as const,
         value: "draft.txt"
@@ -104,7 +105,8 @@ describe("file manager state model", () => {
     expect(next.entries.map((entry) => entry.id)).toEqual(["projects", "readme"]);
     expect(next.directorySubscriptionId).toBe("subscription-1");
     expect(next.directoryGeneration).toBe(3);
-    expect(next.selectedEntryId).toBeUndefined();
+    expect(next.selectedEntryIds).toEqual([]);
+    expect(next.selectionAnchorId).toBeUndefined();
     expect(next.createDraft).toBeUndefined();
   });
 
@@ -148,7 +150,8 @@ describe("file manager state model", () => {
           generation: 5
         }
       ),
-      selectedEntryId: directoryEntry.id
+      selectedEntryIds: [directoryEntry.id],
+      selectionAnchorId: directoryEntry.id
     };
     const renamedEntry: FileManagerEntry = {
       ...directoryEntry,
@@ -168,7 +171,8 @@ describe("file manager state model", () => {
 
     const next = applyDirectoryPatchToState(state, patch, labels);
 
-    expect(next.selectedEntryId).toBe("archive");
+    expect(next.selectedEntryIds).toEqual(["archive"]);
+    expect(next.selectionAnchorId).toBe("archive");
     expect(next.entries.map((entry) => entry.path)).toEqual([
       renamedEntry.path,
       fileEntry.path

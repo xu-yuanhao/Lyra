@@ -59,6 +59,7 @@ const labels: FileManagerSurfaceLabels = {
   createConfirm: "Confirm",
   createCancel: "Cancel",
   contextOpen: "Open",
+  contextOpenInTerminal: "Open in Terminal",
   contextMountDevice: "Mount device",
   contextMoveToTrash: "Move to trash",
   contextRestore: "Restore",
@@ -167,7 +168,8 @@ const createState = (overrides: Partial<FileManagerAppState> = {}): FileManagerA
   downloadErrorMessage: undefined,
   directorySubscriptionId: undefined,
   directoryGeneration: undefined,
-  selectedEntryId: "file-1",
+  selectedEntryIds: ["file-1"],
+  selectionAnchorId: "file-1",
   selectedTrashEntryId: undefined,
   createDraft: undefined,
   errorMessage: undefined,
@@ -256,12 +258,12 @@ describe("FileManagerSurface", () => {
       onOpenFile: vi.fn()
     });
 
-    fireEvent.click(screen.getByLabelText("Back"));
+    fireEvent.click(screen.getByLabelText("Up"));
     fireEvent.click(screen.getByLabelText("Large view"));
     fireEvent.click(screen.getByLabelText("New file"));
     fireEvent.click(screen.getByLabelText("Delete"));
 
-    expect(model.goBack).toHaveBeenCalledWith("fm-1");
+    expect(model.goUp).toHaveBeenCalledWith("fm-1");
     expect(model.setPresentationMode).toHaveBeenCalledWith("fm-1", "large");
     expect(model.beginCreateDraft).toHaveBeenCalledWith("fm-1", "file");
     expect(model.moveSelectionToTrash).toHaveBeenCalledWith("fm-1");
@@ -337,7 +339,8 @@ describe("FileManagerSurface", () => {
         },
         parentPath: undefined,
         entries: [],
-        selectedEntryId: undefined,
+        selectedEntryIds: [],
+        selectionAnchorId: undefined,
         downloadUrlDraft: "https://example.com/build.zip",
         downloadTasks: [
           {
@@ -381,7 +384,8 @@ describe("FileManagerSurface", () => {
         currentLocation: null,
         parentPath: undefined,
         entries: [],
-        selectedEntryId: undefined
+        selectedEntryIds: [],
+        selectionAnchorId: undefined
       }),
       labels,
       model,

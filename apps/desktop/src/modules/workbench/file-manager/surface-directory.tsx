@@ -1,5 +1,7 @@
 import { AppEmptyState, AppList, AppObjectRow } from "@renderer/ui/components";
+import type { MouseEvent as ReactMouseEvent } from "react";
 
+import type { FileManagerSelectionMode } from "./types";
 import {
   renderFileManagerEntryIcon
 } from "./icon-registry";
@@ -10,6 +12,15 @@ import {
 } from "./surface-entry-tiles";
 import { preventContextMenuDefaults } from "./surface-view-events";
 import type { FileManagerSurfaceChromeProps } from "./surface-view-types";
+
+const resolveSelectionMode = (
+  event: ReactMouseEvent
+): FileManagerSelectionMode => {
+  if (event.shiftKey) {
+    return "range";
+  }
+  return event.metaKey || event.ctrlKey ? "toggle" : "replace";
+};
 
 export const FileManagerDirectoryContent = ({
   renderModel,
@@ -40,8 +51,8 @@ export const FileManagerDirectoryContent = ({
               key={entry.id}
               entry={entry}
               isActive={active}
-              onSelect={() => {
-                actions.onSelectEntry(entry.id);
+              onSelect={(event) => {
+                actions.onSelectEntry(entry.id, resolveSelectionMode(event));
               }}
               onOpen={() => {
                 actions.onOpenEntry(entry);
@@ -85,8 +96,8 @@ export const FileManagerDirectoryContent = ({
             active={active}
             data-lyra-allow-web-drag="true"
             draggable
-            onClick={() => {
-              actions.onSelectEntry(entry.id);
+            onClick={(event) => {
+              actions.onSelectEntry(entry.id, resolveSelectionMode(event));
             }}
             onDoubleClick={() => {
               actions.onOpenEntry(entry);

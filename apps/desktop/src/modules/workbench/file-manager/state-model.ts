@@ -64,7 +64,8 @@ export const createInitialState = (
   downloadErrorMessage: downloads?.errorMessage,
   directorySubscriptionId: undefined,
   directoryGeneration: undefined,
-  selectedEntryId: undefined,
+  selectedEntryIds: [],
+  selectionAnchorId: undefined,
   selectedTrashEntryId: undefined,
   createDraft: undefined,
   errorMessage: undefined
@@ -154,11 +155,20 @@ export const mergeRecentLocations = (
 export const findSelectedEntry = (
   state: FileManagerAppState
 ): FileManagerEntry | null => {
-  if (state.selectedEntryId === undefined) {
+  const selectedEntryId = state.selectedEntryIds[state.selectedEntryIds.length - 1];
+  if (selectedEntryId === undefined) {
     return null;
   }
-  return state.entries.find((entry) => entry.id === state.selectedEntryId) ?? null;
+  return state.entries.find((entry) => entry.id === selectedEntryId) ?? null;
 };
+
+export const findSelectedEntries = (
+  state: FileManagerAppState
+): readonly FileManagerEntry[] =>
+  state.selectedEntryIds.flatMap((entryId) => {
+    const entry = state.entries.find((item) => item.id === entryId);
+    return entry === undefined ? [] : [entry];
+  });
 
 export const findSelectedTrashEntry = (
   state: FileManagerAppState
@@ -263,7 +273,8 @@ export const buildHomeState = (
     trashEntries: [],
     directorySubscriptionId: undefined,
     directoryGeneration: undefined,
-    selectedEntryId: undefined,
+    selectedEntryIds: [],
+    selectionAnchorId: undefined,
     selectedTrashEntryId: undefined,
     createDraft: undefined,
     errorMessage: undefined
@@ -294,7 +305,8 @@ export const buildDirectoryState = (
   trashEntries: [],
   directorySubscriptionId: realtime?.subscriptionId,
   directoryGeneration: realtime?.generation,
-  selectedEntryId: undefined,
+  selectedEntryIds: [],
+  selectionAnchorId: undefined,
   selectedTrashEntryId: undefined,
   createDraft: undefined,
   errorMessage: undefined
@@ -320,7 +332,8 @@ export const buildTrashState = (
   trashEntries: payload.entries,
   directorySubscriptionId: undefined,
   directoryGeneration: undefined,
-  selectedEntryId: undefined,
+  selectedEntryIds: [],
+  selectionAnchorId: undefined,
   selectedTrashEntryId: undefined,
   createDraft: undefined,
   errorMessage: undefined
@@ -352,7 +365,8 @@ export const buildDownloadsState = (
     trashEntries: [],
     directorySubscriptionId: undefined,
     directoryGeneration: undefined,
-    selectedEntryId: undefined,
+    selectedEntryIds: [],
+    selectionAnchorId: undefined,
     selectedTrashEntryId: undefined,
     createDraft: undefined,
     errorMessage: undefined
@@ -406,17 +420,20 @@ export const applyDirectoryPatchToState = (
       return state;
     }
     const entries = state.entries.filter((entry) => entry.path !== removePath);
+    const removedIds = new Set(
+      state.entries.filter((entry) => entry.path === removePath).map((entry) => entry.id)
+    );
     return {
       ...state,
       status: "ready",
       entries,
       iconKey: deriveDirectoryIconKey(entries),
       directoryGeneration: patch.generation,
-      selectedEntryId:
-        state.selectedEntryId !== undefined
-        && state.entries.find((entry) => entry.id === state.selectedEntryId)?.path === removePath
+      selectedEntryIds: state.selectedEntryIds.filter((id) => !removedIds.has(id)),
+      selectionAnchorId:
+        state.selectionAnchorId !== undefined && removedIds.has(state.selectionAnchorId)
           ? undefined
-          : state.selectedEntryId,
+          : state.selectionAnchorId,
       errorMessage: undefined
     };
   }
@@ -431,17 +448,18 @@ export const applyDirectoryPatchToState = (
       state.entries.filter((item) => item.path !== removePath),
       entry
     );
+    const renamedId = state.entries.find((item) => item.path === removePath)?.id;
     return {
       ...state,
       status: "ready",
       entries,
       iconKey: deriveDirectoryIconKey(entries),
       directoryGeneration: patch.generation,
-      selectedEntryId:
-        state.selectedEntryId !== undefined
-        && state.entries.find((item) => item.id === state.selectedEntryId)?.path === removePath
-          ? entry.id
-          : state.selectedEntryId,
+      selectedEntryIds: state.selectedEntryIds.map((id) =>
+        id === renamedId ? entry.id : id
+      ),
+      selectionAnchorId:
+        state.selectionAnchorId === renamedId ? entry.id : state.selectionAnchorId,
       errorMessage: undefined
     };
   }

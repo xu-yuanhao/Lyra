@@ -86,7 +86,6 @@ describe("useWorkbenchWorkspaceTabsProps", () => {
       return {
         props: useWorkbenchWorkspaceTabsProps({
           tabsModel,
-          activeTabPageKind: "page",
           canGoBack: true,
           canGoForward: false,
           labels: {
@@ -153,9 +152,8 @@ describe("useWorkbenchWorkspaceTabsProps", () => {
     const { result } = renderHook(() => {
       return useWorkbenchWorkspaceTabsProps({
         tabsModel,
-        activeTabPageKind: "search",
-        canGoBack: true,
-        canGoForward: true,
+        canGoBack: false,
+        canGoForward: false,
         labels: {
           goBackLabel: "Back",
           goForwardLabel: "Forward",

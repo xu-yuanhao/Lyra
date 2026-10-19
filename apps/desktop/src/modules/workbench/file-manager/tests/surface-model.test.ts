@@ -43,6 +43,8 @@ const createState = (overrides: Partial<FileManagerAppState> = {}): FileManagerA
   downloadStatus: "ready",
   downloadUrlDraft: "",
   downloadErrorMessage: undefined,
+  selectedEntryIds: [],
+  selectionAnchorId: undefined,
   ...overrides
 } as FileManagerAppState);
 

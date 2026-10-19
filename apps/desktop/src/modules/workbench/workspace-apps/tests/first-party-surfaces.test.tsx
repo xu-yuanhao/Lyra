@@ -739,14 +739,15 @@ describe("independently shipped first-party surfaces", () => {
       }],
       trashEntries: [],
       downloadTasks: [],
-      selectedEntryId: "file-1"
+      selectedEntryIds: ["file-1"],
+      selectionAnchorId: "file-1"
     };
     const execute = vi.fn(async (commandId: string): Promise<JsonValue> => {
       if (commandId === "lyra.core.files.move-selection-to-trash") {
         state = {
           ...(state as Record<string, JsonValue>),
           entries: [],
-          selectedEntryId: null
+          selectedEntryIds: []
         };
       }
       if (commandId === "lyra.core.files.empty-trash") {

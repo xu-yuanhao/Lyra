@@ -19,7 +19,6 @@ type UseWorkbenchWorkspaceTabsPropsArgs = {
   readonly tabsModel: WorkspaceTabsModel;
   readonly terminalIdentityByTabId?: Readonly<Record<string, ResolvedIdentityIcon>>;
   readonly workspaceAppIdentityByTabId?: Readonly<Record<string, ResolvedIdentityIcon>>;
-  readonly activeTabPageKind: WorkspaceTab["pageKind"];
   readonly canGoBack: boolean;
   readonly canGoForward: boolean;
   readonly labels: WorkbenchWorkspaceTabsLabels;
@@ -35,7 +34,6 @@ export const useWorkbenchWorkspaceTabsProps = ({
   tabsModel,
   terminalIdentityByTabId,
   workspaceAppIdentityByTabId,
-  activeTabPageKind,
   canGoBack,
   canGoForward,
   labels,
@@ -75,8 +73,8 @@ export const useWorkbenchWorkspaceTabsProps = ({
       activeTabId: tabsModel.activeTabId,
       goBackLabel: labels.goBackLabel,
       goForwardLabel: labels.goForwardLabel,
-      canGoBack: activeTabPageKind === "page" && canGoBack,
-      canGoForward: activeTabPageKind === "page" && canGoForward,
+      canGoBack,
+      canGoForward,
       openNewTabLabel: labels.openNewTabLabel,
       closeTabLabel: labels.closeTabLabel,
       splitTriggerMode,
@@ -94,7 +92,6 @@ export const useWorkbenchWorkspaceTabsProps = ({
       onDetachTabFromSplit: tabsModel.detachTabFromSplit
     }),
     [
-      activeTabPageKind,
       canGoBack,
       canGoForward,
       interactionPolicy,

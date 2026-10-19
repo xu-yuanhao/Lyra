@@ -20,7 +20,8 @@ export const useFileManagerModel = ({
   desktopApi,
   contextMenuModel,
   labels,
-  onMetaChange
+  onMetaChange,
+  onOpenTerminal
 }: UseFileManagerModelOptions): FileManagerModel => {
   const downloadTasksRef = useRef<readonly DownloadManagerTask[]>([]);
   const downloadStatusRef = useRef<FileManagerAppState["downloadStatus"]>("idle");
@@ -112,7 +113,8 @@ export const useFileManagerModel = ({
     selectEntry: fileActions.selectEntry,
     selectTrashEntry: fileActions.selectTrashEntry,
     beginCreateDraft: fileActions.beginCreateDraft,
-    emptyTrash: fileActions.emptyTrash
+    emptyTrash: fileActions.emptyTrash,
+    ...(onOpenTerminal === undefined ? {} : { onOpenTerminal })
   });
 
   const {

@@ -5,6 +5,7 @@ import {
   HardDriveDownload,
   RefreshCw,
   RotateCcw,
+  SquareTerminal,
   Star,
   StarOff,
   Trash2,
@@ -26,6 +27,7 @@ import type {
 } from "../context-menu";
 import type {
   FileManagerAppState,
+  FileManagerSelectionMode,
   FileManagerSurfaceLabels
 } from "./types";
 import { isSameLocationPath } from "./location-utils";
@@ -93,7 +95,8 @@ export const useFileManagerContextMenusController = ({
   selectEntry,
   selectTrashEntry,
   beginCreateDraft,
-  emptyTrash
+  emptyTrash,
+  onOpenTerminal
 }: {
   readonly desktopApi: LyraDesktopApi | null;
   readonly contextMenuModel: ContextMenuModel;
@@ -125,10 +128,15 @@ export const useFileManagerContextMenusController = ({
   readonly ejectDisk: (instanceId: string, disk: FileManagerDisk) => Promise<void>;
   readonly ejectDevice: (instanceId: string, device: FileManagerDevice) => Promise<void>;
   readonly mountDevice: (instanceId: string, device: FileManagerDevice) => Promise<void>;
-  readonly selectEntry: (instanceId: string, entryId: string) => void;
+  readonly selectEntry: (
+    instanceId: string,
+    entryId: string,
+    mode?: FileManagerSelectionMode
+  ) => void;
   readonly selectTrashEntry: (instanceId: string, entryId: string) => void;
   readonly beginCreateDraft: (instanceId: string, kind: "file" | "directory") => void;
   readonly emptyTrash: (instanceId: string) => Promise<void>;
+  readonly onOpenTerminal?: (cwd: string) => void;
 }): FileManagerContextMenusController => {
   const { statesRef } = store;
 
@@ -297,7 +305,14 @@ export const useFileManagerContextMenusController = ({
     if (entry === undefined) {
       return;
     }
-    selectEntry(instanceId, entryId);
+    const selectedIds = state?.selectedEntryIds ?? [];
+    const preservesSelection = selectedIds.includes(entryId);
+    if (!preservesSelection) {
+      selectEntry(instanceId, entryId);
+    }
+    const trashTargets = preservesSelection && state !== undefined
+      ? state.entries.filter((item) => selectedIds.includes(item.id))
+      : [entry];
     contextMenuModel.openMenu({
       anchorX,
       anchorY,
@@ -309,6 +324,16 @@ export const useFileManagerContextMenusController = ({
               icon: <FolderUp size={14} />,
               onSelect: () => {
                 void loadDirectory(instanceId, entry.path);
+              }
+            }]
+          : []),
+        ...(entry.kind === "directory" && onOpenTerminal !== undefined
+          ? [{
+              id: `terminal-${entry.id}`,
+              label: labels.contextOpenInTerminal,
+              icon: <SquareTerminal size={14} />,
+              onSelect: () => {
+                onOpenTerminal(entry.path);
               }
             }]
           : []),
@@ -338,7 +363,9 @@ export const useFileManagerContextMenusController = ({
             if (desktopApi === null) {
               return;
             }
-            void desktopApi.files.moveToTrash({ paths: [entry.path] }).then(() => refresh(instanceId));
+            void desktopApi.files.moveToTrash({
+              paths: trashTargets.map((target) => target.path)
+            }).then(() => refresh(instanceId));
           }
         }
       ]
@@ -350,8 +377,10 @@ export const useFileManagerContextMenusController = ({
     labels.addFavorite,
     labels.contextMoveToTrash,
     labels.contextOpen,
+    labels.contextOpenInTerminal,
     labels.removeFavorite,
     loadDirectory,
+    onOpenTerminal,
     refresh,
     selectEntry,
     statesRef,
@@ -423,6 +452,7 @@ export const useFileManagerContextMenusController = ({
   }, [contextMenuModel, emptyTrash, labels.contextEmptyTrash, labels.refresh, loadTrash]);
 
   const openDirectoryContextMenu = useCallback((instanceId: string, anchorX: number, anchorY: number) => {
+    const currentPath = statesRef.current[instanceId]?.currentLocation?.path;
     contextMenuModel.openMenu({
       anchorX,
       anchorY,
@@ -443,6 +473,16 @@ export const useFileManagerContextMenusController = ({
             beginCreateDraft(instanceId, "file");
           }
         },
+        ...(onOpenTerminal !== undefined && currentPath !== undefined
+          ? [{
+              id: `terminal-${instanceId}`,
+              label: labels.contextOpenInTerminal,
+              icon: <SquareTerminal size={14} />,
+              onSelect: () => {
+                onOpenTerminal(currentPath);
+              }
+            }]
+          : []),
         {
           id: `refresh-${instanceId}`,
           label: labels.refresh,
@@ -490,8 +530,10 @@ export const useFileManagerContextMenusController = ({
     labels.addFavorite,
     labels.newFile,
     labels.newFolder,
+    labels.contextOpenInTerminal,
     labels.refresh,
     labels.removeFavorite,
+    onOpenTerminal,
     refresh,
     statesRef,
     toggleCurrentDirectoryFavorite

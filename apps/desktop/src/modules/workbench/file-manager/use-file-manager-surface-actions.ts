@@ -226,8 +226,8 @@ export const useFileManagerSurfaceActions = ({
       onCancelCreateDraft: () => {
         model.cancelCreateDraft(instanceId);
       },
-      onSelectEntry: (entryId) => {
-        model.selectEntry(instanceId, entryId);
+      onSelectEntry: (entryId, mode) => {
+        model.selectEntry(instanceId, entryId, mode);
       },
       onOpenEntry: (entry) => {
         if (entry.kind === "directory") {

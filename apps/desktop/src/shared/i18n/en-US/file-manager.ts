@@ -48,6 +48,7 @@ export const fileManager = {
   "files.createConfirm": "Create",
   "files.createCancel": "Cancel create",
   "files.contextOpen": "Open",
+  "files.contextOpenInTerminal": "Open in Terminal",
   "files.contextMountDevice": "Mount",
   "files.contextMoveToTrash": "Move to Trash",
   "files.contextRestore": "Restore",

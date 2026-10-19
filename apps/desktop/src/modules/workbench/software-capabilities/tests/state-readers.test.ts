@@ -59,7 +59,7 @@ describe("software capability state readers", () => {
             kind: "directory",
             path: "/tmp"
           },
-          selectedEntryId: "entry-0",
+          selectedEntryIds: ["entry-0"],
           entries
         }))
       } as never,

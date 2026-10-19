@@ -25,19 +25,22 @@ type UseWorkbenchFileAppModelsOptions = {
   readonly contextMenuModel: ContextMenuModel;
   readonly fileManagerLabels: FileManagerSurfaceLabels;
   readonly tabsModel: WorkspaceTabsModel;
+  readonly onOpenTerminal?: (cwd: string) => void;
 };
 
 export const useWorkbenchFileAppModels = ({
   desktopApi,
   contextMenuModel,
   fileManagerLabels,
-  tabsModel
+  tabsModel,
+  onOpenTerminal
 }: UseWorkbenchFileAppModelsOptions): WorkbenchFileAppModels => {
   const fileManagerModel = useFileManagerModel({
     desktopApi,
     contextMenuModel,
     labels: fileManagerLabels,
-    onMetaChange: tabsModel.updateAppTabMeta
+    onMetaChange: tabsModel.updateAppTabMeta,
+    ...(onOpenTerminal === undefined ? {} : { onOpenTerminal })
   });
   const fileEditorModel = useFileEditorModel({
     desktopApi,

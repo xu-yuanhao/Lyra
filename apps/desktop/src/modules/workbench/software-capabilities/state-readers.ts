@@ -119,7 +119,7 @@ export const createSoftwareStateReaders = ({
       appInstanceId: tab.appInstanceId,
       viewKind: state.viewKind,
       currentLocation: state.currentLocation,
-      selectedEntryId: state.selectedEntryId,
+      selectedEntryId: state.selectedEntryIds[state.selectedEntryIds.length - 1],
       entries: state.entries.slice(0, 100).map((entry) => ({
         id: entry.id,
         name: entry.name,

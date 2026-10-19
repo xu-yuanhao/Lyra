@@ -14,6 +14,7 @@ import type { FileManagerSurfaceRenderModel } from "./surface-model";
 import type {
   FileManagerCreateDraftKind,
   FileManagerPresentationMode,
+  FileManagerSelectionMode,
   FileManagerSurfaceLabels
 } from "./types";
 
@@ -66,7 +67,7 @@ export type FileManagerSurfaceActions = {
   readonly onDraftValueChange: (value: string) => void;
   readonly onCommitCreateDraft: () => void;
   readonly onCancelCreateDraft: () => void;
-  readonly onSelectEntry: (entryId: string) => void;
+  readonly onSelectEntry: (entryId: string, mode?: FileManagerSelectionMode) => void;
   readonly onOpenEntry: (entry: FileManagerEntry) => void;
   readonly onEntryContextMenu: (
     entryId: string,

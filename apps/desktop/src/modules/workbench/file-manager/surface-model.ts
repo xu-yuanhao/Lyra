@@ -622,7 +622,7 @@ const deriveBodyModel = (
         createDraft: state.createDraft,
         entries: state.entries.map((entry) => ({
           entry,
-          active: entry.id === state.selectedEntryId
+          active: state.selectedEntryIds.includes(entry.id)
         })),
         isEmpty: state.entries.length === 0
       }
@@ -710,7 +710,7 @@ export const deriveFileManagerSurfaceModel = (
       favoriteDisabled: pageKind === "favorites" || pageKind === "downloads" || state.currentLocation?.path === undefined,
       canCreateDraft: pageKind === "directory",
       canMoveSelectionToTrash:
-        pageKind === "directory" && state.selectedEntryId !== undefined,
+        pageKind === "directory" && state.selectedEntryIds.length > 0,
       canRestoreSelectionFromTrash:
         pageKind === "trash" && state.selectedTrashEntryId !== undefined,
       canEmptyTrash: pageKind === "trash" && state.trashEntries.length > 0

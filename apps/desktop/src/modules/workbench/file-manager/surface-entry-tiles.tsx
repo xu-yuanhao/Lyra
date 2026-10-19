@@ -115,9 +115,9 @@ export const FileManagerLargeEntryTile = ({
   onDragStart,
   onDragEnd
 }: {
-  readonly entry: FileManagerEntry;
+  entry: FileManagerEntry;
   readonly isActive: boolean;
-  readonly onSelect: () => void;
+  readonly onSelect: (event: ReactMouseEvent<HTMLButtonElement>) => void;
   readonly onOpen: () => void;
   readonly onContextMenu: (event: ReactMouseEvent<HTMLButtonElement>) => void;
   readonly onDragStart: (event: ReactDragEvent<HTMLButtonElement>) => void;

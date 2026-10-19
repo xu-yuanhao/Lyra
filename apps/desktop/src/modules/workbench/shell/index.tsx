@@ -231,6 +231,20 @@ export const WorkbenchShell = ({ onSignedOut = () => undefined }: WorkbenchShell
   const activeBrowserTabId = activeTab?.pageKind === "page" ? activeTab.id : null;
   const visibleWorkspaceLayout = tabsModel.getVisibleWorkspaceLayout();
   const terminalModel = useTerminalDockModel();
+  const onOpenTerminalAtDirectory = useCallback((cwd: string): void => {
+    const normalizedCwd = cwd.trim();
+    if (normalizedCwd.length === 0) {
+      return;
+    }
+    const slashIndex = Math.max(normalizedCwd.lastIndexOf("/"), normalizedCwd.lastIndexOf("\\"));
+    const title = slashIndex >= 0 ? normalizedCwd.slice(slashIndex + 1) || normalizedCwd : normalizedCwd;
+    const { tab } = terminalModel.openTabWithPlacement({
+      placement: "workspace",
+      cwd: normalizedCwd,
+      title
+    });
+    tabsModel.openTerminalTab(tab.id, tab.title);
+  }, [tabsModel, terminalModel]);
   useTerminalSessionRestore({
     desktopApi,
     terminalModel
@@ -423,7 +437,8 @@ resolvedThemeId,
     desktopApi,
     contextMenuModel,
     fileManagerLabels: labels.fileManager,
-    tabsModel
+    tabsModel,
+    onOpenTerminal: onOpenTerminalAtDirectory
   });
   const agentPlanBoardModel = useAgentPlanBoardModel({
     desktopApi,

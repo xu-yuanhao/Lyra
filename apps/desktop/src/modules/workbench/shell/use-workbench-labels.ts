@@ -572,6 +572,7 @@ export const useWorkbenchLabels = (t: WorkbenchTranslator) =>
         createConfirm: t("files.createConfirm"),
         createCancel: t("files.createCancel"),
         contextOpen: t("files.contextOpen"),
+        contextOpenInTerminal: t("files.contextOpenInTerminal"),
         contextMountDevice: t("files.contextMountDevice"),
         contextMoveToTrash: t("files.contextMoveToTrash"),
         contextRestore: t("files.contextRestore"),

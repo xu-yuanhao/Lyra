@@ -1,6 +1,4 @@
 import {
-  ChevronLeft,
-  ChevronRight,
   ChevronUp,
   FilePlus2,
   FolderPlus,
@@ -85,22 +83,6 @@ export const FileManagerToolbarContent = ({
   return (
     <>
       <div className="lyra-titlebar-context-group">
-        <AppIconButton
-          aria-label={labels.navigationBack}
-          title={labels.navigationBack}
-          disabled={!toolbar.canGoBack}
-          onClick={actions.onGoBack}
-        >
-          <ChevronLeft size={14} />
-        </AppIconButton>
-        <AppIconButton
-          aria-label={labels.navigationForward}
-          title={labels.navigationForward}
-          disabled={!toolbar.canGoForward}
-          onClick={actions.onGoForward}
-        >
-          <ChevronRight size={14} />
-        </AppIconButton>
         <AppIconButton
           aria-label={labels.navigationUp}
           title={labels.navigationUp}

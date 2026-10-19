@@ -5,9 +5,9 @@ import type {
   FileManagerDisk
 } from "../../../shared/file-manager";
 import type { LyraDesktopApi } from "../../../shared/desktop-bridge";
-import type { FileManagerPresentationMode } from "./types";
+import type { FileManagerPresentationMode, FileManagerSelectionMode } from "./types";
 import {
-  findSelectedEntry,
+  findSelectedEntries,
   findSelectedTrashEntry,
   isPathInsideMount
 } from "./state-model";
@@ -15,7 +15,11 @@ import type { FileManagerStateStore } from "./state-store";
 
 export type FileManagerFileActionsController = {
   readonly setPresentationMode: (instanceId: string, mode: FileManagerPresentationMode) => void;
-  readonly selectEntry: (instanceId: string, entryId: string) => void;
+  readonly selectEntry: (
+    instanceId: string,
+    entryId: string,
+    mode?: FileManagerSelectionMode
+  ) => void;
   readonly selectTrashEntry: (instanceId: string, entryId: string) => void;
   readonly beginCreateDraft: (instanceId: string, kind: "file" | "directory") => void;
   readonly updateCreateDraft: (instanceId: string, value: string) => void;
@@ -58,19 +62,61 @@ export const useFileManagerFileActionsController = ({
     }));
   }, [patchState]);
 
-  const selectEntry = useCallback((instanceId: string, entryId: string) => {
-    patchState(instanceId, (state) => ({
-      ...state,
-      selectedEntryId: entryId,
-      selectedTrashEntryId: undefined
-    }));
+  const selectEntry = useCallback((
+    instanceId: string,
+    entryId: string,
+    mode: FileManagerSelectionMode = "replace"
+  ) => {
+    patchState(instanceId, (state) => {
+      const clickedIndex = state.entries.findIndex((entry) => entry.id === entryId);
+      if (clickedIndex < 0) {
+        return state;
+      }
+
+      if (mode === "toggle") {
+        const selected = state.selectedEntryIds.includes(entryId);
+        return {
+          ...state,
+          selectedEntryIds: selected
+            ? state.selectedEntryIds.filter((id) => id !== entryId)
+            : [...state.selectedEntryIds, entryId],
+          selectionAnchorId: entryId,
+          selectedTrashEntryId: undefined
+        };
+      }
+
+      if (mode === "range" && state.selectionAnchorId !== undefined) {
+        const anchorIndex = state.entries.findIndex(
+          (entry) => entry.id === state.selectionAnchorId
+        );
+        if (anchorIndex >= 0) {
+          const start = Math.min(anchorIndex, clickedIndex);
+          const end = Math.max(anchorIndex, clickedIndex);
+          return {
+            ...state,
+            selectedEntryIds: state.entries
+              .slice(start, end + 1)
+              .map((entry) => entry.id),
+            selectedTrashEntryId: undefined
+          };
+        }
+      }
+
+      return {
+        ...state,
+        selectedEntryIds: [entryId],
+        selectionAnchorId: entryId,
+        selectedTrashEntryId: undefined
+      };
+    });
   }, [patchState]);
 
   const selectTrashEntry = useCallback((instanceId: string, entryId: string) => {
     patchState(instanceId, (state) => ({
       ...state,
       selectedTrashEntryId: entryId,
-      selectedEntryId: undefined
+      selectedEntryIds: [],
+      selectionAnchorId: undefined
     }));
   }, [patchState]);
 
@@ -134,12 +180,12 @@ export const useFileManagerFileActionsController = ({
 
   const moveSelectionToTrash = useCallback(async (instanceId: string) => {
     const state = statesRef.current[instanceId];
-    const target = state === undefined ? null : findSelectedEntry(state);
-    if (desktopApi === null || target === null) {
+    const targets = state === undefined ? [] : findSelectedEntries(state);
+    if (desktopApi === null || targets.length === 0) {
       return;
     }
 
-    await desktopApi.files.moveToTrash({ paths: [target.path] });
+    await desktopApi.files.moveToTrash({ paths: targets.map((target) => target.path) });
     await refresh(instanceId);
   }, [desktopApi, refresh, statesRef]);
 

@@ -40,6 +40,8 @@ export type FileManagerDownloadStatus = "idle" | "loading" | "ready" | "error";
 
 export type FileManagerPresentationMode = "list" | "large";
 
+export type FileManagerSelectionMode = "replace" | "toggle" | "range";
+
 export type FileManagerAppState = {
   readonly instanceId: string;
   readonly status: FileManagerStatus;
@@ -65,7 +67,8 @@ export type FileManagerAppState = {
   readonly downloadErrorMessage: string | undefined;
   readonly directorySubscriptionId: string | undefined;
   readonly directoryGeneration: number | undefined;
-  readonly selectedEntryId: string | undefined;
+  readonly selectedEntryIds: readonly string[];
+  readonly selectionAnchorId: string | undefined;
   readonly selectedTrashEntryId: string | undefined;
   readonly createDraft: FileManagerCreateDraft | undefined;
   readonly errorMessage: string | undefined;
@@ -119,6 +122,7 @@ export type FileManagerSurfaceLabels = {
   readonly createConfirm: string;
   readonly createCancel: string;
   readonly contextOpen: string;
+  readonly contextOpenInTerminal: string;
   readonly contextMountDevice: string;
   readonly contextMoveToTrash: string;
   readonly contextRestore: string;
@@ -220,7 +224,11 @@ export type FileManagerModel = {
   readonly goUp: (instanceId: string) => Promise<void>;
   readonly refresh: (instanceId: string) => Promise<void>;
   readonly setPresentationMode: (instanceId: string, mode: FileManagerPresentationMode) => void;
-  readonly selectEntry: (instanceId: string, entryId: string) => void;
+  readonly selectEntry: (
+    instanceId: string,
+    entryId: string,
+    mode?: FileManagerSelectionMode
+  ) => void;
   readonly selectTrashEntry: (instanceId: string, entryId: string) => void;
   readonly beginCreateDraft: (instanceId: string, kind: FileManagerCreateDraftKind) => void;
   readonly updateCreateDraft: (instanceId: string, value: string) => void;
@@ -283,6 +291,7 @@ export type UseFileManagerModelOptions = {
   readonly desktopApi: LyraDesktopApi | null;
   readonly contextMenuModel: ContextMenuModel;
   readonly labels: FileManagerSurfaceLabels;
+  readonly onOpenTerminal?: (cwd: string) => void;
   readonly onMetaChange: (request: {
     readonly appId: FileManagerAppId;
     readonly appInstanceId: string;
