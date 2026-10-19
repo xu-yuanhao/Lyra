@@ -121,7 +121,7 @@ fn textual_function_call_example_remains_inert_text() {
 }
 
 #[test]
-fn leaked_xml_tool_calls_are_removed_without_execution() {
+fn leaked_xml_tool_calls_are_removed_and_reported_as_tool_intent() {
     let mut reply = ModelReply {
         content: Some(
             r#"好的，让我先看看目录。
@@ -148,11 +148,13 @@ fn leaked_xml_tool_calls_are_removed_without_execution() {
     assert_eq!(reply.content.as_deref(), Some("好的，让我先看看目录。"));
     assert!(reply.tool_calls.is_empty());
     assert!(reply.reasoning_content.is_none());
-    assert_eq!(reply.stop_signal, TurnStopSignal::EndTurn);
+    // No call was parsed or executed, but the turn must not end on the leaked
+    // fragment: the loop treats this as tool intent and re-elicits a real call.
+    assert_eq!(reply.stop_signal, TurnStopSignal::ToolUse);
 }
 
 #[test]
-fn leaked_dsml_tool_calls_are_removed_without_execution() {
+fn leaked_dsml_tool_calls_are_removed_and_reported_as_tool_intent() {
     let mut reply = ModelReply {
         content: Some(
             r#"先看看目录结构和关键文件。
@@ -183,6 +185,63 @@ fn leaked_dsml_tool_calls_are_removed_without_execution() {
     assert_eq!(reply.content.as_deref(), Some("先看看目录结构和关键文件。"));
     assert!(reply.tool_calls.is_empty());
     assert!(reply.reasoning_content.is_none());
+    assert_eq!(reply.stop_signal, TurnStopSignal::ToolUse);
+}
+
+#[test]
+fn leaked_tool_markup_stays_final_without_advertised_tools() {
+    let mut reply = ModelReply {
+        content: Some(
+            r#"先看看目录。
+
+<tool_calls>
+<invoke name="exec_command">
+<parameter name="command">ls -la</parameter>
+</invoke>
+</tool_calls>
+"#
+            .to_string(),
+        ),
+        reasoning_content: None,
+        tool_calls: Vec::new(),
+        ui_message_id: None,
+        raw_stop_reason: Some("stop".to_string()),
+        provider_replay_protocol: None,
+        provider_replay_items: Vec::new(),
+        response_meta: Default::default(),
+        stop_signal: TurnStopSignal::EndTurn,
+    };
+
+    normalize_model_reply_protocol(&mut reply, &[]).expect("markup is display-only");
+    assert_eq!(reply.content.as_deref(), Some("先看看目录。"));
+    // Nothing to re-elicit: a retry cannot produce a structured call.
+    assert_eq!(reply.stop_signal, TurnStopSignal::EndTurn);
+}
+
+#[test]
+fn fenced_tool_markup_example_does_not_become_tool_intent() {
+    let mut reply = ModelReply {
+        content: Some(
+            "Here is the markup format:\n\n```xml\n<tool_calls><invoke name=\"x\"/></tool_calls>\n```\n"
+                .to_string(),
+        ),
+        reasoning_content: None,
+        tool_calls: Vec::new(),
+        ui_message_id: None,
+        raw_stop_reason: Some("stop".to_string()),
+        provider_replay_protocol: None,
+        provider_replay_items: Vec::new(),
+        response_meta: Default::default(),
+        stop_signal: TurnStopSignal::EndTurn,
+    };
+
+    normalize_model_reply_protocol(&mut reply, &model_tools()).expect("examples are inert");
+    assert!(
+        reply
+            .content
+            .as_deref()
+            .is_some_and(|text| text.contains("<tool_calls>"))
+    );
     assert_eq!(reply.stop_signal, TurnStopSignal::EndTurn);
 }
 

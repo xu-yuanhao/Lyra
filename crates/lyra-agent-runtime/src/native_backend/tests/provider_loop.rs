@@ -1225,6 +1225,113 @@ fn streaming_failure_falls_back_to_non_streaming_when_uncommitted() {
 }
 
 #[test]
+fn reasoning_only_stream_stall_retries_without_failing_the_turn() {
+    // A provider can stall after streaming only reasoning. Nothing visible was
+    // committed and no tool ran, so the turn is replayable: the draft thinking
+    // block must be dropped and the request retried once.
+    let backend = LyraAgentBackend;
+    let created = backend
+        .call_agent_method(
+            "agent.session.create",
+            json!({ "title": "Reasoning Stall Test" }),
+        )
+        .expect("create session");
+    let session_id = created["id"].as_str().expect("session id").to_string();
+    let turn_id = start_test_runtime_turn(&session_id);
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind local provider");
+    let addr = listener.local_addr().expect("local addr");
+    let attempts = Arc::new(AtomicUsize::new(0));
+    let attempts_for_server = attempts.clone();
+    let server = thread::spawn(move || {
+        for _ in 0..2 {
+            let (mut stream, _) = listener.accept().expect("accept provider request");
+            let _ = read_http_json_body(&mut stream);
+            let attempt = attempts_for_server.fetch_add(1, Ordering::SeqCst);
+            if attempt == 0 {
+                // Reasoning lands (committed), then the body dies mid-stream.
+                let body = "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"stalled thought\"}}]}\n\n";
+                write!(
+                    stream,
+                    "HTTP/1.1 200 OK\r\ncontent-type: text/event-stream\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                    body.len() + 4096,
+                    body
+                )
+                .expect("write truncated reasoning stream");
+                drop(stream);
+            } else {
+                let body = concat!(
+                    "data: {\"choices\":[{\"delta\":{\"content\":\"Recovered.\"}}]}\n\n",
+                    "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+                    "data: [DONE]\n\n",
+                );
+                write!(
+                    stream,
+                    "HTTP/1.1 200 OK\r\ncontent-type: text/event-stream\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                    body.len(),
+                    body
+                )
+                .expect("write retry stream");
+            }
+        }
+    });
+    let provider = NativeProviderProfile {
+        id: "local".to_string(),
+        label: "Local Test".to_string(),
+        route_id: "custom_openai_compatible".to_string(),
+        base_url: Some(format!("http://{addr}")),
+        default_model: Some("test-model".to_string()),
+        api_key_ref: None,
+        api_key: Some("test-key".to_string()),
+        api_key_env: None,
+        auth_header: None,
+        embedding_model: None,
+        models: vec![NativeProviderModel {
+            id: "test-model".to_string(),
+            label: None,
+            context_window: None,
+            supports_image_input: false,
+            supports_tool_calling: false,
+            supports_streaming: true,
+            supports_reasoning_effort: None,
+            reasoning_replay_field: ReasoningReplayField::Auto,
+            requires_reasoning_field_on_assistant_messages: None,
+            supports_tool_choice: None,
+            enabled: true,
+            api_npm: None,
+        }],
+    };
+
+    let reply = call_model_once(
+        &session_id,
+        &turn_id,
+        &provider,
+        "test-model",
+        &[json!({ "role": "user", "content": "hello" })],
+        &[],
+        &model_capabilities(&provider, "test-model"),
+        &CancellationToken::new(),
+    )
+    .expect("reasoning-only stall should retry instead of failing the turn");
+
+    assert_eq!(reply.content.as_deref(), Some("Recovered."));
+    assert_eq!(attempts.load(Ordering::SeqCst), 2);
+    let messages = state()
+        .lock()
+        .expect("state lock")
+        .sessions
+        .get(&session_id)
+        .and_then(|session| session.snapshot["messages"].as_array().cloned())
+        .unwrap_or_default();
+    assert_eq!(
+        messages.len(),
+        1,
+        "the reasoning-only draft must be discarded, not left beside the replay: {messages:#?}"
+    );
+    server.join().expect("server join");
+    backend.clear_event_callback();
+}
+
+#[test]
 fn committed_stream_does_not_resample_or_fall_back_to_non_streaming() {
     // Once a streaming delta is committed, replaying the whole request could
     // duplicate text or tool side effects. The transport error must surface

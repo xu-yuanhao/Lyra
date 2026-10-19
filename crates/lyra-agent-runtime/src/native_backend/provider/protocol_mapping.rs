@@ -1341,7 +1341,22 @@ pub(crate) fn normalize_model_reply_protocol(
         }
     }
     if let Some(content) = reply.content.take() {
-        reply.content = Some(openai_chat::scrub_tool_markup(&content));
+        let scrubbed = openai_chat::scrub_tool_markup(&content);
+        // The provider sometimes writes its native tool-call markup (DeepSeek
+        // DSML, Hermes/Qwen `<tool_calls>`) into the text channel and reports a
+        // clean `stop` instead of a structured tool call. The markup is still
+        // removed from visible text (never executed), but it is a tool-use
+        // intent: report it as such so the loop re-elicits a real structured
+        // call instead of ending the turn on a leaked fragment. Without tools
+        // advertised there is nothing to re-elicit, so the reply stays final.
+        if scrubbed != content
+            && reply.tool_calls.is_empty()
+            && reply.stop_signal == TurnStopSignal::EndTurn
+            && !tools.is_empty()
+        {
+            reply.stop_signal = TurnStopSignal::ToolUse;
+        }
+        reply.content = Some(scrubbed);
     }
     if reply.stop_signal != TurnStopSignal::MaxTokens {
         openai_chat::validate_tool_call_arguments(&reply.tool_calls)?;

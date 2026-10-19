@@ -560,6 +560,7 @@ pub(crate) fn call_model_once_inner(
         let mut stream_fallback_attempted = false;
         let mut last_stream_transport_error: Option<AgentRuntimeError> = None;
         loop {
+            let previous_message_id = active_ui_message_id(session_id, turn_id);
             let mut committed_any: Option<bool> = None;
             match scheduled_provider_request(session_id, provider, model, cancellation, || {
                 crate::native_backend::turn_engine::block_on(call_model_once_streaming_inner_async(
@@ -577,27 +578,37 @@ pub(crate) fn call_model_once_inner(
             }) {
                 Ok(reply) => return Ok(reply),
                 Err(error) if is_provider_transport_error(&error) => {
-                    // Safe to replay the whole streaming turn only when the
-                    // route's parser confirms nothing was committed before the
-                    // failure (`Some(false)`). `None` means the parser doesn't
-                    // report commit state (dedicated protocols) and `Some(true)`
-                    // means a partial assistant/tool delta already landed — both
-                    // stay conservative: no replay, fail the turn (the original
-                    // behavior), because replaying would duplicate or corrupt
-                    // the committed timeline.
-                    let safe_to_retry = committed_any == Some(false)
-                        && stream_transport_retries < transport_retry_limit(&error);
+                    // Safe to replay the whole streaming turn when the parser
+                    // confirms nothing was committed (`Some(false)`), or when
+                    // the only committed progress is reasoning (`has_only_reasoning`)
+                    // — no visible text and no tool call, so the draft can be
+                    // dropped. `None` means the parser doesn't report commit
+                    // state (dedicated protocols) and `Some(true)` with visible
+                    // text or tool progress stays conservative: no replay,
+                    // because it would duplicate or corrupt the timeline.
+                    let reasoning_only = committed_any == Some(true)
+                        && super::continuation::StreamContinuation::has_only_reasoning(
+                            session_id,
+                            turn_id,
+                            previous_message_id.as_deref(),
+                        );
+                    let replayable = committed_any == Some(false) || reasoning_only;
+                    let safe_to_retry =
+                        replayable && stream_transport_retries < transport_retry_limit(&error);
                     // Non-streaming fallback (Claude Code pattern): when the
-                    // streaming turn failed and nothing was committed, retry the
-                    // SAME turn non-streaming once. Non-streaming has no partial
-                    // SSE state to corrupt, so it is safe as long as the stream
-                    // didn't already commit an increment — `committed_any ==
-                    // Some(true)` must never fall back (the non-streaming reply
-                    // would re-emit the full assistant text, duplicating the
-                    // committed delta).
+                    // streaming turn failed and nothing durable was committed,
+                    // retry the SAME turn non-streaming once. Non-streaming has
+                    // no partial SSE state to corrupt; a visible delta must
+                    // never fall back (the non-streaming reply would re-emit
+                    // the full assistant text, duplicating the committed delta).
                     let can_fallback = !connection_establishment_failed(&error)
                         && !stream_fallback_attempted
-                        && committed_any == Some(false);
+                        && replayable;
+                    if reasoning_only && (safe_to_retry || can_fallback) {
+                        super::continuation::StreamContinuation::discard_reasoning_only(
+                            session_id, turn_id,
+                        );
+                    }
                     emit_provider_protocol_event(
                         session_id,
                         turn_id,
@@ -618,7 +629,7 @@ pub(crate) fn call_model_once_inner(
                             turn_id,
                             "stream_transport_safe_retry",
                             stream_transport_retries,
-                            "streaming transport failed before any committed increment; replaying the turn",
+                            "streaming transport failed before any visible increment; replaying the turn",
                         );
                         sleep_before_provider_retry(stream_transport_retries, cancellation)?;
                         continue;
@@ -812,11 +823,27 @@ pub(crate) async fn call_model_once_inner_async(
             match attempt_result {
                 Ok(reply) => return Ok(reply),
                 Err(error) if is_provider_transport_error(&error) => {
-                    let safe_to_retry = committed_any == Some(false)
-                        && stream_transport_retries < transport_retry_limit(&error);
+                    // Reasoning-only progress is replayable. The user never saw
+                    // assistant text and no tool ran, so a provider stall during
+                    // the thinking phase can drop the draft and retry instead of
+                    // failing the whole turn.
+                    let reasoning_only = committed_any == Some(true)
+                        && super::continuation::StreamContinuation::has_only_reasoning(
+                            session_id,
+                            turn_id,
+                            previous_message_id.as_deref(),
+                        );
+                    let replayable = committed_any == Some(false) || reasoning_only;
+                    let safe_to_retry =
+                        replayable && stream_transport_retries < transport_retry_limit(&error);
                     let can_fallback = !connection_establishment_failed(&error)
                         && !stream_fallback_attempted
-                        && committed_any == Some(false);
+                        && replayable;
+                    if reasoning_only && (safe_to_retry || can_fallback) {
+                        super::continuation::StreamContinuation::discard_reasoning_only(
+                            session_id, turn_id,
+                        );
+                    }
                     emit_provider_protocol_event(
                         session_id,
                         turn_id,
@@ -842,7 +869,7 @@ pub(crate) async fn call_model_once_inner_async(
                             turn_id,
                             "stream_transport_safe_retry",
                             stream_transport_retries,
-                            "streaming transport failed before any committed increment; replaying the turn",
+                            "streaming transport failed before any visible increment; replaying the turn",
                         );
                         sleep_before_provider_retry_async(stream_transport_retries, cancellation)
                             .await?;

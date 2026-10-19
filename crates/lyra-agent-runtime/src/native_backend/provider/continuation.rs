@@ -39,6 +39,50 @@ impl StreamContinuation {
             })
             .unwrap_or(false)
     }
+    /// True when the active draft holds reasoning but no visible text and no
+    /// anchored tool call. Discarding it and replaying the turn cannot duplicate
+    /// anything the user saw or any tool side effect.
+    pub(super) fn has_only_reasoning(
+        session_id: &str,
+        turn_id: &str,
+        previous_message_id: Option<&str>,
+    ) -> bool {
+        let Some(id) = active_ui_message_id(session_id, turn_id) else {
+            return false;
+        };
+        if Some(id.as_str()) == previous_message_id {
+            return false;
+        }
+        state()
+            .lock()
+            .ok()
+            .and_then(|state| {
+                let session = state.sessions.get(session_id)?;
+                let message = session.snapshot["messages"]
+                    .as_array()?
+                    .iter()
+                    .find(|message| message["id"] == id)?;
+                let has_visible = message["text"]
+                    .as_str()
+                    .is_some_and(|text| !text.is_empty());
+                let has_reasoning = message["reasoningContent"]
+                    .as_str()
+                    .is_some_and(|text| !text.is_empty());
+                Some(
+                    !has_visible
+                        && has_reasoning
+                        && !turns::anchored_protocol_step_has_tool_calls(session, &id),
+                )
+            })
+            .unwrap_or(false)
+    }
+    /// Drop the reasoning-only draft before a replay so its thinking block does
+    /// not stay in the transcript next to the replayed reply.
+    pub(super) fn discard_reasoning_only(session_id: &str, turn_id: &str) {
+        if let Some(id) = active_ui_message_id(session_id, turn_id) {
+            turns::remove_assistant_message(session_id, &id);
+        }
+    }
     pub(super) fn mark_partial(session_id: &str, turn_id: &str) {
         if let Some(id) = active_ui_message_id(session_id, turn_id) {
             turns::attach_metadata_to_active_assistant_message(
