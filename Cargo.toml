@@ -22,7 +22,6 @@ members = [
   "crates/lyra-docs-napi",
   "crates/lyra-download-core",
   "crates/lyra-accessibility-napi",
-  "crates/lyra-performance-core",
   "crates/lyra-process-lifecycle-core",
   "crates/lyra-computer-use-core",
 ]
@@ -56,7 +55,6 @@ lyra-wasi-host = { path = "crates/lyra-wasi-host" }
 lyra-docs-core = { path = "crates/lyra-docs-core" }
 lyra-tool-fs-core = { path = "crates/lyra-tool-fs-core" }
 
-lyra-performance-core = { path = "crates/lyra-performance-core" }
 lyra-process-lifecycle-core = { path = "crates/lyra-process-lifecycle-core" }
 
 # External

@@ -25,7 +25,6 @@ const cargoManifest = path.join(repoRoot, "Cargo.toml");
 
 const runtimePackages = [
   "lyra-cli",
-  "lyra-performance-core",
   "lyra-bootstrap-core",
   "lyra-wasi-host",
 ] as const;
@@ -189,7 +188,6 @@ const executableNames = (target: DesktopTarget): readonly string[] =>
         "lyra-files-host.exe",
         "lyra-scheduler-host.exe",
         "lyra.exe",
-        "lyra-performance-helper.exe",
         "lyra-bootstrap.exe",
         "lyra-wasi-runner.exe"
       ]
@@ -200,7 +198,6 @@ const executableNames = (target: DesktopTarget): readonly string[] =>
         "lyra-files-host",
         "lyra-scheduler-host",
         "lyra",
-        "lyra-performance-helper",
         "lyra-bootstrap",
         "lyra-wasi-runner"
       ];

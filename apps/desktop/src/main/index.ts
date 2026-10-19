@@ -58,10 +58,6 @@ import {
 } from "./language-packs";
 import { createLinuxCompatBridge } from "./linux-compat";
 import { configureLinuxSecretStore } from "./sensitive-values/linux-secret-store";
-import {
-  createLyraPerformanceResourceScheduler,
-  createLyraWorkspaceSurfacePerformanceSync
-} from "./performance";
 import { resolveCurrentDesktopTarget } from "./platform-target";
 import { createSearchIpcBridge } from "./search";
 import { createStorageBackedIpcBridges } from "./storage-backed-bridges";
@@ -196,7 +192,6 @@ let disposeSystemNotificationsBridge: (() => void) | null = null;
 let disposeProductAnnouncementsBridge: (() => void) | null = null;
 let disposeScreenshotPreviewBridge: (() => void) | null = null;
 let disposeBrowserImportBridge: (() => void) | null = null;
-let disposeWorkspaceSurfacePerformanceSync: (() => void) | null = null;
 let disposeAutoUpdateService: (() => void) | null = null;
 let workbenchAppQuitting = false;
 let workbenchBrowserBridge: WorkbenchBrowserIpcBridge | null = null;
@@ -1181,27 +1176,6 @@ const registerIpcHandlers = async (): Promise<void> => {
   });
   const runtimeClient = modularRuntimeHost.runtimeClient;
   disposeRuntimeClient = modularRuntimeHost.disposeRuntime;
-  const performanceScheduler = createLyraPerformanceResourceScheduler(runtimeClient);
-  const registerRuntimePerformanceResource = (
-    resourceId: string,
-    kind: "agentTask" | "downloadTask" | "lspTask" | "searchTask" | "terminalPane"
-  ): void => {
-    performanceScheduler.registerResource({
-      resourceId,
-      kind,
-      coreKey: resourceId,
-      stateKey: resourceId,
-      lifecycle: "keptAlive",
-      visible: false,
-      active: false,
-      sharedSignature: resourceId
-    });
-  };
-  registerRuntimePerformanceResource("terminal:runtime", "terminalPane");
-  registerRuntimePerformanceResource("download:runtime", "downloadTask");
-  registerRuntimePerformanceResource("lsp:runtime", "lspTask");
-  registerRuntimePerformanceResource("search:runtime", "searchTask");
-  registerRuntimePerformanceResource("agent:runtime", "agentTask");
   const filesBridge = createFilesIpcBridge({
     storageRoot: storageRoots.modules.fileManager,
     runtimeClient,
@@ -1301,18 +1275,12 @@ const registerIpcHandlers = async (): Promise<void> => {
   } else {
     console.warn(`[lyra-accessibility] native unavailable: ${accessibilityNativeLoadResult.errorMessage}`);
   }
-  const workspaceSurfacePerformanceSync = createLyraWorkspaceSurfacePerformanceSync({
-    workbenchState: workbenchStateBridge,
-    performanceScheduler
-  });
-  disposeWorkspaceSurfacePerformanceSync = workspaceSurfacePerformanceSync.dispose;
   workbenchBrowserBridge = createWorkbenchBrowserIpcBridge({
     getWindow: () => mainWindow,
     downloadManager: downloadManagerBridge,
     loginManager: loginManagerBridge,
     accessibilityNative: accessibilityNativeLoadResult,
     workbenchState: workbenchStateBridge,
-    performanceScheduler,
     deferLayoutSync: deferWorkbenchBrowserLayoutSync,
     getActCacheEnabled: readActCacheEnabled,
     resolveBrowserContextMenuLabels: languagePacksBridge.resolveBrowserContextMenuLabels,
@@ -1653,10 +1621,6 @@ app.on("before-quit", () => {
   if (disposeWorkbenchBrowserBridge !== null) {
     disposeWorkbenchBrowserBridge();
     disposeWorkbenchBrowserBridge = null;
-  }
-  if (disposeWorkspaceSurfacePerformanceSync !== null) {
-    disposeWorkspaceSurfacePerformanceSync();
-    disposeWorkspaceSurfacePerformanceSync = null;
   }
   if (disposeWorkbenchObservationRendererClient !== null) {
     disposeWorkbenchObservationRendererClient();

@@ -20,7 +20,7 @@ test("disposing within the snapshot debounce saves the last navigation before en
       isVisible: true, isLoading: false, canGoBack: true, canGoForward: false, isHtmlFullscreen: false, updatedAt: Date.now() };
     const entries = new Map([["tab", { runtime: runtimeState, requestedAddress: runtimeState.address, titleHint: "Latest" }]]) as never;
     const runtime = createBrowserSessionRuntime({ workbenchState: bridge, entries, tombstones: new Map(),
-      hasActiveLiveAgentBrowserTask: () => false, hasUserInputDirtyTab: () => false, publishEvent: vi.fn(),
+      hasActiveLiveAgentBrowserTask: () => false, publishEvent: vi.fn(),
       readTopology: () => ({ activeTabId: "tab", pages: [{ tabId: "tab", address: runtimeState.address, isActive: true }] }),
       readLayoutSnapshot: () => EMPTY_WORKBENCH_BROWSER_LAYOUT_SNAPSHOT, liveElectronSession: () => ({ getStoragePath: () => null }) as never });
     runtime.scheduleBrowserSessionSnapshotWrite(120);

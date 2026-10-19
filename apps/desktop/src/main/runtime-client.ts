@@ -131,23 +131,12 @@ const resolveSocketPath = (storageRoot: string, hostRole?: string): string => {
 const resolveRuntimeBinaryName = (): string =>
   process.platform === "win32" ? "lyrad.exe" : "lyrad";
 
-const resolvePerformanceHelperBinaryName = (): string =>
-  process.platform === "win32" ? "lyra-performance-helper.exe" : "lyra-performance-helper";
-
 export const resolveRuntimeBinaryCandidates = (cwd: string): readonly string[] =>
   resolveNativeResourceCandidates({
     cwd,
     moduleDir: __dirname,
     envVar: "LYRA_RUNTIME_BIN",
     fileNames: [resolveRuntimeBinaryName()],
-  });
-
-export const resolvePerformanceHelperBinaryCandidates = (cwd: string): readonly string[] =>
-  resolveNativeResourceCandidates({
-    cwd,
-    moduleDir: __dirname,
-    envVar: "LYRA_PERFORMANCE_HELPER_BIN",
-    fileNames: [resolvePerformanceHelperBinaryName()],
   });
 
 const resolveRuntimeBinaryPath = (): string => {
@@ -162,23 +151,6 @@ const resolveRuntimeBinaryPath = (): string => {
 
 const resolveRuntimeWorkingDirectory = (): string => {
   return os.homedir();
-};
-
-const resolvePerformanceHelperEnv = (
-  baseEnv: NodeJS.ProcessEnv,
-  cwd: string
-): Partial<NodeJS.ProcessEnv> => {
-  if (
-    typeof baseEnv.LYRA_PERFORMANCE_HELPER_SOCKET === "string"
-    || typeof baseEnv.LYRA_PERFORMANCE_HELPER_TCP === "string"
-    || typeof baseEnv.LYRA_PERFORMANCE_HELPER_BIN === "string"
-  ) {
-    return {};
-  }
-  const helperPath = resolvePerformanceHelperBinaryCandidates(cwd).find((candidate) =>
-    fs.existsSync(candidate)
-  );
-  return helperPath === undefined ? {} : { LYRA_PERFORMANCE_HELPER_BIN: helperPath };
 };
 
 const toError = (error: RuntimeError | undefined, fallback: string): Error =>
@@ -325,7 +297,6 @@ const buildRuntimeDaemonEnv = (
   delete inheritedEnv.ELECTRON_RENDERER_URL;
   return {
     ...inheritedEnv,
-    ...resolvePerformanceHelperEnv(baseEnv, cwd),
     ELECTRON_RUN_AS_NODE: "",
     LYRA_AGENT_HOME: options.agentStorageRoot,
     LYRA_AGENT_RUNTIME_DIR: resolveAgentRuntimeDir(options.agentStorageRoot),
@@ -1008,7 +979,6 @@ export const createLyraRuntimeClient = (
 
 export const runtimeClientInternalsForTests = {
   buildRuntimeDaemonEnv,
-  resolvePerformanceHelperEnv,
   resolveLyraDesignNodePathEntries,
   resolveLyraDesignPlaywrightBrowsersPath,
   resolveAgentRuntimeDir,

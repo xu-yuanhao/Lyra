@@ -328,15 +328,6 @@ export type {
   DownloadManagerUpdateSettingsRequest
 } from "./download-manager";
 export type {
-  LyraPerformanceActivitySignals,
-  LyraPerformanceDecisionKind,
-  LyraPerformanceIsolationFlags,
-  LyraPerformanceKernelEvent,
-  LyraPerformanceResourceDescriptor,
-  LyraPerformanceResourceKind,
-  LyraPerformanceResourceLifecycle
-} from "./performance-kernel";
-export type {
   BrowserActiveElementRef,
   BrowserElementBounds,
   BrowserFormDraftFieldMetadata,

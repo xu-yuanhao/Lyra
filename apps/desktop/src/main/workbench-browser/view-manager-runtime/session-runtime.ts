@@ -11,7 +11,6 @@ import type {
   WorkbenchBrowserRecoveryFailure,
   WorkbenchBrowserTopologySnapshot
 } from "../../../shared/desktop-bridge";
-import type { LyraPerformanceResourceDescriptor } from "../../../shared/performance-kernel";
 import {
   WORKBENCH_BROWSER_LIVE_PROFILE_PARTITION,
   WORKBENCH_BROWSER_SESSION_SNAPSHOT_SCHEMA_VERSION,
@@ -19,7 +18,6 @@ import {
   sanitizeBrowserPageRestoreState,
   sanitizeBrowserSessionSnapshot
 } from "../../../shared/workbench-browser";
-import type { LyraPerformanceResourceScheduler } from "../../performance";
 import type { WorkbenchBrowserPublishEvent } from "../types";
 import {
   BROWSER_SESSION_SNAPSHOT_WRITE_DELAY_MS,
@@ -28,7 +26,6 @@ import {
   normalizeAddress,
   normalizeString,
   normalizeWebOrigin,
-  resolveBrowserCoreKey,
   runtimeStateEquals
 } from "./normalizers";
 import type { BrowserPageEntry, BrowserPageTombstone } from "./types";
@@ -38,9 +35,7 @@ export const createBrowserSessionRuntime = ({
   entries,
   tombstones,
   hasActiveLiveAgentBrowserTask,
-  hasUserInputDirtyTab,
   publishEvent,
-  performanceScheduler,
   readTopology,
   readLayoutSnapshot,
   liveElectronSession
@@ -52,9 +47,7 @@ export const createBrowserSessionRuntime = ({
   readonly entries: Map<string, BrowserPageEntry>;
   readonly tombstones: Map<string, BrowserPageTombstone>;
   readonly hasActiveLiveAgentBrowserTask: (tabId: string) => boolean;
-  readonly hasUserInputDirtyTab: (tabId: string) => boolean;
   readonly publishEvent: WorkbenchBrowserPublishEvent;
-  readonly performanceScheduler?: LyraPerformanceResourceScheduler | undefined;
   readonly readTopology: () => WorkbenchBrowserTopologySnapshot;
   readonly readLayoutSnapshot: () => WorkbenchBrowserLayoutSnapshot;
   readonly liveElectronSession: () => Session;
@@ -294,87 +287,6 @@ const scheduleBrowserSessionSnapshotWrite = (delayMs = BROWSER_SESSION_SNAPSHOT_
   }, Math.max(0, delayMs));
 };
 
-const toPerformanceLifecycle = (
-  lifecycle: WorkbenchBrowserPageRuntimeState["lifecycleState"]
-): LyraPerformanceResourceDescriptor["lifecycle"] => {
-  switch (lifecycle) {
-    case "foreground":
-      return "foreground";
-    case "visible":
-      return "visible";
-    case "hot-hidden":
-      return "hotHidden";
-    case "tombstoned":
-      return "tombstoned";
-    case "restoring":
-      return "restoring";
-    default:
-      return "hotHidden";
-  }
-};
-
-const readWebContentsProcessId = (entry: BrowserPageEntry | undefined): number | undefined => {
-  if (entry === undefined || entry.webContents.isDestroyed()) {
-    return undefined;
-  }
-  try {
-    const processId = entry.webContents.getOSProcessId();
-    return Number.isFinite(processId) && processId > 0 ? processId : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-const toPerformanceBrowserResource = (
-  runtime: WorkbenchBrowserPageRuntimeState,
-  entry?: BrowserPageEntry
-): LyraPerformanceResourceDescriptor => {
-  const formDraft = runtime.restoreState?.formDraft;
-  const storage = runtime.restoreState?.storage;
-  const historyEntryCount = runtime.restoreState?.history?.entries.length ?? 0;
-  const processId = readWebContentsProcessId(entry);
-  const webContentsId =
-    entry === undefined || entry.webContents.isDestroyed()
-      ? undefined
-      : entry.webContents.id;
-  return {
-    resourceId: `browserPage:${runtime.tabId}`,
-    kind: "browserPage",
-    coreKey: runtime.coreKey ?? resolveBrowserCoreKey(runtime.address),
-    stateKey: runtime.stateKey ?? `web-state:${runtime.tabId}`,
-    lifecycle: toPerformanceLifecycle(runtime.lifecycleState),
-    visible: runtime.isVisible,
-    active: runtime.isActive,
-    signals: {
-      hasUserInput: hasUserInputDirtyTab(runtime.tabId),
-      hasFormDraft: (formDraft?.editedFieldCount ?? 0) > 0,
-      hasAgentControl: hasActiveLiveAgentBrowserTask(runtime.tabId),
-      hasDivergentHistory: historyEntryCount > 1,
-      isLoading: runtime.isLoading,
-      isFullscreen: runtime.isHtmlFullscreen,
-      unknown: runtime.recoveryFailure !== undefined
-    },
-    isolation: {
-      containsSensitiveInput: (formDraft?.passwordFieldCount ?? 0) > 0,
-      authenticatedSession: (storage?.cookieCount ?? 0) > 0,
-      crossOriginState: storage?.localStorage === "available"
-        || storage?.indexedDB === "available"
-        || storage?.sessionStorage === "available"
-    },
-    ...(processId === undefined ? {} : { processId }),
-    ...(webContentsId === undefined ? {} : { webContentsId }),
-    sharedSignature: runtime.address,
-    updatedAt: runtime.updatedAt
-  };
-};
-
-const syncPerformanceRuntimeState = (
-  runtime: WorkbenchBrowserPageRuntimeState,
-  entry?: BrowserPageEntry
-): void => {
-  performanceScheduler?.updateResource(toPerformanceBrowserResource(runtime, entry));
-};
-
 const updateRuntimeState = (
   entry: BrowserPageEntry,
   patch: Partial<WorkbenchBrowserPageRuntimeState>
@@ -391,7 +303,6 @@ const updateRuntimeState = (
     return;
   }
   entry.runtime = nextRuntime;
-  syncPerformanceRuntimeState(nextRuntime, entry);
   publishEvent({
     kind: "page-runtime-state",
     page: nextRuntime
@@ -400,7 +311,6 @@ const updateRuntimeState = (
 };
 
 const publishRuntimeState = (runtime: WorkbenchBrowserPageRuntimeState): void => {
-  syncPerformanceRuntimeState(runtime);
   publishEvent({
     kind: "page-runtime-state",
     page: runtime
@@ -530,7 +440,6 @@ const readPageStorageAvailability = async (
     readPageStorageAvailability,
     scheduleBrowserSessionSnapshotWrite,
     sessionStoragePath,
-    syncPerformanceRuntimeState,
     updateRuntimeState
   };
 };

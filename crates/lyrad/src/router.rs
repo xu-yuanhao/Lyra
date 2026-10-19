@@ -10,9 +10,6 @@ use lyra_download_core::{
     set_download_priority_json, update_download_settings_json,
 };
 use lyra_files_core::json::{handle_files_json, FILES_METHODS};
-use lyra_performance_core::{
-    handle_performance_request as handle_performance_core_request, PerformanceKernelError,
-};
 use lyra_runtime_protocol::{
     is_known_runtime_family, RuntimeError, RuntimeHelloV2Request, RuntimeHelloV2Response,
     DAEMON_CAPABILITIES, HANDSHAKE_METHOD, HOST_API_VERSION, PROTOCOL_MAX_VERSION,
@@ -52,7 +49,6 @@ pub(crate) fn role_allows(role: &str, method: &str) -> bool {
             method.starts_with("search.")
                 || method.starts_with("lsp.")
                 || method.starts_with("download.")
-                || method.starts_with("performance.")
         }
         _ => false,
     }
@@ -64,10 +60,6 @@ pub(crate) fn runtime_error(code: &str, message: impl Into<String>) -> RuntimeEr
 
 fn map_runtime_error(error: impl std::fmt::Display) -> RuntimeError {
     runtime_error("RUNTIME_ERROR", error.to_string())
-}
-
-fn map_performance_error(error: PerformanceKernelError) -> RuntimeError {
-    runtime_error(error.code(), error.to_string())
 }
 
 fn json_request(payload: Value) -> Result<String, RuntimeError> {
@@ -267,9 +259,6 @@ pub(crate) fn handle_runtime_request(method: &str, payload: Value) -> Result<Val
         method if method.starts_with("download.") => handle_download_request(method, payload),
         method if method.starts_with("files.") => handle_files_request(method, payload),
         method if method.starts_with("agent.") => handle_agent_request(method, payload),
-        method if method.starts_with("performance.") => {
-            handle_performance_core_request(method, payload).map_err(map_performance_error)
-        }
         other => Err(runtime_error(
             "METHOD_NOT_FOUND",
             format!("unknown runtime method: {other}"),

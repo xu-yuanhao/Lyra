@@ -4295,18 +4295,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lyra-performance-core"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "libc",
- "serde",
- "serde_json",
- "sysinfo",
- "windows-sys 0.61.2",
-]
-
-[[package]]
 name = "lyra-process-lifecycle-core"
 version = "0.1.0"
 dependencies = [
@@ -4395,7 +4383,6 @@ dependencies = [
  "lyra-download-core",
  "lyra-files-core",
  "lyra-lsp-core",
- "lyra-performance-core",
  "lyra-process-lifecycle-core",
  "lyra-runtime-protocol",
  "lyra-terminal-core",

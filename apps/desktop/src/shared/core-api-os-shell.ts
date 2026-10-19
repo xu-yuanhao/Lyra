@@ -19,8 +19,7 @@ export const LYRA_CORE_API_DAEMON_METHOD_PREFIXES = [
 export const LYRA_DAEMON_EXTRA_METHOD_PREFIXES = [
   "runtime.",
   "files.",
-  "scheduler.",
-  "performance."
+  "scheduler."
 ] as const;
 
 export const LYRA_DAEMON_METHOD_PREFIXES = [

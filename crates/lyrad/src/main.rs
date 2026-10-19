@@ -58,10 +58,6 @@ use lyra_lsp_core::{
     register_rust_event_callback as register_lsp_event_callback, shutdown as shutdown_lsp,
 };
 #[cfg(any(unix, windows))]
-use lyra_performance_core::{
-    clear_performance_event_callback, register_performance_event_callback,
-};
-#[cfg(any(unix, windows))]
 use lyra_runtime_protocol::{
     RuntimeConnectionRole, RuntimeEnvelope, RuntimeError, RuntimeHelloV2Request, HANDSHAKE_METHOD,
     PRIMARY_HOST_EXISTS_CODE,
@@ -81,10 +77,7 @@ use tokio::net::windows::named_pipe::{NamedPipeServer, ServerOptions};
 #[cfg(unix)]
 use tokio::net::{UnixListener, UnixStream};
 #[cfg(any(unix, windows))]
-use tokio::sync::{
-    mpsc::{channel, error::TrySendError, Receiver, Sender},
-    OwnedSemaphorePermit, Semaphore,
-};
+use tokio::sync::mpsc::{channel, error::TrySendError, Receiver, Sender};
 #[cfg(windows)]
 use windows_sys::Win32::{
     Foundation::{CloseHandle, GetLastError, LocalFree, HANDLE},
@@ -109,8 +102,6 @@ const DOWNLOAD_RUNTIME_EVENT_NAME: &str = "download.runtime";
 #[cfg(any(unix, windows))]
 const AGENT_RUNTIME_EVENT_NAME: &str = "agent.runtime";
 #[cfg(any(unix, windows))]
-const PERFORMANCE_RUNTIME_EVENT_NAME: &str = "performance.kernel";
-#[cfg(any(unix, windows))]
 const DEFAULT_HOST_CAPABILITY_TIMEOUT: Duration = Duration::from_secs(30);
 #[cfg(any(unix, windows))]
 const MAX_HOST_CAPABILITY_TIMEOUT: Duration = Duration::from_secs(120);
@@ -118,8 +109,6 @@ const MAX_HOST_CAPABILITY_TIMEOUT: Duration = Duration::from_secs(120);
 const HOST_CAPABILITY_TIMEOUT_GRACE: Duration = Duration::from_secs(5);
 #[cfg(any(unix, windows))]
 const MAX_RUNTIME_FRAME_BYTES: usize = 8 * 1024 * 1024;
-#[cfg(any(unix, windows))]
-const MAX_PENDING_PERFORMANCE_REQUESTS: usize = 32;
 #[cfg(any(unix, windows))]
 const OUTGOING_QUEUE_CAPACITY: usize = 1_024;
 
@@ -223,60 +212,12 @@ fn run() {
 #[derive(Clone)]
 struct ConnectionContext {
     outgoing: Sender<RuntimeEnvelope>,
-    performance_requests: PerformanceRequestGate,
-}
-
-#[cfg(any(unix, windows))]
-#[derive(Clone)]
-struct PerformanceRequestGate {
-    pending: Arc<Semaphore>,
-    executing: Arc<Semaphore>,
-}
-
-#[cfg(any(unix, windows))]
-struct PerformanceRequestPermit {
-    _pending: OwnedSemaphorePermit,
-    _executing: OwnedSemaphorePermit,
-}
-
-#[cfg(any(unix, windows))]
-impl PerformanceRequestGate {
-    fn new(max_pending: usize) -> Self {
-        Self {
-            pending: Arc::new(Semaphore::new(max_pending)),
-            executing: Arc::new(Semaphore::new(1)),
-        }
-    }
-
-    async fn enter(&self) -> Result<PerformanceRequestPermit, RuntimeError> {
-        let pending = self.pending.clone().try_acquire_owned().map_err(|_| {
-            router::runtime_error(
-                "RUNTIME_BUSY",
-                "performance request queue is full; retry after pending updates settle",
-            )
-        })?;
-        let executing = self.executing.clone().acquire_owned().await.map_err(|_| {
-            router::runtime_error("RUNTIME_UNAVAILABLE", "performance request queue is closed")
-        })?;
-        Ok(PerformanceRequestPermit {
-            _pending: pending,
-            _executing: executing,
-        })
-    }
-}
-
-#[cfg(any(unix, windows))]
-impl Default for PerformanceRequestGate {
-    fn default() -> Self {
-        Self::new(MAX_PENDING_PERFORMANCE_REQUESTS)
-    }
 }
 
 #[cfg(any(unix, windows))]
 #[derive(Clone)]
 struct DaemonSessionManager {
     inner: Arc<DaemonSessionManagerInner>,
-    performance_requests: PerformanceRequestGate,
 }
 
 #[cfg(any(unix, windows))]
@@ -299,7 +240,6 @@ impl Default for DaemonSessionManager {
     fn default() -> Self {
         Self {
             inner: Arc::new(DaemonSessionManagerInner::default()),
-            performance_requests: PerformanceRequestGate::default(),
         }
     }
 }
@@ -521,9 +461,6 @@ fn is_replaceable_runtime_envelope(envelope: &RuntimeEnvelope) -> bool {
     let RuntimeEnvelope::Event { event, payload } = envelope else {
         return false;
     };
-    if event == PERFORMANCE_RUNTIME_EVENT_NAME {
-        return true;
-    }
     // A delta is not a replaceable projection: dropping even one append event
     // corrupts the final text. Backpressure deltas until the downstream frame
     // coalescer can merge them; only a complete session snapshot may supersede
@@ -1122,15 +1059,6 @@ fn register_runtime_hooks(sessions: &DaemonSessionManager) {
                 })
                 .map_err(|error| error.message)
         }));
-
-        let performance_sessions = sessions.clone();
-        register_performance_event_callback(Arc::new(move |event_json| {
-            forward_json_event(
-                &performance_sessions,
-                PERFORMANCE_RUNTIME_EVENT_NAME,
-                &event_json,
-            );
-        }));
     }
 }
 
@@ -1144,7 +1072,6 @@ fn shutdown_runtime_modules() {
     clear_files_event_callback();
     clear_aria2_resource_lease_dispatcher();
     clear_agent_event_callback();
-    clear_performance_event_callback();
     clear_agent_host_capability_dispatcher();
 }
 
@@ -1183,18 +1110,6 @@ async fn handle_request_envelope(
             ))
         } else {
             Ok(lyra_agent_runtime::run_exec_tool(payload).await)
-        }
-    } else if method.starts_with("performance.") {
-        let method_for_blocking = method.clone();
-        let _permit = connection.performance_requests.enter().await;
-        match _permit {
-            Ok(_permit) => tokio::task::spawn_blocking(move || {
-                router::handle_runtime_request(&method_for_blocking, payload)
-            })
-            .await
-            .map_err(|error| router::runtime_error("TASK_JOIN_FAILED", error.to_string()))
-            .and_then(|result| result),
-            Err(error) => Err(error),
         }
     } else {
         let method_for_blocking = method.clone();
@@ -1288,7 +1203,6 @@ where
     let connection_id = sessions.register(outgoing.clone());
     let context = ConnectionContext {
         outgoing: outgoing.clone(),
-        performance_requests: sessions.performance_requests.clone(),
     };
 
     let writer_task = tokio::spawn(write_loop(writer, receiver));
@@ -1434,7 +1348,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::router::handle_runtime_request;
-    use crate::{parse_socket_argument, DaemonSessionManager, PerformanceRequestGate};
+    use crate::{parse_socket_argument, DaemonSessionManager};
     use lyra_runtime_protocol::{RuntimeConnectionRole, RuntimeEnvelope};
     use tokio::sync::mpsc::channel;
 
@@ -1522,22 +1436,6 @@ mod tests {
         assert!(super::is_replaceable_runtime_envelope(&agent_event(
             "sessionSnapshot"
         )));
-    }
-
-    #[test]
-    fn performance_request_gate_rejects_excess_waiters() {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .expect("runtime");
-        runtime.block_on(async {
-            let gate = PerformanceRequestGate::new(1);
-            let active = gate.enter().await.expect("first request admitted");
-            let error = gate.enter().await.err().expect("second request rejected");
-            assert_eq!(error.code, "RUNTIME_BUSY");
-            drop(active);
-            assert!(gate.enter().await.is_ok());
-        });
     }
 
     #[test]
@@ -1767,26 +1665,5 @@ mod tests {
         let error = handle_runtime_request("agent.unknown", serde_json::json!({}))
             .expect_err("unknown route should fail");
         assert_eq!(error.code, "METHOD_NOT_FOUND");
-    }
-
-    #[test]
-    fn performance_routes_are_registered() {
-        let status = handle_runtime_request("performance.status", serde_json::json!({}))
-            .expect("performance status");
-        assert_eq!(status["authorizationRequired"], true);
-
-        let registered = handle_runtime_request(
-            "performance.registerResource",
-            serde_json::json!({
-                "resourceId": "browserPage:route-test",
-                "kind": "browserPage",
-                "coreKey": "https://example.test",
-                "stateKey": "web-state:route-test",
-                "lifecycle": "hotHidden",
-                "sharedSignature": "https://example.test/home"
-            }),
-        )
-        .expect("performance register");
-        assert_eq!(registered["event"]["resourceId"], "browserPage:route-test");
     }
 }

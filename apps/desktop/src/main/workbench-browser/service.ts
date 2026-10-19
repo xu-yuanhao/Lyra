@@ -31,7 +31,6 @@ import type {
 import type { DownloadManagerIpcBridge } from "../download-manager";
 import type { AccessibilityNativeLoadResult } from "../accessibility";
 import type { LoginManagerIpcBridge } from "../login-manager";
-import type { LyraPerformanceResourceScheduler } from "../performance";
 import type { WorkbenchStateIpcBridge } from "../workbench-state";
 import type { WorkbenchObservationBrowserDomSummary } from "../workbench-observation/types";
 import type { BrowserContextMenuLabels } from "../../shared/browser-context-menu-labels";
@@ -385,7 +384,6 @@ export const createWorkbenchBrowserIpcBridge = ({
   loginManager,
   accessibilityNative,
   workbenchState,
-  performanceScheduler,
   deferLayoutSync,
   getActCacheEnabled,
   resolveBrowserContextMenuLabels,
@@ -396,7 +394,6 @@ export const createWorkbenchBrowserIpcBridge = ({
   readonly loginManager?: Pick<LoginManagerIpcBridge, "attachWebContents">;
   readonly accessibilityNative?: AccessibilityNativeLoadResult;
   readonly workbenchState?: Pick<WorkbenchStateIpcBridge, "readState" | "writeState">;
-  readonly performanceScheduler?: LyraPerformanceResourceScheduler;
   readonly deferLayoutSync?: (flush: () => void) => boolean;
   // ActCache toggle (mirrors browserFollowMode). Forwarded to the view manager
   // and on to the AX controller so it can replay cached axActOnNode results.
@@ -411,7 +408,6 @@ export const createWorkbenchBrowserIpcBridge = ({
     publishEvent: (event) => publishEvent(getWindow, event),
     ...(osAxAdapter === undefined ? {} : { osAxAdapter }),
     ...(workbenchState === undefined ? {} : { workbenchState }),
-    ...(performanceScheduler === undefined ? {} : { performanceScheduler }),
     ...(getActCacheEnabled === undefined ? {} : { getActCacheEnabled }),
     ...(resolveBrowserContextMenuLabels === undefined ? {} : { resolveBrowserContextMenuLabels }),
     ...(resolveNativeRecoveryLabels === undefined ? {} : { resolveNativeRecoveryLabels }),

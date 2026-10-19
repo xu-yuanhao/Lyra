@@ -309,7 +309,6 @@ const runtimeMethodsMarkdown = () => {
     "crates/lyrad/src/router.rs",
     "crates/lyrad/src/handlers.rs",
     "crates/lyra-files-core/src/json.rs",
-    "crates/lyra-performance-core/src/lib.rs",
     "crates/lyra-runtime-protocol/src/lib.rs",
   ];
   const methods = [...new Set(
