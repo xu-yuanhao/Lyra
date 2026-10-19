@@ -99,7 +99,15 @@ export const createBrowserSettingsSurfaceProps = (
     mcp: "MCP",
     back: "Import Settings",
     loading: "Working",
-    unavailable: "Unavailable"
+    unavailable: "Unavailable",
+    browsersDescription: "Copy the signed-in state of a browser profile.",
+    browserImport: "Import",
+    browserEmpty: "No browser profile with data to import was found.",
+    cookies: "cookies",
+    sites: "sites",
+    browserIssueKeyring: "the system keyring did not release the decryption key",
+    browserIssueAppBound: "this browser protects its cookies with app-bound encryption",
+    browserIssueGeneric: "some data could not be read"
   },
   notificationsCategoryLabel: "Notifications",
   loginManagerCategoryLabel: "Login Manager",

@@ -166,7 +166,15 @@ export const useWorkbenchLabels = (t: WorkbenchTranslator) =>
           mcp: t("settings.mcpCategoryLabel"),
           back: t("settings.importSettingsBack"),
           loading: t("settings.importSettingsLoading"),
-          unavailable: t("settings.importSettingsUnavailable")
+          unavailable: t("settings.importSettingsUnavailable"),
+          browsersDescription: t("settings.browserImportDescription"),
+          browserImport: t("settings.browserImportAction"),
+          browserEmpty: t("settings.browserImportEmpty"),
+          cookies: t("settings.browserImportCookies"),
+          sites: t("settings.browserImportSites"),
+          browserIssueKeyring: t("settings.browserImportIssueKeyring"),
+          browserIssueAppBound: t("settings.browserImportIssueAppBound"),
+          browserIssueGeneric: t("settings.browserImportIssueGeneric")
         },
         notificationsCategoryLabel: t("settings.notificationsCategoryLabel"),
         linuxCategoryLabel: t("settings.linuxCategoryLabel"),

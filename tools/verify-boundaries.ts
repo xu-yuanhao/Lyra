@@ -162,8 +162,13 @@ const forbiddenPatternRules: readonly ForbiddenPatternRule[] = [
   },
   {
     scopePrefix: "apps/desktop/src/modules/workbench/",
-    pattern: /\blocalStorage\b|\bsessionStorage\b/,
-    excludePathPattern: /\/tests\//,
+    // The ban is on reaching the browser's storage. A field read such as
+    // `result.localStorage` and an object key such as `localStorage: {...}`
+    // reach nothing, so they are ignored; bare globals and `window.localStorage`
+    // are still caught.
+    pattern:
+      /(?<![.\w$])(?:localStorage|sessionStorage)(?!\s*:)|(?:window|globalThis|self)\.(?:localStorage|sessionStorage)\b/,
+    excludePathPattern: /\/tests\/|\.test\.tsx?$/,
     message:
       "Workbench modules must not use browser storage directly. Use workbenchState bridge-backed storage adapters."
   },

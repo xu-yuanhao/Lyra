@@ -132,6 +132,9 @@ import type {
   LoginManagerApi
 } from "./login-manager";
 import type {
+  BrowserImportApi
+} from "./browser-import";
+import type {
   LyraSensitiveValueApi
 } from "./sensitive-value";
 import type { AgentApi } from "./agent";
@@ -484,6 +487,18 @@ export type {
   LoginManagerUpdateSessionRequest
 } from "./login-manager";
 export type {
+  BrowserImportApi,
+  BrowserImportBrowserId,
+  BrowserImportCookieStats,
+  BrowserImportFamily,
+  BrowserImportIssue,
+  BrowserImportLocalStorageStats,
+  BrowserImportProfile,
+  BrowserImportProfilesResponse,
+  BrowserImportResult,
+  BrowserImportRunRequest
+} from "./browser-import";
+export type {
   LyraSensitiveValueApi,
   LyraSensitiveStorageStatus,
   LyraSensitiveValueCapability,
@@ -633,6 +648,8 @@ export const LYRA_CHANNELS = {
   loginManagerFillCredential: "lyra:login-manager/fill-credential",
   loginManagerClearSite: "lyra:login-manager/clear-site",
   loginManagerEvent: "lyra:login-manager/event",
+  browserImportListProfiles: "lyra:browser-import/list-profiles",
+  browserImportRun: "lyra:browser-import/run",
   sensitiveValuesRevealToUser: "lyra:sensitive-values/reveal-to-user",
   sensitiveValuesStore: "lyra:sensitive-values/store",
   sensitiveValuesDelete: "lyra:sensitive-values/delete",
@@ -2464,6 +2481,7 @@ export type LyraDesktopApi = {
   readonly browserShell: BrowserShellApi;
   readonly browser: LyraBrowserRendererApi;
   readonly loginManager?: LoginManagerApi;
+  readonly browserImport?: BrowserImportApi;
   readonly sensitiveValues?: LyraSensitiveValueApi;
   readonly lsp: LspApi;
   readonly terminal: TerminalApi;

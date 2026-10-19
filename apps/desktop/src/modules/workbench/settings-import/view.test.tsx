@@ -9,7 +9,13 @@ const labels: SettingsImportLabels = {
   title: "Import Settings", description: "Sync settings",
   detect: "Detect", sync: "Sync",
   synced: "Synced", needsAttention: "Needs attention", noContent: "Nothing to sync",
-  skills: "Skills", mcp: "MCP", back: "Import Settings", loading: "Working", unavailable: "Unavailable"
+  skills: "Skills", mcp: "MCP", back: "Import Settings", loading: "Working", unavailable: "Unavailable",
+  browsersDescription: "Copy the signed-in state of a browser profile.",
+  browserImport: "Import", browserEmpty: "No browser profile with data to import was found.",
+  cookies: "cookies", sites: "sites",
+  browserIssueKeyring: "the system keyring did not release the decryption key",
+  browserIssueAppBound: "this browser protects its cookies with app-bound encryption",
+  browserIssueGeneric: "some data could not be read"
 };
 
 const createApi = () => {
@@ -46,9 +52,18 @@ describe("SettingsImportView", () => {
     const [detect] = detectButtons;
     expect(detect).toBeDefined();
     expect(detectButtons).toHaveLength(5);
+    for (const button of detectButtons) {
+      expect(button).toHaveClass("lyra-settings-ai-action");
+    }
+    const sourceRows = document.querySelectorAll(".lyra-settings-row-list > .lyra-settings-import-source");
+    expect(sourceRows).toHaveLength(5);
+    expect(document.querySelector(".lyra-settings-group-header")).toBeNull();
     for (const sourceId of ["claude", "cursor", "codex", "opencode", "zed"]) {
       expect(document.querySelector(`.lyra-settings-import-source-icon[src*="${sourceId}"]`))
         .toBeInTheDocument();
+    }
+    for (const configPath of ["/home/.claude", "/home/.cursor", "/home/.codex", "/home/.config/opencode", "/home/.config/zed"]) {
+      expect(screen.queryByText(configPath)).toBeNull();
     }
     expect(document.querySelector(".lyra-settings-import"))
       .toHaveClass("lyra-settings-import");
@@ -59,5 +74,75 @@ describe("SettingsImportView", () => {
     fireEvent.click(screen.getByText("Claude"));
     expect(screen.getByRole("switch", { name: "Skills" })).toBeChecked();
     expect(screen.getByRole("switch", { name: "MCP" })).toBeChecked();
+  });
+
+  test("lists every detected browser profile in the agent list and badges its account picture", async () => {
+    const run = vi.fn(async () => ({
+      profileId: "/home/.config/chromium/Default",
+      cookies: { imported: 412, skipped: 0, failed: 0 },
+      localStorage: { originsImported: 3, entriesImported: 9, originsSkipped: 0, originsFailed: 0 }
+    }));
+    const desktopApi = {
+      agent: createApi().agent,
+      browserImport: {
+        listProfiles: vi.fn(async () => ({
+          profiles: [
+            {
+              id: "/home/.config/chromium/Default", browser: "chromium", browserLabel: "Chromium",
+              family: "chromium", profileName: "Work", accountEmail: "work@example.com",
+              avatarDataUrl: "data:image/png;base64,iVBORw0KGgo=",
+              profilePath: "/home/.config/chromium/Default", isDefault: true, lastUsed: false
+            },
+            {
+              id: "/home/.config/chromium/Profile 2", browser: "chromium", browserLabel: "Chromium",
+              family: "chromium", profileName: "Pete", accountEmail: "pete@example.com",
+              profilePath: "/home/.config/chromium/Profile 2", isDefault: false, lastUsed: true
+            }
+          ]
+        })),
+        run
+      }
+    } as unknown as LyraDesktopApi;
+    render(<SettingsImportView desktopApi={desktopApi} labels={labels} />);
+
+    // The browser rows join the agent rows: one list, one divider rule, no section of their own.
+    expect(await screen.findByText("Chromium · Work")).toBeInTheDocument();
+    expect(screen.getByText("Chromium · Pete")).toBeInTheDocument();
+    expect(document.querySelectorAll(".lyra-settings-import-browser")).toHaveLength(2);
+    expect(document.querySelectorAll(".lyra-settings-row-list > .lyra-settings-import-source"))
+      .toHaveLength(7);
+    expect(document.querySelectorAll(".lyra-settings-group")).toHaveLength(1);
+    expect(document.querySelectorAll(".lyra-settings-group-header")).toHaveLength(0);
+
+    // The browser mark carries the row; the account shows as a corner badge instead of a line.
+    expect(document.querySelectorAll(".lyra-settings-import-browser .lyra-settings-import-source-icon[src*=\"chromium\"]"))
+      .toHaveLength(2);
+    expect(screen.queryByText("work@example.com")).toBeNull();
+    expect(screen.queryByText("pete@example.com")).toBeNull();
+    const avatars = document.querySelectorAll(".lyra-settings-import-browser .lyra-settings-import-source-avatar");
+    expect(avatars).toHaveLength(2);
+    expect(avatars[0]?.querySelector(".lyra-identity-icon-image"))
+      .toHaveAttribute("src", "data:image/png;base64,iVBORw0KGgo=");
+    // A profile whose browser cached no picture falls back to the account initial.
+    expect(avatars[1]?.querySelector(".lyra-identity-icon-image")).toBeNull();
+    expect(avatars[1]?.textContent).toBe("P");
+
+    fireEvent.click(screen.getAllByRole("button", { name: labels.browserImport })[0]!);
+    await waitFor(() =>
+      expect(run).toHaveBeenCalledWith({ profileId: "/home/.config/chromium/Default" })
+    );
+    expect(await screen.findByText("412 cookies · 3 sites")).toBeInTheDocument();
+  });
+
+  test("says so when no browser profile can be imported", async () => {
+    const desktopApi = {
+      agent: createApi().agent,
+      browserImport: { listProfiles: vi.fn(async () => ({ profiles: [] })), run: vi.fn() }
+    } as unknown as LyraDesktopApi;
+
+    render(<SettingsImportView desktopApi={desktopApi} labels={labels} />);
+
+    const empty = await screen.findByText(labels.browserEmpty);
+    expect(empty.closest(".lyra-settings-row-list")).not.toBeNull();
   });
 });

@@ -69,6 +69,7 @@ import {
   createLyraFileAccessController,
 } from "./security";
 import { createScreenshotPreviewIpcBridge } from "./screenshot-preview/service";
+import { createBrowserImportIpcBridge } from "./browser-import";
 import { resolveScreenshotPreviewStoreDir } from "./screenshot-preview/temp-image-store";
 import { createProductAnnouncementsIpcBridge } from "./product-announcements/service";
 import { createSystemNotificationsIpcBridge } from "./system-notifications/service";
@@ -194,6 +195,7 @@ let disposeLyraDockIconThemeSync: (() => void) | null = null;
 let disposeSystemNotificationsBridge: (() => void) | null = null;
 let disposeProductAnnouncementsBridge: (() => void) | null = null;
 let disposeScreenshotPreviewBridge: (() => void) | null = null;
+let disposeBrowserImportBridge: (() => void) | null = null;
 let disposeWorkspaceSurfacePerformanceSync: (() => void) | null = null;
 let disposeAutoUpdateService: (() => void) | null = null;
 let workbenchAppQuitting = false;
@@ -1351,6 +1353,8 @@ const registerIpcHandlers = async (): Promise<void> => {
     getWindow: () => mainWindow
   });
   disposeScreenshotPreviewBridge = screenshotPreviewBridge.dispose;
+  const browserImportBridge = createBrowserImportIpcBridge();
+  disposeBrowserImportBridge = browserImportBridge.dispose;
   const powerSaveBlockerController = createPowerSaveBlockerController();
   powerSaveBlockerController.setEnabled(
     readPreventSleepEnabledPreference(workbenchStateBridge.readState("preferences"))
@@ -1681,6 +1685,10 @@ app.on("before-quit", () => {
   if (disposeScreenshotPreviewBridge !== null) {
     disposeScreenshotPreviewBridge();
     disposeScreenshotPreviewBridge = null;
+  }
+  if (disposeBrowserImportBridge !== null) {
+    disposeBrowserImportBridge();
+    disposeBrowserImportBridge = null;
   }
   if (disposeSystemNotificationsBridge !== null) {
     disposeSystemNotificationsBridge();

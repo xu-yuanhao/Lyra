@@ -760,11 +760,37 @@
   gap: var(--lyra-space-10);
 }
 
+.lyra-settings-import-source-icon-frame {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
 .lyra-settings-import-source-icon {
   width: var(--lyra-icon-size-20);
   height: var(--lyra-icon-size-20);
   flex: none;
   object-fit: contain;
+}
+
+/* Account picture of the profile, sitting on the browser mark's bottom-right corner. */
+.lyra-settings-import-source-icon-frame .lyra-settings-import-source-avatar {
+  position: absolute;
+  right: calc(-1 * var(--lyra-space-2));
+  bottom: calc(-1 * var(--lyra-space-2));
+  width: var(--lyra-icon-size-14);
+  height: var(--lyra-icon-size-14);
+  border: var(--lyra-stroke-thin) solid var(--lyra-settings-card-bg);
+  border-radius: var(--lyra-radius-pill);
+  background: var(--lyra-settings-card-bg);
+  color: var(--lyra-text-primary);
+  font-size: var(--lyra-text-size-10);
+  font-weight: 600;
+  line-height: var(--lyra-text-line-1);
+}
+
+.lyra-settings-import-source-avatar .lyra-identity-icon-image {
+  border-radius: inherit;
 }
 
 :root[data-lyra-theme-tone="dark"] .lyra-settings-import-source-icon[data-monochrome="true"] {

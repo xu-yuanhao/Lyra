@@ -222,6 +222,9 @@ import {
   type SoftwareCapabilitiesQueryRequest,
   type SoftwareCapabilitiesQueryResult,
   type InstalledUiuxPack,
+  type BrowserImportProfilesResponse,
+  type BrowserImportResult,
+  type BrowserImportRunRequest,
   type BrowserShellEvent,
   type LyraBrowserEvent,
   type WorkbenchBrowserEvent,
@@ -1189,6 +1192,17 @@ const createLyraDesktopApi = (): LyraDesktopApi => ({
         loginManagerEventListeners.delete(listener);
       };
     }
+  },
+  browserImport: {
+    listProfiles: () =>
+      ipcRenderer.invoke(
+        LYRA_CHANNELS.browserImportListProfiles
+      ) as Promise<BrowserImportProfilesResponse>,
+    run: (request: BrowserImportRunRequest) =>
+      ipcRenderer.invoke(
+        LYRA_CHANNELS.browserImportRun,
+        request
+      ) as Promise<BrowserImportResult>
   },
   sensitiveValues: {
     readStatus: () => ipcRenderer.invoke(LYRA_CHANNELS.sensitiveValuesReadStatus) as Promise<LyraSensitiveStorageStatus>,
