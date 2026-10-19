@@ -280,6 +280,10 @@ const PROVIDER_ROUTE_ALIASES: readonly {
     values: ["atria", "atria asi", "dawn", "internlm", "书生"],
   },
   {
+    match: (route) => route.providerId === "intern",
+    values: ["intern", "internlm", "inkstone", "tokenplan", "书生", "书生端砚", "端砚", "墨点"],
+  },
+  {
     match: (route) => route.providerId === "poolside" || route.label.toLocaleLowerCase().includes("poolside") || route.label.toLocaleLowerCase().includes("laguna"),
     values: ["poolside", "laguna", "laguna s"],
   },
@@ -1598,20 +1602,28 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
       ?? ""
     );
     setProviderApiKey("");
+  }, [
+    hasSelectedProviderRoute,
+    selectedProviderConfig?.baseUrl,
+    selectedProviderProfile?.baseUrl,
+    selectedProviderRouteDefaultBaseUrl,
+    routeAdjustment,
+  ]);
+
+  // ponytail: 只按服务商选择重置发现态。上面的 effect 依赖 profile/baseUrl，
+  // Discover 保存后 refreshAgent 会让这些依赖变化，若在其中重置就会把刚发现的
+  // 模型清空（表现为首次 Discover 闪一下消失，需要再点一次）。
+  useEffect(() => {
+    if (selectedProviderRouteId.length === 0) {
+      return;
+    }
     setDiscoveredModelIds([]);
     setIsAddingCustomModel(false);
     setCustomModelId("");
     setDisabledDiscoveredModelIds(new Set());
     setIsDiscoveringModels(false);
     setDiscoveryReturnedEmpty(false);
-  }, [
-    hasSelectedProviderRoute,
-    selectedProviderConfig?.baseUrl,
-    selectedProviderProfile?.baseUrl,
-    selectedProviderRouteDefaultBaseUrl,
-    selectedProviderRouteId,
-    routeAdjustment,
-  ]);
+  }, [selectedProviderRouteId]);
 
   const setModelEnabled = (entry: SettingsAiRenderedModelEntry, enabled: boolean): void => {
     const provider = modelProviderKeys(entry)[0] ?? "";

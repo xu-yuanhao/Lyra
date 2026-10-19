@@ -1005,6 +1005,112 @@ describe("Settings AI views", () => {
     });
   });
 
+  test("keeps discovered models when the saved profile reloads into the catalog", async () => {
+    const baseModel = createModel();
+    const discoveredCatalog = {
+      ...baseModel.agentModelCatalog!,
+      models: [
+        ...baseModel.agentModelCatalog!.models,
+        {
+          id: "openai:gpt-5.1",
+          label: "gpt-5.1",
+          model: "gpt-5.1",
+          provider: "openai",
+          providerId: "openai",
+          providerKey: "openai",
+          providerLabel: "OpenAI",
+          apiMethod: "chatCompletions",
+          detail: "OpenAI",
+          contextWindow: null,
+          supportsImageInput: true,
+          supportsToolCalling: true,
+          available: true,
+          enabled: true,
+        },
+      ],
+    };
+    const saveAndDiscoverAgentProviderProfile = vi.fn(async () => discoveredCatalog);
+    const model = createModel({ saveAndDiscoverAgentProviderProfile });
+
+    const { rerender } = render(
+      <SettingsAiModelsView labels={labels} model={model} openDialog={vi.fn()} />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Add Model/ }));
+    fireEvent.change(screen.getByLabelText("Select provider"), {
+      target: { value: "opena" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^OpenAI\b/u }));
+    fireEvent.change(screen.getByLabelText("API key"), {
+      target: { value: "sk-openai" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Discover Models/ }));
+
+    expect(await screen.findByText("gpt-5.1")).toBeInTheDocument();
+
+    // The service awaits refreshAgent() after discovery, so the freshly saved
+    // profile arrives through props a moment later.
+    const reloadedConfig = baseModel.agentConfig!.config as {
+      readonly providers?: Record<string, unknown>;
+    };
+    await act(async () => {
+      rerender(
+        <SettingsAiModelsView
+          labels={labels}
+          model={{
+            ...model,
+            agentConfig: {
+              ...baseModel.agentConfig!,
+              config: {
+                ...reloadedConfig,
+                providers: {
+                  ...reloadedConfig.providers,
+                  openai: {
+                    label: "OpenAI",
+                    routeId: "openai",
+                    protocolId: "openai_chat_completions",
+                    protocolFamily: "openai-compatible",
+                    baseUrl: "https://api.openai.com/v1",
+                    authHeader: null,
+                    defaultModel: "gpt-5.1",
+                    models: [{ id: "gpt-5.1" }],
+                  },
+                },
+              },
+            },
+            agentProviderCatalog: {
+              ...baseModel.agentProviderCatalog!,
+              profiles: [
+                ...baseModel.profiles,
+                {
+                  id: "openai",
+                  label: "OpenAI",
+                  routeId: "openai",
+                  protocolId: "openai_chat_completions",
+                  protocolFamily: "openai-compatible",
+                  baseUrl: "https://api.openai.com/v1",
+                  defaultModel: "gpt-5.1",
+                  configured: true,
+                  authHeader: null,
+                  modelCount: 1,
+                  capabilities: {
+                    supportsImageInput: true,
+                    supportsToolCalling: true,
+                    supportsStreaming: true,
+                  },
+                },
+              ],
+            },
+          }}
+          openDialog={vi.fn()}
+        />
+      );
+    });
+
+    expect(screen.getByText("gpt-5.1")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "gpt-5.1" })).toBeChecked();
+  });
+
   test("searches providers with Chinese aliases and cancels from the Add Model button", () => {
     const baseModel = createModel();
     const ollamaRoute = {
