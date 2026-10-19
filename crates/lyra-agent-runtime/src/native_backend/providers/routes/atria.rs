@@ -1,34 +1,68 @@
 use crate::{
-    AgentRuntimeError, AgentRuntimeResult,
-    native_backend::{
-        NativeProviderModel, NativeProviderProfile, ReasoningReplayField,
-        providers::protocol::openai_common::{self, ModelDiscoveryScope},
-    },
+    AgentRuntimeResult,
+    native_backend::{NativeProviderModel, NativeProviderProfile},
 };
 
 use super::{
     super::{protocol, types::ProviderRouteDescriptor},
-    RouteModelDiscoveryHook,
+    RouteModelDiscoveryHook, hosted_openai,
 };
 
 pub(crate) const ROUTE_ID: &str = "atria";
+pub(crate) const ANTHROPIC_ROUTE_ID: &str = "atria_anthropic";
 pub(crate) const DEFAULT_BASE_URL: &str = "https://api.atria-asi.ai/v1";
-pub(crate) const DEFAULT_MODEL: &str = "Atria-Dawn-Preview";
-const CONTEXT_WINDOW: usize = 256_000;
+
+const ENDPOINTS: hosted_openai::SharedModelListEndpoints =
+    hosted_openai::SharedModelListEndpoints {
+        openai_route_id: ROUTE_ID,
+        openai_base_url: DEFAULT_BASE_URL,
+        anthropic_route_id: ANTHROPIC_ROUTE_ID,
+    };
 
 static MODEL_DISCOVERY_HOOK: AtriaModelDiscoveryHook = AtriaModelDiscoveryHook;
 
-pub(crate) fn descriptor() -> ProviderRouteDescriptor {
+pub(crate) fn route_descriptors() -> Vec<ProviderRouteDescriptor> {
+    [ROUTE_ID, ANTHROPIC_ROUTE_ID]
+        .into_iter()
+        .map(descriptor_for)
+        .collect()
+}
+
+pub(crate) fn model_discovery_hook() -> &'static dyn RouteModelDiscoveryHook {
+    &MODEL_DISCOVERY_HOOK
+}
+
+fn descriptor_for(route_id: &str) -> ProviderRouteDescriptor {
+    let (label, description, protocol_id, protocol_family, api_method, auth_kind) = match route_id {
+        ROUTE_ID => (
+            "Atria ASI",
+            "Atria Dawn OpenAI-compatible endpoint.",
+            protocol::openai_chat_completions::PROTOCOL_ID,
+            protocol::openai_chat_completions::PROTOCOL_FAMILY,
+            "chatCompletions",
+            "bearer",
+        ),
+        ANTHROPIC_ROUTE_ID => (
+            "Atria ASI (Anthropic)",
+            "Atria Dawn Anthropic-compatible Messages endpoint.",
+            protocol::anthropic_messages::PROTOCOL_ID,
+            protocol::anthropic_messages::PROTOCOL_FAMILY,
+            "messages",
+            "x-api-key",
+        ),
+        _ => unreachable!("unsupported Atria route id"),
+    };
+
     ProviderRouteDescriptor {
-        id: ROUTE_ID.to_string(),
+        id: route_id.to_string(),
         provider_id: "atria".to_string(),
-        protocol_id: protocol::openai_chat_completions::PROTOCOL_ID.to_string(),
-        protocol_family: protocol::openai_chat_completions::PROTOCOL_FAMILY.to_string(),
-        label: "Atria ASI".to_string(),
-        description: "Atria Dawn Preview OpenAI-compatible endpoint.".to_string(),
+        protocol_id: protocol_id.to_string(),
+        protocol_family: protocol_family.to_string(),
+        label: label.to_string(),
+        description: description.to_string(),
         default_base_url: Some(DEFAULT_BASE_URL.to_string()),
-        api_method: "chatCompletions".to_string(),
-        auth_kind: "bearer".to_string(),
+        api_method: api_method.to_string(),
+        auth_kind: auth_kind.to_string(),
         runtime_supported: true,
         model_discovery_supported: true,
         custom_headers_supported: false,
@@ -39,80 +73,18 @@ pub(crate) fn descriptor() -> ProviderRouteDescriptor {
     }
 }
 
-pub(crate) fn model_discovery_hook() -> &'static dyn RouteModelDiscoveryHook {
-    &MODEL_DISCOVERY_HOOK
-}
-
-fn documented_model() -> NativeProviderModel {
-    NativeProviderModel {
-        id: DEFAULT_MODEL.to_string(),
-        label: Some("Atria Dawn Preview".to_string()),
-        context_window: Some(CONTEXT_WINDOW),
-        supports_image_input: false,
-        supports_tool_calling: true,
-        supports_streaming: true,
-        supports_reasoning_effort: None,
-        reasoning_replay_field: ReasoningReplayField::Auto,
-        requires_reasoning_field_on_assistant_messages: None,
-        supports_tool_choice: None,
-        enabled: true,
-        api_npm: None,
-    }
-}
-
-fn apply_documented_facts(mut model: NativeProviderModel) -> NativeProviderModel {
-    if model.id.eq_ignore_ascii_case(DEFAULT_MODEL) {
-        model.id = DEFAULT_MODEL.to_string();
-        if model
-            .label
-            .as_deref()
-            .map(str::trim)
-            .unwrap_or("")
-            .is_empty()
-        {
-            model.label = Some("Atria Dawn Preview".to_string());
-        }
-        model.context_window = Some(model.context_window.unwrap_or(CONTEXT_WINDOW));
-        model.supports_image_input = false;
-        model.supports_tool_calling = true;
-        model.supports_streaming = true;
-    }
-    model
-}
-
-fn merge_documented_catalog(models: Vec<NativeProviderModel>) -> Vec<NativeProviderModel> {
-    let mut models = models
-        .into_iter()
-        .map(apply_documented_facts)
-        .collect::<Vec<_>>();
-    if !models.iter().any(|model| model.id == DEFAULT_MODEL) {
-        models.push(documented_model());
-    }
-    models
-}
-
 struct AtriaModelDiscoveryHook;
 
 impl RouteModelDiscoveryHook for AtriaModelDiscoveryHook {
     fn descriptor(&self) -> ProviderRouteDescriptor {
-        descriptor()
+        descriptor_for(ROUTE_ID)
     }
 
     fn discover_models(
         &self,
         provider: &NativeProviderProfile,
     ) -> AgentRuntimeResult<Vec<NativeProviderModel>> {
-        let client = reqwest::blocking::Client::builder()
-            .timeout(std::time::Duration::from_secs(30))
-            .build()
-            .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
-        let discovered = openai_common::discover_models(
-            &client,
-            provider,
-            true,
-            ModelDiscoveryScope::CompatibleText,
-        )?;
-        Ok(merge_documented_catalog(discovered))
+        hosted_openai::discover_models_via_openai_endpoint(provider, ENDPOINTS)
     }
 }
 
@@ -120,40 +92,111 @@ impl RouteModelDiscoveryHook for AtriaModelDiscoveryHook {
 mod tests {
     use super::*;
 
-    #[test]
-    fn documented_model_keeps_api_id_and_text_only_window() {
-        let model = documented_model();
-        assert_eq!(model.id, "Atria-Dawn-Preview");
-        assert_eq!(model.context_window, Some(256_000));
-        assert!(!model.supports_image_input);
-        assert!(model.supports_tool_calling);
-        assert!(model.supports_streaming);
+    fn provider(route_id: &str, base_url: &str) -> NativeProviderProfile {
+        NativeProviderProfile {
+            id: "atria-test".to_string(),
+            label: "Atria Test".to_string(),
+            route_id: route_id.to_string(),
+            base_url: Some(base_url.to_string()),
+            default_model: None,
+            api_key_ref: None,
+            api_key: Some("atr-test".to_string()),
+            api_key_env: None,
+            auth_header: None,
+            embedding_model: None,
+            models: Vec::new(),
+        }
     }
 
     #[test]
-    fn merge_documented_catalog_restores_missing_and_canonical_id() {
-        let merged = merge_documented_catalog(vec![NativeProviderModel {
-            id: "atria-dawn-preview".to_string(),
-            label: None,
-            context_window: None,
-            supports_image_input: true,
-            supports_tool_calling: false,
-            supports_streaming: false,
-            supports_reasoning_effort: None,
-            reasoning_replay_field: ReasoningReplayField::Auto,
-            requires_reasoning_field_on_assistant_messages: None,
-            supports_tool_choice: None,
-            enabled: true,
-            api_npm: None,
-        }]);
-        assert_eq!(merged.len(), 1);
-        assert_eq!(merged[0].id, DEFAULT_MODEL);
-        assert!(!merged[0].supports_image_input);
-        assert!(merged[0].supports_tool_calling);
-        assert_eq!(merged[0].context_window, Some(CONTEXT_WINDOW));
+    fn routes_cover_chat_completions_and_messages_protocols() {
+        let routes = route_descriptors();
+        assert_eq!(routes.len(), 2);
 
-        let filled = merge_documented_catalog(Vec::new());
-        assert_eq!(filled.len(), 1);
-        assert_eq!(filled[0].id, DEFAULT_MODEL);
+        let openai_route = &routes[0];
+        assert_eq!(openai_route.id, ROUTE_ID);
+        assert_eq!(
+            openai_route.protocol_id,
+            protocol::openai_chat_completions::PROTOCOL_ID
+        );
+        assert_eq!(openai_route.api_method, "chatCompletions");
+        assert_eq!(openai_route.auth_kind, "bearer");
+
+        let anthropic_route = &routes[1];
+        assert_eq!(anthropic_route.id, ANTHROPIC_ROUTE_ID);
+        assert_eq!(
+            anthropic_route.protocol_id,
+            protocol::anthropic_messages::PROTOCOL_ID
+        );
+        assert_eq!(anthropic_route.api_method, "messages");
+        assert_eq!(anthropic_route.auth_kind, "x-api-key");
+        assert_eq!(
+            anthropic_route.default_base_url.as_deref(),
+            Some(DEFAULT_BASE_URL)
+        );
+    }
+
+    #[test]
+    fn discovery_returns_only_the_models_the_endpoint_lists() {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let base_url = format!("http://{}/v1", listener.local_addr().unwrap());
+        let server = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            stream
+                .set_read_timeout(Some(std::time::Duration::from_secs(2)))
+                .unwrap();
+            let mut bytes = [0; 4096];
+            let size = stream.read(&mut bytes).unwrap();
+            let request = String::from_utf8_lossy(&bytes[..size]).to_ascii_lowercase();
+            assert!(request.starts_with("get /v1/models http/1.1"), "{request}");
+            assert!(
+                request.contains("authorization: bearer atr-test"),
+                "{request}"
+            );
+            let body = r#"{"data":[{"id":"Atria-Dawn"}]}"#;
+            write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )
+            .unwrap();
+        });
+
+        let client = reqwest::blocking::Client::builder()
+            .timeout(std::time::Duration::from_secs(2))
+            .no_proxy()
+            .build()
+            .unwrap();
+        let discovered = hosted_openai::discover_models_via_openai_endpoint_with_client(
+            &client,
+            &provider(ROUTE_ID, &base_url),
+            ENDPOINTS,
+        )
+        .expect("discovery");
+        server.join().unwrap();
+
+        // A documented catalog must never invent a model the account cannot call.
+        assert_eq!(
+            discovered
+                .iter()
+                .map(|model| model.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["Atria-Dawn"]
+        );
+    }
+
+    #[test]
+    fn anthropic_route_discovers_through_the_openai_endpoint() {
+        let discovery = hosted_openai::openai_endpoint_discovery_profile(
+            &provider(ANTHROPIC_ROUTE_ID, "https://gateway.example/v1"),
+            ENDPOINTS,
+        );
+
+        assert_eq!(discovery.route_id, ROUTE_ID);
+        assert_eq!(discovery.base_url.as_deref(), Some(DEFAULT_BASE_URL));
+        assert_eq!(discovery.auth_header, None);
     }
 }

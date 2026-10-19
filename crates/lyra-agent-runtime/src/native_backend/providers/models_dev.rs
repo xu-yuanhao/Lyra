@@ -921,7 +921,8 @@ mod tests {
             "ollama-cloud": { "models": { "glm-5.3-flash": { "tool_call": true } } },
             "opencode": { "models": { "big-pickle": { "tool_call": true } } },
             "deepseek": { "models": { "deepseek-v4-flash": { "tool_call": true } } },
-            "amd": { "models": { "DeepSeek-V4-Flash": { "tool_call": true } } }
+            "amd": { "models": { "DeepSeek-V4-Flash": { "tool_call": true } } },
+            "volcengine-coding-plan": { "models": { "glm-5.3": { "tool_call": true } } }
         });
         assert!(parse_provider_catalog(&body, "google_gemini").contains_key("gemini-test"));
         assert!(parse_provider_catalog(&body, "aws_bedrock").contains_key("bedrock-test"));
@@ -941,6 +942,12 @@ mod tests {
             parse_provider_catalog(&body, "deepseek_anthropic").contains_key("deepseek-v4-flash")
         );
         assert!(parse_provider_catalog(&body, "amd").contains_key("deepseek-v4-flash"));
+        assert!(parse_provider_catalog(&body, "volcengine_coding_plan").contains_key("glm-5.3"));
+        assert!(
+            parse_provider_catalog(&body, "volcengine_coding_plan_anthropic")
+                .contains_key("glm-5.3"),
+            "the Anthropic coding-plan route must share the plan catalogue"
+        );
         assert!(
             parse_provider_catalog(&body, "llama_cpp_server").is_empty(),
             "local llama.cpp must not inherit Meta's llama catalog"

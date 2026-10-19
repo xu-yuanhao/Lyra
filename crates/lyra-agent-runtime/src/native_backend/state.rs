@@ -1269,11 +1269,50 @@ pub(crate) fn install_default_providers(config: &mut NativeConfig) {
                 .or_else(|| Some(providers::routes::atria::DEFAULT_BASE_URL.to_string())),
             default_model: env::var("ATRIA_MODEL")
                 .ok()
-                .filter(|value| !value.trim().is_empty())
-                .or_else(|| Some(providers::routes::atria::DEFAULT_MODEL.to_string())),
+                .filter(|value| !value.trim().is_empty()),
             api_key_ref: None,
             api_key: env::var("ATRIA_API_KEY").ok(),
             api_key_env: Some("ATRIA_API_KEY".to_string()),
+            auth_header: None,
+            embedding_model: Some("lyra-hash-embedding-v1".to_string()),
+            models: Vec::new(),
+        });
+    config
+        .providers
+        .entry("intern-token-plan".to_string())
+        .or_insert_with(|| NativeProviderProfile {
+            id: "intern-token-plan".to_string(),
+            label: "Intern TokenPlan".to_string(),
+            route_id: providers::routes::intern::ROUTE_ID.to_string(),
+            base_url: env::var("INTERN_TOKENPLAN_BASE_URL")
+                .ok()
+                .or_else(|| Some(providers::routes::intern::DEFAULT_BASE_URL.to_string())),
+            default_model: env::var("INTERN_TOKENPLAN_MODEL")
+                .ok()
+                .filter(|value| !value.trim().is_empty()),
+            api_key_ref: None,
+            api_key: env::var("TOKENPLAN_API_KEY").ok(),
+            api_key_env: Some("TOKENPLAN_API_KEY".to_string()),
+            auth_header: None,
+            embedding_model: Some("lyra-hash-embedding-v1".to_string()),
+            models: Vec::new(),
+        });
+    config
+        .providers
+        .entry("intern-token-plan-anthropic".to_string())
+        .or_insert_with(|| NativeProviderProfile {
+            id: "intern-token-plan-anthropic".to_string(),
+            label: "Intern TokenPlan (Anthropic)".to_string(),
+            route_id: providers::routes::intern::ANTHROPIC_ROUTE_ID.to_string(),
+            base_url: env::var("INTERN_TOKENPLAN_BASE_URL")
+                .ok()
+                .or_else(|| Some(providers::routes::intern::ANTHROPIC_BASE_URL.to_string())),
+            default_model: env::var("INTERN_TOKENPLAN_MODEL")
+                .ok()
+                .filter(|value| !value.trim().is_empty()),
+            api_key_ref: None,
+            api_key: env::var("TOKENPLAN_API_KEY").ok(),
+            api_key_env: Some("TOKENPLAN_API_KEY".to_string()),
             auth_header: None,
             embedding_model: Some("lyra-hash-embedding-v1".to_string()),
             models: Vec::new(),

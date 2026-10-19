@@ -143,6 +143,7 @@ export const PROVIDER_RECORDS: readonly ProviderRecord[] = [
   cloudAi("deepseek", "DeepSeek", null),
   cloudAi("zhipu-glm", "Zhipu AI / Z.ai (GLM)", null),
   cloudAi("moonshot", "Moonshot AI / Kimi", null),
+  cloudAi("volcengine-ark", "Volcengine Ark (Volcano Engine)", null),
   cloudAi(
     "nvidia-nim",
     "NVIDIA NIM",
@@ -155,6 +156,11 @@ export const PROVIDER_RECORDS: readonly ProviderRecord[] = [
   ),
   cloudAi("b-ai", "B.AI", "https://b.ai/privacy"),
   cloudAi("atria-asi", "Atria ASI", null),
+  cloudAi(
+    "intern-token-plan",
+    "Shanghai AI Laboratory (Intern InkStone TokenPlan)",
+    "https://www.shlab.org.cn/agreement/privacy"
+  ),
   cloudAi("poolside", "Poolside", "https://poolside.ai/privacy"),
   cloudAi(
     "xiaomi-mimo",

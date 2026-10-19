@@ -32,11 +32,13 @@ pub(crate) fn route_catalog() -> Vec<ProviderRouteDescriptor> {
     routes.extend(routes::deepseek::route_descriptors());
     routes.extend(routes::glm::route_descriptors());
     routes.extend(routes::moonshot::route_descriptors());
+    routes.extend(routes::volcengine::route_descriptors());
     routes.push(routes::nvidia::descriptor());
     routes.push(routes::amd::descriptor());
-    routes.push(routes::atria::descriptor());
+    routes.extend(routes::atria::route_descriptors());
     routes.push(routes::poolside::descriptor());
     routes.push(routes::bai::descriptor());
+    routes.extend(routes::intern::route_descriptors());
     routes.extend(routes::mimo::route_descriptors());
     routes.extend([
         routes::lmstudio::descriptor(),
@@ -106,7 +108,15 @@ pub(crate) fn route_model_discovery_hook(
         routes::deepseek::OPENAI_ROUTE_ID | routes::deepseek::ANTHROPIC_ROUTE_ID => {
             Some(routes::deepseek::model_discovery_hook())
         }
-        routes::atria::ROUTE_ID => Some(routes::atria::model_discovery_hook()),
+        routes::volcengine::OPENAI_ROUTE_ID | routes::volcengine::ANTHROPIC_ROUTE_ID => {
+            Some(routes::volcengine::model_discovery_hook())
+        }
+        routes::atria::ROUTE_ID | routes::atria::ANTHROPIC_ROUTE_ID => {
+            Some(routes::atria::model_discovery_hook())
+        }
+        routes::intern::ROUTE_ID | routes::intern::ANTHROPIC_ROUTE_ID => {
+            Some(routes::intern::model_discovery_hook())
+        }
         routes::poolside::ROUTE_ID => Some(routes::poolside::model_discovery_hook()),
         route_id if routes::subscription::is_subscription_route(route_id) => {
             Some(subscription_discovery())
@@ -151,9 +161,15 @@ pub(crate) fn route_id_for_login_provider(provider: &str) -> Option<&'static str
         "deepseek" => Some(routes::deepseek::OPENAI_ROUTE_ID),
         "glm" | "zhipu" | "zai" => Some(routes::glm::ROUTE_ID),
         "kimi" | "moonshot" => Some(routes::moonshot::ROUTE_ID),
+        "volcengine" | "volcengine_ark" | "ark" | "doubao" => {
+            Some(routes::volcengine::OPENAI_ROUTE_ID)
+        }
         "nvidia" | "nim" => Some(routes::nvidia::ROUTE_ID),
         "amd" | "radeon" => Some(routes::amd::ROUTE_ID),
         "atria" | "atria-asi" | "atria_asi" => Some(routes::atria::ROUTE_ID),
+        "intern" | "intern-token-plan" | "intern_token_plan" | "tokenplan" | "token-plan" => {
+            Some(routes::intern::ROUTE_ID)
+        }
         "poolside" | "laguna" => Some(routes::poolside::ROUTE_ID),
         "bai" | "b.ai" => Some(routes::bai::ROUTE_ID),
         "ollama_cloud" | "ollama-cloud" => Some(routes::ollama::CLOUD_ROUTE_ID),
@@ -314,6 +330,44 @@ mod tests {
         assert_eq!(anthropic_route.auth_kind, "x-api-key");
         assert!(anthropic_route.quick_setup_supported);
         assert!(anthropic_route.model_discovery_supported);
+    }
+
+    #[test]
+    fn volcengine_coding_plan_routes_use_plan_base_urls() {
+        let openai_route =
+            require_route(routes::volcengine::OPENAI_ROUTE_ID).expect("volcengine coding route");
+        assert_eq!(
+            openai_route.protocol_id,
+            protocol::openai_chat_completions::PROTOCOL_ID
+        );
+        assert_eq!(
+            openai_route.default_base_url.as_deref(),
+            Some(routes::volcengine::OPENAI_BASE_URL)
+        );
+        assert_eq!(openai_route.auth_kind, "bearer");
+        assert!(openai_route.quick_setup_supported);
+        assert!(openai_route.model_discovery_supported);
+
+        let anthropic_route = require_route(routes::volcengine::ANTHROPIC_ROUTE_ID)
+            .expect("volcengine anthropic route");
+        assert_eq!(
+            anthropic_route.protocol_id,
+            protocol::anthropic_messages::PROTOCOL_ID
+        );
+        assert_eq!(
+            anthropic_route.default_base_url.as_deref(),
+            Some(routes::volcengine::ANTHROPIC_BASE_URL)
+        );
+        assert_eq!(anthropic_route.auth_kind, "x-api-key");
+        assert!(anthropic_route.quick_setup_supported);
+        assert!(anthropic_route.model_discovery_supported);
+
+        assert_eq!(
+            route_id_for_login_provider("doubao"),
+            Some(routes::volcengine::OPENAI_ROUTE_ID)
+        );
+        assert!(route_model_discovery_hook(routes::volcengine::OPENAI_ROUTE_ID).is_some());
+        assert!(route_model_discovery_hook(routes::volcengine::ANTHROPIC_ROUTE_ID).is_some());
     }
 
     #[test]

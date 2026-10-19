@@ -14,6 +14,7 @@ pub(crate) mod glm;
 pub(crate) mod google_gemini;
 pub(crate) mod groq;
 pub(crate) mod hosted_openai;
+pub(crate) mod intern;
 pub(crate) mod llama_cpp_server;
 pub(crate) mod lmstudio;
 pub(crate) mod local_openai_compatible;
@@ -32,6 +33,7 @@ pub(crate) mod subscription;
 pub(crate) mod togetherai;
 pub(crate) mod venice;
 pub(crate) mod vllm;
+pub(crate) mod volcengine;
 pub(crate) mod xai;
 
 pub(crate) use hosted_openai::HostedOpenAiRouteHook;
