@@ -76,7 +76,7 @@ impl FetchProvider for ReqwestFetchProvider {
         }
 
         let response = request_builder.send().map_err(|error| ReaderError::Fetch {
-            message: format!("request failed: {error}"),
+            message: format!("request failed: {}", describe_reqwest_error(&error)),
             final_url: Some(request.url.to_string()),
             status: None,
         })?;
@@ -118,6 +118,29 @@ impl FetchProvider for ReqwestFetchProvider {
     }
 }
 
+/// Render a reqwest error together with its cause chain.
+///
+/// `reqwest::Error`'s own `Display` stops at the failure kind, so DNS, TLS,
+/// timeout and connection-reset failures all read
+/// "error sending request for url (…)". The cause that distinguishes them lives
+/// in `source()`, and dropping it leaves the failure undiagnosable.
+fn describe_reqwest_error(error: &reqwest::Error) -> String {
+    let mut message = error.to_string();
+    let mut cause = std::error::Error::source(error);
+    for _ in 0..8 {
+        let Some(current) = cause else {
+            break;
+        };
+        let text = current.to_string();
+        if !text.is_empty() && !message.contains(&text) {
+            message.push_str(": ");
+            message.push_str(&text);
+        }
+        cause = current.source();
+    }
+    message
+}
+
 /// Read up to `max_bytes` from the response body, stopping early once exceeded.
 fn read_capped(
     response: reqwest::blocking::Response,
@@ -143,4 +166,42 @@ fn read_capped(
         });
     }
     Ok(buffer)
+}
+
+#[cfg(test)]
+#[allow(clippy::expect_used, clippy::unwrap_used, unused_imports)]
+mod tests {
+    use super::*;
+    use crate::fetch::FetchRequest;
+
+    #[test]
+    fn request_failure_keeps_the_underlying_cause() {
+        // Bind and drop a listener so the port is closed but known.
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind loopback");
+        let port = listener.local_addr().expect("local addr").port();
+        drop(listener);
+
+        let error = ReqwestFetchProvider::new()
+            .fetch(&FetchRequest {
+                url: &format!("http://127.0.0.1:{port}/"),
+                user_agent: "Lyra Agent/0.1",
+                accept: "text/html",
+                timeout: std::time::Duration::from_secs(5),
+                redirect_limit: 0,
+                max_bytes: 1024,
+                extra_headers: &[],
+                proxy: None,
+            })
+            .expect_err("a closed port must fail");
+
+        let ReaderError::Fetch { message, .. } = error else {
+            panic!("expected a transport failure, got {error:?}");
+        };
+        assert!(message.contains("error sending request"), "{message}");
+        assert!(
+            message.to_ascii_lowercase().contains("connection refused")
+                || message.to_ascii_lowercase().contains("connect"),
+            "cause missing from {message}"
+        );
+    }
 }

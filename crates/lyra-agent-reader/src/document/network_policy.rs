@@ -11,6 +11,18 @@ use super::security;
 const DEFAULT_REDIRECT_LIMIT: usize = 5;
 const DEFAULT_ACCEPT: &str =
     "text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8,*/*;q=0.5";
+// ponytail: Cloudflare's bot score refuses a request that carries only
+// `user-agent` + `accept` (chatgpt.com answers 403 while the same UA through
+// curl gets the page), so every fetch also identifies as a document
+// navigation. Ceiling: this raises the score, it does not defeat a real
+// interactive challenge - use engine=browser for those.
+const NAVIGATION_HEADERS: &[(&str, &str)] = &[
+    ("sec-fetch-dest", "document"),
+    ("sec-fetch-mode", "navigate"),
+    ("sec-fetch-site", "none"),
+    ("sec-fetch-user", "?1"),
+    ("upgrade-insecure-requests", "1"),
+];
 
 pub(super) fn fetch_with_checked_redirects(
     url: &str,
@@ -31,7 +43,7 @@ pub(super) fn fetch_with_checked_redirects(
             // Redirects are followed here so URL/IP policy runs before each hop.
             redirect_limit: 0,
             max_bytes,
-            extra_headers: &[],
+            extra_headers: NAVIGATION_HEADERS,
             proxy: None,
         })?;
         if !is_http_redirect(response.status) {
@@ -182,5 +194,49 @@ mod tests {
         );
         assert!(result.markdown_with_citations.contains("redirected body"));
         assert_eq!(fetch.calls(), 2);
+    }
+
+    #[test]
+    fn fetch_carries_browser_navigation_headers() {
+        struct RecordingFetch(std::cell::RefCell<Vec<(String, String)>>);
+
+        impl FetchProvider for RecordingFetch {
+            fn fetch(
+                &self,
+                request: &FetchRequest<'_>,
+            ) -> Result<crate::fetch::FetchResponse, ReaderError> {
+                self.0.borrow_mut().extend(
+                    request
+                        .extra_headers
+                        .iter()
+                        .map(|(name, value)| ((*name).to_string(), (*value).to_string())),
+                );
+                Ok(crate::fetch::FetchResponse {
+                    final_url: request.url.to_string(),
+                    status: 200,
+                    content_type: Some("text/html".to_string()),
+                    headers: Vec::new(),
+                    body: b"<html><body><p>body</p></body></html>".to_vec(),
+                })
+            }
+        }
+
+        let fetch = RecordingFetch(std::cell::RefCell::new(Vec::new()));
+        let request = ReaderRequest {
+            input: ReaderInput::Url("https://public.test/page".to_string()),
+            options: ReaderOptions::default(),
+        };
+        run(&request, Some(&fetch)).expect("fetch result");
+
+        let headers = fetch.0.borrow();
+        let has = |name: &str, value: Option<&str>| {
+            headers
+                .iter()
+                .any(|(key, found)| key == name && value.is_none_or(|expected| found == expected))
+        };
+        assert!(has("sec-fetch-dest", Some("document")), "{headers:?}");
+        assert!(has("sec-fetch-mode", Some("navigate")), "{headers:?}");
+        assert!(has("sec-fetch-site", Some("none")), "{headers:?}");
+        assert!(has("upgrade-insecure-requests", None), "{headers:?}");
     }
 }
