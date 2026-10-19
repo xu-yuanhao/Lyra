@@ -165,6 +165,9 @@ export const createAgentShadowController = ({
       width,
       height,
       webPreferences: {
+        // Offscreen automation window: the agent drives this page while it is
+        // hidden, so Chromium must not clamp its timers.
+        backgroundThrottling: false,
         contextIsolation: true,
         nodeIntegration: false,
         partition: WORKBENCH_BROWSER_ISOLATED_PROFILE_PARTITION,
@@ -209,6 +212,9 @@ export const createAgentShadowController = ({
       width,
       height,
       webPreferences: {
+        // Offscreen automation window: the agent drives this page while it is
+        // hidden, so Chromium must not clamp its timers.
+        backgroundThrottling: false,
         contextIsolation: true,
         nodeIntegration: false,
         partition: WORKBENCH_BROWSER_ISOLATED_PROFILE_PARTITION,

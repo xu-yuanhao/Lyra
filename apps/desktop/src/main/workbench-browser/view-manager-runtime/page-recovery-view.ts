@@ -14,7 +14,7 @@ export const createPageRecoveryView = (host: {
 }): WebContentsView => {
   const view = new WebContentsView({ webPreferences: {
     contextIsolation: true, nodeIntegration: false, sandbox: true,
-    partition: "lyra-page-recovery", backgroundThrottling: false, focusOnNavigation: false
+    partition: "lyra-page-recovery", focusOnNavigation: false
   } });
   const contents = view.webContents;
   contents.setWindowOpenHandler(() => ({ action: "deny" }));

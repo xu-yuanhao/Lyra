@@ -45,6 +45,7 @@ import {
 
 type SharedControlControllerHost = {
   readonly publishEvent: WorkbenchBrowserPublishEvent;
+  readonly entries?: Map<string, BrowserPageEntry>;
   readonly getLiveEntry: (tabId: string) => BrowserPageEntry | undefined;
   readonly readAgentFollowFinalPageState: (
     tabId: string,
@@ -54,6 +55,7 @@ type SharedControlControllerHost = {
 
 export const createSharedControlController = ({
   publishEvent,
+  entries,
   getLiveEntry,
   readAgentFollowFinalPageState
 }: SharedControlControllerHost) => {
@@ -620,6 +622,18 @@ export const createSharedControlController = ({
       session.endedAt = endedAt;
       session.updatedAt = endedAt;
       session.reason = request.reason ?? null;
+    }
+    // Pages the agent drove run unthrottled. Once no task owns them, hand them
+    // back to Chromium's background throttling.
+    for (const entry of entries?.values() ?? []) {
+      if (
+        entry.isDestroyed
+        || entry.webContents.isDestroyed()
+        || hasActiveLiveAgentBrowserTask(entry.tabId)
+      ) {
+        continue;
+      }
+      entry.webContents.setBackgroundThrottling(true);
     }
   };
 

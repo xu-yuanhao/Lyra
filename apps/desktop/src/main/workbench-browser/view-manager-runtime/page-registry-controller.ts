@@ -127,10 +127,6 @@ type PageRegistryHost = {
     patch: Partial<WorkbenchBrowserPageRuntimeState>
   ) => void;
   readonly publishRuntimeState: (runtime: WorkbenchBrowserPageRuntimeState) => void;
-  readonly syncPerformanceRuntimeState: (
-    runtime: WorkbenchBrowserPageRuntimeState,
-    entry?: BrowserPageEntry
-  ) => void;
   readonly cancelPendingAgentPageLoad: (webContents: WebContents) => void;
   readonly captureBrowserRestoreState: (
     entry: BrowserPageEntry
@@ -180,7 +176,6 @@ type PageRegistryHost = {
   readonly openDebuggerSessionForTarget: (
     entry: ReturnType<typeof liveAgentTarget>
   ) => Promise<WorkbenchBrowserDebuggerSession>;
-  readonly unregisterBrowserPageResource: (tabId: string) => void;
   readonly readBrowserContextMenuLabels: () => BrowserContextMenuLabels;
   readonly readNativeRecoveryLabels?: (() => NativeRecoveryLabels) | undefined;
   readonly onBrowserHealthPopup?: (tabId: string, url: string) => void;
@@ -202,7 +197,12 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
   };
   const ensureAgentEntry = (tabId: string): BrowserPageEntry | undefined => {
     const existing = entries.get(tabId);
-    if (existing && !existing.isDestroyed && !existing.webContents.isDestroyed()) return existing;
+    if (existing && !existing.isDestroyed && !existing.webContents.isDestroyed()) {
+      // The agent drives this page even while it is hidden, so it must keep
+      // full-rate timers until the task ends.
+      existing.webContents.setBackgroundThrottling(false);
+      return existing;
+    }
     const spec = knownPages.get(tabId);
     if (!spec) return undefined; // A closed/unknown tab is never resurrected.
     const runtime = host.readTombstoneRuntime(tabId);
@@ -210,7 +210,12 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
   };
   const prepareAgentPage = (tabId: string, address: string): BrowserPageEntry | null => {
     const existing = getEntry(tabId);
-    if (existing) return existing;
+    if (existing) {
+      if (!existing.webContents.isDestroyed()) {
+        existing.webContents.setBackgroundThrottling(false);
+      }
+      return existing;
+    }
     const spec: WorkbenchBrowserPageSpec = { tabId, address, isActive: false, isVisible: true };
     knownPages.set(tabId, spec);
     // A topology echo that has not seen this tab yet must not destroy it.
@@ -268,7 +273,6 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
     }
     if (emitClosedEvent) {
       host.deleteTombstone(entry.tabId);
-      host.unregisterBrowserPageResource(entry.tabId);
       host.publishEvent({
         kind: "page-closed",
         tabId: entry.tabId
@@ -386,11 +390,15 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
 
   const createEntry = (
     spec: WorkbenchBrowserPageSpec,
-    restoredRuntime?: WorkbenchBrowserPageRuntimeState
+    restoredRuntime: WorkbenchBrowserPageRuntimeState | undefined,
+    keepAwake: boolean
   ): BrowserPageEntry => {
     const view = new WebContentsView({
       webPreferences: {
-        backgroundThrottling: false,
+        // User tabs stay throttled while hidden so Chromium can clamp their
+        // timers and animation frames. Only pages an agent is driving run at
+        // full rate, and they release it when the turn ends.
+        ...(keepAwake ? { backgroundThrottling: false } : {}),
         contextIsolation: true,
         disableHtmlFullscreenWindowResize: true,
         focusOnNavigation: false,
@@ -701,7 +709,6 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
           tabId: entry.tabId
         });
         host.markUserInputDirty(entry.tabId);
-        host.syncPerformanceRuntimeState(entry.runtime, entry);
         host.hideTransientChromePopover(entry);
       }
     });
@@ -721,7 +728,6 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
         return;
       }
       host.markUserInputDirty(entry.tabId);
-      host.syncPerformanceRuntimeState(entry.runtime, entry);
       host.handleSharedControlInput(entry.tabId, "keyboard", event);
     });
 
@@ -772,7 +778,6 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
 
     loadRequestedAddress(entry);
 
-    host.syncPerformanceRuntimeState(entry.runtime, entry);
     host.publishEvent({
       kind: "page-runtime-state",
       page: entry.runtime
@@ -829,7 +834,7 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
           };
     const restoredRuntime = tombstone?.runtime ?? persistedRuntime;
     host.consumeTombstone(spec.tabId);
-    const entry = createEntry(spec, restoredRuntime);
+    const entry = createEntry(spec, restoredRuntime, forAgent);
     entries.set(spec.tabId, entry);
     return entry;
   };
@@ -871,7 +876,6 @@ export const createPageRegistryController = (host: PageRegistryHost) => {
         continue;
       }
       host.deleteTombstone(tabId);
-      host.unregisterBrowserPageResource(tabId);
       host.publishEvent({
         kind: "page-closed",
         tabId

@@ -22,7 +22,6 @@ import {
   createBrowserStorageStateRef,
   sanitizeBrowserPageRestoreState
 } from "../../shared/workbench-browser";
-import type { LyraPerformanceResourceScheduler } from "../performance";
 import { createWorkbenchBrowserElementPickerController } from "./element-picker/controller";
 import type {
   WorkbenchBrowserAgentModeRequest,
@@ -72,7 +71,6 @@ export const createWorkbenchBrowserViewManager = ({
   osAxAdapter,
   workbenchState,
   onWebContentsCreated,
-  performanceScheduler,
   getActCacheEnabled,
   resolveBrowserContextMenuLabels,
   resolveNativeRecoveryLabels
@@ -85,7 +83,6 @@ export const createWorkbenchBrowserViewManager = ({
     readonly writeState: (key: typeof BROWSER_SESSION_STATE_KEY, json: string) => void;
   };
   readonly onWebContentsCreated?: (tabId: string, webContents: WebContents) => () => void;
-  readonly performanceScheduler?: LyraPerformanceResourceScheduler;
   // ActCache toggle (mirrors browserFollowMode). When true, the AX controller
   // may replay cached axActOnNode results for repeatable NL→axRef mappings.
   readonly getActCacheEnabled?: () => boolean;
@@ -180,8 +177,6 @@ export const createWorkbenchBrowserViewManager = ({
       browserSessionRuntime.scheduleBrowserSessionSnapshotWrite(delayMs),
     updateRuntimeState: (entry, patch) => browserSessionRuntime.updateRuntimeState(entry, patch),
     publishRuntimeState: (runtime) => browserSessionRuntime.publishRuntimeState(runtime),
-    syncPerformanceRuntimeState: (runtime, entry) =>
-      browserSessionRuntime.syncPerformanceRuntimeState(runtime, entry),
     cancelPendingAgentPageLoad,
     captureBrowserRestoreState: (entry) => restoreTombstoneController.captureBrowserRestoreState(entry),
     restoreNavigationHistory: (entry, restoreState) =>
@@ -210,9 +205,6 @@ export const createWorkbenchBrowserViewManager = ({
     clearUserInputDirty: (tabId) => clearUserInputDirty(tabId),
     markUserInputDirty: (tabId) => markUserInputDirty(tabId),
     openDebuggerSessionForTarget,
-    unregisterBrowserPageResource: (tabId) => {
-      performanceScheduler?.unregisterResource(`browserPage:${tabId}`);
-    },
     readBrowserContextMenuLabels: () => {
       const locale = readBrowserContextMenuLocaleFromPreferences(
         workbenchState?.readState("preferences") ?? null
@@ -244,6 +236,7 @@ export const createWorkbenchBrowserViewManager = ({
   });
   const sharedControlController = createSharedControlController({
     publishEvent,
+    entries,
     getLiveEntry: (tabId) => entries.get(tabId),
     readAgentFollowFinalPageState: (tabId, targetMode) =>
       readAgentFollowFinalPageState(tabId, targetMode)
@@ -332,9 +325,7 @@ export const createWorkbenchBrowserViewManager = ({
     entries,
     tombstones,
     hasActiveLiveAgentBrowserTask,
-    hasUserInputDirtyTab: hasUserInputDirty,
     publishEvent,
-    performanceScheduler,
     readTopology,
     readLayoutSnapshot,
     liveElectronSession

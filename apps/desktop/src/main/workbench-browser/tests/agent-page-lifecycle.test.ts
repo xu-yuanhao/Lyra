@@ -69,3 +69,20 @@ test("finishing one task cannot release a page still used by another task",()=>{
   host.finishAgentFollowSessions({turnId:"a",status:"completed"});
   expect(host.hasActiveLiveAgentBrowserTask("shared")).toBe(false);
 });
+
+test("finishing a task hands agent-driven pages back to Chromium throttling", () => {
+  const contents = { isDestroyed: () => false, setBackgroundThrottling: vi.fn() };
+  const entry = { tabId: "shared", webContents: contents } as never;
+  const host = createSharedControlController({
+    publishEvent: () => {},
+    entries: new Map([["shared", entry]]),
+    getLiveEntry: () => entry,
+    readAgentFollowFinalPageState: () => null
+  });
+  browserAgentOperationContext.run({ sessionId: "s", turnId: "t" }, () =>
+    host.recordFollowAction("shared", "live", "read", { visibleFollow: true, inputActive: false, result: "success" }));
+  host.finishAgentFollowSessions({ turnId: "other-turn", status: "completed" });
+  expect(contents.setBackgroundThrottling).not.toHaveBeenCalled();
+  host.finishAgentFollowSessions({ turnId: "t", status: "completed" });
+  expect(contents.setBackgroundThrottling).toHaveBeenCalledWith(true);
+});

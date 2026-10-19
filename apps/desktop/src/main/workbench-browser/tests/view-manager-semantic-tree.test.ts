@@ -171,6 +171,7 @@ type FakeWebContents = {
   close: ReturnType<typeof vi.fn>;
   stop: ReturnType<typeof vi.fn>;
   setWindowOpenHandler: ReturnType<typeof vi.fn>;
+  setBackgroundThrottling: ReturnType<typeof vi.fn>;
   on: ReturnType<typeof vi.fn>;
   off: ReturnType<typeof vi.fn>;
   once: ReturnType<typeof vi.fn>;
@@ -507,6 +508,7 @@ const createWebContents = (
     close: vi.fn(),
     stop: vi.fn(),
     setWindowOpenHandler: vi.fn(),
+    setBackgroundThrottling: vi.fn(),
     on: vi.fn((event: string, listener: (...args: unknown[]) => void) => {
       addListener(event, listener);
     }),
