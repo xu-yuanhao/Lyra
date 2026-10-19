@@ -16,12 +16,14 @@ import {
   createId,
   createInitialState
 } from "./state-model";
+import { fileManagerTabFilePath } from "./location-utils";
 
 type FileManagerAppMeta = {
   readonly appId: "file-manager";
   readonly appInstanceId: string;
   readonly title: string;
   readonly iconKey: FileManagerAppIconKey;
+  readonly filePath: string;
 };
 
 type DownloadDefaults = {
@@ -46,7 +48,7 @@ export type FileManagerStateStore = {
     updater: (state: FileManagerAppState) => FileManagerAppState
   ) => void;
   readonly replaceState: (instanceId: string, nextState: FileManagerAppState) => void;
-  readonly createInstance: () => FileManagerAppMeta;
+  readonly createInstance: () => Omit<FileManagerAppMeta, "filePath">;
   readonly ensureInstance: (instanceId: string) => void;
   readonly getState: (instanceId: string) => FileManagerAppState | null;
   readonly syncExternalInstances: (instanceIds: readonly string[]) => void;
@@ -132,12 +134,14 @@ export const useFileManagerStateStore = ({
       if (
         nextState.title !== base.title
         || nextState.iconKey !== base.iconKey
+        || fileManagerTabFilePath(nextState) !== fileManagerTabFilePath(base)
       ) {
         onMetaChange({
           appId: "file-manager",
           appInstanceId: instanceId,
           title: nextState.title,
-          iconKey: nextState.iconKey
+          iconKey: nextState.iconKey,
+          filePath: fileManagerTabFilePath(nextState)
         });
       }
       return {
@@ -156,7 +160,8 @@ export const useFileManagerStateStore = ({
       appId: "file-manager",
       appInstanceId: instanceId,
       title: nextState.title,
-      iconKey: nextState.iconKey
+      iconKey: nextState.iconKey,
+      filePath: fileManagerTabFilePath(nextState)
     });
   }, [onMetaChange, updateStates]);
 

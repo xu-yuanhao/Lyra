@@ -492,6 +492,7 @@ export const reduceWorkspaceTabsState = (
           if (
             tab.title === action.request.title
             && tab.appIconKey === action.request.iconKey
+            && (action.request.filePath === undefined || tab.filePath === action.request.filePath)
             && (action.request.route === undefined || tab.appRoute === action.request.route)
             && (action.request.opaqueState === undefined
               || tab.appOpaqueState === action.request.opaqueState)

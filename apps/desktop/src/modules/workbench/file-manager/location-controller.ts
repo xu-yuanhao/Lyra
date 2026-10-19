@@ -14,7 +14,7 @@ import type {
   FileManagerAppState,
   FileManagerSurfaceLabels
 } from "./types";
-import { isSameLocationPath, optionalFileManagerPath } from "./location-utils";
+import { isSameLocationPath, optionalFileManagerPath, fileManagerTabFilePath } from "./location-utils";
 import {
   applyDirectoryPatchToState,
   buildDirectoryState,
@@ -35,6 +35,7 @@ type FileManagerAppMeta = {
   readonly appInstanceId: string;
   readonly title: string;
   readonly iconKey: FileManagerAppIconKey;
+  readonly filePath: string;
 };
 
 export type FileManagerLocationController = {
@@ -117,7 +118,8 @@ export const useFileManagerLocationController = ({
           appId: "file-manager",
           appInstanceId: instanceId,
           title: nextState.title,
-          iconKey: nextState.iconKey
+          iconKey: nextState.iconKey,
+          filePath: fileManagerTabFilePath(nextState)
         });
         return {
           ...current,

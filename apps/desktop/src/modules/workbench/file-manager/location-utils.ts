@@ -11,6 +11,13 @@ export const optionalFileManagerPath = (
 ): string | undefined =>
   typeof value === "string" && value.length > 0 ? value : undefined;
 
+// The workspace tab records the directory the file manager is showing so agent
+// references and session restore can address it; "" means "no path" because tab
+// metadata only accepts defined values.
+export const fileManagerTabFilePath = (state: {
+  readonly currentLocation: { readonly path?: string | null } | null;
+}): string => optionalFileManagerPath(state.currentLocation?.path) ?? "";
+
 export const normalizeFileManagerLocation = <T extends {
   readonly path?: string | null;
 }>(location: T): T => ({

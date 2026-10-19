@@ -647,19 +647,21 @@ describe("file manager model", () => {
       appId: "file-manager",
       appInstanceId,
       title: labels.title,
-      iconKey: "file-manager-home"
+      iconKey: "file-manager-home",
+      filePath: ""
     });
   });
 
   test("opens directory and persists recent locations", async () => {
     const desktop = createDesktopApi();
+    const onMetaChange = vi.fn();
 
     const { result } = renderHook(() =>
       useFileManagerModel({
         desktopApi: desktop.api,
         contextMenuModel: createContextMenuModel(),
         labels,
-        onMetaChange: vi.fn()
+        onMetaChange
       })
     );
 
@@ -685,6 +687,15 @@ describe("file manager model", () => {
       entries: directoryResponse.entries
     });
     expect(result.current.getState(appInstanceId)?.recentLocations).toHaveLength(1);
+    // The tab carries the open directory so agent references and session
+    // restore can address it without a read_tab round-trip.
+    expect(onMetaChange).toHaveBeenLastCalledWith({
+      appId: "file-manager",
+      appInstanceId,
+      title: "Documents",
+      iconKey: "file-manager-directory-non-empty",
+      filePath: "/home/lyra/Documents"
+    });
   });
 
   test("subscribes to directories and applies patch events", async () => {

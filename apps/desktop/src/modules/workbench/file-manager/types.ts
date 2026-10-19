@@ -288,5 +288,6 @@ export type UseFileManagerModelOptions = {
     readonly appInstanceId: string;
     readonly title: string;
     readonly iconKey: FileManagerAppIconKey;
+    readonly filePath?: string;
   }) => void;
 };

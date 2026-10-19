@@ -201,6 +201,29 @@ describe("workspace browser session codec", () => {
     unmount();
   });
 
+  test("keeps the open directory when only the app path changes", () => {
+    const { result, unmount } = renderHook(() => useWorkspaceTabsModel(config));
+    const request = {
+      appId: "file-manager",
+      appInstanceId: "file-manager-a00e94f2",
+      title: "Lyra",
+      iconKey: "file-manager-directory-non-empty"
+    } as const;
+
+    act(() => {
+      result.current.openAppTab(request);
+    });
+    act(() => {
+      result.current.updateAppTabMeta({ ...request, filePath: "/home/lyra/Documents/Lyra" });
+    });
+
+    // Only filePath differs from the opened tab, so a meta guard that compares
+    // title/icon alone would drop it and agent citations would lose the path.
+    expect(result.current.tabs.find((tab) => tab.appInstanceId === request.appInstanceId))
+      .toMatchObject({ filePath: "/home/lyra/Documents/Lyra" });
+    unmount();
+  });
+
   test("deduplicates restored workspace tabs by id", () => {
     writeWorkbenchStateSync("workspace-tabs", JSON.stringify({
       schemaVersion: 1,
