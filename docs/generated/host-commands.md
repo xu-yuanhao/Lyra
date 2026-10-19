@@ -11,7 +11,7 @@ Last verified: 2026-07-28
 
 First-party page Host. Not the socket protocol and not Electron IPC.
 
-Commands: **78**. Events: **9**.
+Commands: **79**. Events: **9**.
 
 ## Commands
 
@@ -35,6 +35,7 @@ Commands: **78**. Events: **9**.
 | `openAdjacentImage` | `lyra.core.images.open-adjacent` |
 | `setImageViewport` | `lyra.core.images.set-viewport` |
 | `resetImageViewport` | `lyra.core.images.reset-viewport` |
+| `previewOffice` | `lyra.core.office.preview` |
 | `readFiles` | `lyra.core.files.read` |
 | `openFilesHome` | `lyra.core.files.open-home` |
 | `openFilesDirectory` | `lyra.core.files.open-directory` |

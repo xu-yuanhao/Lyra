@@ -6,13 +6,13 @@ Last verified: 2026-07-28
 
 > Generated file. Do not edit by hand.
 >
-> Sources: `crates/lyra-runtime-protocol/src/methods.rs`, `crates/lyrad/src/router.rs`, `crates/lyrad/src/handlers.rs`, `crates/lyra-files-core/src/json.rs`, `crates/lyra-performance-core/src/lib.rs`, `crates/lyra-runtime-protocol/src/lib.rs`.
+> Sources: `crates/lyra-runtime-protocol/src/methods.rs`, `crates/lyrad/src/router.rs`, `crates/lyrad/src/handlers.rs`, `crates/lyra-files-core/src/json.rs`, `crates/lyra-runtime-protocol/src/lib.rs`.
 > Regenerate with `node docs/scripts/generate-inventories.mjs`.
 
 Socket families are the waist. This list is extracted from the family table
 plus quoted method names in the daemon and core crates. It is not a public SDK.
 
-Families: **8**. Concrete methods found in source: **76**.
+Families: **8**. Concrete methods found in source: **71**.
 
 ## Families
 
@@ -27,7 +27,9 @@ Families: **8**. Concrete methods found in source: **76**.
 
 ## Methods
 
+- `agent.exec.run`
 - `agent.import.v2`
+- `agent.turn`
 - `download.cancel`
 - `download.cancel_all`
 - `download.enqueue`
@@ -47,6 +49,7 @@ Families: **8**. Concrete methods found in source: **76**.
 - `files.directoryPatch`
 - `files.eject_device`
 - `files.empty_trash`
+- `files.list`
 - `files.mount_device`
 - `files.move_to_trash`
 - `files.probe_workbench_path`
@@ -76,15 +79,6 @@ Families: **8**. Concrete methods found in source: **76**.
 - `lsp.goto_definition`
 - `lsp.hover`
 - `lsp.upsert`
-- `performance.applyDecision`
-- `performance.readEvents`
-- `performance.readPressureSnapshot`
-- `performance.readSnapshot`
-- `performance.registerResource`
-- `performance.runPressureHarness`
-- `performance.status`
-- `performance.unregisterResource`
-- `performance.updateResource`
 - `runtime.handshake`
 - `runtime.host.requests`
 - `runtime.identity`
@@ -97,6 +91,7 @@ Families: **8**. Concrete methods found in source: **76**.
 - `terminal.permissions.respond`
 - `terminal.processes.read`
 - `terminal.processes.signal`
+- `terminal.session.create`
 - `terminal.sessions.close`
 - `terminal.sessions.create`
 - `terminal.sessions.read`

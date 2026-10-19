@@ -13,14 +13,14 @@ This static index records production source references. The runtime registry
 and its validation tests remain authoritative for callable manifests.
 Tool-FS is internal and is not a public developer contract.
 
-Total referenced paths: **91**.
+Total referenced paths: **95**.
 
 ## Domains
 
 | Domain | Count |
 | --- | ---: |
 | `agent` | 1 |
-| `browser` | 12 |
+| `browser` | 16 |
 | `browser_ax` | 2 |
 | `computer` | 9 |
 | `design` | 3 |
@@ -43,14 +43,18 @@ Total referenced paths: **91**.
 | `/tools/agent/spawn` | `agent` | manifest catalog, runtime adapter |
 | `/tools/browser/act` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/detect_qr` | `browser` | manifest catalog, runtime adapter |
+| `/tools/browser/dialog` | `browser` | manifest catalog, runtime adapter |
+| `/tools/browser/drag` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/elevate` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/map` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/navigate` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/press` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/read` | `browser` | manifest catalog, runtime adapter |
+| `/tools/browser/reload` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/scroll` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/see` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/type` | `browser` | manifest catalog, runtime adapter |
+| `/tools/browser/upload` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/vact` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser/wait` | `browser` | manifest catalog, runtime adapter |
 | `/tools/browser_ax/act` | `browser_ax` | manifest catalog, runtime adapter |
@@ -105,6 +109,7 @@ Total referenced paths: **91**.
 | `/tools/skills/list` | `skills` | manifest catalog, runtime adapter |
 | `/tools/skills/uninstall` | `skills` | manifest catalog, runtime adapter |
 | `/tools/software/inspect_capability` | `software` | manifest catalog, runtime adapter |
+| `/tools/software/invoke_capability` | `software` | runtime adapter |
 | `/tools/software/list_capabilities` | `software` | manifest catalog, runtime adapter |
 | `/tools/software/read_state` | `software` | manifest catalog, runtime adapter |
 | `/tools/todo/read` | `todo` | manifest catalog, runtime adapter |

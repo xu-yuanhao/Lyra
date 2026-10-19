@@ -11,16 +11,17 @@ Last verified: 2026-07-28
 
 This is a private Electron/preload inventory, not an extension API.
 
-Total channels: **299**.
+Total channels: **309**.
 
 ## Groups
 
 | Group | Count |
 | --- | ---: |
-| `agent` | 101 |
+| `agent` | 106 |
 | `app` | 4 |
 | `app-update` | 5 |
 | `auth` | 7 |
+| `browser-import` | 2 |
 | `components` | 13 |
 | `downloads` | 16 |
 | `files` | 23 |
@@ -38,8 +39,8 @@ Total channels: **299**.
 | `screenshot-preview` | 3 |
 | `search` | 1 |
 | `sensitive-values` | 5 |
-| `shell` | 11 |
-| `software-capabilities` | 2 |
+| `shell` | 13 |
+| `software-capabilities` | 3 |
 | `sqlite` | 1 |
 | `system-notifications` | 4 |
 | `terminal` | 16 |
@@ -91,6 +92,7 @@ Total channels: **299**.
 | `agentMcpList` | `lyra:agent/mcp/list` | `agent` |
 | `agentMcpReload` | `lyra:agent/mcp/reload` | `agent` |
 | `agentMcpRemove` | `lyra:agent/mcp/remove` | `agent` |
+| `agentMcpSetEnabled` | `lyra:agent/mcp/set-enabled` | `agent` |
 | `agentMcpUpsert` | `lyra:agent/mcp/upsert` | `agent` |
 | `agentMemoryAudit` | `lyra:agent/memory/audit` | `agent` |
 | `agentMemoryRecoverRun` | `lyra:agent/memory/recover/run` | `agent` |
@@ -112,6 +114,10 @@ Total channels: **299**.
 | `agentPlanRead` | `lyra:agent/plan/read` | `agent` |
 | `agentPlanReviewRespond` | `lyra:agent/plan/review/respond` | `agent` |
 | `agentPlanRevise` | `lyra:agent/plan/revise` | `agent` |
+| `agentProjectsList` | `lyra:agent/projects/list` | `agent` |
+| `agentProjectsRegister` | `lyra:agent/projects/register` | `agent` |
+| `agentProjectsSetOverride` | `lyra:agent/projects/set-override` | `agent` |
+| `agentProjectsSettings` | `lyra:agent/projects/settings` | `agent` |
 | `agentProtocolContract` | `lyra:agent/protocol/contract` | `agent` |
 | `agentProviderCatalogRead` | `lyra:agent/provider/catalog/read` | `agent` |
 | `agentProviderIconResolve` | `lyra:agent/provider/icon/resolve` | `agent` |
@@ -169,6 +175,8 @@ Total channels: **299**.
 | `authLogout` | `lyra:auth/logout` | `auth` |
 | `authStartGoogleLogin` | `lyra:auth/start-google-login` | `auth` |
 | `authUpdateProfile` | `lyra:auth/update-profile` | `auth` |
+| `browserImportListProfiles` | `lyra:browser-import/list-profiles` | `browser-import` |
+| `browserImportRun` | `lyra:browser-import/run` | `browser-import` |
 | `componentsActivate` | `lyra:components/activate` | `components` |
 | `componentsAssessActivation` | `lyra:components/assess-activation` | `components` |
 | `componentsCancelUpdate` | `lyra:components/cancel-update` | `components` |
@@ -287,11 +295,14 @@ Total channels: **299**.
 | `revealInFolder` | `lyra:shell/reveal-in-folder` | `shell` |
 | `closeWindow` | `lyra:shell/window/close` | `shell` |
 | `minimizeWindow` | `lyra:shell/window/minimize` | `shell` |
+| `readWindowTheme` | `lyra:shell/window/read-theme` | `shell` |
 | `setWindowThemeSource` | `lyra:shell/window/set-theme-source` | `shell` |
 | `windowStateChanged` | `lyra:shell/window/state-changed` | `shell` |
+| `windowThemeChanged` | `lyra:shell/window/theme-changed` | `shell` |
 | `toggleWindowMaximize` | `lyra:shell/window/toggle-maximize` | `shell` |
 | `softwareCapabilitiesQuery` | `lyra:software-capabilities/query` | `software-capabilities` |
 | `softwareCapabilitiesQueryResult` | `lyra:software-capabilities/query-result` | `software-capabilities` |
+| `softwareCapabilitiesSnapshot` | `lyra:software-capabilities/snapshot` | `software-capabilities` |
 | `sqliteInspect` | `lyra:sqlite/inspect` | `sqlite` |
 | `systemNotificationsActivated` | `lyra:system-notifications/activated` | `system-notifications` |
 | `systemNotificationsOpenSettings` | `lyra:system-notifications/open-settings` | `system-notifications` |
