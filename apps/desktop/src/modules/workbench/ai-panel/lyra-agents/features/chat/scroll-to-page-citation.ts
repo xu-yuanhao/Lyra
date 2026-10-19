@@ -1,5 +1,6 @@
 import type { AgentPageCitation } from "../../../../../../shared/agent";
 import type { LyraDesktopApi } from "../../../../../../shared/desktop-bridge";
+import { isLocalFilePath } from "./page-citation";
 import { terminalTabIdFromPageUrl } from "./terminal-tab-citation";
 
 const sleep = (ms: number): Promise<void> =>
@@ -34,6 +35,13 @@ export const navigateToPageCitation = async (
   }
 
   if (citation.pageUrl.startsWith("lyra://workspace-tab/")) {
+    setActiveTab(citation.tabId);
+    return true;
+  }
+
+  // A file-manager or editor tab's address is a local path. Activating the tab is
+  // the whole action; there is no browser page to navigate or search.
+  if (isLocalFilePath(citation.pageUrl)) {
     setActiveTab(citation.tabId);
     return true;
   }

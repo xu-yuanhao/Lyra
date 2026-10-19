@@ -14,6 +14,11 @@ import { pageCitationIconFieldsFromWorkspaceTab } from "./page-citation-tab-icon
 
 export const PAGE_CITE_MARKER_PATTERN = /⟦page-cite:([^⟧]+)⟧/g;
 
+// File-manager, editor and project tabs cite the local path they are showing.
+// That path is neither a browser address nor a lyra:// surface.
+export const isLocalFilePath = (value: string): boolean =>
+  value.startsWith("/") || /^[A-Za-z]:[\\/]/u.test(value);
+
 export const compactCitationTrail = (parts: readonly string[]): string => {
   const seen = new Set<string>();
   const trails: string[] = [];
@@ -287,8 +292,17 @@ export const normalizePageCitation = (raw: unknown): AgentPageCitation | null =>
     rawPageUrl === null
       ? null
       : canonicalizeBrowserCitationUrls(rawPageUrl, rawFrameUrl);
-  if (tabId === null || canonical === null) return null;
-  const pageUrl = canonical.pageUrl;
+  // App, settings and terminal tabs cite their own lyra:// address, which HTTP
+  // canonicalization rejects. Keep it verbatim so a dragged tab survives the
+  // round-trip through message metadata instead of degrading to a bare "Page".
+  // File-manager and editor tabs cite the local path they show; it is not a
+  // canonicalizable URL either, so it stays verbatim by the same rule.
+  const pageUrl = canonical?.pageUrl
+    ?? (rawPageUrl !== null && (rawPageUrl.startsWith("lyra://") || isLocalFilePath(rawPageUrl))
+      ? rawPageUrl
+      : null);
+  if (tabId === null || pageUrl === null) return null;
+  const frameUrl = canonical?.frameUrl ?? null;
   const id = typeof value.id === "string" && value.id.length > 0 ? value.id : `page-cite-${tabId}`;
   const excerptKind: AgentPageCitationExcerptKind =
     value.excerptKind === "selection" || value.excerptKind === "link" || value.excerptKind === "page"
@@ -316,7 +330,7 @@ export const normalizePageCitation = (raw: unknown): AgentPageCitation | null =>
     tabTitle: typeof value.tabTitle === "string" ? value.tabTitle : "",
     pageUrl,
     pageTitle: typeof value.pageTitle === "string" ? value.pageTitle : pageUrl,
-    frameUrl: canonical.frameUrl,
+    frameUrl,
     linkUrl: typeof value.linkUrl === "string" ? value.linkUrl : null,
     linkText: typeof value.linkText === "string" ? value.linkText : null,
     srcUrl: typeof value.srcUrl === "string" ? value.srcUrl : null,

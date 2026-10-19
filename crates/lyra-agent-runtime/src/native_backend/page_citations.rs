@@ -252,6 +252,16 @@ pub(crate) fn citation_needs_live_map(citation: &Value) -> bool {
     if citation.get("sourceKind").and_then(Value::as_str) == Some("terminal-tab") {
         return false;
     }
+    // App, settings and search tabs cite a Lyra surface with no browser page to
+    // map; only a real browser page earns a live map. Missing tabPageKind means
+    // an external/browser citation, which still maps.
+    if citation
+        .get("tabPageKind")
+        .and_then(Value::as_str)
+        .is_some_and(|kind| kind != "page")
+    {
+        return false;
+    }
     let url = citation
         .get("pageUrl")
         .and_then(Value::as_str)
@@ -481,6 +491,18 @@ mod tests {
         let mut terminal = page.clone();
         terminal["sourceKind"] = json!("terminal-tab");
         assert!(!citation_needs_live_map(&terminal));
+        let mut file_manager = page.clone();
+        file_manager["tabPageKind"] = json!("app");
+        file_manager["pageUrl"] = json!("/home/user/Documents");
+        assert!(!citation_needs_live_map(&file_manager));
+        let mut settings = page.clone();
+        settings["tabPageKind"] = json!("settings");
+        settings["pageUrl"] = json!("lyra://settings");
+        assert!(!citation_needs_live_map(&settings));
+        let mut browser_tab = page.clone();
+        browser_tab["tabPageKind"] = json!("page");
+        browser_tab["sourceKind"] = json!("workspace-tab");
+        assert!(citation_needs_live_map(&browser_tab));
     }
 
     #[test]

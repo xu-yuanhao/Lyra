@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { useState } from "react";
 
 import type { ChatMessage, SessionMeta } from "../../core/types";
@@ -45,22 +47,24 @@ const longThreadMessages = Array.from({ length: 200 }, (_, index) => makeMessage
 
 function RenderBudgetChatHarness({
   initialBudget = 12,
-  onLoadEarlier
+  onLoadEarlier,
+  threadMessages = allMessages
 }: {
   readonly initialBudget?: number;
   readonly onLoadEarlier?: () => void;
+  readonly threadMessages?: readonly ChatMessage[];
 }) {
   const [budget, setBudget] = useState(initialBudget);
-  const resolvedBudget = Math.min(allMessages.length, budget);
-  const messages = allMessages.slice(allMessages.length - resolvedBudget);
-  const hiddenBefore = Math.max(0, allMessages.length - resolvedBudget);
+  const resolvedBudget = Math.min(threadMessages.length, budget);
+  const messages = threadMessages.slice(threadMessages.length - resolvedBudget);
+  const hiddenBefore = Math.max(0, threadMessages.length - resolvedBudget);
   const data = createDataProviderValue({
     session,
     messages,
     messageWindow: {
       visibleCount: resolvedBudget,
       hiddenBefore,
-      totalCount: allMessages.length,
+      totalCount: threadMessages.length,
       canLoadEarlier: hiddenBefore > 0
     },
     loadEarlierMessages: async () => {
@@ -302,6 +306,47 @@ describe("ChatView virtual message window", () => {
         "Message 21"
       );
     });
+  });
+
+  test("sticky anchor keeps citation chips inside the pill on a single row", async () => {
+    const citedThread: ChatMessage[] = allMessages.map((message): ChatMessage =>
+      message.id === "message-21"
+        ? {
+            ...message,
+            blocks: [{ type: "text", id: "message-21-text", body: "Message 21 ⟦cite:cite-1⟧" }],
+            transcriptCitations: [{
+              id: "cite-1",
+              messageId: "message-20",
+              role: "user",
+              excerptKind: "selection",
+              preview: "引用预览",
+              quotedText: "引用预览",
+              truncated: false
+            }]
+          }
+        : message
+    );
+    const { container } = render(
+      <RenderBudgetChatHarness initialBudget={12} threadMessages={citedThread} />
+    );
+    const scroll = container.querySelector(".lyra-agents-chat-scroll") as HTMLDivElement;
+    primeScroll(scroll, { clientHeight: 300, scrollHeight: 960, scrollTop: 230 });
+    await waitFor(() => {
+      // The cited message keeps its chip, so the pill shows the real message styling.
+      expect(
+        container.querySelector(".lyra-agents-chat-thread-anchor-text .lyra-agents-resource-chip")
+      ).toHaveTextContent("引用预览");
+    });
+
+    // The shared chip group stacks its chips in a column, which spilled out of the
+    // fixed-height pill. The anchor rule must override it back to one shrinking row.
+    const anchorStyles = readFileSync(
+      resolve(process.cwd(), "src/renderer/styles/agents.scss"),
+      "utf8"
+    );
+    expect(anchorStyles).toMatch(
+      /\.lyra-agents-chat-thread-anchor-text \.lyra-agents-inline-resource-group \{[\s\S]*?flex-direction: row;[\s\S]*?\}/
+    );
   });
 
   test("hides sticky anchor when scrolled to the very top", async () => {
