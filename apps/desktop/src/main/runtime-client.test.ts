@@ -130,6 +130,7 @@ describe("Lyra runtime client", () => {
     const env = runtimeClientInternalsForTests.buildRuntimeDaemonEnv(
       {
         PATH: "/bin",
+        ELECTRON_RENDERER_URL: "http://127.0.0.1:5173",
         LYRA_AGENT_HOME: "/legacy/.lyra-agent",
         LYRA_AGENT_RUNTIME_DIR: "/legacy/lyra-agent-runtime",
         JCODE_HOME: "/legacy/.agent",
@@ -143,6 +144,9 @@ describe("Lyra runtime client", () => {
     );
 
     expect(env.PATH).toBe("/bin");
+    // Terminals and agent exec shells descend from this daemon, so an
+    // electron-vite app launched there must not inherit Lyra's dev renderer.
+    expect(env.ELECTRON_RENDERER_URL).toBeUndefined();
     expect(env.ELECTRON_RUN_AS_NODE).toBe("");
     expect(env.LYRA_AGENT_HOME).toBe("/Users/tester/.lyra/modules/agent");
     expect(env.LYRA_AGENT_RUNTIME_DIR).toBe(

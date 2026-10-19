@@ -317,8 +317,14 @@ const buildRuntimeDaemonEnv = (
   const cwd = process.cwd();
   const lyraDesignNodePaths = resolveLyraDesignNodePathEntries(cwd);
   const inheritedNodePath = typeof baseEnv.NODE_PATH === "string" ? baseEnv.NODE_PATH : "";
+  // lyrad spawns the user's terminals and the agent's exec shells, so Lyra's own
+  // dev-server pointer must not ride along: an electron-vite app launched from
+  // there loads Lyra's dev renderer instead of its own UI (a grey window stuck
+  // on Lyra's bootstrap mark). Packaged builds never set it.
+  const inheritedEnv = { ...baseEnv };
+  delete inheritedEnv.ELECTRON_RENDERER_URL;
   return {
-    ...baseEnv,
+    ...inheritedEnv,
     ...resolvePerformanceHelperEnv(baseEnv, cwd),
     ELECTRON_RUN_AS_NODE: "",
     LYRA_AGENT_HOME: options.agentStorageRoot,
