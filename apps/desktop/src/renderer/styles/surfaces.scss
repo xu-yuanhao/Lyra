@@ -3969,15 +3969,8 @@
 
 .lyra-file-manager-home-card .lyra-app-object-row-icon,
 .lyra-file-manager-favorite-row .lyra-app-object-row-icon,
-.lyra-file-manager-list-row .lyra-app-object-row-icon,
 .lyra-file-manager-home-card.lyra-app-object-row:hover:not(:disabled) .lyra-app-object-row-icon,
 .lyra-file-manager-favorite-row.lyra-app-object-row:hover:not(:disabled) .lyra-app-object-row-icon,
-.lyra-file-manager-list-row.lyra-app-object-row:hover:not(:disabled) .lyra-app-object-row-icon,
-.lyra-file-manager-list-row.lyra-app-object-row[data-active="true"] .lyra-app-object-row-icon {
-  background: transparent;
-  box-shadow: none;
-}
-
 .lyra-file-manager-disk-card {
   min-height: calc(var(--lyra-control-h-52) + var(--lyra-space-8));
   align-items: center;
@@ -4102,7 +4095,7 @@
 }
 
 .lyra-file-manager-list-grid {
-  --lyra-app-row-list-row-min-height: var(--lyra-control-h-36);
+  --lyra-app-row-list-row-min-height: var(--lyra-app-sidebar-row-h);
   min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -4117,7 +4110,8 @@
 }
 
 .lyra-file-manager-list-row {
-  min-height: var(--lyra-control-h-36);
+  /* Sidebar-nav row height: a file row is an option-sized band, not a card. */
+  min-height: var(--lyra-app-sidebar-row-h);
   grid-template-columns: var(--lyra-control-h-28) minmax(0, 1fr) auto auto;
   column-gap: var(--lyra-space-8);
   padding: 0 var(--lyra-space-8);
@@ -4156,7 +4150,7 @@
 
 .lyra-file-manager-list-row-draft {
   grid-template-columns: minmax(0, 1fr);
-  min-height: var(--lyra-control-h-40);
+  min-height: var(--lyra-app-sidebar-row-h);
   color: var(--lyra-text-primary);
   background: var(--lyra-app-row-active-bg);
 }
