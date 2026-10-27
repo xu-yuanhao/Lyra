@@ -986,26 +986,12 @@
   margin-inline: auto;
   padding: var(--lyra-unit-24) var(--lyra-unit-24) var(--lyra-unit-32);
 }
-
-/* ZCode conversationLayout.ts: 864px → calc(100% - 6rem) / 56rem, 1280px → calc(100% - 24rem) / 72rem. */
-@container lyra-conversation (min-width: 864px) {
-  .lyra-agents-chat-inner,
-  .lyra-agents-composer-wrap {
-    width: calc(100% - 6rem);
-    max-width: 56rem;
-  }
-}
-
-@container lyra-conversation (min-width: 1280px) {
-  .lyra-agents-chat-inner,
-  .lyra-agents-composer-wrap {
-    width: calc(100% - 24rem);
-    max-width: 72rem;
-  }
-}
-
-.lyra-agents-app-drag-host:has(.lyra-agents-chat-empty) .lyra-agents-chat-inner,
-.lyra-agents-app-drag-host:has(.lyra-agents-chat-empty) .lyra-agents-composer-wrap {
+/* The content column (thread + composer) is pinned to the new-session (empty
+   state) width. The old stepped container-query widths (56rem at 860px,
+   72rem at 1180px) made the column widen on first send and snap whenever the
+   panel or window was resized across a threshold; a single cap removes both. */
+.lyra-agents-app-drag-host .lyra-agents-chat-inner,
+.lyra-agents-app-drag-host .lyra-agents-composer-wrap {
   width: 100%;
   max-width: 42rem;
 }
@@ -6867,7 +6853,10 @@ span.lyra-agents-resource-chip {
 
 /* ======== Responsive Adaptations ======== */
 
-/* Narrow AI panel layouts. Container queries track panel width, not window width. */
+/* Narrow AI panel layouts. Container queries track panel width, not window width.
+   Box edges (header padding, chat/composer paddings, radii) must NOT change at a
+   width threshold: dragging the panel across it would pop the content column and
+   the tabs narrower for one frame. Font-size-only tweaks stay. */
 @container (max-width: 720px) {
   .lyra-agents-app {
     max-width: 100%;
@@ -6875,8 +6864,6 @@ span.lyra-agents-resource-chip {
 
   .lyra-agents-header {
     max-width: 100%;
-    padding: 0 var(--lyra-unit-12);
-    border-radius: 0;
   }
 
   .lyra-agents-header-title {
@@ -6894,7 +6881,6 @@ span.lyra-agents-resource-chip {
 
   .lyra-agents-todo-pill {
     max-width: 100%;
-    border-radius: 0 0 var(--lyra-unit-10) var(--lyra-unit-10);
   }
 
   .lyra-agents-todo-pill-current {
@@ -6905,25 +6891,6 @@ span.lyra-agents-resource-chip {
     min-width: unset;
   }
 
-  .lyra-agents-chat-inner {
-    padding: var(--lyra-unit-20) var(--lyra-unit-14) var(--lyra-unit-28);
-  }
-
-  /* Row spacing lives inside the measured box (not sibling margins) so the
-     virtualizer offsets include it; rows are laid out in normal flow. */
-  .lyra-agents-chat-message-slot {
-    padding-top: var(--lyra-unit-18);
-  }
-
-  .lyra-agents-composer-wrap {
-    max-width: 100%;
-    padding: var(--lyra-agents-composer-wrap-padding-top-compact) var(--lyra-space-12) var(--lyra-agents-composer-wrap-padding-bottom);
-  }
-
-  .lyra-agents-composer {
-    border-radius: var(--lyra-unit-14);
-    padding: var(--lyra-unit-8) var(--lyra-unit-10) var(--lyra-unit-7);
-  }
 
   .lyra-agents-composer > .lyra-ui-textarea.lyra-agents-composer-input {
     font-size: var(--lyra-unit-16); /* Prevent iOS zoom on focus */
@@ -7010,23 +6977,6 @@ span.lyra-agents-resource-chip {
     font-size: var(--lyra-unit-12);
   }
 
-  .lyra-agents-chat-inner {
-    padding: var(--lyra-unit-18) var(--lyra-unit-10) var(--lyra-unit-24);
-  }
-
-  .lyra-agents-chat-message-slot {
-    padding-top: var(--lyra-unit-16);
-  }
-
-  .lyra-agents-composer-wrap {
-    padding: var(--lyra-agents-composer-wrap-padding-top-narrow) var(--lyra-space-10) var(--lyra-agents-composer-wrap-padding-bottom);
-    gap: 0;
-  }
-
-  .lyra-agents-composer {
-    padding: var(--lyra-unit-7) var(--lyra-unit-9) var(--lyra-unit-6);
-    border-radius: var(--lyra-unit-12);
-  }
 
   .lyra-agents-composer > .lyra-ui-textarea.lyra-agents-composer-input {
     height: var(--lyra-unit-48);

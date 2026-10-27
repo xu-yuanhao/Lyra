@@ -2307,3 +2307,12 @@ body.lyra-panel-resizing .lyra-main,
 body.lyra-panel-resizing .lyra-center-stack {
   transition: none;
 }
+
+/* Native window-edge resize also writes coupled panel sizes (re-clamped per
+   frame against window-derived bounds); leave the 260ms grid transition active
+   and every write restarts it, so the panes visibly lag, then snap — same
+   failure the splitter suppression exists for. */
+body.lyra-window-resizing .lyra-main,
+body.lyra-window-resizing .lyra-center-stack {
+  transition: none;
+}
