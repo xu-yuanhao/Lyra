@@ -54,6 +54,8 @@ export type AppModelMenuProps<TModelValue extends string = string> = {
   readonly submenus?: readonly AppModelMenuSubmenu[];
   /** Shown when hovering a model row (reasoning effort, etc.). */
   readonly optionSubmenus?: readonly AppModelMenuSubmenu[];
+  /** Trigger display override; the opening menu rows keep using option labels. */
+  readonly triggerLabel?: ReactNode;
   readonly onOptionSubmenuSelect?: (
     modelId: TModelValue,
     submenuId: string,
@@ -80,6 +82,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
   submenus = [],
   optionSubmenus = [],
   onOptionSubmenuSelect,
+  triggerLabel,
   value
 }: AppModelMenuProps<TModelValue>) => {
   const [open, setOpen] = useState(false);
@@ -109,7 +112,10 @@ export const AppModelMenu = <TModelValue extends string = string>({
     ? groups.flatMap((group) => group.options)
     : options;
   const selectedOption = allOptions.find((option) => option.value === value);
-  const triggerLabel = selectedOption?.label ?? placeholder ?? ariaLabel;
+  const effectiveTriggerLabel =
+    triggerLabel === undefined
+      ? (selectedOption?.label ?? placeholder ?? ariaLabel)
+      : triggerLabel;
   const triggerIcon = selectedOption?.icon;
   const enabledSubmenus = submenus.filter((submenu) => submenu.options.length > 0);
   const enabledOptionSubmenus = optionSubmenus.filter((submenu) => submenu.options.length > 0);
@@ -232,7 +238,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
       <DropdownMenuTrigger
         className={cn("lyra-ui-select-trigger lyra-app-model-menu-trigger", className)}
         aria-label={ariaLabel}
-        title={labelText(triggerLabel) ?? ariaLabel}
+        title={labelText(effectiveTriggerLabel) ?? ariaLabel}
         disabled={disabled || allOptions.length === 0}
         data-has-icon={triggerIcon === undefined ? undefined : "true"}
       >
@@ -242,7 +248,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
               {triggerIcon}
             </span>
           )}
-          <span className="lyra-ui-select-trigger-label">{triggerLabel}</span>
+          <span className="lyra-ui-select-trigger-label">{effectiveTriggerLabel}</span>
         </span>
         <ChevronDown className="lyra-ui-select-chevron" aria-hidden="true" />
       </DropdownMenuTrigger>

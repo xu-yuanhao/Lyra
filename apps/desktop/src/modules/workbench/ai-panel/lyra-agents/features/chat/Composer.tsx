@@ -67,7 +67,8 @@ import type { WorkspaceTab } from "../../../../workspace-tabs/types";
 import type {
   AgentImageAttachment,
   ComposerModelControls,
-  ComposerPermissionModeControls
+  ComposerPermissionModeControls,
+  ModelOption
 } from "../../core/types";
 import type { AgentFileAttachment } from "./composer-file";
 import { AgentProviderBrandIcon } from "../../../../agent-provider-brand-icon";
@@ -122,6 +123,44 @@ const reasoningEffortLabel = (option: string): string => {
     default:
       return option;
   }
+};
+
+/**
+ * Composer trigger shows just the model name ("beam-free" / "deepseek-v4-pro");
+ * the provider prefix stays in the menu rows, the group header and the provider
+ * icon, where it already carries the context.
+ * Model ids may be bare ("beam-free") or provider-qualified, and the full
+ * label may prefix either form. Strip against provider aliases first, then
+ * against the first segment of a provider-qualified model id — e.g. an
+ * "opencode"-route provider whose ids read "opencode-zen-free/beam-free".
+ */
+export const composerModelTriggerLabel = (model: ModelOption): string => {
+  const separator = model.model.indexOf("/");
+  const aliases = [model.provider, model.providerId, model.providerKey];
+  if (separator > 0) {
+    aliases.push(model.model.slice(0, separator));
+  }
+  for (const alias of aliases) {
+    const providerName = alias?.trim();
+    if (
+      providerName !== undefined
+      && providerName.length > 0
+      && model.label.length > providerName.length + 1
+      && model.label.slice(0, providerName.length).toLowerCase() === providerName.toLowerCase()
+      && model.label[providerName.length] === "/"
+    ) {
+      return model.label.slice(providerName.length + 1);
+    }
+  }
+  const bareModel = model.model.trim();
+  if (
+    bareModel.length > 0
+    && bareModel !== model.label
+    && model.label.endsWith(`/${bareModel}`)
+  ) {
+    return bareModel;
+  }
+  return model.label;
 };
 
 export function Composer({
@@ -673,6 +712,11 @@ export function Composer({
             {modelControls !== null && modelControls !== undefined && modelPickerOptions.length > 0 ? (
               <AppModelMenu
                 ariaLabel={t("lyra-agents-composer.modelControls")}
+                {...(hideModelLabel
+                  ? {}
+                  : { triggerLabel: (
+                    selectedModel === null ? undefined : composerModelTriggerLabel(selectedModel)
+                  ) })}
                 className={hideModelLabel
                   ? "lyra-agents-composer-model-picker lyra-agents-composer-toolbar-icon-only"
                   : "lyra-agents-composer-model-picker"}
