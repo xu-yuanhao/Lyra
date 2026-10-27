@@ -1072,8 +1072,13 @@
   max-width: 100%;
 }
 
+/* Row spacing lives inside the measured box (not sibling margins) so the
+   virtualizer offsets include it; keep it in the base rule — gating it on panel
+   width left no gap once the panel went narrow, so bubbles touched the card
+   above. */
 .lyra-agents-chat-message-slot {
   min-width: 0;
+  padding-top: var(--lyra-space-18);
 }
 
 /* -------- Messages -------- */
