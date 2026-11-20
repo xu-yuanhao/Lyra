@@ -242,8 +242,7 @@ const BrowserImportRows = ({
               <AppButton
                 type="button"
                 variant="outline"
-                size="sm"
-                className="lyra-settings-ai-action"
+                size="md"
                 disabled={pendingProfileId !== null}
                 onClick={() => void handleImport(profile)}
               >
@@ -364,10 +363,7 @@ export const SettingsImportView = ({ desktopApi, labels }: Props) => {
                   <AppButton
                     type="button"
                     variant={state === "sync" ? "default" : "outline"}
-                    size="sm"
-                    className={state === "sync"
-                      ? "lyra-settings-ai-action lyra-settings-ai-action-primary"
-                      : "lyra-settings-ai-action"}
+                    size="md"
                     disabled={pendingSourceId !== null || state === "synced" || state === "attention"}
                     onClick={(event) => { event.stopPropagation(); void handleAction(source); }}
                   >

@@ -35,8 +35,6 @@ export type SettingsAiRenderedModelEntry = Pick<
   | "protocolId"
   | "protocolFamily"
   | "enabled"
-  | "free"
-  | "sourceLabel"
   | "capabilities"
   | "contextWindow"
   | "reasoningReplayField"
@@ -193,7 +191,7 @@ export const SettingsAiModelCapabilitiesView = ({
         onClick={onBack}
       />
       {entry.capabilities?.runtimeConflict == null ? null : (
-        <AppStatusMessage className="lyra-settings-ai-error" tone="error" role="alert">
+        <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="error" role="alert">
           {entry.capabilities.runtimeConflict}
         </AppStatusMessage>
       )}

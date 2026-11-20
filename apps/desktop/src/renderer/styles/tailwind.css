@@ -15,7 +15,6 @@
   --text-ui-sm: var(--lyra-text-ui-sm);
   --text-ui-base: var(--lyra-text-ui-base);
   --text-ui-lg: var(--lyra-text-ui-lg);
-  --text-ui-xl: var(--lyra-text-ui-xl);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -82,6 +81,12 @@
   --spacing-control-prominent: var(--lyra-control-h-prominent);
   --spacing-shell-titlebar: var(--lyra-shell-titlebar-h);
 
+  /* Two semantic radii, so primitives name the object instead of guessing a
+     scale step: every interactive control shares one corner, every card-like
+     surface shares another. The numeric scale below stays for small elements
+     (menu rows, chips, tabs) that deliberately sit inside a larger corner. */
+  --radius-control: var(--lyra-control-radius-default);
+  --radius-surface: var(--lyra-radius-10);
   --radius-sm: var(--lyra-radius-sm);
   --radius-md: var(--lyra-radius-md);
   --radius-lg: var(--lyra-radius-lg);

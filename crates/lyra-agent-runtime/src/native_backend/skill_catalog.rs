@@ -8,10 +8,9 @@ use zip::ZipArchive;
 const REGISTRY_FILE_NAME: &str = "registry.v1.json";
 const SKILL_MD_FILE_NAME: &str = "SKILL.md";
 const DEFAULT_SKILL_STORE_INDEX_URL: &str = "lyra://skills/dynamic";
-const CLAUDE_PLUGINS_SKILLS_API: &str = "https://claude-plugins.dev/api/skills";
-const SKILLS_SH_SEARCH_API: &str = "https://skills.sh/api/search";
 const CLAWHUB_SEARCH_API: &str = "https://clawhub.ai/api/v1/search";
-const CLAWHUB_DOWNLOAD_API: &str = "https://api.clawhub.ai/api/v1/skills";
+const CLAWHUB_LIST_API: &str = "https://clawhub.ai/api/v1/skills";
+const CLAWHUB_DOWNLOAD_API: &str = "https://clawhub.ai/api/v1/download";
 const SKILL_STORE_LIMIT: usize = 24;
 const SKILL_SEARCH_MAX_RESULTS: usize = 80;
 const SKILL_PACKAGE_SEARCH_DEPTH: usize = 6;
@@ -1040,41 +1039,6 @@ fn merge_store_entries(entries: Vec<SkillStoreEntry>) -> Vec<SkillStoreEntry> {
     entries
 }
 
-fn github_tree_source(source_url: &str) -> Option<SkillSource> {
-    let url = Url::parse(source_url).ok()?;
-    if url.host_str()? != "github.com" {
-        return None;
-    }
-    let parts = url
-        .path_segments()?
-        .map(|part| {
-            urlencoding::decode(part)
-                .ok()
-                .map(|value| value.to_string())
-        })
-        .collect::<Option<Vec<_>>>()?;
-    let owner = parts.first()?;
-    let repo = parts.get(1)?.trim_end_matches(".git");
-    if owner.is_empty() || repo.is_empty() {
-        return None;
-    }
-    let tree_index = parts.iter().position(|part| part == "tree");
-    Some(SkillSource::Git {
-        url: format!("https://github.com/{owner}/{repo}.git"),
-        ref_name: tree_index.and_then(|index| parts.get(index + 1).cloned()),
-        subdir: tree_index
-            .map(|index| {
-                parts
-                    .iter()
-                    .skip(index + 2)
-                    .cloned()
-                    .collect::<Vec<_>>()
-                    .join("/")
-            })
-            .filter(|value| !value.is_empty()),
-    })
-}
-
 fn fetch_json(client: &reqwest::blocking::Client, url: Url) -> AgentRuntimeResult<Value> {
     client
         .get(url)
@@ -1086,153 +1050,61 @@ fn fetch_json(client: &reqwest::blocking::Client, url: Url) -> AgentRuntimeResul
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))
 }
 
-fn fetch_claude_plugins_entries(
-    client: &reqwest::blocking::Client,
-    query: &str,
-    offset: usize,
-) -> AgentRuntimeResult<Vec<SkillStoreEntry>> {
-    let mut url = Url::parse(CLAUDE_PLUGINS_SKILLS_API)
-        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
-    if !query.is_empty() {
-        url.query_pairs_mut().append_pair("q", query);
-    }
-    url.query_pairs_mut()
-        .append_pair("limit", &SKILL_STORE_LIMIT.to_string())
-        .append_pair("offset", &offset.to_string());
-    let json = fetch_json(client, url)?;
-    let Some(skills) = json.get("skills").and_then(Value::as_array) else {
-        return Ok(Vec::new());
-    };
-    let entries = skills
-        .iter()
-        .filter_map(|skill| {
-            let name = string_at(skill, "/name")?.to_string();
-            let owner = string_at(skill, "/metadata/repoOwner").unwrap_or_default();
-            let repo = string_at(skill, "/metadata/repoName").unwrap_or_default();
-            let directory = string_at(skill, "/metadata/directoryPath").unwrap_or_default();
-            let source_url = string_at(skill, "/sourceUrl").map(str::to_string);
-            let source = if !owner.is_empty() && !repo.is_empty() {
-                Some(SkillSource::Git {
-                    url: format!("https://github.com/{owner}/{repo}.git"),
-                    ref_name: None,
-                    subdir: (!directory.is_empty()).then(|| directory.to_string()),
-                })
-            } else {
-                source_url.as_deref().and_then(github_tree_source)
-            }?;
-            Some(SkillStoreEntry {
-                id: format!(
-                    "claude-plugins:{}",
-                    string_at(skill, "/namespace")
-                        .or_else(|| string_at(skill, "/sourceUrl"))
-                        .or_else(|| string_at(skill, "/id"))
-                        .unwrap_or(name.as_str())
-                ),
-                name,
-                version: string_at(skill, "/version").unwrap_or_default().to_string(),
-                description: string_at(skill, "/description")
-                    .unwrap_or_default()
-                    .to_string(),
-                source,
-                permissions: Vec::new(),
-                tool_paths: Vec::new(),
-                source_registry: Some("claude-plugins.dev".to_string()),
-                source_url,
-                installs: u64_at(skill, "/installs"),
-                stars: u64_at(skill, "/stars"),
-                score: None,
-            })
-        })
-        .collect::<Vec<_>>();
-    Ok(entries)
-}
-
-fn fetch_skills_sh_entries(
-    client: &reqwest::blocking::Client,
-    query: &str,
-    offset: usize,
-) -> AgentRuntimeResult<Vec<SkillStoreEntry>> {
-    if query.chars().count() < 2 {
-        return Ok(Vec::new());
-    }
-    let mut url = Url::parse(SKILLS_SH_SEARCH_API)
-        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
-    url.query_pairs_mut()
-        .append_pair("q", query)
-        .append_pair("limit", &SKILL_STORE_LIMIT.to_string())
-        .append_pair("offset", &offset.to_string());
-    let json = fetch_json(client, url)?;
-    let Some(skills) = json.get("skills").and_then(Value::as_array) else {
-        return Ok(Vec::new());
-    };
-    let entries = skills
-        .iter()
-        .filter_map(|skill| {
-            let id = string_at(skill, "/id")?;
-            let source_repo = string_at(skill, "/source")?;
-            let name = string_at(skill, "/name")
-                .or_else(|| string_at(skill, "/skillId"))
-                .unwrap_or(id)
-                .to_string();
-            let subdir = id
-                .strip_prefix(&format!("{source_repo}/"))
-                .filter(|value| !value.trim().is_empty())
-                .map(str::to_string);
-            Some(SkillStoreEntry {
-                id: format!("skills.sh:{id}"),
-                name,
-                version: String::new(),
-                description: String::new(),
-                source: SkillSource::Git {
-                    url: format!("https://github.com/{source_repo}.git"),
-                    ref_name: None,
-                    subdir,
-                },
-                permissions: Vec::new(),
-                tool_paths: Vec::new(),
-                source_registry: Some("skills.sh".to_string()),
-                source_url: Some(format!("https://github.com/{source_repo}")),
-                installs: u64_at(skill, "/installs"),
-                stars: None,
-                score: None,
-            })
-        })
-        .collect::<Vec<_>>();
-    Ok(entries)
-}
-
 fn fetch_clawhub_entries(
     client: &reqwest::blocking::Client,
     query: &str,
     offset: usize,
 ) -> AgentRuntimeResult<Vec<SkillStoreEntry>> {
-    let mut url = Url::parse(CLAWHUB_SEARCH_API)
-        .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
-    url.query_pairs_mut()
-        .append_pair("q", query)
-        .append_pair("limit", &SKILL_STORE_LIMIT.to_string())
-        .append_pair("offset", &offset.to_string());
-    let json = fetch_json(client, url)?;
-    let Some(skills) = json.get("results").and_then(Value::as_array) else {
-        return Ok(Vec::new());
+    // clawhub.ai slugs are only unique per publisher; installs need both
+    // `slug` and `ownerHandle`, so ids and download URLs stay owner-qualified.
+    let skills = if query.trim().is_empty() {
+        let mut url = Url::parse(CLAWHUB_LIST_API)
+            .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+        url.query_pairs_mut()
+            .append_pair("limit", &SKILL_STORE_LIMIT.to_string());
+        let json = fetch_json(client, url)?;
+        json.get("items")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
+    } else {
+        let mut url = Url::parse(CLAWHUB_SEARCH_API)
+            .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+        url.query_pairs_mut()
+            .append_pair("q", query)
+            .append_pair("limit", &SKILL_STORE_LIMIT.to_string());
+        let json = fetch_json(client, url)?;
+        json.get("results")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default()
     };
     let entries = skills
         .iter()
         .filter_map(|skill| {
             let slug = string_at(skill, "/slug")?;
+            let owner = string_at(skill, "/ownerHandle").unwrap_or_default();
+            if owner.is_empty() {
+                return None;
+            }
             let name = string_at(skill, "/displayName").unwrap_or(slug).to_string();
             Some(SkillStoreEntry {
-                id: format!("clawhub:{slug}"),
+                id: format!("clawhub:{owner}/{slug}"),
                 name,
-                version: string_at(skill, "/version").unwrap_or_default().to_string(),
+                version: string_at(skill, "/latestVersion/version")
+                    .or_else(|| string_at(skill, "/version"))
+                    .unwrap_or_default()
+                    .to_string(),
                 description: string_at(skill, "/summary").unwrap_or_default().to_string(),
                 source: SkillSource::Archive {
-                    url: format!("{CLAWHUB_DOWNLOAD_API}/{slug}/download"),
+                    url: format!(
+                        "{CLAWHUB_DOWNLOAD_API}?slug={slug}&ownerHandle={owner}"
+                    ),
                 },
                 permissions: Vec::new(),
                 tool_paths: Vec::new(),
                 source_registry: Some("clawhub.ai".to_string()),
-                source_url: Some(format!("https://clawhub.ai/skills/{slug}")),
+                source_url: Some(format!("https://clawhub.ai/{owner}/skills/{slug}")),
                 installs: u64_at(skill, "/downloads"),
                 stars: None,
                 score: f64_at(skill, "/score"),
@@ -1254,14 +1126,6 @@ fn fetch_store_index(
         .map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
     let mut entries = Vec::new();
     let mut errors = Vec::new();
-    match fetch_skills_sh_entries(&client, query, offset) {
-        Ok(value) => entries.extend(value),
-        Err(error) => errors.push(format!("skills.sh: {error}")),
-    }
-    match fetch_claude_plugins_entries(&client, query, offset) {
-        Ok(value) => entries.extend(value),
-        Err(error) => errors.push(format!("claude-plugins.dev: {error}")),
-    }
     match fetch_clawhub_entries(&client, query, offset) {
         Ok(value) => entries.extend(value),
         Err(error) => errors.push(format!("clawhub.ai: {error}")),
@@ -1515,24 +1379,6 @@ Use zip-installed instructions.
         let installed = install_local_archive(&storage, &archive_path, source).expect("install");
         assert_eq!(installed.id, "zip-skill");
         assert!(installed.manifest.prompt.contains("zip-installed"));
-    }
-
-    #[test]
-    fn parses_github_tree_source() {
-        let source =
-            github_tree_source("https://github.com/acme/skill-pack/tree/main/skills/review-skill")
-                .expect("parse source");
-        let SkillSource::Git {
-            url,
-            ref_name,
-            subdir,
-        } = source
-        else {
-            panic!("expected git source");
-        };
-        assert_eq!(url, "https://github.com/acme/skill-pack.git");
-        assert_eq!(ref_name.as_deref(), Some("main"));
-        assert_eq!(subdir.as_deref(), Some("skills/review-skill"));
     }
 
     #[test]

@@ -7,7 +7,7 @@ import {
   type ReactNode
 } from "react";
 
-import { AppIconButton } from "@renderer/ui/components";
+import { AppButton, AppIconButton } from "@renderer/ui/components";
 import { executeWorkspaceAppCommand } from "../workspace-apps";
 import { cx } from "../ui-primitives";
 import {
@@ -57,22 +57,41 @@ const WorkbenchChromeToolbarContextFromBus = ({
             {actions.length > 0 ? (
               <div className="lyra-titlebar-context-controls">
                 {actions.map((action) => (
-                  <AppIconButton
-                    key={action.id}
-                    className={cx(
-                      "lyra-titlebar-context-icon-button",
-                      action.tone === "danger" ? "lyra-titlebar-context-danger" : undefined
-                    )}
-                    tone={action.tone === "danger" ? "danger" : "default"}
-                    aria-label={action.label}
-                    title={action.label}
-                    disabled={action.disabled === true}
-                    onClick={() => {
-                      void executeWorkspaceAppCommand(action.commandId, {});
-                    }}
-                  >
-                    {renderChromeActionIcon(action.iconKey, 14)}
-                  </AppIconButton>
+                  action.display === "text" ? (
+                    <AppButton
+                      key={action.id}
+                      variant="ghost"
+                      size="sm"
+                      className={cx(
+                        "lyra-titlebar-context-text-button",
+                        action.active === true ? "lyra-titlebar-context-button-active" : undefined
+                      )}
+                      aria-pressed={action.active === true}
+                      disabled={action.disabled === true}
+                      onClick={() => {
+                        void executeWorkspaceAppCommand(action.commandId, {});
+                      }}
+                    >
+                      {action.label}
+                    </AppButton>
+                  ) : (
+                    <AppIconButton
+                      key={action.id}
+                      className={cx(
+                        "lyra-titlebar-context-icon-button",
+                        action.tone === "danger" ? "lyra-titlebar-context-danger" : undefined
+                      )}
+                      tone={action.tone === "danger" ? "danger" : "default"}
+                      aria-label={action.label}
+                      title={action.label}
+                      disabled={action.disabled === true}
+                      onClick={() => {
+                        void executeWorkspaceAppCommand(action.commandId, {});
+                      }}
+                    >
+                      {renderChromeActionIcon(action.iconKey, 14)}
+                    </AppIconButton>
+                  )
                 ))}
               </div>
             ) : null}

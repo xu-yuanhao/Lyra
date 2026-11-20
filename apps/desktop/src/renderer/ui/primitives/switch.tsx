@@ -12,7 +12,7 @@ export const Switch = forwardRef<
   <SwitchPrimitive.Root
     ref={ref}
     className={cn(
-      "lyra-ui-switch peer relative inline-flex shrink-0 cursor-pointer items-center rounded-full border-0 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
+      "lyra-ui-switch peer relative inline-flex shrink-0 cursor-pointer items-center rounded-full border-0 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
       className
     )}
     {...props}

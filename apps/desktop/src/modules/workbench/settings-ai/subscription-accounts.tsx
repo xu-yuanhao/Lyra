@@ -104,24 +104,24 @@ export function SubscriptionRouteLogin({
       <span className="lyra-settings-ai-model-discovery-action-row">
         <AppButton
           variant="outline"
-          size="sm"
+          size="md"
           type="button"
-          className="lyra-settings-ai-action"
           disabled={busy}
           onClick={start}
         >
           {t("settings.aiSubscriptionLogin")}
         </AppButton>
-        <AppButton
-          variant="ghost"
-          size="sm"
-          type="button"
-          className="lyra-settings-ai-action"
-          disabled={busy}
-          onClick={() => complete(true)}
-        >
-          {t("settings.aiSubscriptionBorrow")}
-        </AppButton>
+        {routeId === "azure_openai" ? (
+          <AppButton
+            variant="ghost"
+            size="md"
+            type="button"
+            disabled={busy}
+            onClick={() => complete(true)}
+          >
+            {t("settings.aiSubscriptionBorrow")}
+          </AppButton>
+        ) : null}
       </span>
       {userCode === null && authUrl === null && flowId === null ? null : (
         <>
@@ -136,9 +136,8 @@ export function SubscriptionRouteLogin({
           />
           <AppButton
             variant="default"
-            size="sm"
+            size="md"
             type="button"
-            className="lyra-settings-ai-action lyra-settings-ai-action-primary"
             disabled={busy}
             onClick={() => complete(false)}
           >

@@ -6,8 +6,6 @@ import { Moon } from "@lyra/icons";
 import {
   AppBadge,
   AppButton,
-  AppChoiceCard,
-  AppDataTable,
   AppDialog,
   AppErrorBoundary,
   AppEmptyState,
@@ -29,7 +27,6 @@ import {
   AppToastViewport,
   AppToolbarButton,
   AppWindowButton,
-  type AppDataTableColumn
 } from ".";
 
 describe("Lyra App UI components", () => {
@@ -40,19 +37,6 @@ describe("Lyra App UI components", () => {
       "lyra-ui-button",
       "lyra-ui-button-outline"
     );
-  });
-
-  test("renders active choice cards with a checked state", () => {
-    const onClick = vi.fn();
-    render(
-      <AppChoiceCard active role="radio" aria-checked="true" onClick={onClick} label="Dark" />
-    );
-
-    const radio = screen.getByRole("radio", { name: "Dark" });
-    expect(radio).toHaveAttribute("data-state", "checked");
-
-    fireEvent.click(radio);
-    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   test("wraps form controls and settings sections with stable classes", () => {
@@ -342,93 +326,5 @@ describe("Lyra App UI components", () => {
       .toHaveClass("lyra-app-state-error", "lyra-app-state-tone-error");
     expect(screen.getByRole("button", { name: "Retry" }))
       .toHaveClass("lyra-ui-button");
-  });
-
-  test("renders data tables with rows, actions, and fallback states", () => {
-    type PackageRow = {
-      readonly id: string;
-      readonly name: string;
-      readonly status: string;
-    };
-    const onRowClick = vi.fn();
-    const onAction = vi.fn();
-    const columns: AppDataTableColumn<PackageRow>[] = [
-      {
-        id: "name",
-        header: "Name",
-        cell: (row) => row.name,
-        truncate: true
-      },
-      {
-        id: "status",
-        header: "Status",
-        cell: (row) => row.status,
-        align: "end" as const
-      }
-    ];
-
-    const { rerender } = render(
-      <AppDataTable
-        ariaLabel="Packages"
-        columns={columns}
-        rows={[{ id: "pkg-1", name: "Lyra Package", status: "Active" } satisfies PackageRow]}
-        getRowKey={(row) => row.id}
-        activeRowKey="pkg-1"
-        onRowClick={onRowClick}
-        rowActions={(row) => (
-          <button type="button" onClick={() => onAction(row.id)}>
-            Open
-          </button>
-        )}
-      />
-    );
-
-    const table = screen.getByRole("table", { name: "Packages" });
-    expect(table.closest(".lyra-app-data-table")).not.toBeNull();
-    const row = screen.getByRole("button", { name: /Lyra Package Active Open/u });
-    expect(row).toHaveAttribute("data-active", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Open" }));
-    expect(onAction).toHaveBeenCalledWith("pkg-1");
-    expect(onRowClick).not.toHaveBeenCalled();
-    fireEvent.click(row);
-    expect(onRowClick).toHaveBeenCalledWith({ id: "pkg-1", name: "Lyra Package", status: "Active" }, 0);
-
-    rerender(
-      <AppDataTable
-        ariaLabel="Packages"
-        columns={columns}
-        rows={[] as PackageRow[]}
-        getRowKey={(row) => row.id}
-        emptyState={<AppEmptyState title="No rows" />}
-      />
-    );
-    expect(screen.getByText("No rows").closest(".lyra-app-state"))
-      .toHaveClass("lyra-app-state-empty");
-
-    rerender(
-      <AppDataTable
-        ariaLabel="Packages"
-        columns={columns}
-        rows={[] as PackageRow[]}
-        getRowKey={(row) => row.id}
-        loading
-        loadingState={<AppLoadingState title="Loading rows" />}
-      />
-    );
-    expect(screen.getByText("Loading rows").closest(".lyra-app-state"))
-      .toHaveClass("lyra-app-state-loading");
-
-    rerender(
-      <AppDataTable
-        ariaLabel="Packages"
-        columns={columns}
-        rows={[] as PackageRow[]}
-        getRowKey={(row) => row.id}
-        error
-        errorState={<AppErrorState title="Rows failed" />}
-      />
-    );
-    expect(screen.getByText("Rows failed").closest(".lyra-app-state"))
-      .toHaveClass("lyra-app-state-error");
   });
 });

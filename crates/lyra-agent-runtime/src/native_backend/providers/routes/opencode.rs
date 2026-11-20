@@ -16,61 +16,7 @@ pub(crate) const ZEN_ROUTE_ID: &str = "opencode_zen";
 pub(crate) const GO_ROUTE_ID: &str = "opencode_go";
 pub(crate) const ZEN_BASE_URL: &str = "https://opencode.ai/zen/v1";
 pub(crate) const GO_BASE_URL: &str = "https://opencode.ai/zen/go/v1";
-pub(crate) const ANONYMOUS_PROVIDER_ID: &str = "opencode-free";
-pub(crate) const ANONYMOUS_PROVIDER_LABEL: &str = "OpenCode Free";
-pub(crate) const ANONYMOUS_DEFAULT_MODEL: &str = "big-pickle";
 const IDENTITY_CLIENT: &str = "lyra";
-const OPENAI_RESPONSES_NPM: &str = "@ai-sdk/openai";
-
-/// Built-in anonymous catalog. Source: OpenCode zen.mdx Free table plus
-/// models still listed by `GET https://opencode.ai/zen/v1/models` (2026-09-10).
-pub(crate) const ANONYMOUS_MODELS: &[AnonymousModel] = &[
-    AnonymousModel::chat("big-pickle", "Big Pickle"),
-    AnonymousModel::chat("deepseek-v4-flash-free", "DeepSeek V4 Flash Free"),
-    AnonymousModel::chat("mimo-v2.5-free", "MiMo-V2.5 Free"),
-    AnonymousModel::chat("ling-3.0-flash-fin-free", "Ling 3.0 Flash Fin Free"),
-    AnonymousModel::chat("nemotron-3-ultra-free", "Nemotron 3 Ultra Free"),
-    AnonymousModel::chat("nemotron-3.5-lightning-free", "Nemotron 3.5 Lightning Free"),
-    AnonymousModel::responses(
-        "muse-spark-1.3-contributor-free",
-        "Muse Spark 1.3 Contributor Free",
-    ),
-    AnonymousModel::responses(
-        "muse-spark-1.2-contributor-free",
-        "Muse Spark 1.2 Contributor Free",
-    ),
-];
-
-const RETIRED_ANONYMOUS_MODEL_IDS: &[&str] = &[
-    "north-mini-code-free",
-    "hy3-free",
-    "laguna-s-2.1-free",
-    "ling-3.0-tiny-free",
-];
-
-pub(crate) struct AnonymousModel {
-    pub(crate) id: &'static str,
-    pub(crate) label: &'static str,
-    pub(crate) api_npm: Option<&'static str>,
-}
-
-impl AnonymousModel {
-    const fn chat(id: &'static str, label: &'static str) -> Self {
-        Self {
-            id,
-            label,
-            api_npm: None,
-        }
-    }
-
-    const fn responses(id: &'static str, label: &'static str) -> Self {
-        Self {
-            id,
-            label,
-            api_npm: Some(OPENAI_RESPONSES_NPM),
-        }
-    }
-}
 
 static MODEL_DISCOVERY_HOOK: OpenCodeModelDiscoveryHook = OpenCodeModelDiscoveryHook;
 
@@ -92,7 +38,6 @@ pub(crate) fn effective_api_method(route_id: &str, api_npm: Option<&str>) -> Opt
 
 pub(crate) fn uses_opencode_gateway(provider: &NativeProviderProfile) -> bool {
     matches!(provider.route_id.as_str(), ZEN_ROUTE_ID | GO_ROUTE_ID)
-        || provider.id == ANONYMOUS_PROVIDER_ID
         || provider
             .base_url
             .as_deref()
@@ -138,33 +83,6 @@ pub(crate) fn apply_identity_headers_async(
     builder
 }
 
-pub(crate) fn seed_anonymous_models() -> Vec<NativeProviderModel> {
-    ANONYMOUS_MODELS
-        .iter()
-        .map(anonymous_native_model)
-        .collect()
-}
-
-pub(crate) fn reconcile_anonymous_models(models: &mut Vec<NativeProviderModel>) {
-    models.retain(|model| !is_retired_anonymous_model(&model.id));
-    for spec in ANONYMOUS_MODELS {
-        if let Some(existing) = models.iter_mut().find(|model| model.id == spec.id) {
-            if existing.label.as_deref().unwrap_or("").trim().is_empty() {
-                existing.label = Some(spec.label.to_string());
-            }
-            if existing.api_npm.is_none() {
-                existing.api_npm = spec.api_npm.map(str::to_string);
-            }
-            continue;
-        }
-        models.push(anonymous_native_model(spec));
-    }
-}
-
-pub(crate) fn is_retired_anonymous_model(id: &str) -> bool {
-    RETIRED_ANONYMOUS_MODEL_IDS.contains(&id)
-}
-
 fn identity_headers(
     provider: &NativeProviderProfile,
     session_id: &str,
@@ -201,15 +119,6 @@ fn active_session_fallback() -> Option<String> {
         .ok()
         .and_then(|state| state.active_session_id.clone())
         .and_then(|id| non_empty(&id))
-}
-
-fn anonymous_native_model(spec: &AnonymousModel) -> NativeProviderModel {
-    NativeProviderModel {
-        id: spec.id.to_string(),
-        label: Some(spec.label.to_string()),
-        api_npm: spec.api_npm.map(str::to_string),
-        ..NativeProviderModel::default()
-    }
 }
 
 fn descriptor_for(route_id: &str) -> ProviderRouteDescriptor {
@@ -429,26 +338,5 @@ mod tests {
         );
         assert!(headers.get("x-opencode-session").is_none());
         assert!(headers.get("x-opencode-client").is_none());
-    }
-
-    #[test]
-    fn reconcile_anonymous_models_replaces_retired_ids_and_sets_responses_npm() {
-        let mut models = vec![
-            anonymous_native_model(&AnonymousModel::chat("hy3-free", "Hy3 Free")),
-            anonymous_native_model(&AnonymousModel::chat("big-pickle", "Big Pickle")),
-        ];
-        reconcile_anonymous_models(&mut models);
-        let ids = models
-            .iter()
-            .map(|model| model.id.as_str())
-            .collect::<Vec<_>>();
-        assert!(!ids.contains(&"hy3-free"));
-        assert!(ids.contains(&"ling-3.0-flash-fin-free"));
-        assert!(ids.contains(&"muse-spark-1.3-contributor-free"));
-        let muse = models
-            .iter()
-            .find(|model| model.id == "muse-spark-1.3-contributor-free")
-            .expect("muse");
-        assert_eq!(muse.api_npm.as_deref(), Some(OPENAI_RESPONSES_NPM));
     }
 }

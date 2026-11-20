@@ -37,9 +37,9 @@ export const LYRA_RESOLVED_THEMES: Record<LyraResolvedThemeId, WorkbenchTheme> =
       "--lyra-text-muted": "#737373",
       "--lyra-text-accent": "#171717",
       "--lyra-window-close-hover-bg": "#d36151",
-      "--lyra-status-success": "#669f59",
-      "--lyra-status-warning": "#a48819",
-      "--lyra-status-error": "#d36151"
+      "--lyra-status-success": "#3f7a3a",
+      "--lyra-status-warning": "#7a5f00",
+      "--lyra-status-error": "#b03a2e"
     })
   },
   "lyra-dark": {

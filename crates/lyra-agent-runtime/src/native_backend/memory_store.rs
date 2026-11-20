@@ -1,5 +1,5 @@
 use super::*;
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
 use std::{
     collections::{HashMap, HashSet},
     fs,
@@ -68,9 +68,14 @@ pub(crate) fn record_memory_trigger_and_enqueue(
     root: &Path,
     event: &super::memory_event_trigger::MemoryTriggerEvent,
 ) -> AgentRuntimeResult<String> {
-    let conn = open_memory_connection(root)?;
+    let mut conn = open_memory_connection(root)?;
     init_memory_schema(&conn)?;
-    let transaction = conn.unchecked_transaction().map_err(sql_error)?;
+    // BEGIN IMMEDIATE (codex's begin_immediate): take the writer lock before
+    // the first read instead of upgrading a deferred read — the upgrade path
+    // returns SQLITE_BUSY immediately regardless of busy_timeout.
+    let transaction = conn
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(sql_error)?;
     insert_trigger_mark(
         &transaction,
         &event.session_id,
@@ -1200,7 +1205,8 @@ pub(crate) fn list_memory_candidates(
 ) -> AgentRuntimeResult<Vec<MemoryCandidate>> {
     let conn = open_memory_connection(root)?;
     init_memory_schema(&conn)?;
-    expire_memory_candidates(&conn)?;
+    // Expiry maintenance moved to the background drain (memory_event_trigger);
+    // its UPDATE here made this read path a writer on every session poll.
     let normalized_status = status
         .filter(|value| !value.trim().is_empty())
         .map(normalize_candidate_status);
@@ -1238,7 +1244,6 @@ pub(crate) fn list_memory_candidates(
 pub(crate) fn apply_memory_candidate(root: &Path, id: &str) -> AgentRuntimeResult<Value> {
     let conn = open_memory_connection(root)?;
     init_memory_schema(&conn)?;
-    expire_memory_candidates(&conn)?;
     let candidate = load_memory_candidate(&conn, id)?
         .ok_or_else(|| AgentRuntimeError::Core(format!("memory candidate not found: {id}")))?;
     if !matches!(
@@ -1634,6 +1639,9 @@ pub(crate) fn promote_stability_pending_memory_candidates(
 ) -> AgentRuntimeResult<usize> {
     let conn = open_memory_connection(root)?;
     init_memory_schema(&conn)?;
+    // Candidate expiry maintenance lives here (background drain), not in the
+    // read paths that used to call it per poll.
+    expire_memory_candidates(&conn)?;
     promote_stability_pending_candidates(&conn)
 }
 

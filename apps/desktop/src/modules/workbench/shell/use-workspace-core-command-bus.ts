@@ -14,6 +14,7 @@ import type { WorkbenchAppId, WorkspaceAppIconKey } from "../workspace-apps";
 import {
   CORE_HOST_COMMANDS,
   CORE_HOST_EVENTS,
+  readWorkspaceAppHostTab,
   registerWorkspaceCoreEvent,
   registerWorkspaceCoreCommand
 } from "../workspace-apps";
@@ -1168,6 +1169,10 @@ export const useWorkspaceCoreCommandBus = ({
       registerWorkspaceCoreCommand(CORE_HOST_COMMANDS.workspaceResolveTab, async (value) => {
         const input = asRecord(value);
         const instanceId = requiredString(input, "instanceId");
+        const hostTabId = readWorkspaceAppHostTab(instanceId);
+        if (hostTabId !== undefined && tabsModel.tabs.some((tab) => tab.id === hostTabId)) {
+          return { tabId: hostTabId };
+        }
         const matches = tabsModel.tabs.filter((tab) => tab.appInstanceId === instanceId);
         if (matches.length === 0) {
           return null;

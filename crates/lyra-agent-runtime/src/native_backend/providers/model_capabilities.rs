@@ -868,8 +868,8 @@ mod tests {
     #[test]
     fn openai_compatible_models_require_explicit_advanced_fields() {
         let mut provider = NativeProviderProfile {
-            id: "opencode-free".to_string(),
-            label: "OpenCode Free".to_string(),
+            id: "zen-mirror".to_string(),
+            label: "Zen Mirror".to_string(),
             route_id: super::super::routes::custom_openai_compatible::ROUTE_ID.to_string(),
             base_url: Some("https://opencode.ai/zen/v1".to_string()),
             default_model: Some("deepseek-v4-flash-free".to_string()),

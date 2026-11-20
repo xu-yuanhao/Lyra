@@ -1437,20 +1437,6 @@ pub(crate) fn call_model_once_non_streaming_with_choice(
     session_id: &str,
     request_id: &str,
 ) -> AgentRuntimeResult<ModelReply> {
-    if providers::subscription::is_special_transport(&provider.route_id) {
-        let text = providers::subscription::special_text(provider, model, messages, tools)?;
-        return Ok(ModelReply {
-            content: Some(text),
-            reasoning_content: None,
-            tool_calls: Vec::new(),
-            ui_message_id: None,
-            raw_stop_reason: Some("stop".to_string()),
-            provider_replay_protocol: None,
-            provider_replay_items: Vec::new(),
-            response_meta: ProviderResponseMeta::default(),
-            stop_signal: TurnStopSignal::EndTurn,
-        });
-    }
     if route_uses_openai_responses(provider, model)? {
         let response = apply_opencode_identity(
             build_openai_responses_request(provider, model, messages, tools, tool_choice, false)?,
@@ -1581,20 +1567,6 @@ pub(crate) fn call_model_once_streaming_inner(
     // (the existing conservative behavior). Only the OpenAI-compatible path
     // tracks commits and can opt in to safe transport retry.
     *committed_any = None;
-    if providers::subscription::is_special_transport(&provider.route_id) {
-        let text = providers::subscription::special_text(provider, model, messages, tools)?;
-        return Ok(ModelReply {
-            content: Some(text),
-            reasoning_content: None,
-            tool_calls: Vec::new(),
-            ui_message_id: None,
-            raw_stop_reason: Some("stop".to_string()),
-            provider_replay_protocol: None,
-            provider_replay_items: Vec::new(),
-            response_meta: ProviderResponseMeta::default(),
-            stop_signal: TurnStopSignal::EndTurn,
-        });
-    }
     if route_uses_openai_responses(provider, model)? {
         let response = apply_opencode_identity(
             build_openai_responses_request(provider, model, messages, tools, tool_choice, true)?,
@@ -1754,20 +1726,6 @@ pub(crate) async fn call_model_once_streaming_inner_async(
     committed_any: &mut Option<bool>,
 ) -> AgentRuntimeResult<ModelReply> {
     *committed_any = None;
-    if providers::subscription::is_special_transport(&provider.route_id) {
-        let text = providers::subscription::special_text(provider, model, messages, tools)?;
-        return Ok(ModelReply {
-            content: Some(text),
-            reasoning_content: None,
-            tool_calls: Vec::new(),
-            ui_message_id: None,
-            raw_stop_reason: Some("stop".to_string()),
-            provider_replay_protocol: None,
-            provider_replay_items: Vec::new(),
-            response_meta: ProviderResponseMeta::default(),
-            stop_signal: TurnStopSignal::EndTurn,
-        });
-    }
     if route_uses_openai_responses(provider, model)? {
         let response = apply_opencode_identity_async(
             build_openai_responses_request_async(

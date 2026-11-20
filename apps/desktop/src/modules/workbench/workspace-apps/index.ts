@@ -33,6 +33,7 @@ export {
   listWorkspaceProductComponents,
   mountWorkspaceAppInstance,
   readWorkspaceAppActiveModule,
+  readWorkspaceAppHostTab,
   readWorkspaceAppVersionState,
   registerWorkspaceApp,
   registerWorkspaceAppModule,

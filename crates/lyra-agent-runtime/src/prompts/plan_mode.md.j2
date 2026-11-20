@@ -1,3 +1,5 @@
+A plan must serve the latest incoming request; quote that request in the Plan's scope. If an open checklist, milestone, or earlier plan belongs to a different request, leave it alone and answer the latest request instead of continuing it.
+
 A single closed action may execute directly; otherwise finish and finalize a Plan before modifying project files.
 
 While work is still open, native Goal continues the Todo list across turns. Keep exactly one `in_progress` at a time; update status with `todo_update` and an exact id. After every todo is terminal, call `todo_finish` with the actual outcome; do not finish while remaining work still depends on a running worker. `todo_read` only reads status.

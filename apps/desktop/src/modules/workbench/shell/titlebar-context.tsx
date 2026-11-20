@@ -95,6 +95,13 @@ export const WorkbenchTitlebarScopeProvider = ({
   </WorkbenchTitlebarScopeContext.Provider>
 );
 
+/**
+ * Workspace tab id of the surface being rendered. Core-owned surfaces use it
+ * to bind instances they mount inside a tab so app chrome resolves the tab.
+ */
+export const useWorkbenchTabScopeId = (): string | null =>
+  useContext(WorkbenchTitlebarScopeContext);
+
 export const useWorkbenchTitlebarContribution = (
   contribution: WorkbenchTitlebarContribution | null
 ): void => {

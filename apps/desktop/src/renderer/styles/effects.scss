@@ -56,15 +56,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--lyra-unit-16);
-  height: var(--lyra-unit-16);
-  gap: var(--lyra-unit-1);
+  width: var(--lyra-space-16);
+  height: var(--lyra-space-16);
+  gap: var(--lyra-space-1);
   color: var(--lyra-text-muted);
 }
 
 .lyra-agents-tool-execution-indicator span {
-  width: var(--lyra-unit-2);
-  height: var(--lyra-unit-10);
+  width: var(--lyra-space-2);
+  height: var(--lyra-space-10);
   border-radius: var(--lyra-radius-pill);
   background: currentColor;
   opacity: 0.32;
@@ -85,6 +85,6 @@
 
 @keyframes lyra-agents-tool-execution-step {
   0% { opacity: 0.28; }
-  50% { opacity: 0.82; }
+  50% { opacity: var(--lyra-opacity-lifted); }
   100% { opacity: 0.36; }
 }

@@ -2,10 +2,25 @@ use super::*;
 
 pub(crate) fn open_memory_connection(root: &Path) -> AgentRuntimeResult<Connection> {
     fs::create_dir_all(root).map_err(|error| AgentRuntimeError::Core(error.to_string()))?;
+    // Same contract as codex/ZCode: readers and the background memory worker
+    // share this file. WAL is switched once at startup (init_memory_schema),
+    // never re-probed here — a mode switch needs a momentary exclusive lock,
+    // so re-probing on every open turned each poll into a lock contender.
     open_sqlite_connection(&memory_store_path(root))
 }
 
 pub(crate) fn init_memory_schema(conn: &Connection) -> AgentRuntimeResult<()> {
+    // Steady state is read-free: the startup call (ensure_memory_store) has
+    // applied the schema, so later callers only verify the ledger row. The
+    // DDL batch below ends in an INSERT — re-running it per call made every
+    // session read a writer and serialized polls behind the memory worker.
+    if memory_schema_ready(conn)? {
+        return Ok(());
+    }
+    // WAL is a startup-time switch, never a per-open probe: changing journal
+    // mode needs a momentary exclusive lock, so probing on every connection
+    // made each poll a lock contender (codex/ZCode set WAL once at init).
+    ensure_wal(conn)?;
     conn.execute_batch(
         r#"
         PRAGMA foreign_keys = ON;
@@ -256,6 +271,54 @@ fn schema_migration_applied(conn: &Connection, version: i64) -> AgentRuntimeResu
         |row| row.get::<_, bool>(0),
     )
     .map_err(sql_error)
+}
+
+fn table_exists(conn: &Connection, name: &str) -> AgentRuntimeResult<bool> {
+    conn.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1)",
+        params![name],
+        |row| row.get::<_, bool>(0),
+    )
+    .map_err(sql_error)
+}
+
+fn memory_schema_ready(conn: &Connection) -> AgentRuntimeResult<bool> {
+    // Fresh file: no ledger table yet → full DDL path.
+    if !table_exists(conn, "schema_migrations")?
+        || !schema_migration_applied(conn, MEMORY_SCHEMA_VERSION)?
+    {
+        return Ok(false);
+    }
+    // Databases created before the WAL contract have the ledger row but still
+    // run the delete journal; they must cross the one-time WAL switch.
+    let mode: String = conn
+        .query_row("PRAGMA journal_mode", [], |row| row.get(0))
+        .map_err(sql_error)?;
+    Ok(mode.eq_ignore_ascii_case("wal"))
+}
+
+fn ensure_wal(conn: &Connection) -> AgentRuntimeResult<()> {
+    // Switching journal modes needs a momentary exclusive lock, so only the
+    // busy timeout stands between us and SQLITE_BUSY — re-read the mode and
+    // retry a bounded number of times, like ZCode's migration runner.
+    for _ in 0..50 {
+        let mode: String = conn
+            .query_row("PRAGMA journal_mode", [], |row| row.get(0))
+            .map_err(sql_error)?;
+        if mode.eq_ignore_ascii_case("wal") || !mode.eq_ignore_ascii_case("delete") {
+            return Ok(());
+        }
+        if conn
+            .query_row("PRAGMA journal_mode = WAL", [], |row| {
+                row.get::<_, String>(0)
+            })
+            .is_ok_and(|set| set.eq_ignore_ascii_case("wal"))
+        {
+            return Ok(());
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    Ok(())
 }
 
 fn rebuild_memory_fts_for_all_statuses(conn: &Connection) -> AgentRuntimeResult<()> {

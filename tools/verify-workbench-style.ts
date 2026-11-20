@@ -3,7 +3,11 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 
-import { WORKBENCH_FOUNDATION_TOKENS } from "../apps/desktop/src/modules/workbench/theme/foundation";
+import {
+  UNIT_VALUES,
+  WORKBENCH_FOUNDATION_TOKENS
+} from "../apps/desktop/src/modules/workbench/theme/foundation";
+import { WORKBENCH_RESOLVED_THEMES } from "../apps/desktop/src/modules/workbench/theme/config";
 
 type SelectorRule = {
   readonly selector: string;
@@ -37,7 +41,9 @@ const WORKBENCH_SHELL_ENTRYPOINT = path.join(MODULES_WORKBENCH_DIR, "shell/index
 const WORKBENCH_SHELL_ENTRYPOINT_RELATIVE = "apps/desktop/src/modules/workbench/shell/index.tsx";
 const DELETED_LEGACY_CSS_PATH = path.join(RENDERER_STYLES_DIR, "workbench.css");
 const WORKBENCH_SHELL_ENTRYPOINT_MAX_LINES = 800;
-const APPROVED_BREAKPOINTS = new Set(["360px", "720px", "860px", "980px", "1080px", "1180px", "1200px"]);
+// Four layout steps plus one micro-container. Adding a step means auditing every
+// surface at that width first; 1080px and 1200px were folded into 980px/1180px.
+const APPROVED_BREAKPOINTS = new Set(["360px", "720px", "860px", "980px", "1180px"]);
 const FOUNDATION_TOKEN_NAMES = new Set(Object.keys(WORKBENCH_FOUNDATION_TOKENS));
 const VISUAL_STYLE_KEYS = new Set([
   "fontSize",
@@ -210,15 +216,6 @@ const selectorRules: readonly SelectorRule[] = [
     required: [/background:\s*var\(--lyra-app-row-hover-bg\)\s*;/]
   },
   {
-    selector: ".lyra-settings-ai-action-icon",
-    required: [/border-color:\s*transparent\s*;/, /background:\s*transparent\s*;/]
-  },
-  {
-    selector: ".lyra-settings-ai-action-primary.lyra-settings-ai-action-icon",
-    required: [/color:\s*var\(--lyra-text-secondary\)\s*;/, /border-color:\s*transparent\s*;/, /background:\s*transparent\s*;/],
-    forbidden: [/var\(--lyra-(?:text-accent|line-focused|warning-500)\)/]
-  },
-  {
     selector: ".lyra-logo-toggle-active",
     required: [/color:\s*var\(--lyra-text-primary\)\s*;/],
     forbidden: [/#f8c55d/i, /var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/, /radial-gradient\(/, /box-shadow\s*:/]
@@ -259,7 +256,8 @@ const selectorRules: readonly SelectorRule[] = [
   },
   {
     selector: ".lyra-file-manager-disk-meter-fill-healthy",
-    required: [/background:\s*color-mix\(in srgb,\s*var\(--lyra-text-secondary\)/],
+    // Neutral fill since 0ac3a3f4; terminal-green must never leak into product UI.
+    required: [/background:\s*var\(--lyra-app-primary-button\)\s*;/],
     forbidden: [/var\(--lyra-terminal-green/]
   },
   {
@@ -299,37 +297,35 @@ const selectorRules: readonly SelectorRule[] = [
     forbidden: [/bottom:\s*0\s*;/]
   },
   {
+    // Current design: borderless neutral tab. The Chrome-style curved tab shape
+    // (chrome-tab-background geometry) was removed in c5355aa5; do not restore it.
     selector: ".lyra-browser-tab-item",
     required: [
-      /border:\s*var\(--lyra-stroke-thin\)\s+solid\s+transparent\s*;/,
+      /border:\s*0\s*;/,
       /border-radius:\s*var\(--lyra-radius-8\)\s*;/,
       /background:\s*transparent\s*;/
-    ]
+    ],
+    forbidden: [/lyra-chrome-tab-background/]
   },
   {
     selector: ".lyra-browser-tabs .lyra-browser-tab-item",
-    required: [/margin-bottom:\s*var\(--lyra-unit-1\)\s*;/],
-    forbidden: [/margin-top:\s*var\(--lyra-unit-3\)\s*;/]
+    required: [
+      /margin-bottom:\s*var\(--lyra-browser-tab-control-y\)\s*;/,
+      /margin-top:\s*var\(--lyra-browser-tab-control-y\)\s*;/
+    ]
   },
   {
-    selector: ".lyra-browser-tabs .lyra-chrome-tab-background-svg",
-    required: [/transform:\s*scaleY\(-1\)\s*;/]
+    selector: ".lyra-tab-strip .lyra-tab-item-active",
+    required: [/background:\s*var\(--lyra-tab-shape-active-fill\)\s*;/]
   },
   {
-    selector: ".lyra-browser-tabs .lyra-browser-tab-item-active::before",
-    required: [/top:\s*calc\(var\(--lyra-unit-0-5\)\s*\*\s*-1\)\s*;/, /bottom:\s*auto\s*;/]
-  },
-  {
-    selector: ".lyra-browser-tabs .lyra-browser-tab-item-split-group-active::before",
-    required: [/top:\s*calc\(var\(--lyra-unit-0-5\)\s*\*\s*-1\)\s*;/, /bottom:\s*auto\s*;/]
+    // Every tab model carries both hooks; the active fill must cover both.
+    selector: ".lyra-tab-strip .lyra-browser-tab-item-active",
+    required: [/background:\s*var\(--lyra-tab-shape-active-fill\)\s*;/]
   },
   {
     selector: ".lyra-browser-tab-item:hover .lyra-browser-tab-title",
     required: [/color:\s*var\(--lyra-text-primary\)\s*;/]
-  },
-  {
-    selector: ".lyra-browser-tab-item-active",
-    required: [/background:\s*var\(--lyra-tabstrip-active-bg\)\s*;/]
   },
   {
     selector: ".lyra-ai-agent-send-ready",
@@ -726,29 +722,166 @@ export const scanLegacyVisualTokenConsumers = (filePath: string, text: string): 
   return violations;
 };
 
+/**
+ * Resolvable `--lyra-*` properties: stylesheet declarations, foundation/theme
+ * tokens, the injected unit scale, and custom properties set from TSX inline styles.
+ */
+export const collectResolvableLyraProperties = (cssTexts: readonly string[], tsxTexts: readonly string[]): Set<string> => {
+  const names = new Set<string>();
+  for (const text of [...cssTexts, ...tsxTexts]) {
+    for (const match of text.matchAll(/(?<=[\s;{{])(--lyra-[A-Za-z0-9-]+)\s*:/g)) names.add(match[1] ?? "");
+    for (const match of text.matchAll(/["'](--lyra-[A-Za-z0-9-]+)["']\s*:/g)) names.add(match[1] ?? "");
+  }
+  for (const value of UNIT_VALUES) names.add(`--lyra-unit-${value.replaceAll(".", "-")}`);
+  const themeTokens = [...Object.keys(WORKBENCH_FOUNDATION_TOKENS), ...Object.values(WORKBENCH_RESOLVED_THEMES).flatMap((theme) => Object.keys(theme.vars))];
+  for (const name of themeTokens) {
+    if (name.startsWith("--lyra-app-")) names.add(`--lyra-material-solid-${name.slice(10)}`);
+  }
+  return names;
+};
+
+/** A bare `var(--lyra-*)` whose token is unresolvable makes the whole declaration invalid. */
+export const scanUndeclaredTokenReferences = (filePath: string, text: string, resolvable: ReadonlySet<string>): string[] => {
+  if (isWorkbenchTestPath(filePath)) return [];
+  const violations: string[] = [];
+  for (const match of text.matchAll(/var\(\s*(--lyra-[A-Za-z0-9-]+)/g)) {
+    const tokenName = match[1] ?? "";
+    if (resolvable.has(tokenName) || /^\s*,/.test(text.slice((match.index ?? 0) + match[0].length))) continue;
+    violations.push(`${reportPath(filePath)}:${lineNumberAt(text, match.index ?? 0)} references undeclared token ${tokenName}; the declaration is dropped at runtime.`);
+  }
+  return violations;
+};
+
+/** Raw line-height ratios, sub-tier control heights and off-scale text sizes are the three scales that drift silently. */
+const TEXT_SIZE_TIERS = new Set([
+  "12",
+  "14",
+  "16",
+  "20",
+  "24",
+  "caption",
+  "body",
+  "title-sm",
+  "title-md"
+]);
+
+const validateTypographicScale = (filePath: string, text: string, violations: string[]): void => {
+  for (const match of text.matchAll(/line-height:\s*([0-9]*\.?[0-9]+)\s*;/g)) {
+    violations.push(`${filePath}:${lineNumberAt(text, match.index ?? 0)} uses raw line-height ${match[1]}; use a --lyra-text-line-* ratio token.`);
+  }
+  for (const match of text.matchAll(/--lyra-control-h-(22|26|30)\b/g)) {
+    violations.push(`${filePath}:${lineNumberAt(text, match.index ?? 0)} uses the retired control-height tier ${match[0]}; 24px is the click-target floor and 28/32 are the only compact/default steps.`);
+  }
+  for (const match of text.matchAll(/--lyra-text-size-([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)/g)) {
+    if (TEXT_SIZE_TIERS.has(match[1] ?? "")) continue;
+    violations.push(`${filePath}:${lineNumberAt(text, match.index ?? 0)} uses ${match[0]}; the type scale is 12/14/16/20/24 only (caption/body/title-sm/title-md).`);
+  }
+  for (const match of text.matchAll(/--lyra-text-ui-xl\b/g)) {
+    violations.push(`${filePath}:${lineNumberAt(text, match.index ?? 0)} uses retired token ${match[0]}; the type scale has no ui-xl tier.`);
+  }
+  for (const match of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = (match[1] ?? "").trim().split("\n").pop() ?? "";
+    if (/\.katex\b/.test(selector)) continue;
+    const relative = /font-size:\s*([0-9]*\.?[0-9]+)em\s*;/.exec(match[2] ?? "");
+    if (relative === null) continue;
+    const offset = (match.index ?? 0) + (match[1] ?? "").length + (match[2] ?? "").indexOf(relative[0]);
+    violations.push(`${filePath}:${lineNumberAt(text, offset)} sets a relative font-size ${relative[1]}em; use a --lyra-text-size-* tier so text follows the user's font-size setting.`);
+  }
+};
+
+const DISABLED_SELECTOR = /:(?:disabled|disabled\))|\[(?:aria-)?disabled/;
+
+/** Disabled controls must dim by the one token; anything else is drift. */
+const validateDisabledOpacity = (filePath: string, text: string, violations: string[]): void => {
+  for (const match of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = (match[1] ?? "").trim().split("\n").pop() ?? "";
+    if (!DISABLED_SELECTOR.test(selector)) continue;
+    const body = match[2] ?? "";
+    const opacity = /opacity:\s*([0-9]*\.?[0-9]+)\s*;/.exec(body);
+    if (opacity === null || opacity[1] === "1") continue;
+    const offset = (match.index ?? 0) + (match[1] ?? "").length + body.indexOf(opacity[0]);
+    violations.push(`${filePath}:${lineNumberAt(text, offset)} sets disabled opacity ${opacity[1]}; use var(--lyra-opacity-disabled).`);
+  }
+};
+
+/** Literal `ease` keywords and hand-copied bezier curves drift silently while
+    identical-looking. Every easing must name a token. */
+const validateEasingTokens = (filePath: string, text: string, violations: string[]): void => {
+  for (const match of text.matchAll(/(?:transition|animation)[^;]*;/g)) {
+    const declaration = match[0];
+    if (/(?:^|[\s,])ease(?:-in|-out|-in-out)?(?=[\s,;])/u.test(declaration) === false) continue;
+    if (declaration.includes("var(--lyra-ease-")) continue;
+    const lineNumber = lineNumberAt(text, match.index ?? 0);
+    violations.push(`${filePath}:${lineNumber} uses a literal ease keyword; name it with a var(--lyra-ease-*) token.`);
+  }
+  for (const match of text.matchAll(/(?:transition|animation)[^;]*cubic-bezier\(/g)) {
+    const declaration = text.slice(match.index ?? 0, (match.index ?? 0) + 120);
+    if (declaration.includes("var(--lyra-ease-")) continue;
+    const lineNumber = lineNumberAt(text, match.index ?? 0);
+    violations.push(`${filePath}:${lineNumber} uses a raw cubic-bezier; use a var(--lyra-ease-*) token.`);
+  }
+};
+
+/** `outline: thin` is a non-token width; focus rings read --lyra-app-focus. */
+const validateOutlineLiterals = (filePath: string, text: string, violations: string[]): void => {
+  for (const match of text.matchAll(/outline[^;:]*:\s*thin\b/g)) {
+    const lineNumber = lineNumberAt(text, match.index ?? 0);
+    violations.push(`${filePath}:${lineNumber} uses the outline-thin keyword; use --lyra-stroke-* width tokens.`);
+  }
+  for (const match of text.matchAll(/outline[^;:]*:\s*(?:--lyra-space-[0-9]+|[0-9]+px)\s+solid\s+var\(--lyra-text-accent\)/g)) {
+    const lineNumber = lineNumberAt(text, match.index ?? 0);
+    violations.push(`${filePath}:${lineNumber} draws the focus ring with --lyra-text-accent; focus rings use --lyra-app-focus.`);
+  }
+};
+
+/** Workhorse decorative dimming values (0.72 icon-dim, 0.82 lifted) have tokens;
+    re-adding the raw literal is drift. One-off decorative values stay local. */
+const WORKHORSE_OPACITY_LITERALS = new Set(["0.72", "0.82"]);
+const validateDecorativeOpacityTokens = (filePath: string, text: string, violations: string[]): void => {
+  for (const match of text.matchAll(/opacity:\s*(0\.[0-9]+)\s*;/g)) {
+    if (!WORKHORSE_OPACITY_LITERALS.has(match[1] ?? "")) continue;
+    const lineNumber = lineNumberAt(text, match.index ?? 0);
+    violations.push(`${filePath}:${lineNumber} sets opacity ${match[1]}; use var(--lyra-opacity-icon-dim) or var(--lyra-opacity-lifted).`);
+  }
+};
+
+/** Replace CSS comments with same-length blanks so literal scans skip them
+    while line numbers still match the original file. */
+const blankCssComments = (text: string): string =>
+  text.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, " "));
+
 export const scanCssText = (filePath: string, text: string): string[] => {
   const violations: string[] = [];
   if (/apps\/desktop\/src\/modules\/workbench\/ai-panel\/lyra-agents\/.*\.css$/.test(normalizePath(filePath))) {
     violations.push(`${filePath}:1 Lyra Agents styles must live in apps/desktop/src/renderer/styles/agents.scss, not inside the module directory.`);
   }
   const rawValueSource = isRawValueSourceFile(filePath);
+  // Literal scans (px, colors, em, opacity) run on comment-free text; the
+  // typographic/disabled validators read the original so selectors they rely
+  // on keep their shape.
+  const scanned = blankCssComments(text);
+  validateTypographicScale(filePath, scanned, violations);
+  validateDisabledOpacity(filePath, scanned, violations);
+  validateEasingTokens(filePath, scanned, violations);
+  validateOutlineLiterals(filePath, scanned, violations);
+  validateDecorativeOpacityTokens(filePath, scanned, violations);
 
-  for (const match of text.matchAll(/var\((--lyra-unit-[A-Za-z0-9-]+)/g)) {
+  for (const match of scanned.matchAll(/var\((--lyra-unit-[A-Za-z0-9-]+)/g)) {
     const tokenName = match[1] ?? "";
     if (FOUNDATION_TOKEN_NAMES.has(tokenName)) {
       continue;
     }
     const index = match.index ?? 0;
-    const lineNumber = lineNumberAt(text, index);
+    const lineNumber = lineNumberAt(scanned, index);
     violations.push(`${filePath}:${lineNumber} references unknown foundation token ${tokenName}`);
   }
 
   if (!rawValueSource) {
-    for (const match of text.matchAll(/-?\d+(?:\.\d+)?px\b/g)) {
+    for (const match of scanned.matchAll(/-?\d+(?:\.\d+)?px\b/g)) {
       const literal = match[0];
       const index = match.index ?? 0;
-      const lineNumber = lineNumberAt(text, index);
-      const line = text.split("\n")[lineNumber - 1] ?? "";
+      const lineNumber = lineNumberAt(scanned, index);
+      const line = scanned.split("\n")[lineNumber - 1] ?? "";
       if (isBreakpointLine(line, literal.replace(/^-/, ""))) {
         continue;
       }
@@ -757,9 +890,9 @@ export const scanCssText = (filePath: string, text: string): string[] => {
   }
 
   if (!rawValueSource) {
-    for (const match of text.matchAll(/#[0-9A-Fa-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|oklch\([^)]*\)/g)) {
+    for (const match of scanned.matchAll(/#[0-9A-Fa-f]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|oklch\([^)]*\)/g)) {
       const index = match.index ?? 0;
-      const lineNumber = lineNumberAt(text, index);
+      const lineNumber = lineNumberAt(scanned, index);
       violations.push(`${filePath}:${lineNumber} contains raw color literal ${match[0]}`);
     }
   }
@@ -1163,9 +1296,15 @@ export const runUiStyleGuard = (): string[] => {
   violations.push(...validateIconOnlyHoverRules(combinedCss));
   violations.push(...validateTransparentMenuSelections(combinedCss));
 
+  const resolvableTokens = collectResolvableLyraProperties(
+    [...cssByPath.values()],
+    collectFiles(DESKTOP_SRC_DIR, (filePath) => filePath.endsWith(".tsx")).map((filePath) => fs.readFileSync(filePath, "utf8"))
+  );
+
   for (const [cssPath, cssText] of cssByPath) {
     violations.push(...scanCssText(cssPath, cssText));
     violations.push(...scanPageVisualTokenSources(cssPath, cssText));
+    violations.push(...scanUndeclaredTokenReferences(cssPath, cssText, resolvableTokens));
   }
 
   for (const filePath of collectWorkbenchTsPaths()) {

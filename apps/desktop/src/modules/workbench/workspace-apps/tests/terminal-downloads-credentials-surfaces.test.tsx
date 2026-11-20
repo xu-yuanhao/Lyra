@@ -15,12 +15,20 @@ afterEach(() => {
 
 const createHost = (
   executeCommand: LyraHostApiV1["executeCommand"],
-  onSubscribe?: (eventId: string, handler: HostEventHandlerV1) => void
+  onSubscribe?: (eventId: string, handler: HostEventHandlerV1) => void,
+  commands?: Map<string, (input: JsonValue) => JsonValue | Promise<JsonValue>>
 ): LyraHostApiV1 => ({
   apiVersion: "1.0.0",
   executeCommand,
   invokeCapability: async () => null,
-  registerCommand: () => ({ dispose() {} }),
+  registerCommand: (commandId, handler) => {
+    commands?.set(commandId, handler);
+    return {
+      dispose: () => {
+        if (commands?.get(commandId) === handler) commands.delete(commandId);
+      }
+    };
+  },
   registerCapability: () => ({ dispose() {} }),
   subscribeEvent: (eventId, handler) => {
     if (
@@ -212,13 +220,15 @@ describe("Terminal, Downloads, and Credentials component surfaces", () => {
     };
     const execute = vi.fn(async (commandId: string): Promise<JsonValue> => {
       if (commandId === "lyra.core.credentials.read") return snapshot;
+      if (commandId === "lyra.core.workspace.resolve-tab") return { tabId: "settings-tab" };
       return null;
     });
     let eventHandler: HostEventHandlerV1 | undefined;
+    const credentialsCommands = new Map<string, (input: JsonValue) => JsonValue | Promise<JsonValue>>();
     const host = createHost(execute, (eventId, handler) => {
       expect(eventId).toBe("lyra.core.credentials-changed");
       eventHandler = handler;
-    });
+    }, credentialsCommands);
     await credentialsModule.activate(host);
     const instance = await credentialsModule.create({
       host, appId: "login-manager", instanceId: "credentials-test", route: "/"
@@ -231,9 +241,13 @@ describe("Terminal, Downloads, and Credentials component surfaces", () => {
     }));
 
     await waitFor(() => expect(container.querySelector(".lyra-login-manager-embedded-list")).not.toBeNull());
-    expect(container.textContent).toContain("Passwords");
+    expect(container.querySelector('[aria-label="Sessions"]')).not.toBeNull();
     expect(container.textContent).not.toContain("Saved credentials");
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Reveal password")).toBe(false);
+    await act(async () => {
+      await credentialsCommands.get("lyra.credentials.show-passwords")?.({});
+    });
+    await waitFor(() => expect(container.querySelector('[aria-label="Passwords"]')).not.toBeNull());
     fireEvent.click(container.querySelector('button[aria-label="Fill"]')!);
     await waitFor(() => expect(execute).toHaveBeenCalledWith(
       "lyra.core.credentials.fill",

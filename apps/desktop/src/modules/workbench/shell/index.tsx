@@ -51,13 +51,9 @@ import { useWorkbenchAppRestoration } from "./use-workbench-app-restoration";
 import { useWorkbenchBrowserRuntime, type EmbeddedBrowserPageDescriptor } from "./use-workbench-browser-runtime";
 import {
   destroyAgentBrowserPreviewWatch,
-  promoteAgentBrowserPreviewTab,
-  registerAgentBrowserPreviewWorkspace
+  promoteAgentBrowserPreviewTab
 } from "../ai-panel/lyra-agents/hooks/agent-browser-preview-workspace";
-import {
-  createWorkbenchChromeLabels,
-  useWorkbenchActionApi
-} from "./use-workbench-action-api";
+import { useWorkbenchActionApi } from "./use-workbench-action-api";
 import { applyPanelLayoutCssVars } from "./panel-layout-shell-vars";
 import { usePanelLayoutModel } from "./use-panel-layout";
 import { useOpenTerminalLiveSession } from "./use-open-terminal-live-session";
@@ -103,6 +99,9 @@ import {
 } from "../theme";
 import { createInitialWorkbenchPreferences, createWorkbenchBrowserTabsConfig } from "./workbench-shell-defaults";
 import { WorkbenchShellStage } from "./workbench-shell-stage";
+import { useParkedAgentBrowserPages } from "./use-parked-agent-browser-pages";
+import { useThemeTransition } from "./use-theme-transition";
+import { useWorkbenchChromeLabels } from "./use-workbench-chrome-labels";
 
 const WORKBENCH_BROWSER_LAYOUT_ANIMATION_MS = 260;
 const WORKBENCH_BROWSER_LAYOUT_ANIMATION_SYNC_INTERVAL_MS = 33;
@@ -129,9 +128,6 @@ export const WorkbenchShell = ({ onSignedOut = () => undefined }: WorkbenchShell
     useState<AgentSessionHistoryLocateRequest | null>(null);
   const [agentHistoryBrowserPreviewPage, setAgentHistoryBrowserPreviewPage] =
     useState<AgentSessionHistoryBrowserPreviewPage | null>(null);
-  const [parkedAgentBrowserPages, setParkedAgentBrowserPages] = useState<
-    readonly EmbeddedBrowserPageDescriptor[]
-  >([]);
   const [browserHistoryEntries, setBrowserHistoryEntries] = useState(() =>
     readBrowserHistoryEntries()
   );
@@ -156,75 +152,8 @@ export const WorkbenchShell = ({ onSignedOut = () => undefined }: WorkbenchShell
   const tabsModel = useWorkspaceTabsModel(browserTabsConfig, browserTabsOptions);
   const tabsModelRef = useRef(tabsModel);
   tabsModelRef.current = tabsModel;
-  const parkedAgentBrowserPagesRef = useRef(parkedAgentBrowserPages);
-  parkedAgentBrowserPagesRef.current = parkedAgentBrowserPages;
-  useEffect(() => {
-    return registerAgentBrowserPreviewWorkspace({
-      parkTabIfWatched: (tabId, tab) => {
-        const page: EmbeddedBrowserPageDescriptor = {
-          tabId,
-          address: tab.displayAddress,
-          ...(tab.title.length === 0 ? {} : { titleHint: tab.title })
-        };
-        parkedAgentBrowserPagesRef.current = [
-          ...parkedAgentBrowserPagesRef.current.filter((entry) => entry.tabId !== tabId),
-          page
-        ];
-        setParkedAgentBrowserPages(parkedAgentBrowserPagesRef.current);
-        return true;
-      },
-      ensureParked: (page) => {
-        parkedAgentBrowserPagesRef.current = [
-          ...parkedAgentBrowserPagesRef.current.filter((entry) => entry.tabId !== page.tabId),
-          page
-        ];
-        setParkedAgentBrowserPages(parkedAgentBrowserPagesRef.current);
-      },
-      promoteOrActivate: (tabId) => {
-        const tabs = tabsModelRef.current;
-        const parked = parkedAgentBrowserPagesRef.current.find((entry) => entry.tabId === tabId);
-        const unpark = (): void => {
-          if (parked === undefined) {
-            return;
-          }
-          parkedAgentBrowserPagesRef.current = parkedAgentBrowserPagesRef.current.filter(
-            (entry) => entry.tabId !== tabId
-          );
-          setParkedAgentBrowserPages(parkedAgentBrowserPagesRef.current);
-        };
-        if (tabs.tabs.some((tab) => tab.id === tabId)) {
-          tabs.setActiveTab(tabId);
-          unpark();
-          return true;
-        }
-        if (parked === undefined) {
-          return false;
-        }
-        const opened = tabs.openPageInNewTab(
-          parked.address,
-          parked.titleHint,
-          { tabId }
-        );
-        if (opened === null) {
-          return false;
-        }
-        unpark();
-        return true;
-      },
-      destroyWatch: (tabIds) => {
-        const idSet = new Set(tabIds);
-        parkedAgentBrowserPagesRef.current = parkedAgentBrowserPagesRef.current.filter(
-          (entry) => idSet.has(entry.tabId) === false
-        );
-        setParkedAgentBrowserPages(parkedAgentBrowserPagesRef.current);
-        for (const tabId of tabIds) {
-          if (tabsModelRef.current.tabs.some((tab) => tab.id === tabId)) {
-            tabsModelRef.current.closeTab(tabId);
-          }
-        }
-      }
-    });
-  }, []);
+  const { parkedAgentBrowserPages, parkedAgentBrowserPagesRef } =
+    useParkedAgentBrowserPages(tabsModelRef);
   const activeTab = tabsModel.activeTab;
   const activeTabPageKind = activeTab?.pageKind ?? "search";
   const activePageTabId = activeTab?.pageKind === "page" ? activeTab.id : "";
@@ -268,40 +197,10 @@ resolvedThemeId,
     preferencesModel.preferences.theme,
   );
   const previousThemeVarsRef = useRef(themeVars);
-  const [isThemeTransitioning, setIsThemeTransitioning] = useState(false);
+  const isThemeTransitioning = useThemeTransition(themeVars, previousThemeVarsRef, rootRef);
 
-  useEffect(() => {
-    const previousThemeVars = previousThemeVarsRef.current;
-    if (previousThemeVars === themeVars) {
-      return;
-    }
-
-    const root = rootRef.current;
-    if (root !== null) {
-      root.style.setProperty(
-        "--lyra-theme-transition-from-bg",
-        previousThemeVars["--lyra-app-bg"] ?? "transparent"
-      );
-    }
-    previousThemeVarsRef.current = themeVars;
-    setIsThemeTransitioning(true);
-    const timer = window.setTimeout(() => {
-      setIsThemeTransitioning(false);
-    }, 440);
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [themeVars]);
-
-  const workbenchChromeLabels = useMemo(
-    () => createWorkbenchChromeLabels(t),
-    [t]
-  );
-  const historyAppSuggestionLabels = useMemo(() => ({
-    sessions: labels.agentSessionHistory.categorySessions,
-    archivedSessions: labels.agentSessionHistory.categoryArchivedSessions,
-    browserHistory: labels.agentSessionHistory.categoryBrowserHistory
-  }), [labels.agentSessionHistory]);
+  const { workbenchChromeLabels, historyAppSuggestionLabels } =
+    useWorkbenchChromeLabels(t, labels);
   const refreshBrowserHistoryEntries = useCallback((): void => {
     setBrowserHistoryEntries(readBrowserHistoryEntries());
   }, []);

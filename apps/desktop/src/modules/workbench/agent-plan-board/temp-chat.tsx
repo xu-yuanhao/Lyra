@@ -3,6 +3,7 @@ import { ArrowUp } from "@lyra/icons";
 
 import {
   AppButton,
+  AppStatusMessage,
   AppTextarea
 } from "@renderer/ui/components";
 import type {
@@ -268,7 +269,9 @@ export const PlanTempChat = ({
         ))}
         {busy ? <div className="lyra-agent-plan-board-temp-chat-busy">{labels.tempChatBusy}</div> : null}
         {error !== null ? (
-          <div className="lyra-agent-plan-board-temp-chat-error">{error}</div>
+          <AppStatusMessage className="lyra-agent-plan-board-temp-chat-error" role="alert" tone="error">
+            {error}
+          </AppStatusMessage>
         ) : null}
       </div>
       <div className="lyra-agents-composer-wrap lyra-agent-plan-board-temp-chat-composer-wrap">

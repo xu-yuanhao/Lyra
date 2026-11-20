@@ -228,7 +228,9 @@ export const useFirstPartyWorkbenchChrome = (
         });
       }
     };
-    void apply();
+    // Chrome is best effort: the surface may unmount while Core tears the
+    // module down, and a disposed host must not surface an unhandled rejection.
+    void apply().catch(() => undefined);
     return () => {
       disposed = true;
     };
@@ -251,7 +253,7 @@ export const useFirstPartyWorkbenchChrome = (
         await host.executeCommand(CHROME_HOST_COMMANDS.clear, {
           scope, slot: "navigation", ownerId
         });
-      })();
+      })().catch(() => undefined);
     };
   }, [host, instanceId, ownerId]);
 };

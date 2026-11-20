@@ -1,13 +1,6 @@
 export { AppBadge, type AppBadgeProps, type AppBadgeTone } from "./app-badge";
 export { AppButton, appButtonVariants, type AppButtonProps } from "./app-button";
-export { AppCard, AppCardContent, AppCardHeader } from "./app-card";
 export { AppCheckbox, type AppCheckboxProps } from "./app-checkbox";
-export { AppChoiceCard, type AppChoiceCardProps } from "./app-choice-card";
-export {
-  AppDataTable,
-  type AppDataTableColumn,
-  type AppDataTableProps
-} from "./app-data-table";
 export {
   AppDialog,
   AppDialogTrigger,

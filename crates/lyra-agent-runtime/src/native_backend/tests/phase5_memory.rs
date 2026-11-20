@@ -118,3 +118,50 @@ fn interrupted_memory_job_is_requeued() {
         .expect("requeued job");
     assert_eq!(replayed.id, claimed.id);
 }
+
+#[test]
+fn memory_reads_stay_read_only_once_schema_is_ready() {
+    // The lock-contention root cause: every session poll re-ran schema DDL
+    // (ending in an INSERT) and re-probed WAL. Steady state must not write —
+    // verify via total_changes on a ready store.
+    let temp = tempdir().expect("tempdir");
+    ensure_memory_store(temp.path()).expect("init store");
+    let conn = open_memory_connection(temp.path()).expect("open");
+    let before: i64 = conn
+        .query_row("SELECT total_changes()", [], |row| row.get(0))
+        .expect("total_changes before");
+    init_memory_schema(&conn).expect("re-init must be a no-op");
+    let after: i64 = conn
+        .query_row("SELECT total_changes()", [], |row| row.get(0))
+        .expect("total_changes after");
+    assert_eq!(after - before, 0, "ready schema must not write");
+
+    let mode: String = conn
+        .query_row("PRAGMA journal_mode", [], |row| row.get(0))
+        .expect("journal mode");
+    assert_eq!(mode.to_ascii_lowercase(), "wal");
+}
+
+#[test]
+fn concurrent_writer_does_not_block_memory_candidate_read() {
+    // WAL contract (codex/ZCode): a poll must read while another connection
+    // holds the writer. Delete-journal or per-open WAL probes serialize here.
+    let temp = tempdir().expect("tempdir");
+    ensure_memory_store(temp.path()).expect("init store");
+    let mut writer = open_memory_connection(temp.path()).expect("writer");
+    let tx = writer
+        .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)
+        .expect("hold writer lock");
+    tx.execute(
+        "INSERT INTO memory_candidates (id, fact, content_json, category, scope, confidence, source_type, proposed_action, status, created_at)
+         VALUES ('candidate-held', 'held by writer', '{}', 'other', 'global', 0.9, 'memory_agent_inference', 'create', 'pending', ?)",
+        [now()],
+    )
+    .expect("insert inside held transaction");
+    // Read path used to fight this writer: schema INSERT + expiry UPDATE.
+    let listed = list_memory_candidates(temp.path(), Some("pending"), 20).expect("read while held");
+    assert!(listed.is_empty(), "uncommitted row must not leak");
+    tx.commit().expect("commit");
+    let listed = list_memory_candidates(temp.path(), Some("pending"), 20).expect("read after");
+    assert_eq!(listed.len(), 1);
+}

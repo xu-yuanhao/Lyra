@@ -21,10 +21,19 @@ Global `AppShellTitlebar` window controls remain Core-owned in v1.
 - `lyra.core.chrome.set` — `{ scope, slot, ownerId, contribution }`
 - `lyra.core.chrome.clear` — `{ scope, slot, ownerId }`
 - `lyra.core.chrome.read` — `{ scope, slot }`
-- `lyra.core.workspace.resolve-tab` — `{ instanceId }` → `{ tabId }`
+- `lyra.core.workspace.resolve-tab` — `{ instanceId }` → `{ tabId }`. Resolves
+  the tab whose `appInstanceId` matches, or the host tab Core recorded when it
+  mounted the instance inside a tab (Settings → Logins uses this, since the
+  Logins instance is not itself a workspace tab).
 - Event: `lyra.core.chrome-changed`
 
 Types live in `@lyra/app-runtime` (`WorkbenchChromeScopeV1`, `WorkbenchChromeContributionV1`, …).
+
+Actions render as icon buttons by default. `display: "text"` renders the
+compact label button the address band uses for page-local switches, and
+`active: true` marks the selected member of that switch. Use it for a section
+switch a page would otherwise draw in its own body; keep icon actions for
+commands.
 
 ## Module SDK
 

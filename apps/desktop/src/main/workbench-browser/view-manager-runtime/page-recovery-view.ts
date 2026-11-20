@@ -26,9 +26,9 @@ export const createPageRecoveryView = (host: {
   const html = `<!doctype html><html><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
 <style>
-:root { color-scheme: light dark; font: 15px system-ui, sans-serif; background: Canvas; color: CanvasText; }
+:root { color-scheme: light dark; font: 14px system-ui, sans-serif; background: Canvas; color: CanvasText; }
 body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
-main { width: min(32rem, 80vw); } h1 { font-size: 22px; font-weight: 600; }
+main { width: min(32rem, 80vw); } h1 { font-size: 20px; font-weight: 600; }
 p { line-height: 1.5; } .address { opacity: .65; overflow-wrap: anywhere; }
 button { font: inherit; background: transparent; cursor: pointer; display: inline-block; margin-top: 12px; padding: 9px 16px; border: 1px solid; border-radius: 4px; color: inherit; text-decoration: none; }
 button:focus-visible { outline: 2px solid Highlight; outline-offset: 3px; }

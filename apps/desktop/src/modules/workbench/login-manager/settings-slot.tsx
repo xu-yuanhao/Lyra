@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AppButton, AppEmptyState, AppErrorState } from "@renderer/ui/components";
 
 import { DynamicWorkspaceAppSurface } from "../shell/dynamic-workspace-app-surface";
+import { useWorkbenchTabScopeId } from "../shell/titlebar-context";
 import {
   createWorkspaceAppInstance,
   isWorkspaceAppModuleSurfaceReady,
@@ -32,6 +33,7 @@ export const LoginManagerSettingsSlot = ({
 }: LoginManagerSettingsSlotProps) => {
   const version = readWorkspaceAppVersionState(CREDENTIALS_COMPONENT_ID).active;
   const ready = isWorkspaceAppModuleSurfaceReady(CREDENTIALS_COMPONENT_ID, version);
+  const hostTabId = useWorkbenchTabScopeId();
   const [instanceReady, setInstanceReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +49,8 @@ export const LoginManagerSettingsSlot = ({
       appId: LOGIN_MANAGER_APP_ID,
       componentId: CREDENTIALS_COMPONENT_ID,
       instanceId: LOGIN_MANAGER_INSTANCE_ID,
-      route: "/"
+      route: "/",
+      ...(hostTabId === null ? {} : { hostTabId })
     }).then((created) => {
       if (cancelled) {
         void created.close();
@@ -70,7 +73,7 @@ export const LoginManagerSettingsSlot = ({
         console.error("[lyra-credentials] failed to close settings surface", closeError);
       });
     };
-  }, [ready, version]);
+  }, [ready, version, hostTabId]);
 
   if (!ready) {
     return (

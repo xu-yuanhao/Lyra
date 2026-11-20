@@ -449,9 +449,45 @@ pub(crate) fn read_session_window(payload: Value) -> AgentRuntimeResult<Value> {
         .map(|value| value as usize)
         .unwrap_or(SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES)
         .clamp(256, SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES);
+    // Cursor paging (ZCode rows/range shape): `beforeMessageId` asks for the
+    // page of rows immediately older than that message. The persisted session
+    // stays complete; each response is one bounded page, so long histories are
+    // reachable without ever exceeding the wire budget.
+    let before_message_id = payload
+        .get("beforeMessageId")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string);
     let mut snapshot = read_session(payload)?;
-    project_session_window(&mut snapshot, message_limit, output_preview_bytes);
+    project_session_window(
+        &mut snapshot,
+        message_limit,
+        output_preview_bytes,
+        before_message_id.as_deref(),
+    );
     Ok(snapshot)
+}
+
+/// Tool ids referenced by a page of messages. A page must carry the tools it
+/// renders: the UI resolves tool blocks through `session.tools`, so paging the
+/// messages without their tools would silently drop older tool cards.
+fn tool_ids_for_messages(messages: &[Value]) -> HashSet<String> {
+    let mut ids = HashSet::new();
+    for message in messages {
+        let Some(blocks) = message.get("blocks").and_then(Value::as_array) else {
+            continue;
+        };
+        for block in blocks {
+            if block.get("type").and_then(Value::as_str) != Some("tool") {
+                continue;
+            }
+            if let Some(tool_id) = block.get("toolId").and_then(Value::as_str) {
+                ids.insert(tool_id.to_string());
+            }
+        }
+    }
+    ids
 }
 
 // Caps are byte-based: a char cap lets CJK text triple its wire cost
@@ -546,22 +582,56 @@ fn compact_tool_outputs(snapshot: &mut Value, output_preview_bytes: usize) {
     }
 }
 
-fn project_session_window(snapshot: &mut Value, message_limit: usize, output_preview_bytes: usize) {
+fn project_session_window(
+    snapshot: &mut Value,
+    message_limit: usize,
+    output_preview_bytes: usize,
+    before_message_id: Option<&str>,
+) {
+    let mut page_tool_ids: Option<HashSet<String>> = None;
     if let Some(messages) = snapshot.get_mut("messages").and_then(Value::as_array_mut) {
         let total = messages.len();
-        let omitted = total.saturating_sub(message_limit);
-        if omitted > 0 {
-            messages.drain(..omitted);
+        let end = before_message_id
+            .and_then(|id| {
+                messages.iter().position(|message| {
+                    message.get("id").and_then(Value::as_str) == Some(id)
+                })
+            })
+            .unwrap_or(total);
+        let start = end.saturating_sub(message_limit);
+        if before_message_id.is_some() {
+            page_tool_ids = Some(tool_ids_for_messages(&messages[start..end]));
         }
+        if start > 0 {
+            messages.drain(..start);
+        }
+        let count = end.saturating_sub(start);
+        messages.truncate(count);
         snapshot["messageWindow"] = json!({
-            "start": omitted,
+            "start": start,
             "count": messages.len(),
             "total": total,
-            "hasEarlier": omitted > 0,
+            "hasEarlier": start > 0,
         });
     }
 
-    if let Some(tools) = snapshot.get_mut("tools").and_then(Value::as_array_mut) {
+    if let Some(tool_ids) = page_tool_ids {
+        if let Some(tools) = snapshot.get_mut("tools").and_then(Value::as_array_mut) {
+            let total = tools.len();
+            tools.retain(|tool| {
+                tool.get("id")
+                    .and_then(Value::as_str)
+                    .map(|id| tool_ids.contains(id))
+                    .unwrap_or(false)
+            });
+            snapshot["toolsWindow"] = json!({
+                "start": 0,
+                "count": tools.len(),
+                "total": total,
+                "hasEarlier": false,
+            });
+        }
+    } else if let Some(tools) = snapshot.get_mut("tools").and_then(Value::as_array_mut) {
         let total = tools.len();
         let omitted = total.saturating_sub(SESSION_TOOL_WINDOW);
         if omitted > 0 {
@@ -650,7 +720,7 @@ mod session_window_tests {
             }]
         });
 
-        project_session_window(&mut snapshot, 2, 256);
+        project_session_window(&mut snapshot, 2, 256, None);
 
         assert_eq!(snapshot["messages"][0]["id"], "two");
         assert_eq!(snapshot["messageWindow"]["start"], 1);
@@ -671,7 +741,7 @@ mod session_window_tests {
                 .collect::<Vec<_>>()
         });
 
-        project_session_window(&mut snapshot, 500, 16_384);
+        project_session_window(&mut snapshot, 500, 16_384, None);
 
         let tools = snapshot["tools"].as_array().unwrap();
         assert_eq!(tools.len(), SESSION_TOOL_WINDOW);
@@ -701,6 +771,7 @@ mod session_window_tests {
             &mut snapshot,
             SESSION_MESSAGE_WINDOW,
             SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES,
+            None,
         );
 
         let text = snapshot["messages"][0]["text"].as_str().unwrap();
@@ -741,6 +812,7 @@ mod session_window_tests {
             &mut snapshot,
             SESSION_MESSAGE_WINDOW,
             SESSION_TOOL_OUTPUT_PREVIEW_MAX_BYTES,
+            None,
         );
 
         let bytes = serde_json::to_vec(&snapshot).unwrap().len();
@@ -753,6 +825,65 @@ mod session_window_tests {
         assert_eq!(messages[messages.len() - 1]["id"], "msg-499");
         let tools = snapshot["tools"].as_array().unwrap();
         assert_eq!(tools.len(), SESSION_TOOL_WINDOW);
+    }
+
+    #[test]
+    fn cursor_page_returns_the_batch_before_the_cursor_with_its_tools() {
+        // ZCode rows/range semantics: `beforeMessageId` pages backwards, one
+        // bounded window per read, and the page carries exactly the tools its
+        // tool blocks render.
+        let mut snapshot = json!({
+            "messages": (0..10)
+                .map(|index| json!({
+                    "id": format!("msg-{index}"),
+                    "blocks": [{ "type": "tool", "toolId": format!("tool-{index}") }]
+                }))
+                .collect::<Vec<_>>(),
+            "tools": (0..10)
+                .map(|index| json!({
+                    "id": format!("tool-{index}"),
+                    "input": { "command": "ok" },
+                    "output": { "content": "ok" }
+                }))
+                .collect::<Vec<_>>()
+        });
+
+        project_session_window(&mut snapshot, 3, 16_384, Some("msg-7"));
+
+        let ids = snapshot["messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|message| message["id"].as_str().unwrap().to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(ids, vec!["msg-4", "msg-5", "msg-6"]);
+        assert_eq!(snapshot["messageWindow"]["start"], 4);
+        assert_eq!(snapshot["messageWindow"]["count"], 3);
+        assert_eq!(snapshot["messageWindow"]["total"], 10);
+        assert_eq!(snapshot["messageWindow"]["hasEarlier"], true);
+        let tool_ids = snapshot["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|tool| tool["id"].as_str().unwrap().to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(tool_ids, vec!["tool-4", "tool-5", "tool-6"]);
+    }
+
+    #[test]
+    fn cursor_page_that_reaches_the_first_row_reports_no_earlier() {
+        let mut snapshot = json!({
+            "messages": (0..5)
+                .map(|index| json!({ "id": format!("msg-{index}") }))
+                .collect::<Vec<_>>(),
+            "tools": []
+        });
+
+        project_session_window(&mut snapshot, 3, 16_384, Some("msg-2"));
+
+        assert_eq!(snapshot["messages"].as_array().unwrap().len(), 2);
+        assert_eq!(snapshot["messageWindow"]["start"], 0);
+        assert_eq!(snapshot["messageWindow"]["hasEarlier"], false);
     }
 
     #[test]
@@ -775,7 +906,7 @@ mod session_window_tests {
             }]
         });
 
-        project_session_window(&mut snapshot, 10, 4_096);
+        project_session_window(&mut snapshot, 10, 4_096, None);
 
         let metadata = &snapshot["messages"][0]["metadata"];
         assert!(metadata.get("providerProtocol").is_none());

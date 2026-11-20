@@ -59,7 +59,7 @@ export const SettingsProjectsView = ({ desktopApi }: { readonly desktopApi: Lyra
   const failure = error ?? listError;
   const errorRow = failure ? <AppSettingsRow role="alert" title={t("settings.projectsError")} description={failure} /> : null;
   if (!projectId) return (
-    <AppSettingsSection label={t("settings.projectsCategoryLabel")}>
+    <AppSettingsSection label={t("settings.projectsCategoryLabel")} titlePlacement="none">
       {projects.map((project) => <AppSettingsRow key={project.id} title={project.name} description={`${project.path}${project.available ? "" : ` · ${t("settings.projectsUnavailable")}`}`} control={
         <AppButton variant="ghost" onClick={() => { setProjectId(project.id); setTab("mcp"); setQuery(""); }}>{project.name}</AppButton>
       } />)}

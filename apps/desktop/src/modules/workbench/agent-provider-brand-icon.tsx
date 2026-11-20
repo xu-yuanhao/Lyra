@@ -175,14 +175,6 @@ const isCustomProvider = ({
     value?.toLocaleLowerCase().includes("custom") === true
   );
 
-const isBuiltInOpenCodeProvider = ({
-  label,
-  provider,
-  providerId,
-}: Pick<AgentProviderBrandIconProps, "label" | "provider" | "providerId">): boolean =>
-  [provider, providerId].some((value) => value?.trim() === "opencode-free")
-  || label?.trim() === "OpenCode Free";
-
 export const resolveAgentProviderBrandIcon = (
   props: AgentProviderBrandIconProps
 ): AgentProviderBrandIconSource | null => {
@@ -252,7 +244,6 @@ export const AgentProviderBrandIcon = ({
   const [siteIconUrl, setSiteIconUrl] = useState<string | null>(null);
   const customProvider = isCustomProvider({ provider, providerId, routeId });
   const shouldResolveSiteIcon = customProvider || resolveSiteIcon;
-  const builtInOpenCodeProvider = isBuiltInOpenCodeProvider({ label, provider, providerId });
   const specialBrand = resolveSpecialBrand({
     label,
     modelId,
@@ -263,8 +254,7 @@ export const AgentProviderBrandIcon = ({
   useEffect(() => {
     setSiteIconUrl(null);
     if (
-      builtInOpenCodeProvider
-      || !shouldResolveSiteIcon
+      !shouldResolveSiteIcon
       || (baseUrl?.trim() ?? "").length === 0
     ) {
       return;
@@ -284,7 +274,7 @@ export const AgentProviderBrandIcon = ({
     return () => {
       cancelled = true;
     };
-  }, [baseUrl, builtInOpenCodeProvider, shouldResolveSiteIcon]);
+  }, [baseUrl, shouldResolveSiteIcon]);
   const modelIcon = customProvider && (modelId?.trim() ?? "").length > 0
     ? resolveAgentProviderBrandIcon({ modelId })
     : null;
@@ -305,19 +295,6 @@ export const AgentProviderBrandIcon = ({
           aria-hidden="true"
           className="lyra-agent-provider-brand-icon-image lyra-agent-provider-brand-icon-avatar"
           src={accountImage}
-        />
-      </span>
-    );
-  }
-
-  if (builtInOpenCodeProvider) {
-    return (
-      <span className={classNames} title={label ?? provider ?? providerId ?? undefined}>
-        <img
-          alt=""
-          aria-hidden="true"
-          className="lyra-agent-provider-brand-icon-image"
-          src={openCodeIconUrl}
         />
       </span>
     );

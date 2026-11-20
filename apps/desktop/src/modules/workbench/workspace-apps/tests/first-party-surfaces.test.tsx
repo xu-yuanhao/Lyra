@@ -115,12 +115,20 @@ const handleFirstPartyChromeHostCommand = (commandId: string): JsonValue | undef
 const createHost = (
   executeCommand: LyraHostApiV1["executeCommand"],
   onSubscribe?: (eventId: string, handler: HostEventHandlerV1) => void,
-  onPresentationSubscribe?: (eventId: string, handler: HostEventHandlerV1) => void
+  onPresentationSubscribe?: (eventId: string, handler: HostEventHandlerV1) => void,
+  commands?: Map<string, (input: JsonValue) => JsonValue | Promise<JsonValue>>
 ): LyraHostApiV1 => ({
   apiVersion: "1.0.0",
   executeCommand,
   invokeCapability: async () => null,
-  registerCommand: () => ({ dispose() {} }),
+  registerCommand: (commandId, handler) => {
+    commands?.set(commandId, handler);
+    return {
+      dispose: () => {
+        if (commands?.get(commandId) === handler) commands.delete(commandId);
+      }
+    };
+  },
   registerCapability: () => ({ dispose() {} }),
   subscribeEvent: (eventId, handler) => {
     if (
@@ -532,10 +540,11 @@ describe("independently shipped first-party surfaces", () => {
       return null;
     });
     let credentialsEventHandler: HostEventHandlerV1 | undefined;
+    const credentialsCommands = new Map<string, (input: JsonValue) => JsonValue | Promise<JsonValue>>();
     const host = createHost(execute, (eventId, handler) => {
       expect(eventId).toBe("lyra.core.credentials-changed");
       credentialsEventHandler = handler;
-    });
+    }, undefined, credentialsCommands);
     await credentialsModule.activate(host);
     const instance = await credentialsModule.create({
       host,
@@ -555,12 +564,43 @@ describe("independently shipped first-party surfaces", () => {
     expect(container.querySelector(".lyra-login-manager-embedded")).not.toBeNull();
     expect(container.querySelector(".lyra-login-manager-detail")).toBeNull();
     expect(container.querySelector('input[placeholder="Search sites, accounts, methods, or notes"]')).not.toBeNull();
-    expect(container.textContent).toContain("Sessions");
-    expect(container.textContent).toContain("Review");
-    expect(container.textContent).toContain("Passwords");
+    expect(container.querySelector('[aria-label="Sessions"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Passwords"]')).toBeNull();
     expect(container.textContent).not.toContain("Saved credentials");
-    expect(container.textContent).not.toContain("Credentials");
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Reveal password")).toBe(false);
+
+    // The address band switches lists; the page keeps no in-body section headers.
+    const toolbar = await waitFor(() => {
+      const call = execute.mock.calls.find(([id]) => id === "lyra.core.chrome.set");
+      expect(call).toBeDefined();
+      return call![1] as {
+        readonly contribution: {
+          readonly actions?: readonly {
+            readonly id: string;
+            readonly label: string;
+            readonly commandId: string;
+            readonly display?: string;
+            readonly active?: boolean;
+          }[];
+        };
+      };
+    });
+    const actions = toolbar.contribution.actions ?? [];
+    expect(actions.map((action) => action.label)).toEqual(["Sessions", "Review", "Passwords"]);
+    expect(actions.every((action) => action.display === "text")).toBe(true);
+    expect(actions.filter((action) => action.active === true).map((action) => action.label))
+      .toEqual(["Sessions"]);
+
+    await act(async () => {
+      await credentialsCommands.get("lyra.credentials.show-passwords")?.({});
+    });
+    await waitFor(() => expect(container.querySelector('[aria-label="Passwords"]')).not.toBeNull());
+    expect(container.querySelector('[aria-label="Sessions"]')).toBeNull();
+    await waitFor(() => expect(
+      (execute.mock.calls.filter(([id]) => id === "lyra.core.chrome.set").at(-1)?.[1] as {
+        readonly contribution: { readonly actions?: readonly { readonly label: string; readonly active?: boolean }[] };
+      }).contribution.actions?.filter((action) => action.active === true).map((action) => action.label)
+    ).toEqual(["Passwords"]));
 
     fireEvent.click(container.querySelector('button[aria-label="Fill"]')!);
     await waitFor(() => expect(execute).toHaveBeenCalledWith(
@@ -575,17 +615,26 @@ describe("independently shipped first-party surfaces", () => {
     fireEvent.click(container.querySelectorAll('button[aria-label="Open site"]')[0]!);
     await waitFor(() => expect(execute).toHaveBeenCalledWith(
       "lyra.core.navigate",
+      { address: "https://example.com", title: "example.com" }
+    ));
+    fireEvent.click(container.querySelector('button[aria-label="Delete password"]')!);
+    await waitFor(() => expect(execute).toHaveBeenCalledWith(
+      "lyra.core.credentials.delete",
+      { credentialId: "credential-1" }
+    ));
+    await act(async () => {
+      await credentialsCommands.get("lyra.credentials.show-sessions")?.({});
+    });
+    await waitFor(() => expect(container.querySelector('[aria-label="Sessions"]')).not.toBeNull());
+    fireEvent.click(container.querySelectorAll('button[aria-label="Open site"]')[0]!);
+    await waitFor(() => expect(execute).toHaveBeenCalledWith(
+      "lyra.core.navigate",
       { address: "https://example.com/login", title: "Example" }
     ));
     fireEvent.click(container.querySelector('button[aria-label="Log out site"]')!);
     await waitFor(() => expect(execute).toHaveBeenCalledWith(
       "lyra.core.credentials.clear-site",
       { sessionId: "session-1" }
-    ));
-    fireEvent.click(container.querySelector('button[aria-label="Delete password"]')!);
-    await waitFor(() => expect(execute).toHaveBeenCalledWith(
-      "lyra.core.credentials.delete",
-      { credentialId: "credential-1" }
     ));
     expect(JSON.stringify(await credentialsModule.snapshot(instance))).not.toContain("top-secret");
     expect(await credentialsModule.snapshot(instance)).not.toHaveProperty("password");

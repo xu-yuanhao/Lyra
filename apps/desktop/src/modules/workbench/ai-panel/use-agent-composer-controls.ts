@@ -11,8 +11,6 @@ import type {
   ComposerPermissionModeControls
 } from "./lyra-agents/core/types";
 
-const loadEarlierMessages = async (): Promise<void> => undefined;
-
 export const useAgentComposerControls = ({
   desktopApi,
   modelState,
@@ -42,7 +40,6 @@ export const useAgentComposerControls = ({
 }): {
   readonly modelControls: ComposerModelControls | null;
   readonly permissionModeControls: ComposerPermissionModeControls | null;
-  readonly loadEarlierMessages: () => Promise<void>;
 } => {
   const modelControls = useMemo<ComposerModelControls | null>(() => {
     if (modelState === null) return null;
@@ -103,7 +100,6 @@ export const useAgentComposerControls = ({
 
   return {
     modelControls,
-    permissionModeControls,
-    loadEarlierMessages
+    permissionModeControls
   };
 };

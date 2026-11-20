@@ -38,9 +38,9 @@ describe("AgentProviderBrandIcon", () => {
     const { container } = render(
       <AgentProviderBrandIcon
         baseUrl="https://opencode.ai/zen/v1"
-        providerId="opencode-free"
-        routeId="custom_openai_compatible"
-        label="OpenCode Free"
+        providerId="opencode_zen"
+        routeId="opencode_zen"
+        label="OpenCode Zen"
       />
     );
 

@@ -45,6 +45,107 @@ describe("workbench UI guard", () => {
     expect(scanCssText("apps/desktop/src/renderer/styles/material.scss", rawColorCss)).toEqual([]);
   });
 
+  test("flags raw line-height ratios", () => {
+    const css = `.demo { line-height: 1.55; }\n.ok { line-height: var(--lyra-text-line-relaxed); }`;
+    const violations = scanCssText("apps/desktop/src/renderer/styles/surfaces.scss", css);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toContain("raw line-height 1.55");
+  });
+
+  test("flags retired control-height tiers", () => {
+    for (const tier of ["22", "26", "30"]) {
+      const violations = scanCssText(
+        "apps/desktop/src/renderer/styles/surfaces.scss",
+        `.demo { height: var(--lyra-control-h-${tier}); }`
+      );
+      expect(violations[0]).toContain(`retired control-height tier --lyra-control-h-${tier}`);
+    }
+    expect(scanCssText(
+      "apps/desktop/src/renderer/styles/surfaces.scss",
+      `.ok { height: var(--lyra-control-h-24); width: var(--lyra-control-h-28); }`
+    )).toEqual([]);
+  });
+
+  test("flags off-scale and retired text sizes", () => {
+    for (const token of [
+      "--lyra-text-size-11",
+      "--lyra-text-size-13",
+      "--lyra-text-size-18",
+      "--lyra-text-size-meta",
+      "--lyra-text-size-body-strong",
+      "--lyra-text-ui-xl"
+    ]) {
+      const violations = scanCssText(
+        "apps/desktop/src/renderer/styles/surfaces.scss",
+        `.demo { font-size: var(${token}); }`
+      );
+      expect(violations[0]).toContain(token);
+    }
+    const allowed = scanCssText(
+      "apps/desktop/src/renderer/styles/surfaces.scss",
+      `.a { font-size: var(--lyra-text-size-12); }
+       .b { font-size: var(--lyra-text-size-caption); }
+       .c { font-size: var(--lyra-text-size-title-md); }`
+    );
+    expect(allowed).toEqual([]);
+  });
+
+  test("flags relative em font sizes but leaves KaTeX metrics compensation alone", () => {
+    const violations = scanCssText(
+      "apps/desktop/src/renderer/styles/surfaces.scss",
+      `.demo { font-size: 0.85em; }\n.katex { font-size: 1.08em; }`
+    );
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toContain("relative font-size 0.85em");
+  });
+
+  test("flags raw disabled opacity and one-off decorative values stay local", () => {
+    const css = `
+      .demo:disabled { opacity: 0.45; }
+      .glow { opacity: 0.3; }
+      .demo:disabled { opacity: var(--lyra-opacity-disabled); }
+    `;
+    const violations = scanCssText("apps/desktop/src/renderer/styles/surfaces.scss", css);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toContain("disabled opacity 0.45");
+  });
+
+  test("flags literal ease keywords and raw bezier curves", () => {
+    const css = `
+      .a { transition: opacity 120ms ease; }
+      .b { transition: opacity 120ms var(--lyra-ease-fast); }
+      .c { animation: pulse 1.2s ease-in-out infinite; }
+      .d { transition: transform 190ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+    `;
+    const violations = scanCssText("apps/desktop/src/renderer/styles/surfaces.scss", css);
+    expect(violations).toHaveLength(3);
+    expect(violations[0]).toContain("literal ease keyword");
+    expect(violations[2]).toContain("raw cubic-bezier");
+  });
+
+  test("flags outline-thin and accent-colored focus rings", () => {
+    const css = `
+      .a:focus-visible { outline: thin solid var(--lyra-text-accent); }
+      .b:focus-visible { outline: var(--lyra-stroke-strong) solid var(--lyra-app-focus); }
+    `;
+    const violations = scanCssText("apps/desktop/src/renderer/styles/surfaces.scss", css);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toContain("outline-thin");
+  });
+
+  test("flags workhorse decorative opacity literals", () => {
+    const css = `
+      .icon { opacity: 0.72; }
+      .pulse { opacity: 0.82; }
+      .glow { opacity: 0.3; }
+      .ok-icon { opacity: var(--lyra-opacity-icon-dim); }
+    `;
+    const violations = scanCssText("apps/desktop/src/renderer/styles/surfaces.scss", css);
+    expect(violations).toHaveLength(2);
+    expect(violations[0]).toContain("opacity 0.72");
+    expect(violations[1]).toContain("opacity 0.82");
+  });
+
   test("keeps AI panels above the composer opaque under native material", () => {
     expect(materialStyles).toMatch(
       /\.lyra-agents-composer-wrap \.lyra-agents-user-gate-host > \.lyra-agents-decision-panel,[\s\S]*?\.lyra-agents-composer-toprow \.lyra-agents-composer-rail-chip\s*\{[\s\S]*?--lyra-material-solid-surface-strong-bg/

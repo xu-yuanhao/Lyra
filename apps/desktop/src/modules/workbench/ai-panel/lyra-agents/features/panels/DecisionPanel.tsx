@@ -104,7 +104,7 @@ export function DecisionPanel({
               onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i - 1); }}
               aria-label={t("decision.prevQuestion")}
             >
-              <ChevronLeft size={14} strokeWidth={2.2} />
+              <ChevronLeft size={14} strokeWidth={2.1} />
             </AppButton>
             <span className="lyra-agents-decision-counter">
               {currentIndex + 1}/{questions.length}
@@ -116,7 +116,7 @@ export function DecisionPanel({
               onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i + 1); }}
               aria-label={t("decision.nextQuestion")}
             >
-              <ChevronRight size={14} strokeWidth={2.2} />
+              <ChevronRight size={14} strokeWidth={2.1} />
             </AppButton>
           </div>
         ) : null}
@@ -198,7 +198,7 @@ export function DecisionPanel({
               onClick={handleSubmit}
               aria-label={t("decision.submit")}
             >
-              <ArrowUp size={14} strokeWidth={2.4} />
+              <ArrowUp size={14} strokeWidth={2.1} />
             </AppButton>
           </div>
         </div>

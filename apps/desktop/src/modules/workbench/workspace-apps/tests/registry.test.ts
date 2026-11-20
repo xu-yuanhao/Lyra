@@ -17,6 +17,7 @@ import {
   listWorkspaceApps,
   mountWorkspaceAppInstance,
   readWorkspaceAppActiveModule,
+  readWorkspaceAppHostTab,
   readWorkspaceAppVersionState,
   registerWorkspaceApp,
   registerWorkspaceAppModule,
@@ -319,6 +320,35 @@ describe("workspace app registry", () => {
       "close:1.0.0:create-instance",
       "deactivate:1.0.0"
     ]);
+    await unregister();
+  });
+
+  test("records the host tab of an instance mounted inside a Core tab", async () => {
+    const componentId = "dev.host-tab";
+    const module = createModule(componentId, "1.0.0");
+    const unregister = registerWorkspaceAppModule(module);
+
+    const hosted = await createWorkspaceAppInstance({
+      appId: "dev-host-tab",
+      componentId,
+      version: "1.0.0",
+      instanceId: "hosted-instance",
+      route: "/",
+      hostTabId: "settings-tab"
+    });
+    expect(readWorkspaceAppHostTab("hosted-instance")).toBe("settings-tab");
+    await hosted.close();
+
+    const standalone = await createWorkspaceAppInstance({
+      appId: "dev-host-tab",
+      componentId,
+      version: "1.0.0",
+      instanceId: "standalone-instance",
+      route: "/"
+    });
+    expect(readWorkspaceAppHostTab("standalone-instance")).toBeUndefined();
+    await standalone.close();
+
     await unregister();
   });
 

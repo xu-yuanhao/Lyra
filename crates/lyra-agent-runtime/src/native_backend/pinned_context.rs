@@ -23,11 +23,9 @@ pub(crate) fn collect_pinned_items(
 
     items.push(PinnedItem {
         kind: "session".to_string(),
-        title: snapshot
-            .get("title")
-            .and_then(Value::as_str)
-            .unwrap_or("Session")
-            .to_string(),
+        // The auto title is the first user message, so injecting it here keeps
+        // an old goal in front of the model long after that turn ended.
+        title: "Session".to_string(),
         content: format!(
             "workingDir={}",
             snapshot
@@ -120,7 +118,12 @@ pub(crate) fn collect_pinned_items(
         .flatten()
     {
         let status = todo.get("status").and_then(Value::as_str).unwrap_or("open");
-        if matches!(status, "done" | "completed" | "cancelled") {
+        // failed/skipped are terminal. Keeping a failed item pinned kept the
+        // previous task alive as if it still needed work.
+        if matches!(
+            status,
+            "done" | "completed" | "cancelled" | "failed" | "skipped"
+        ) {
             continue;
         }
         let content = todo
@@ -133,8 +136,8 @@ pub(crate) fn collect_pinned_items(
         }
         items.push(PinnedItem {
             kind: "todo".to_string(),
-            title: "Active todo".to_string(),
-            content: content.to_string(),
+            title: "Session checklist item (may belong to an earlier request)".to_string(),
+            content: format!("[{status}] {content}"),
             source_ref: todo.get("id").and_then(Value::as_str).map(str::to_string),
             message_ids: Vec::new(),
         });
@@ -280,7 +283,10 @@ pub(crate) fn pinned_context_prompt(items: &[PinnedItem]) -> String {
     if items.is_empty() {
         return String::new();
     }
-    let mut lines = vec!["Pinned context keep through compaction:".to_string()];
+    let mut lines = vec![
+        "Pinned background context (earlier session state; the latest incoming request outranks it):"
+            .to_string(),
+    ];
     for item in items.iter().take(24) {
         lines.push(format!("[{}] {}: {}", item.kind, item.title, item.content));
     }
@@ -314,5 +320,62 @@ pub(crate) fn stamp_snapshot_timestamps(snapshot: &mut Value) {
         object.insert("updatedAt".to_string(), Value::String(iso.clone()));
         object.insert("updatedAtIso".to_string(), Value::String(iso));
         object.insert("updatedAtMs".to_string(), Value::Number(ms.into()));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use std::collections::HashMap;
+
+    fn session_with(title: &str) -> NativeSession {
+        NativeSession {
+            id: "session-test".to_string(),
+            snapshot: json!({
+                "title": title,
+                "workingDir": "/tmp/player",
+                "messages": [
+                    {"id": "m1", "role": "user", "text": title},
+                    {"id": "m2", "role": "assistant", "text": "old diagnosis"},
+                    {"id": "m3", "role": "user", "text": "why does this song not play?"}
+                ],
+                "todos": [
+                    {"id": "t1", "content": "old task that already failed", "status": "failed"},
+                    {"id": "t2", "content": "old task still open", "status": "in_progress"},
+                    {"id": "t3", "content": "old task already done", "status": "completed"}
+                ],
+                "taskMilestones": [],
+                "tools": []
+            }),
+            created_at: now(),
+            saved: false,
+            save_label: None,
+            archived: false,
+            custom_title: None,
+            short_name: None,
+            runtime_turns: Vec::new(),
+            rollback_checkpoints: Vec::new(),
+            file_read_state: HashMap::new(),
+            provider_protocol_log: Vec::new(),
+            dirty: false,
+            dialog_dirty_from: None,
+            persisted_dialog_len: 0,
+            dialog_loaded: true,
+            ephemeral: false,
+            stream_journal_sequence: 0,
+        }
+    }
+
+    #[test]
+    fn earlier_goal_state_does_not_outrank_the_latest_request() {
+        let session = session_with("remember playback progress");
+        let prompt = pinned_context_prompt(&collect_pinned_items(&session, None));
+
+        assert!(!prompt.contains("remember playback progress"));
+        assert!(!prompt.contains("old task that already failed"));
+        assert!(!prompt.contains("old task already done"));
+        assert!(prompt.contains("[in_progress] old task still open"));
+        assert!(prompt.contains("the latest incoming request outranks it"));
     }
 }

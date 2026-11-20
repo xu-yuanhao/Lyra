@@ -47,11 +47,21 @@ export type CredentialsSnapshot = {
   readonly credentials: readonly StoredCredential[];
 };
 
+/**
+ * The three lists the Logins page shows. The address band owns the switch, so
+ * the page renders one list at a time instead of stacking collapsible sections.
+ */
+export type CredentialsSection = "sessions" | "review" | "credentials";
+
 export type CredentialsMessages = {
   readonly searchPlaceholder: string;
   readonly sessionsTab: string;
   readonly reviewTab: string;
   readonly credentialsTab: string;
+  readonly sectionsLabel: string;
+  readonly emptySessions: string;
+  readonly emptyReview: string;
+  readonly emptyCredentials: string;
   readonly openSite: string;
   readonly logoutSite: string;
   readonly deleteCredential: string;

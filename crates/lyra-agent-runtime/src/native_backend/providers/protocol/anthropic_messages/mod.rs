@@ -68,9 +68,7 @@ pub(crate) fn apply_headers(
     builder: RequestBuilder,
     provider: &NativeProviderProfile,
 ) -> AgentRuntimeResult<RequestBuilder> {
-    if super::super::subscription::uses_claude_code_contract(&provider.route_id)
-        || provider.route_id == super::super::routes::subscription::MINIMAX
-    {
+    if super::super::subscription::is_subscription_route(&provider.route_id) {
         return transport::auth::apply_model_auth(builder, provider)
             .map(|builder| builder.header("anthropic-version", ANTHROPIC_VERSION));
     }
@@ -105,9 +103,7 @@ pub(crate) fn apply_headers_async(
     builder: AsyncRequestBuilder,
     provider: &NativeProviderProfile,
 ) -> AgentRuntimeResult<AsyncRequestBuilder> {
-    if super::super::subscription::uses_claude_code_contract(&provider.route_id)
-        || provider.route_id == super::super::routes::subscription::MINIMAX
-    {
+    if super::super::subscription::is_subscription_route(&provider.route_id) {
         return transport::auth::apply_model_auth_async(builder, provider)
             .map(|builder| builder.header("anthropic-version", ANTHROPIC_VERSION));
     }

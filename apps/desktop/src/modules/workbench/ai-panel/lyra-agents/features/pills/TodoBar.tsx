@@ -36,7 +36,7 @@ export function TodoBar({
       title={t("lyra-agents-composer.openTodoBoard")}
       aria-label={label}
     >
-      <ListChecks size={13} strokeWidth={2.2} />
+      <ListChecks size={13} strokeWidth={2.1} />
       <span className="lyra-agents-todo-capsule-progress">
         {currentNumber}
         <span className="lyra-agents-todo-capsule-sep">|</span>

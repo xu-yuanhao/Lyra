@@ -266,7 +266,6 @@ export interface ModelOption {
   enabled: boolean;
   selected?: boolean;
   contextWindow?: number | null;
-  sourceLabel?: string | null;
   accountEmail?: string | null;
   accountName?: string | null;
   accountAvatarUrl?: string | null;

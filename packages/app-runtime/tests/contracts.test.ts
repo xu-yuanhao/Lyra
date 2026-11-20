@@ -302,6 +302,43 @@ test("validates workbench chrome scopes, slots, and contributions", () => {
   );
   assert.equal(
     validateWorkbenchChromeContributionV1({
+      actions: [{
+        id: "show-passwords",
+        label: "Passwords",
+        commandId: "lyra.credentials.show-passwords",
+        order: 2,
+        display: "text",
+        active: true
+      }]
+    }),
+    true
+  );
+  assert.equal(
+    validateWorkbenchChromeContributionV1({
+      actions: [{
+        id: "show-passwords",
+        label: "Passwords",
+        commandId: "lyra.credentials.show-passwords",
+        order: 2,
+        display: "tabs"
+      }]
+    }),
+    false
+  );
+  assert.equal(
+    validateWorkbenchChromeContributionV1({
+      actions: [{
+        id: "show-passwords",
+        label: "Passwords",
+        commandId: "lyra.credentials.show-passwords",
+        order: 2,
+        active: "yes"
+      }]
+    }),
+    false
+  );
+  assert.equal(
+    validateWorkbenchChromeContributionV1({
       metaItems: [
         { kind: "builtin", id: "projectDir", order: 0 },
         {

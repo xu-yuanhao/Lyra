@@ -74,7 +74,7 @@ export function PermissionPanel({
               onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i - 1); }}
               aria-label={t("permission.prev")}
             >
-              <ChevronLeft size={14} strokeWidth={2.2} />
+              <ChevronLeft size={14} strokeWidth={2.1} />
             </AppButton>
             <span className="lyra-agents-decision-counter">
               {currentIndex + 1}/{requests.length}
@@ -86,7 +86,7 @@ export function PermissionPanel({
               onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i + 1); }}
               aria-label={t("permission.next")}
             >
-              <ChevronRight size={14} strokeWidth={2.2} />
+              <ChevronRight size={14} strokeWidth={2.1} />
             </AppButton>
           </div>
         )}
@@ -110,7 +110,7 @@ export function PermissionPanel({
               onClick={() => handleAction("deny")}
               aria-label={t("permission.deny")}
             >
-              <X size={14} strokeWidth={2.2} />
+              <X size={14} strokeWidth={2.1} />
             </AppButton>
             <AppButton variant="ghost" size="sm"
               type="button"
@@ -118,7 +118,7 @@ export function PermissionPanel({
               onClick={() => handleAction("approve")}
               aria-label={t("permission.approve")}
             >
-              <Check size={14} strokeWidth={2.2} />
+              <Check size={14} strokeWidth={2.1} />
             </AppButton>
           </div>
         </div>

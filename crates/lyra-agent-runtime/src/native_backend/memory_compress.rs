@@ -130,8 +130,8 @@ Return ONLY a JSON object:
 
 Rules:
 - Keep at most 6 candidates.
-- compressedContext.summary should capture essential context: what was discussed, what was decided, what is the current state.
-- Quote every original user request in the compressed window verbatim.
+- compressedContext.summary should capture the objective, decisions, completed work, what is still active, blockers, and the next action. The most recent messages define the current work.
+- Quote a request verbatim only while it is still unanswered or needs further action. Do not repeat requests that newer messages already answered or resolved; newer history takes precedence.
 - compressedContext.compressedMessageIds must list the message IDs you are compressing.
 - compressedContext.tokenEstimate is your estimate of the summary's token count.
 - Ignore secrets, passwords, API keys, tokens in both candidates and summary.

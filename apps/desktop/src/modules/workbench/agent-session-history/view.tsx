@@ -365,7 +365,15 @@ const SessionRow = ({
           {age.length === 0 ? null : (
             <div className="lyra-agent-history-session-card-age">{age}</div>
           )}
-          {session.loadError && <div role="alert">{session.loadError}</div>}
+          {session.loadError === null || session.loadError === undefined || session.loadError.length === 0 ? null : (
+            <AppStatusMessage
+              className="lyra-agent-history-session-card-error"
+              role="alert"
+              tone="error"
+            >
+              {session.loadError}
+            </AppStatusMessage>
+          )}
         </div>
       )}
     >

@@ -37,6 +37,7 @@ import {
   AppMenuTrigger,
   AppModelMenu,
   AppSelect,
+  AppStatusMessage,
   type AppModelMenuGroup,
   type AppModelMenuSubmenu
 } from "@renderer/ui/components";
@@ -537,10 +538,14 @@ export function Composer({
   return (
     <form ref={composerRootRef} className="lyra-agents-composer" onSubmit={handleSubmit}>
       {sendError !== null && (
-        <div className="lyra-agents-composer-send-error" role="alert">
-          <CircleAlert size={TOOLBAR_ICON_SIZE} strokeWidth={TOOLBAR_ICON_STROKE_WIDTH} aria-hidden="true" />
-          <span>{sendError}</span>
-        </div>
+        <AppStatusMessage
+          className="lyra-agents-composer-send-error lyra-app-status-message-boxed"
+          icon={<CircleAlert size={TOOLBAR_ICON_SIZE} strokeWidth={TOOLBAR_ICON_STROKE_WIDTH} />}
+          role="alert"
+          tone="error"
+        >
+          {sendError}
+        </AppStatusMessage>
       )}
       {topSlot}
       <CitationComposerInput

@@ -1346,6 +1346,39 @@ export const useLyraAgentDataProvider = (
 
   const currentSessionId = resolvedSessionId;
 
+  // ZCode-style history paging: the runtime ships a bounded tail window plus a
+  // cursor; scrolling to the top pulls the page older than the first loaded
+  // row. Single-flight + a same-session guard keep a burst of scroll events
+  // from stacking pages, and the cursor is the current window's first row.
+  const loadingEarlierRef = useRef(false);
+  const loadEarlierMessages = useCallback(async (): Promise<void> => {
+    const agentApi = desktopApi?.agent;
+    const session = state.session;
+    const cursor = session?.messages[0]?.id;
+    if (
+      agentApi === undefined
+      || session === null
+      || cursor === undefined
+      || session.messageWindow?.hasEarlier !== true
+      || loadingEarlierRef.current
+    ) {
+      return;
+    }
+    loadingEarlierRef.current = true;
+    try {
+      const page = await agentApi.readSession({
+        sessionId: session.id,
+        beforeMessageId: cursor
+      });
+      dispatch({ type: "prependSnapshot", snapshot: page });
+    } catch {
+      // Read-only retry: a failed page must not error the live session; the
+      // next scroll to the top asks again.
+    } finally {
+      loadingEarlierRef.current = false;
+    }
+  }, [desktopApi, state.session]);
+
   const switchModel = useCallback(async (modelId: string): Promise<void> => {
     if (desktopApi?.agent === undefined) return;
     // ponytail: modelId 是复合 uid `${provider}:${model}`（见 provider_config.rs catalog id）。
@@ -1745,8 +1778,7 @@ export const useLyraAgentDataProvider = (
 
   const {
     modelControls,
-    permissionModeControls,
-    loadEarlierMessages
+    permissionModeControls
   } = useAgentComposerControls({
     desktopApi,
     modelState,
@@ -1810,10 +1842,10 @@ export const useLyraAgentDataProvider = (
       session: agentSessionMetaWithDraftWorkingDir(agentSessionToSessionMeta(state.session), state.session === null ? activeDraftWorkingDir : null),
       messages,
       messageWindow: {
-        visibleCount: totalMessageCount,
-        hiddenBefore: 0,
-        totalCount: totalMessageCount,
-        canLoadEarlier: false
+        visibleCount: state.session?.messageWindow?.count ?? totalMessageCount,
+        hiddenBefore: state.session?.messageWindow?.start ?? 0,
+        totalCount: state.session?.messageWindow?.total ?? totalMessageCount,
+        canLoadEarlier: state.session?.messageWindow?.hasEarlier === true
       },
       todos: agentSessionToTodos(state.session),
       projectTodo: state.session?.projectTodo ?? null,

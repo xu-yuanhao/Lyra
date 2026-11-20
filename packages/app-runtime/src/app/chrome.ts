@@ -13,12 +13,23 @@ export type WorkbenchChromeScopeV1 =
 
 export type ChromeActionToneV1 = "default" | "danger";
 
+/**
+ * Icon actions render as square buttons. Text actions render as the compact
+ * label buttons the address band already uses for page-local switches, so a
+ * surface can move a section switch out of its own body without inventing a
+ * second visual language.
+ */
+export type ChromeActionDisplayV1 = "icon" | "text";
+
 export type ChromeActionV1 = {
   readonly id: string;
   readonly label: string;
   readonly commandId: string;
   readonly order: number;
   readonly iconKey?: string;
+  readonly display?: ChromeActionDisplayV1;
+  /** Marks the currently selected member of a text switch. */
+  readonly active?: boolean;
   readonly tone?: ChromeActionToneV1;
   readonly disabled?: boolean;
 };
@@ -128,6 +139,8 @@ const validateChromeActionV1 = (value: unknown): value is ChromeActionV1 => {
     && typeof value.order === "number"
     && Number.isFinite(value.order)
     && (value.iconKey === undefined || isNonEmptyString(value.iconKey))
+    && (value.display === undefined || value.display === "icon" || value.display === "text")
+    && (value.active === undefined || typeof value.active === "boolean")
     && (value.tone === undefined || value.tone === "default" || value.tone === "danger")
     && (value.disabled === undefined || typeof value.disabled === "boolean");
 };

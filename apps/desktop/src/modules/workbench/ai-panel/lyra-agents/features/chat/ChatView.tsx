@@ -60,6 +60,7 @@ import { createRafCoalescer } from "../../../../shell/raf-coalesce";
 import {
   CONTENT_WIDTH_RESIZE_SETTLE_MS,
   MESSAGE_ROW_ESTIMATE_PX,
+  historyPrefetchTriggerPx,
   type MessageHeightMemory,
   messageVirtualizerOptions,
   shouldAdjustMessageScrollOnItemSizeChange
@@ -264,6 +265,8 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
     previewRollback,
     rollbackMessage,
     todos,
+    messageWindow,
+    loadEarlierMessages,
   } = useData();
   useRegisterCoreComposerMetaChrome(session.id);
   const contextMenu = useContextMenuModel();
@@ -446,6 +449,40 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
     setStickyMessageId((current) => (current === stickyId ? current : stickyId));
   }, [messages, virtualizer]);
 
+  // ── Older history (ZCode rows/range paging) ──────────────────────────────
+  // The runtime ships a bounded tail window plus `messageWindow.hasEarlier`.
+  // Scrolling toward the top (two viewports early, so the page lands before the
+  // user reaches the edge) pulls the page older than the first loaded row.
+  // Prepending moves every existing row down by the inserted height: remember
+  // the row under the viewport top, then restore its absolute position after
+  // the commit so reading never jumps.
+  const prependAnchorRef = useRef<{
+    readonly key: string;
+    readonly offsetTop: number;
+    readonly firstMessageId: string | null;
+    readonly totalSize: number;
+  } | null>(null);
+  const loadingEarlierRef = useRef(false);
+
+  const requestEarlierMessages = useCallback((scrollTop: number): void => {
+    if (!messageWindow.canLoadEarlier || loadingEarlierRef.current) return;
+    const el = scrollRef.current;
+    if (el === null) return;
+    const anchor = virtualizer.getVirtualItemForOffset(scrollTop);
+    prependAnchorRef.current = {
+      key: anchor === undefined ? "" : String(anchor.key),
+      offsetTop: anchor === undefined ? 0 : anchor.start - scrollTop,
+      firstMessageId: messages[0]?.id ?? null,
+      totalSize: virtualizer.getTotalSize()
+    };
+    loadingEarlierRef.current = true;
+    void loadEarlierMessages()
+      .catch(() => undefined)
+      .finally(() => {
+        loadingEarlierRef.current = false;
+      });
+  }, [loadEarlierMessages, messageWindow.canLoadEarlier, messages, virtualizer]);
+
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -456,7 +493,12 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
       el.scrollHeight - scrollTop - el.clientHeight < APP_CONFIG.scroll.atBottomThreshold;
     setIsAtBottom((current) => (current === atBottom ? current : atBottom));
     publishSticky(scrollTop);
-  }, [autoScroll.handleScroll, publishSticky]);
+    if (
+      scrollTop <= historyPrefetchTriggerPx(el.clientHeight, APP_CONFIG.scroll.topLoadThreshold)
+    ) {
+      requestEarlierMessages(scrollTop);
+    }
+  }, [autoScroll.handleScroll, publishSticky, requestEarlierMessages]);
 
   useLayoutEffect(() => {
     const scroll = scrollRef.current;
@@ -491,6 +533,37 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
     autoScroll.follow();
     setIsAtBottom(true);
   }, [autoScroll.follow, autoScroll.userScrolled, followKey]);
+
+  // Prepend anchoring: restore the remembered row to the same viewport offset.
+  useLayoutEffect(() => {
+    const pending = prependAnchorRef.current;
+    if (pending === null) return;
+    if ((messages[0]?.id ?? null) === pending.firstMessageId) return;
+    prependAnchorRef.current = null;
+    const el = scrollRef.current;
+    if (el === null) return;
+    const measurement = pending.key.length === 0
+      ? undefined
+      : virtualizer.measurementsCache.find((item) => String(item.key) === pending.key);
+    if (measurement !== undefined) {
+      const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+      el.scrollTop = Math.max(0, Math.min(measurement.start - pending.offsetTop, maxScrollTop));
+      return;
+    }
+    // Anchor row was unmounted by the prepend: shift by the inserted height.
+    const inserted = virtualizer.getTotalSize() - pending.totalSize;
+    if (inserted > 0) el.scrollTop += inserted;
+  }, [messages, virtualizer]);
+
+  // A short history can leave the scrollport unfilled (nothing to scroll, so
+  // no scroll event ever asks for the next page). Keep paging until it fills.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el === null || !messageWindow.canLoadEarlier) return;
+    if (el.scrollHeight <= el.clientHeight + 1) {
+      requestEarlierMessages(el.scrollTop);
+    }
+  }, [messageWindow.canLoadEarlier, messages.length, requestEarlierMessages]);
 
   useLayoutEffect(() => {
     if (citationScrollTarget === null) return;
@@ -790,7 +863,7 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
               aria-label={t("scroll.toBottom")}
               title={t("scroll.toBottom")}
             >
-              <ArrowDown size={13} strokeWidth={2.2} aria-hidden="true" />
+              <ArrowDown size={13} strokeWidth={2.1} aria-hidden="true" />
             </AppButton>
           )}
           <TodoBar tasks={todos} onOpenBoard={openTodoBoard} />

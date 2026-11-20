@@ -17,7 +17,12 @@
   --lyra-app-input-placeholder: #737373;
   --lyra-app-border: color-mix(in oklab, #0a0a0a 10%, transparent);
   --lyra-app-border-strong: color-mix(in oklab, #0a0a0a 18%, transparent);
-  --lyra-app-focus: color-mix(in oklab, #0a0a0a 22%, transparent);
+  /* Three divider weights only. Do not hand-mix app-border for a new opacity. */
+  --lyra-divider-strong: color-mix(in srgb, var(--lyra-app-border) 72%, transparent);
+  --lyra-divider-soft: color-mix(in srgb, var(--lyra-app-border) 56%, transparent);
+  --lyra-divider-faint: color-mix(in srgb, var(--lyra-app-border) 42%, transparent);
+  /* 45% keeps the 2px focus ring at >=3:1 on #fafafa; 22% measured 1.7:1. */
+  --lyra-app-focus: color-mix(in oklab, #0a0a0a 45%, transparent);
   --lyra-app-primary-button: #171717;
   --lyra-app-primary-button-fg: #fafafa;
   --lyra-app-switch-off: #d4d4d4;
@@ -25,18 +30,15 @@
   --lyra-app-popover-bg: #ffffff;
   --lyra-app-overlay-bg: color-mix(in oklab, #0a0a0a 36%, transparent);
   --lyra-app-switch-thumb-bg: #ffffff;
-  --lyra-app-switch-thumb-shadow: 0 var(--lyra-unit-1) var(--lyra-unit-2) rgba(0, 0, 0, 0.22);
+  --lyra-app-switch-thumb-shadow: 0 var(--lyra-space-1) var(--lyra-space-2) rgba(0, 0, 0, 0.22);
   --lyra-effect-overlay-solid-bg: #000000;
   --lyra-effect-overlay-solid-fg: #ffffff;
-  --lyra-effect-popover-shadow-strong: 0 var(--lyra-unit-10) var(--lyra-unit-30) rgba(0, 0, 0, 0.35);
   --lyra-effect-scrollbar-soft: rgba(255, 255, 255, 0.15);
-  --lyra-effect-scrollbar-strong: rgba(255, 255, 255, 0.2);
   --lyra-effect-glass-subtle: rgba(255, 255, 255, 0.03);
   --lyra-effect-glass-soft: rgba(255, 255, 255, 0.05);
   --lyra-effect-glass-medium: rgba(255, 255, 255, 0.06);
   --lyra-effect-glass-hover: rgba(255, 255, 255, 0.28);
   --lyra-effect-code-block-bg: var(--lyra-app-muted-bg);
-  --lyra-effect-control-raised-bg: rgba(255, 255, 255, 0.9);
   --lyra-effect-debug-panel-bg: rgba(30, 32, 36, 0.95);
   --lyra-effect-permission-approve-hover: #8fffaa;
   --lyra-effect-permission-deny-hover: #ffaaaa;
@@ -89,31 +91,23 @@
   --material-sidebar-background: color-mix(in srgb, var(--lyra-app-sidebar-bg) 70%, transparent);
   --material-toolbar-background: color-mix(in srgb, var(--lyra-app-sidebar-bg) 70%, transparent);
   --material-panel-background: color-mix(in srgb, var(--lyra-app-panel-bg) 80%, transparent);
-  --material-popover-background: color-mix(in srgb, var(--lyra-app-popover-bg) 96%, transparent);
   --material-overlay-background: var(--lyra-app-overlay-bg);
   --material-border: color-mix(in srgb, var(--lyra-app-border) 82%, transparent);
-  --material-border-strong: var(--lyra-app-border-strong);
-  --material-highlight: color-mix(in srgb, var(--lyra-app-surface-strong-bg) 48%, transparent);
-  --material-blur-sm: blur(var(--lyra-unit-18));
-  --material-blur-md: blur(var(--lyra-unit-28));
-  --material-blur-lg: blur(var(--lyra-unit-40));
+  --material-blur-sm: blur(var(--lyra-space-18));
+  --material-blur-md: blur(var(--lyra-space-28));
+  --material-blur-lg: blur(var(--lyra-space-40));
   --material-saturate: saturate(1.35);
   --material-opacity: 0.86;
-  --material-panel-shadow: 0 var(--lyra-unit-18) var(--lyra-unit-48) color-mix(in srgb, var(--lyra-text-primary) 12%, transparent);
   --lyra-app-material-shell-bg: var(--material-shell-background);
   --lyra-app-material-sidebar-bg: var(--material-sidebar-background);
   --lyra-app-material-toolbar-bg: var(--material-toolbar-background);
   --lyra-app-material-panel-bg: var(--material-panel-background);
-  --lyra-app-material-popover-bg: var(--material-popover-background);
   --lyra-app-material-overlay-bg: var(--material-overlay-background);
   --lyra-app-material-border: var(--material-border);
-  --lyra-app-material-border-strong: var(--material-border-strong);
-  --lyra-app-material-highlight: var(--material-highlight);
   --lyra-app-material-blur-sm: var(--material-blur-sm);
   --lyra-app-material-blur-md: var(--material-blur-md);
   --lyra-app-material-blur-lg: var(--material-blur-lg);
   --lyra-app-material-saturate: var(--material-saturate);
-  --lyra-app-material-panel-shadow: var(--material-panel-shadow);
 
   --lyra-select-trigger-bg: var(--lyra-app-input-bg);
   --lyra-select-trigger-hover-bg: var(--lyra-app-input-hover-bg);
@@ -124,7 +118,6 @@
   --lyra-select-focus-border: var(--lyra-app-input-focus-border);
   --lyra-select-focus: transparent;
   --lyra-select-item-hover-bg: var(--lyra-app-row-hover-bg);
-  --lyra-switch-on: var(--lyra-app-switch-on);
 
   --lyra-terminal-bg: var(--lyra-app-panel-bg);
   --lyra-terminal-fg: var(--lyra-text-primary);
@@ -178,7 +171,7 @@
   --lyra-app-input-placeholder: #a3a3a3;
   --lyra-app-border: color-mix(in oklab, #fafafa 8%, transparent);
   --lyra-app-border-strong: color-mix(in oklab, #fafafa 14%, transparent);
-  --lyra-app-focus: color-mix(in oklab, #fafafa 18%, transparent);
+  --lyra-app-focus: color-mix(in oklab, #fafafa 36%, transparent);
   --lyra-app-primary-button: #f5f5f5;
   --lyra-app-primary-button-fg: #171717;
   --lyra-app-switch-off: #3f3f3f;
@@ -208,12 +201,8 @@
   --material-sidebar-background: color-mix(in srgb, var(--lyra-app-sidebar-bg) 70%, transparent);
   --material-toolbar-background: color-mix(in srgb, var(--lyra-app-surface-bg) 72%, transparent);
   --material-panel-background: color-mix(in srgb, var(--lyra-app-panel-bg) 78%, transparent);
-  --material-popover-background: color-mix(in srgb, var(--lyra-app-popover-bg) 96%, transparent);
   --material-overlay-background: var(--lyra-app-overlay-bg);
   --material-border: color-mix(in srgb, var(--lyra-app-border) 88%, transparent);
-  --material-border-strong: var(--lyra-app-border-strong);
-  --material-highlight: color-mix(in srgb, var(--lyra-app-surface-strong-bg) 42%, transparent);
-  --material-panel-shadow: 0 var(--lyra-unit-18) var(--lyra-unit-56) rgba(0, 0, 0, 0.34);
 }
 
 :root[data-lyra-theme-tone="light"] {
@@ -228,10 +217,7 @@
   --material-sidebar-background: color-mix(in srgb, var(--lyra-material-solid-sidebar-bg, var(--lyra-app-sidebar-bg)) 34%, transparent);
   --material-toolbar-background: color-mix(in srgb, var(--lyra-material-solid-sidebar-bg, var(--lyra-app-sidebar-bg)) 26%, transparent);
   --material-panel-background: color-mix(in srgb, var(--lyra-material-solid-panel-bg, var(--lyra-app-panel-bg)) 30%, transparent);
-  --material-popover-background: color-mix(in srgb, var(--lyra-material-solid-popover-bg, var(--lyra-app-popover-bg)) 92%, transparent);
   --material-border: color-mix(in srgb, var(--lyra-material-solid-border, var(--lyra-app-border)) 64%, transparent);
-  --material-highlight: color-mix(in srgb, var(--lyra-material-solid-surface-strong-bg, var(--lyra-app-surface-strong-bg)) 36%, transparent);
-  --material-panel-shadow: 0 var(--lyra-unit-14) var(--lyra-unit-36) color-mix(in srgb, var(--lyra-text-primary) 10%, transparent);
   --material-blur-sm: none;
   --material-blur-md: none;
   --material-blur-lg: none;
@@ -242,9 +228,7 @@
   --material-sidebar-background: color-mix(in srgb, var(--lyra-material-solid-sidebar-bg, var(--lyra-app-sidebar-bg)) 40%, transparent);
   --material-toolbar-background: color-mix(in srgb, var(--lyra-material-solid-surface-bg, var(--lyra-app-surface-bg)) 32%, transparent);
   --material-panel-background: color-mix(in srgb, var(--lyra-material-solid-panel-bg, var(--lyra-app-panel-bg)) 36%, transparent);
-  --material-popover-background: color-mix(in srgb, var(--lyra-material-solid-popover-bg, var(--lyra-app-popover-bg)) 90%, transparent);
   --material-border: color-mix(in srgb, var(--lyra-material-solid-border, var(--lyra-app-border)) 72%, transparent);
-  --material-highlight: color-mix(in srgb, var(--lyra-material-solid-surface-strong-bg, var(--lyra-app-surface-strong-bg)) 42%, transparent);
 }
 
 :root[data-lyra-window-material="native"][data-lyra-material-enabled="true"][data-lyra-theme-tone="light"] {
@@ -253,7 +237,6 @@
   --material-toolbar-background: color-mix(in srgb, var(--lyra-material-solid-bg, #fafafa) 12%, transparent);
   --material-panel-background: transparent;
   --material-border: color-mix(in srgb, var(--lyra-material-solid-border, color-mix(in oklab, #0a0a0a 10%, transparent)) 34%, transparent);
-  --material-highlight: color-mix(in srgb, var(--lyra-material-solid-bg, #fafafa) 20%, transparent);
 }
 
 :root[data-lyra-window-material="opaque"] {
@@ -261,7 +244,6 @@
   --material-sidebar-background: var(--lyra-app-sidebar-bg);
   --material-toolbar-background: var(--lyra-app-sidebar-bg);
   --material-panel-background: var(--lyra-app-panel-bg);
-  --material-popover-background: var(--lyra-app-popover-bg);
   --material-blur-sm: none;
   --material-blur-md: none;
   --material-blur-lg: none;
@@ -274,7 +256,6 @@
   --material-sidebar-background: var(--lyra-app-sidebar-bg);
   --material-toolbar-background: var(--lyra-app-sidebar-bg);
   --material-panel-background: var(--lyra-app-panel-bg);
-  --material-popover-background: var(--lyra-app-popover-bg);
   --material-blur-sm: none;
   --material-blur-md: none;
   --material-blur-lg: none;
@@ -387,26 +368,26 @@ body,
 .lyra-root .lyra-app-group,
 .lyra-root .lyra-ui-card {
   transition:
-    background-color 420ms ease,
-    border-color 420ms ease,
-    box-shadow 420ms ease,
-    color 420ms ease,
-    fill 420ms ease,
-    stroke 420ms ease;
+    background-color var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
+    border-color var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
+    box-shadow var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
+    color var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
+    fill var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
+    stroke var(--lyra-motion-slow-duration) var(--lyra-ease-fast);
 }
 
 .lyra-root::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 999;
+  z-index: var(--lyra-z-overlay-effect);
   pointer-events: none;
   background: var(--lyra-theme-transition-from-bg, transparent);
   opacity: 0;
 }
 
 .lyra-root.lyra-theme-transition::after {
-  animation: lyra-theme-crossfade 420ms ease-out both;
+  animation: lyra-theme-crossfade var(--lyra-motion-slow) both;
 }
 
 @keyframes lyra-theme-crossfade {

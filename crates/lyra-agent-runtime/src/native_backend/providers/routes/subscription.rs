@@ -1,19 +1,19 @@
-use super::super::{protocol, types::ProviderRouteDescriptor};
+//! Subscription-account routes, kept to the set opencode supports:
+//! ChatGPT/Codex, GitHub Copilot, xAI, Azure OpenAI, DigitalOcean, Snowflake.
+//! Software-specific integrations opencode does not ship (Cursor IDE, Qwen CLI,
+//! Gemini Code Assist, Antigravity, Grok CLI, Copilot CLI, MiniMax portal,
+//! Claude Code credential borrowing) are deliberately absent.
 
-pub(crate) const CLAUDE: &str = "claude_subscription";
+use super::{
+    super::{protocol, types::ProviderRouteDescriptor},
+};
+
 pub(crate) const CHATGPT: &str = "chatgpt_codex";
 pub(crate) const COPILOT: &str = "github_copilot";
-pub(crate) const COPILOT_ACP: &str = "github_copilot_acp";
-pub(crate) const GEMINI_CODE_ASSIST: &str = "gemini_code_assist";
-pub(crate) const ANTIGRAVITY: &str = "antigravity";
-pub(crate) const GROK_BUILD: &str = "grok_build";
 pub(crate) const XAI_OAUTH: &str = "xai_oauth";
-pub(crate) const CURSOR: &str = "cursor_subscription";
 pub(crate) const AZURE: &str = "azure_openai";
 pub(crate) const DIGITALOCEAN: &str = "digitalocean";
 pub(crate) const SNOWFLAKE: &str = "snowflake_cortex";
-pub(crate) const QWEN: &str = "qwen_portal";
-pub(crate) const MINIMAX: &str = "minimax_oauth";
 
 pub(crate) fn is_subscription_route(route_id: &str) -> bool {
     descriptors().iter().any(|route| route.id == route_id)
@@ -21,16 +21,6 @@ pub(crate) fn is_subscription_route(route_id: &str) -> bool {
 
 pub(crate) fn descriptors() -> Vec<ProviderRouteDescriptor> {
     vec![
-        route(
-            CLAUDE,
-            "Claude Pro / Max",
-            "Claude subscription via the Claude Code request contract.",
-            "https://api.anthropic.com/v1",
-            protocol::anthropic_messages::PROTOCOL_ID,
-            protocol::anthropic_messages::PROTOCOL_FAMILY,
-            "messages",
-            "subscription",
-        ),
         route(
             CHATGPT,
             "ChatGPT / Codex",
@@ -52,64 +42,14 @@ pub(crate) fn descriptors() -> Vec<ProviderRouteDescriptor> {
             "subscription",
         ),
         route(
-            COPILOT_ACP,
-            "GitHub Copilot CLI",
-            "Copilot subscription through the installed copilot CLI.",
-            "acp://copilot",
-            protocol::openai_chat_completions::PROTOCOL_ID,
-            protocol::openai_chat_completions::PROTOCOL_FAMILY,
-            "chatCompletions",
-            "subscription",
-        ),
-        route(
-            GEMINI_CODE_ASSIST,
-            "Gemini Code Assist",
-            "Google Code Assist subscription.",
-            "https://cloudcode-pa.googleapis.com",
-            protocol::gemini_generate_content::PROTOCOL_ID,
-            protocol::gemini_generate_content::PROTOCOL_FAMILY,
-            "generateContent",
-            "subscription",
-        ),
-        route(
-            ANTIGRAVITY,
-            "Antigravity",
-            "Antigravity subscription on the Cloud Code backend.",
-            "https://daily-cloudcode-pa.googleapis.com",
-            protocol::gemini_generate_content::PROTOCOL_ID,
-            protocol::gemini_generate_content::PROTOCOL_FAMILY,
-            "generateContent",
-            "subscription",
-        ),
-        route(
-            GROK_BUILD,
-            "Grok Build",
-            "Grok CLI subscription on the Grok chat proxy. Shares the xAI login.",
-            "https://cli-chat-proxy.grok.com/v1",
-            protocol::openai_chat_completions::PROTOCOL_ID,
-            protocol::openai_chat_completions::PROTOCOL_FAMILY,
-            "chatCompletions",
-            "subscription",
-        ),
-        route(
             XAI_OAUTH,
             "xAI Grok",
-            "SuperGrok or Premium+ subscription. Shares the Grok Build login.",
+            "SuperGrok or Premium+ subscription via the xAI device login.",
             "https://api.x.ai/v1",
             protocol::openai_chat_completions::PROTOCOL_ID,
             protocol::openai_chat_completions::PROTOCOL_FAMILY,
             "chatCompletions",
             "subscription",
-        ),
-        route(
-            CURSOR,
-            "Cursor",
-            "Cursor account via the Agent service, an API key, or the local IDE login.",
-            "https://agentn.global.api5.cursor.sh",
-            protocol::openai_chat_completions::PROTOCOL_ID,
-            protocol::openai_chat_completions::PROTOCOL_FAMILY,
-            "chatCompletions",
-            "subscription-or-key",
         ),
         route(
             AZURE,
@@ -139,26 +79,6 @@ pub(crate) fn descriptors() -> Vec<ProviderRouteDescriptor> {
             protocol::openai_chat_completions::PROTOCOL_ID,
             protocol::openai_chat_completions::PROTOCOL_FAMILY,
             "chatCompletions",
-            "subscription",
-        ),
-        route(
-            QWEN,
-            "Qwen",
-            "Qwen portal subscription from the Qwen CLI login.",
-            "https://portal.qwen.ai/v1",
-            protocol::openai_chat_completions::PROTOCOL_ID,
-            protocol::openai_chat_completions::PROTOCOL_FAMILY,
-            "chatCompletions",
-            "subscription",
-        ),
-        route(
-            MINIMAX,
-            "MiniMax",
-            "MiniMax subscription over the Anthropic-compatible endpoint.",
-            "https://api.minimax.io/anthropic/v1",
-            protocol::anthropic_messages::PROTOCOL_ID,
-            protocol::anthropic_messages::PROTOCOL_FAMILY,
-            "messages",
             "subscription",
         ),
     ]

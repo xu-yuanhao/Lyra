@@ -44,13 +44,7 @@ const PreviewTranscript = ({
               ref={virtualizer.measureElement}
               data-index={item.index}
               className="lyra-agents-chat-message-slot"
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                transform: `translateY(${item.start}px)`
-              }}
+              style={{ transform: `translateY(${item.start}px)` }}
             >
               <Message message={message} />
             </div>

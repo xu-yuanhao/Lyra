@@ -11,6 +11,7 @@ import {
 
 import {
   AppButton,
+  AppEmptyState,
   AppIconButton,
   AppInput,
   AppObjectRow,
@@ -324,10 +325,6 @@ const PROVIDER_ROUTE_ALIASES: readonly {
     values: ["subscription", "订阅", "账号", "登录"],
   },
   {
-    match: (route) => route.id === "claude_subscription" || route.label.toLocaleLowerCase().includes("claude"),
-    values: ["claude", "anthropic", "克劳德"],
-  },
-  {
     match: (route) => route.id === "chatgpt_codex",
     values: ["chatgpt", "codex", "openai", "gpt"],
   },
@@ -336,16 +333,8 @@ const PROVIDER_ROUTE_ALIASES: readonly {
     values: ["copilot", "github"],
   },
   {
-    match: (route) => route.id === "gemini_code_assist",
-    values: ["gemini", "google", "code assist"],
-  },
-  {
-    match: (route) => route.id === "grok_build" || route.id === "xai_oauth",
-    values: ["grok", "xai", "grok build"],
-  },
-  {
-    match: (route) => route.id === "qwen_portal",
-    values: ["qwen", "通义", "千问"],
+    match: (route) => route.id === "xai_oauth",
+    values: ["grok", "xai", "supergrok"],
   },
 ];
 
@@ -452,7 +441,7 @@ const discoveredModelIdsFromCatalog = (
   previousEntries: readonly AgentModelEntry[]
 ): string[] => {
   const matchedEntries = entries.filter((entry) =>
-    !entry.free && modelMatchesSelectedProvider(entry, profileName)
+    modelMatchesSelectedProvider(entry, profileName)
   );
   if (matchedEntries.length > 0) {
     return modelIdsFromEntries(matchedEntries);
@@ -460,9 +449,7 @@ const discoveredModelIdsFromCatalog = (
 
   const previousKeys = new Set(previousEntries.map(modelEntryIdentity));
   return modelIdsFromEntries(
-    entries.filter((entry) =>
-      !entry.free && !previousKeys.has(modelEntryIdentity(entry))
-    )
+    entries.filter((entry) => !previousKeys.has(modelEntryIdentity(entry)))
   );
 };
 
@@ -1008,8 +995,7 @@ export const SettingsAiMcpView = ({ labels, model }: SettingsAiMcpViewProps) => 
           <AppButton
             type="submit"
             variant="default"
-            size="sm"
-            className="lyra-settings-ai-action lyra-settings-ai-action-primary"
+            size="md"
             disabled={query.trim().length === 0}
           >
             {labels.mcpAddServer}
@@ -1017,16 +1003,19 @@ export const SettingsAiMcpView = ({ labels, model }: SettingsAiMcpViewProps) => 
         </form>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className="lyra-settings-ai-error" tone="error" role="alert">
+          <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
 
         {filteredServers.length === 0 ? (
-          <div className="lyra-settings-ai-empty-panel" role="status">
-            <strong>{servers.length === 0 ? labels.mcpEmptyTitle : labels.mcpDisconnected}</strong>
-            <span>{labels.mcpEmptyDescription}</span>
-          </div>
+          <AppEmptyState
+            density="compact"
+            description={labels.mcpEmptyDescription}
+            icon={false}
+            role="status"
+            title={servers.length === 0 ? labels.mcpEmptyTitle : labels.mcpDisconnected}
+          />
         ) : (
           <div className="lyra-settings-ai-skill-list">
             {filteredServers.map((server) => (
@@ -1284,8 +1273,7 @@ export const SettingsAiSkillsView = ({ labels, model }: SettingsAiSkillsViewProp
           <AppButton
             type="submit"
             variant="default"
-            size="sm"
-            className="lyra-settings-ai-action lyra-settings-ai-action-primary"
+            size="md"
             disabled={query.trim().length === 0 || pendingSkillIds.has("input")}
           >
             {labels.skillsAddSkill}
@@ -1293,20 +1281,26 @@ export const SettingsAiSkillsView = ({ labels, model }: SettingsAiSkillsViewProp
         </form>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className="lyra-settings-ai-error" tone="error" role="alert">
+          <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
 
         {isSearchingSkills && !hasVisibleSkills ? (
-          <div className="lyra-settings-ai-empty-panel" role="status">
-            <span>{labels.skillsEmptyDescription}</span>
-          </div>
+          <AppEmptyState
+            density="compact"
+            icon={false}
+            role="status"
+            title={labels.skillsEmptyDescription}
+          />
         ) : !hasVisibleSkills ? (
-          <div className="lyra-settings-ai-empty-panel" role="status">
-            <strong>{labels.skillsEmptyTitle}</strong>
-            <span>{store?.lastError ?? labels.skillsEmptyDescription}</span>
-          </div>
+          <AppEmptyState
+            density="compact"
+            description={store?.lastError ?? labels.skillsEmptyDescription}
+            icon={false}
+            role="status"
+            title={labels.skillsEmptyTitle}
+          />
         ) : (
           <div className="lyra-settings-ai-skill-list">
 
@@ -1385,16 +1379,10 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
     ?? null;
   const hasSelectedProviderRoute = selectedProviderRoute !== null;
   const selectedProviderRouteDefaultBaseUrl = selectedProviderRoute?.defaultBaseUrl ?? null;
-  const builtInFreeProviderKeys = useMemo(() => new Set(
-    (model.agentModelCatalog?.models ?? [])
-      .filter((entry) => entry.free)
-      .flatMap((entry) => modelProviderKeys(entry)),
-  ), [model.agentModelCatalog?.models]);
   const selectedProviderProfile = selectedProviderRoute === null
     ? null
     : model.profiles.find((profile) =>
       (routeAdjustment ? profile.id === routeAdjustment.profileId : profile.routeId === selectedProviderRoute.id)
-      && !builtInFreeProviderKeys.has(profile.id)
     ) ?? null;
   const selectedProviderProfileId = routeAdjustment?.profileId ?? selectedProviderProfile?.id ?? selectedProviderRoute?.id ?? "";
   const selectedProviderConfig = selectedProviderProfileId.length === 0
@@ -1836,11 +1824,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
           />
           <AppButton
             variant={isAddingModel ? "outline" : "default"}
-            size="sm"
-            className={[
-              "lyra-settings-ai-action",
-              isAddingModel ? "" : "lyra-settings-ai-action-primary",
-            ].filter(Boolean).join(" ")}
+            size="md"
             disabled={model.isSaving || providerRoutes.length === 0}
             onClick={() => {
               setIsAddingModel((value) => {
@@ -1873,7 +1857,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
         </div>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className="lyra-settings-ai-error" tone="error" role="alert">
+          <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
@@ -1966,8 +1950,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                     <span className="lyra-settings-ai-model-discovery-action-row">
                       <AppButton
                         variant="default"
-                        size="sm"
-                        className="lyra-settings-ai-action lyra-settings-ai-action-primary"
+                        size="md"
                         disabled={model.isSaving || isDiscoveringModels}
                         onClick={saveDiscoveredProvider}
                       >
@@ -1976,8 +1959,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                       </AppButton>
                       <AppButton
                         variant="outline"
-                        size="sm"
-                        className="lyra-settings-ai-action"
+                        size="md"
                         disabled={model.isSaving || isDiscoveringModels}
                         onClick={discoverProviderModels}
                       >
@@ -1986,8 +1968,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                       </AppButton>
                       <AppButton
                         variant="outline"
-                        size="sm"
-                        className="lyra-settings-ai-action"
+                        size="md"
                         disabled={model.isSaving || isDiscoveringModels}
                         onClick={() => {
                           setIsAddingCustomModel((value) => !value);
@@ -2002,7 +1983,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                 </div>
 
                 {discoveryReturnedEmpty ? (
-                  <AppStatusMessage className="lyra-settings-ai-error" tone="neutral">
+                  <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="neutral">
                     {labels.modelsDiscoverEmptyDescription}
                   </AppStatusMessage>
                 ) : null}
@@ -2026,8 +2007,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                     />
                     <AppButton
                       variant="outline"
-                      size="sm"
-                      className="lyra-settings-ai-action"
+                      size="md"
                       disabled={customModelId.trim().length === 0}
                       onClick={addCustomModel}
                     >

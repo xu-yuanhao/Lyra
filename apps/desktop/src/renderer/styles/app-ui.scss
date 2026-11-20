@@ -15,7 +15,7 @@
 .lyra-ui-textarea:disabled,
 .lyra-ui-choice-card:disabled {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: var(--lyra-opacity-disabled);
 }
 
 .lyra-ui-button-size-sm {
@@ -102,7 +102,7 @@
   border-radius: var(--lyra-radius-6);
   color: var(--lyra-text-secondary);
   background: transparent;
-  opacity: 0.72;
+  opacity: var(--lyra-opacity-icon-dim);
 }
 
 .lyra-app-window-button:hover:not(:disabled),
@@ -198,7 +198,7 @@
 }
 
 .lyra-ui-input {
-  height: var(--lyra-control-h-36);
+  height: var(--lyra-control-h-default);
   padding-inline: var(--lyra-space-12);
   border-radius: var(--lyra-control-radius-default);
 }
@@ -347,14 +347,14 @@
 .lyra-app-module-card {
   padding: var(--lyra-space-10);
   border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-8);
+  border-radius: var(--lyra-radius-10);
   background: var(--lyra-app-surface-bg);
 }
 
 .lyra-app-module-scrim {
   position: absolute;
   inset: 0;
-  z-index: 10;
+  z-index: var(--lyra-z-sticky-header);
   display: grid;
   place-items: center;
   padding: var(--lyra-space-16);
@@ -365,7 +365,7 @@
   width: min(var(--lyra-unit-420), 100%);
   padding: var(--lyra-space-16);
   border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-12);
+  border-radius: var(--lyra-radius-10);
   color: var(--lyra-text-primary);
   background: var(--lyra-app-popover-bg);
   box-shadow: var(--lyra-shadow-elevated-lg);
@@ -410,14 +410,14 @@
 
 .lyra-app-search-field {
   min-width: 0;
-  height: var(--lyra-control-h-36);
+  height: var(--lyra-control-h-default);
   display: grid;
   grid-template-columns: var(--lyra-icon-size-16) minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--lyra-space-12);
   padding: 0 var(--lyra-space-6) 0 var(--lyra-space-10);
   border: var(--lyra-stroke-thin) solid var(--lyra-app-input-border);
-  border-radius: var(--lyra-radius-10);
+  border-radius: var(--lyra-control-radius-default);
   color: var(--lyra-text-primary);
   background: var(--lyra-app-input-bg);
   transition:
@@ -439,7 +439,7 @@
 
 .lyra-app-search-field[data-disabled="true"] {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: var(--lyra-opacity-disabled);
 }
 
 .lyra-app-search-field-leading {
@@ -452,8 +452,8 @@
 }
 
 .lyra-app-search-field-leading svg {
-  width: var(--lyra-icon-size-15, var(--lyra-icon-size-14));
-  height: var(--lyra-icon-size-15, var(--lyra-icon-size-14));
+  width: var(--lyra-icon-size-14);
+  height: var(--lyra-icon-size-14);
 }
 
 .lyra-app-search-field-input {
@@ -473,8 +473,8 @@
 }
 
 .lyra-app-search-field-submit {
-  width: var(--lyra-control-h-26);
-  height: var(--lyra-control-h-26);
+  width: var(--lyra-control-h-compact);
+  height: var(--lyra-control-h-compact);
 }
 
 .lyra-app-surface-header {
@@ -501,8 +501,8 @@
 .lyra-app-surface-header-title {
   margin: 0;
   color: var(--lyra-text-primary);
-  font-size: var(--lyra-text-size-title-sm);
-  font-weight: 620;
+  font-size: var(--lyra-text-size-title-md);
+  font-weight: 600;
   line-height: var(--lyra-text-line-title);
 }
 
@@ -522,11 +522,15 @@
 
 .lyra-app-content-column {
   --lyra-app-content-max-width: var(--lyra-unit-690);
-  --lyra-app-content-padding-block-start: calc(var(--lyra-space-40) + var(--lyra-space-8));
-  --lyra-app-content-padding-block-end: var(--lyra-space-48);
-  --lyra-app-content-padding-inline: var(--lyra-space-32);
+  --lyra-app-content-padding-block-start: var(--lyra-page-pad-block-start);
+  --lyra-app-content-padding-block-end: var(--lyra-page-pad-block-end);
+  --lyra-app-content-padding-inline: var(--lyra-page-pad-inline);
   --lyra-app-content-gap: var(--lyra-space-22);
-  width: min(100%, var(--lyra-app-content-max-width));
+  /* Edge-gap basis, not a fixed pixel column: a fixed cap left the sides
+     emptier and emptier as the window gains CSS pixels at small OS scale
+     factors. The --lyra-app-content-max-width floor keeps the reading
+     measure on narrow panes. */
+  width: min(100%, max(var(--lyra-app-content-max-width), calc(100% - var(--lyra-space-64) * 2)));
   min-width: 0;
   margin: 0 auto;
   padding:
@@ -550,14 +554,14 @@
 
 .lyra-app-section-title {
   min-width: 0;
-  min-height: var(--lyra-control-h-20, var(--lyra-space-20));
+  min-height: var(--lyra-control-h-24);
   display: inline-flex;
   align-items: center;
   gap: var(--lyra-space-8);
   padding: 0 var(--lyra-space-8);
   color: var(--lyra-text-muted);
   font-size: var(--lyra-text-size-body);
-  font-weight: 450;
+  font-weight: 500;
   line-height: var(--lyra-text-line-body);
 }
 
@@ -613,7 +617,7 @@
   margin: 0;
   color: var(--lyra-text-primary);
   font-size: var(--lyra-text-size-body);
-  font-weight: 560;
+  font-weight: 600;
   line-height: var(--lyra-text-line-body);
 }
 
@@ -736,7 +740,7 @@
 
 .lyra-app-tab:disabled {
   cursor: not-allowed;
-  opacity: 0.42;
+  opacity: var(--lyra-opacity-disabled);
 }
 
 .lyra-app-tab-icon,
@@ -759,7 +763,7 @@
 }
 
 .lyra-titlebar-context-tabs .lyra-app-tab {
-  max-width: calc(var(--lyra-unit-108) + var(--lyra-unit-2));
+  max-width: calc(var(--lyra-unit-108) + var(--lyra-space-2));
 }
 
 .lyra-app-badge {
@@ -767,14 +771,14 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: var(--lyra-control-h-22);
+  min-height: var(--lyra-control-h-24);
   padding: 0 var(--lyra-space-8);
   border: var(--lyra-stroke-thin) solid color-mix(in srgb, var(--lyra-app-border) 80%, transparent);
   border-radius: var(--lyra-radius-pill);
   color: var(--lyra-text-secondary);
   background: var(--lyra-app-surface-strong-bg);
   font-size: var(--lyra-text-size-caption);
-  font-weight: 520;
+  font-weight: 500;
   line-height: var(--lyra-text-line-caption);
   white-space: nowrap;
 }
@@ -826,7 +830,7 @@
 }
 
 .lyra-app-object-row[data-has-icon="true"] {
-  grid-template-columns: var(--lyra-control-h-30) minmax(0, 1fr) auto auto;
+  grid-template-columns: var(--lyra-control-h-default) minmax(0, 1fr) auto auto;
 }
 
 button.lyra-app-object-row {
@@ -849,15 +853,15 @@ button.lyra-app-object-row {
 .lyra-app-object-row:disabled,
 .lyra-app-object-row[aria-disabled="true"] {
   cursor: not-allowed;
-  opacity: 0.46;
+  opacity: var(--lyra-opacity-disabled);
 }
 
 .lyra-app-object-row-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--lyra-control-h-30);
-  height: var(--lyra-control-h-30);
+  width: var(--lyra-control-h-default);
+  height: var(--lyra-control-h-default);
   border-radius: var(--lyra-radius-8);
   color: var(--lyra-text-secondary);
   background: var(--lyra-app-input-bg);
@@ -893,7 +897,7 @@ button.lyra-app-object-row {
   overflow: hidden;
   color: var(--lyra-text-primary);
   font-size: var(--lyra-text-size-body);
-  font-weight: 560;
+  font-weight: 600;
   line-height: var(--lyra-text-line-body);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -904,7 +908,7 @@ button.lyra-app-object-row {
   min-width: 0;
   overflow: hidden;
   color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-meta);
+  font-size: var(--lyra-text-size-caption);
   line-height: var(--lyra-text-line-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -921,12 +925,8 @@ button.lyra-app-object-row {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: var(--lyra-space-6);
-}
-
-.lyra-app-object-row-actions {
   flex-wrap: nowrap;
+  gap: var(--lyra-space-6);
 }
 
 .lyra-app-sidebar-nav {
@@ -997,8 +997,8 @@ button.lyra-app-object-row {
 .lyra-app-sidebar-nav-label {
   padding: 0 var(--lyra-app-sidebar-row-pad-x) var(--lyra-space-6);
   color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-11);
-  font-weight: 620;
+  font-size: var(--lyra-text-size-caption);
+  font-weight: 600;
   line-height: var(--lyra-text-line-14);
 }
 
@@ -1012,7 +1012,7 @@ button.lyra-app-object-row {
   border-radius: var(--lyra-app-sidebar-row-radius);
   color: var(--lyra-text-secondary);
   background: transparent;
-  font-weight: 450;
+  font-weight: 500;
 }
 
 .lyra-app-sidebar-nav-item.lyra-app-object-row:hover:not(:disabled) {
@@ -1022,7 +1022,7 @@ button.lyra-app-object-row {
 
 .lyra-app-sidebar-nav-item.lyra-app-object-row[data-active="true"] {
   color: var(--lyra-text-primary);
-  font-weight: 450;
+  font-weight: 500;
   background: var(--lyra-app-sidebar-row-active-bg);
 }
 
@@ -1033,14 +1033,14 @@ button.lyra-app-object-row {
   color: currentColor;
   background: transparent;
   box-shadow: none;
-  opacity: 0.72;
+  opacity: var(--lyra-opacity-icon-dim);
 }
 
 .lyra-app-sidebar-nav-item.lyra-app-object-row:hover:not(:disabled) .lyra-app-object-row-icon,
 .lyra-app-sidebar-nav-item.lyra-app-object-row[data-active="true"] .lyra-app-object-row-icon {
   color: currentColor;
   background: transparent;
-  opacity: 0.82;
+  opacity: var(--lyra-opacity-lifted);
 }
 
 .lyra-app-sidebar-nav-item.lyra-app-object-row .lyra-app-object-row-icon svg {
@@ -1058,8 +1058,8 @@ button.lyra-app-object-row {
   width: 100%;
   overflow: hidden;
   color: inherit;
-  font-size: var(--lyra-text-size-13);
-  font-weight: 470;
+  font-size: var(--lyra-text-size-body);
+  font-weight: 500;
   line-height: var(--lyra-text-line-18);
   text-overflow: clip;
   white-space: nowrap;
@@ -1095,7 +1095,7 @@ button.lyra-app-object-row {
   background: transparent;
   grid-template-columns: var(--lyra-app-sidebar-icon-size) minmax(0, 1fr) auto;
   column-gap: var(--lyra-space-8);
-  font-weight: 450;
+  font-weight: 500;
 }
 
 .lyra-app-sidebar-row.lyra-app-object-row:hover,
@@ -1126,7 +1126,7 @@ button.lyra-app-object-row {
   overflow: hidden;
   color: inherit;
   font-size: var(--lyra-text-size-body);
-  font-weight: 450;
+  font-weight: 500;
   line-height: var(--lyra-text-line-18);
   text-overflow: clip;
   white-space: nowrap;
@@ -1189,7 +1189,7 @@ button.lyra-app-object-row {
   flex: none;
   color: var(--lyra-text-muted);
   font-variant-numeric: tabular-nums;
-  font-size: var(--lyra-text-size-10);
+  font-size: var(--lyra-text-size-caption);
   line-height: var(--lyra-text-line-14);
   white-space: nowrap;
   pointer-events: none;
@@ -1197,8 +1197,8 @@ button.lyra-app-object-row {
 
 .lyra-app-sidebar-row-action.lyra-app-icon-button {
   display: none;
-  width: var(--lyra-control-h-22);
-  height: var(--lyra-control-h-22);
+  width: var(--lyra-control-h-24);
+  height: var(--lyra-control-h-24);
   color: var(--lyra-text-muted);
 }
 
@@ -1302,7 +1302,7 @@ button.lyra-app-object-row {
   overflow: hidden;
   color: inherit;
   font-size: var(--lyra-text-size-body);
-  font-weight: 450;
+  font-weight: 500;
   line-height: var(--lyra-text-line-18);
   text-overflow: clip;
   white-space: nowrap;
@@ -1438,6 +1438,15 @@ button.lyra-app-object-row {
   color: var(--lyra-text-secondary);
 }
 
+/* Optional container for statuses that need to stand out from surrounding copy. */
+.lyra-app-status-message-boxed {
+  padding: var(--lyra-space-8) var(--lyra-space-10);
+  border: var(--lyra-stroke-thin) solid color-mix(in srgb, currentColor 34%, transparent);
+  border-radius: var(--lyra-radius-6);
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  word-break: break-word;
+}
+
 .lyra-ui-tooltip-content {
   z-index: var(--lyra-z-dialog);
   max-width: min(var(--lyra-unit-280), calc(100vw - var(--lyra-space-24)));
@@ -1472,7 +1481,7 @@ button.lyra-app-object-row {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-12);
+  border-radius: var(--lyra-radius-10);
   color: var(--lyra-text-primary);
   background: var(--lyra-app-popover-bg);
   box-shadow: var(--lyra-shadow-elevated-lg);
@@ -1499,8 +1508,8 @@ button.lyra-app-object-row {
   min-width: 0;
   margin: 0;
   color: var(--lyra-text-primary);
-  font-size: var(--lyra-text-size-15);
-  font-weight: 580;
+  font-size: var(--lyra-text-size-14);
+  font-weight: 600;
   line-height: var(--lyra-text-line-20);
 }
 
@@ -1561,8 +1570,8 @@ button.lyra-app-object-row {
 }
 
 .lyra-app-dialog-close {
-  width: var(--lyra-control-h-26);
-  height: var(--lyra-control-h-26);
+  width: var(--lyra-control-h-compact);
+  height: var(--lyra-control-h-compact);
 }
 
 .lyra-app-dialog-close:hover:not(:disabled) {
@@ -1631,8 +1640,8 @@ button.lyra-app-object-row {
   min-width: 0;
   margin: 0;
   color: var(--lyra-text-primary);
-  font-size: var(--lyra-text-size-13);
-  font-weight: 560;
+  font-size: var(--lyra-text-size-body);
+  font-weight: 600;
   line-height: var(--lyra-text-line-18);
 }
 
@@ -1721,7 +1730,7 @@ button.lyra-app-object-row {
 }
 
 .lyra-app-state-loading .lyra-app-state-icon {
-  animation: lyra-app-state-pulse 1200ms ease-in-out infinite;
+  animation: lyra-app-state-pulse 1200ms var(--lyra-ease-standard) infinite;
 }
 
 .lyra-app-state-copy {
@@ -1740,7 +1749,7 @@ button.lyra-app-object-row {
 
 .lyra-app-state-empty .lyra-app-state-title {
   color: var(--lyra-text-muted);
-  font-weight: 450;
+  font-weight: 500;
 }
 
 .lyra-app-state-description {
@@ -1799,140 +1808,6 @@ button.lyra-app-object-row {
   }
 }
 
-.lyra-app-data-table {
-  min-width: 0;
-  overflow: auto;
-  border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-10);
-  background: var(--lyra-app-surface-bg);
-}
-
-.lyra-app-data-table table {
-  width: 100%;
-  min-width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  color: var(--lyra-text-primary);
-  font-family: var(--lyra-font-ui);
-  font-size: var(--lyra-text-size-body);
-}
-
-.lyra-app-data-table th,
-.lyra-app-data-table td {
-  min-width: 0;
-  border-bottom: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  padding: 0 var(--lyra-space-10);
-  text-align: left;
-  vertical-align: middle;
-}
-
-.lyra-app-data-table[data-density="compact"] th,
-.lyra-app-data-table[data-density="compact"] td {
-  padding-inline: var(--lyra-space-8);
-}
-
-.lyra-app-data-table th {
-  height: var(--lyra-control-h-30);
-  color: var(--lyra-text-muted);
-  background: var(--lyra-app-surface-strong-bg);
-  font-size: var(--lyra-text-size-caption);
-  font-weight: 500;
-  line-height: var(--lyra-text-line-caption);
-}
-
-.lyra-app-data-table td {
-  height: var(--lyra-control-h-36);
-  color: var(--lyra-text-secondary);
-  line-height: var(--lyra-text-line-body);
-}
-
-.lyra-app-data-table[data-density="compact"] td {
-  height: var(--lyra-control-h-30);
-}
-
-.lyra-app-data-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.lyra-app-data-table tbody tr {
-  background: var(--lyra-app-row-bg);
-}
-
-.lyra-app-data-table tbody tr[role="button"] {
-  cursor: default;
-  outline: 0;
-}
-
-.lyra-app-data-table[data-clickable="true"] tbody tr:hover,
-.lyra-app-data-table tbody tr[data-active="true"] {
-  background: var(--lyra-app-row-hover-bg);
-}
-
-.lyra-app-data-table tbody tr[data-active="true"] td {
-  color: var(--lyra-text-primary);
-}
-
-.lyra-app-data-table tbody tr[role="button"]:focus-visible {
-  box-shadow: inset 0 0 0 var(--lyra-stroke-strong) var(--lyra-app-focus);
-}
-
-.lyra-app-data-table th[data-align="center"],
-.lyra-app-data-table td[data-align="center"] {
-  text-align: center;
-}
-
-.lyra-app-data-table th[data-align="end"],
-.lyra-app-data-table td[data-align="end"] {
-  text-align: right;
-}
-
-.lyra-app-data-table-header-label,
-.lyra-app-data-table-cell-content {
-  min-width: 0;
-  display: block;
-}
-
-.lyra-app-data-table td[data-truncate="true"] .lyra-app-data-table-cell-content,
-.lyra-app-data-table-header-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lyra-app-data-table-actions-head,
-.lyra-app-data-table-actions-cell {
-  width: 1%;
-  white-space: nowrap;
-}
-
-.lyra-app-data-table-actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--lyra-space-4);
-}
-
-.lyra-app-data-table-state-row td {
-  padding: var(--lyra-space-8);
-  border-bottom: 0;
-}
-
-.lyra-app-data-table-state-row .lyra-app-state {
-  height: auto;
-  flex: none;
-}
-
-.lyra-app-data-table-visually-hidden {
-  position: absolute;
-  width: var(--lyra-stroke-thin);
-  height: var(--lyra-stroke-thin);
-  margin: calc(var(--lyra-stroke-thin) * -1);
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 @keyframes lyra-app-spin {
   from {
     transform: rotate(0deg);
@@ -1965,9 +1840,13 @@ button.lyra-app-object-row {
 }
 
 .lyra-ui-select-trigger {
+  /* Icon-to-label gap. Overrides set this variable, never a per-site gap or
+     margin, so every trigger and its dropdown items share one spacing scale
+     (dropdown items use the same --lyra-space-8 default). */
+  --lyra-select-icon-gap: var(--lyra-space-8);
   min-width: var(--lyra-unit-150);
   max-width: 100%;
-  height: var(--lyra-control-h-30);
+  height: var(--lyra-control-h-default);
   border: var(--lyra-stroke-thin) solid var(--lyra-select-border, var(--lyra-app-input-border));
   border-radius: var(--lyra-control-radius-default);
   background: var(--lyra-select-trigger-bg, var(--lyra-app-input-bg));
@@ -1976,7 +1855,7 @@ button.lyra-app-object-row {
   display: inline-grid;
   grid-template-columns: minmax(0, 1fr) var(--lyra-icon-size-14);
   align-items: center;
-  gap: var(--lyra-space-8);
+  gap: var(--lyra-select-icon-gap);
   font-family: var(--lyra-font-ui);
   font-size: var(--lyra-text-size-body);
   line-height: var(--lyra-text-line-body);
@@ -2030,7 +1909,7 @@ button.lyra-app-object-row {
 
 .lyra-ui-select-trigger[data-disabled] {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: var(--lyra-opacity-disabled);
 }
 
 .lyra-ui-select-chevron,
@@ -2093,7 +1972,7 @@ button.lyra-app-object-row {
 
 .lyra-ui-select-item[data-disabled] {
   pointer-events: none;
-  opacity: 0.46;
+  opacity: var(--lyra-opacity-disabled);
 }
 
 .lyra-ui-select-item-indicator {
@@ -2188,7 +2067,7 @@ p.lyra-ui-shimmer {
   color: inherit;
   white-space: inherit;
   opacity: 1;
-  transition: opacity var(--lyra-shimmer-swap) ease-out;
+  transition: opacity var(--lyra-shimmer-swap) var(--lyra-ease-fast);
 }
 
 .lyra-ui-shimmer::after {
@@ -2198,7 +2077,7 @@ p.lyra-ui-shimmer {
   white-space: inherit;
   color: var(--lyra-text-muted);
   opacity: 0;
-  transition: opacity var(--lyra-shimmer-swap) ease-out;
+  transition: opacity var(--lyra-shimmer-swap) var(--lyra-ease-fast);
   pointer-events: none;
 }
 
@@ -2274,7 +2153,7 @@ p.lyra-ui-shimmer {
   overflow: auto;
   padding: var(--lyra-space-4);
   border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-8);
+  border-radius: var(--lyra-radius-10);
   background: var(--lyra-app-popover-bg);
   color: var(--lyra-text-primary);
   box-shadow: var(--lyra-shadow-elevated-md);
@@ -2341,7 +2220,7 @@ p.lyra-ui-shimmer {
 .lyra-ui-menu-item[data-disabled],
 .lyra-ui-menu-sub-trigger[data-disabled] {
   pointer-events: none;
-  opacity: 0.46;
+  opacity: var(--lyra-opacity-disabled);
 }
 
 .lyra-ui-menu-label {
@@ -2397,8 +2276,8 @@ p.lyra-ui-shimmer {
 
 .lyra-app-model-menu-content::-webkit-scrollbar,
 .lyra-app-model-menu-sub-content::-webkit-scrollbar {
-  width: var(--lyra-unit-6);
-  height: var(--lyra-unit-6);
+  width: var(--lyra-space-6);
+  height: var(--lyra-space-6);
 }
 
 .lyra-app-model-menu-content::-webkit-scrollbar-track,
@@ -2408,7 +2287,7 @@ p.lyra-ui-shimmer {
 
 .lyra-app-model-menu-content::-webkit-scrollbar-thumb,
 .lyra-app-model-menu-sub-content::-webkit-scrollbar-thumb {
-  min-height: var(--lyra-unit-32);
+  min-height: var(--lyra-space-32);
   border-radius: var(--lyra-radius-pill);
   background-color: var(--lyra-scrollbar-thumb-idle);
 }
@@ -2471,7 +2350,7 @@ p.lyra-ui-shimmer {
 }
 
 .lyra-ui-card {
-  border-radius: var(--lyra-radius-12);
+  border-radius: var(--lyra-radius-10);
 }
 
 .lyra-ui-card-header,
@@ -2516,7 +2395,7 @@ p.lyra-ui-shimmer {
   min-width: 0;
   width: 100%;
   border: var(--lyra-stroke-thin) solid transparent;
-  border-radius: var(--lyra-radius-12);
+  border-radius: var(--lyra-radius-10);
   color: var(--lyra-text-primary);
   background: transparent;
   text-align: left;
@@ -2546,7 +2425,7 @@ p.lyra-ui-shimmer {
 .lyra-ui-choice-card-main strong {
   overflow: hidden;
   font-size: var(--lyra-text-size-body);
-  font-weight: 560;
+  font-weight: 600;
   line-height: var(--lyra-text-line-body);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2554,13 +2433,13 @@ p.lyra-ui-shimmer {
 
 .lyra-ui-choice-card-main small {
   color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-meta);
+  font-size: var(--lyra-text-size-caption);
   line-height: var(--lyra-text-line-caption);
 }
 
 .lyra-ui-switch {
-  width: var(--lyra-unit-32);
-  height: var(--lyra-unit-18);
+  width: var(--lyra-space-32);
+  height: var(--lyra-space-18);
   flex: 0 0 auto;
   padding: var(--lyra-space-1);
   background: var(--lyra-app-switch-off);
@@ -2571,8 +2450,8 @@ p.lyra-ui-shimmer {
 }
 
 .lyra-ui-switch-thumb {
-  width: var(--lyra-unit-14);
-  height: var(--lyra-unit-14);
+  width: var(--lyra-space-14);
+  height: var(--lyra-space-14);
   background: var(--lyra-app-switch-thumb-bg);
   box-shadow: var(--lyra-app-switch-thumb-shadow);
   transform: translateX(0);
@@ -2580,12 +2459,12 @@ p.lyra-ui-shimmer {
 }
 
 .lyra-ui-switch[data-state="checked"] .lyra-ui-switch-thumb {
-  transform: translateX(var(--lyra-unit-14));
+  transform: translateX(var(--lyra-space-14));
 }
 
 .lyra-ui-checkbox {
-  width: var(--lyra-unit-16);
-  height: var(--lyra-unit-16);
+  width: var(--lyra-space-16);
+  height: var(--lyra-space-16);
   flex: 0 0 auto;
 }
 

@@ -58,7 +58,7 @@ const previewHtml = (
         justify-content: space-between;
         gap: 8px;
         color: rgba(255, 255, 255, 0.88);
-        font-size: 11px;
+        font-size: 12px;
         line-height: 1.2;
       }
       .hint {

@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { AppButton } from "@renderer/ui/components";
 import { createSettingsSurfaceModel } from "./settings-render-model";
 import { SettingsSurfaceView } from "./settings-surface-view";
+import { requestSoftwareStoreDetail } from "../software-store/service";
 import type { BrowserSettingsSurfaceProps } from "./settings-surface-types";
 import type { SettingsCategoryId } from "./settings-schema";
-import { useWorkbenchTitlebarContribution } from "../shell/titlebar-context";
 
 export type {
   BrowserSettingsCategoryFocusRequest,
@@ -30,6 +29,14 @@ export const BrowserSettingsSurface = (props: BrowserSettingsSurfaceProps) => {
     setActiveDestination(categoryId);
   };
 
+  const handleRepairLoginManager = (): void => {
+    requestSoftwareStoreDetail({
+      kind: "component",
+      id: "lyra.credentials"
+    });
+    setActiveDestination("softwareStore");
+  };
+
   useEffect(() => {
     const categoryId = props.focusCategoryRequest?.categoryId;
     if (categoryId === undefined) {
@@ -37,35 +44,6 @@ export const BrowserSettingsSurface = (props: BrowserSettingsSurfaceProps) => {
     }
     setActiveDestination(categoryId);
   }, [props.focusCategoryRequest?.categoryId, props.focusCategoryRequest?.requestId]);
-
-  const titlebarContribution = useMemo(
-    () => ({
-      ariaLabel: model.title,
-      content: (
-        <div className="lyra-titlebar-context-controls">
-          {model.categories.map((category) => (
-            <AppButton
-              key={category.id}
-              variant="ghost"
-              size="sm"
-              className={
-                category.id === activeDestination
-                  ? "lyra-titlebar-context-text-button lyra-titlebar-context-button-active"
-                  : "lyra-titlebar-context-text-button"
-              }
-              onClick={() => {
-                handleActivateCategory(category.id);
-              }}
-            >
-              {category.navLabel}
-            </AppButton>
-          ))}
-        </div>
-      )
-    }),
-    [activeDestination, model]
-  );
-  useWorkbenchTitlebarContribution(titlebarContribution);
 
   return (
     <SettingsSurfaceView
@@ -79,6 +57,7 @@ export const BrowserSettingsSurface = (props: BrowserSettingsSurfaceProps) => {
       accountLabels={props.accountLabels}
       desktopApi={props.desktopApi}
       softwareStoreHeading={softwareStoreHeading}
+      onRepairLoginManager={handleRepairLoginManager}
     />
   );
 };

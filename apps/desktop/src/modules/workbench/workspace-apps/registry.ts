@@ -175,6 +175,12 @@ const modules = new Map<string, ModuleRecord>();
 const fallbackModules = new Map<string, ModuleRecord>();
 const instances = new Map<string, InstanceRecord>();
 const instanceWaiters = new Map<string, Set<(record: InstanceRecord) => void>>();
+/**
+ * Host tab for instances Core mounts inside a tab surface rather than as the
+ * tab's own app (for example the Logins page inside Settings). Chrome
+ * contributions resolve their scope through this binding.
+ */
+const hostTabByInstance = new Map<string, string>();
 const hostBus = createLyraHostBus();
 
 const moduleKey = (componentId: string, version: string): string =>
@@ -1035,10 +1041,28 @@ export const createWorkspaceAppInstance = (request: {
   readonly version?: string;
   readonly instanceId: string;
   readonly route: string;
+  /** Workspace tab that hosts this surface, when Core mounts it inside a tab. */
+  readonly hostTabId?: string;
 }): Promise<WorkspaceAppInstanceHandle> => openWorkspaceAppInstance({
   ...request,
   restore: false
+}).then((handle) => {
+  const normalizedInstanceId = request.instanceId.trim();
+  const hostTabId = request.hostTabId?.trim();
+  // Always rewrite the binding so a reused instance id cannot keep pointing at
+  // the previous host tab. The binding outlives close so chrome cleanup can
+  // still resolve the tab while the surface unmounts; `resolve-tab` checks the
+  // tab still exists before returning it.
+  if (hostTabId !== undefined && hostTabId.length > 0) {
+    hostTabByInstance.set(normalizedInstanceId, hostTabId);
+  } else {
+    hostTabByInstance.delete(normalizedInstanceId);
+  }
+  return handle;
 });
+
+export const readWorkspaceAppHostTab = (instanceId: string): string | undefined =>
+  hostTabByInstance.get(instanceId.trim());
 
 export const restoreWorkspaceAppInstance = (request: {
   readonly appId: string;

@@ -566,6 +566,8 @@ export type AgentSessionReadRequest = {
   readonly sessionId?: string | null;
   readonly messageLimit?: number;
   readonly toolOutputPreviewChars?: number;
+  /** Cursor paging: read the page of rows immediately older than this message. */
+  readonly beforeMessageId?: string | null;
 };
 
 export type AgentSessionBindProjectRequest = {
@@ -1494,8 +1496,6 @@ export type AgentModelEntry = {
   readonly agentUsable?: boolean;
   readonly enabled: boolean;
   readonly selected?: boolean;
-  readonly free?: boolean;
-  readonly sourceLabel?: string | null;
   readonly capabilities?: AgentModelCapabilities;
 };
 

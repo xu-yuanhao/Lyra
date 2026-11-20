@@ -174,7 +174,6 @@ const buildSuggestionPanelDocument = ({
         --lyra-unit-6: 6px;
         --lyra-unit-7: 7px;
         --lyra-unit-10: 10px;
-        --lyra-unit-11: 11px;
         --lyra-unit-12: 12px;
         --lyra-unit-240: 240px;
         --lyra-unit-999: 999px;
@@ -274,7 +273,7 @@ const buildSuggestionPanelDocument = ({
       }
       .lyra-suggestion-text {
         min-width: 0;
-        font-size: var(--lyra-unit-11);
+        font-size: 12px;
         font-family: var(--lyra-font-ui);
         white-space: nowrap;
         overflow: hidden;
@@ -282,7 +281,7 @@ const buildSuggestionPanelDocument = ({
         color: var(--lyra-text-primary);
       }
       .lyra-suggestion-type-badge {
-        font-size: 9px;
+        font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
         color: var(--lyra-text-muted);
@@ -304,11 +303,11 @@ const buildSuggestionPanelDocument = ({
       .lyra-find-truncated {
         color: var(--lyra-text-muted);
         padding: var(--lyra-unit-7) var(--lyra-unit-12);
-        font-size: var(--lyra-unit-11);
+        font-size: 12px;
       }
       .lyra-find-truncated {
         padding: var(--lyra-unit-3) var(--lyra-unit-12) var(--lyra-unit-6);
-        font-size: 10.5px;
+        font-size: 12px;
       }
     </style>
   </head>

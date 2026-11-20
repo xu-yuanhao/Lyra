@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pencil, RefreshCw, Trash2 } from "@lyra/icons";
 
 import type { AgentUsageDailyBucket, AgentUsageStats, LyraDesktopApi } from "../../../shared/desktop-bridge";
-import { AppButton, AppIconButton, AppInput, AppTooltip } from "@renderer/ui/components";
+import { AppButton, AppEmptyState, AppIconButton, AppInput, AppStatusMessage, AppTooltip } from "@renderer/ui/components";
 import { IdentityIconView } from "../identity";
 import type { SettingsAccount, SettingsAccountLabels } from "./settings-surface-types";
 
@@ -367,7 +367,11 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
             <AppInput id="lyra-account-avatar-url" aria-label={labels.avatarUrl} value={avatarUrl} placeholder={labels.avatarUrlPlaceholder} onChange={(event) => setAvatarUrl(event.target.value)} />
             <small>{labels.avatarUrlDescription}</small>
           </label>
-          {editError === null ? null : <p className="lyra-account-inline-error" role="alert">{editError}</p>}
+          {editError === null ? null : (
+            <AppStatusMessage className="lyra-account-inline-error" role="alert" tone="error">
+              {editError}
+            </AppStatusMessage>
+          )}
           <div className="lyra-account-edit-actions">
             <AppButton variant="ghost" size="sm" disabled={profileSaving} onClick={() => {
               setEditing(false);
@@ -407,7 +411,12 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
             ))}
           </div>
           {stats.totals.sessions === 0 ? (
-            <section className="lyra-account-panel lyra-account-empty">{labels.noActivity}</section>
+            <AppEmptyState
+              className="lyra-account-empty"
+              data-panel="true"
+              density="compact"
+              title={labels.noActivity}
+            />
           ) : (
             <>
               <TokenActivityChart stats={stats} labels={labels} />

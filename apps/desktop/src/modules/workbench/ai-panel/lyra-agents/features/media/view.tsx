@@ -10,6 +10,7 @@ import {
 
 import type { AgentImageAttachment } from "../../core/types";
 import { useOptionalData } from "../../data/DataProvider";
+import { AppButton } from "@renderer/ui/components";
 import { t } from "@workbench/i18n";
 import {
   AdaptiveImageLayers,
@@ -190,7 +191,8 @@ export function AdaptiveImage({
   }
 
   return (
-    <button
+    <AppButton
+      variant="ghost"
       type="button"
       className={`${classes}${displaySrc === undefined ? " lyra-agents-action-image-placeholder" : ""}`}
       title={t("tool.openImageInWorkbench")}
@@ -201,7 +203,7 @@ export function AdaptiveImage({
       }}
     >
       {imageNode}
-    </button>
+    </AppButton>
   );
 }
 
@@ -296,7 +298,8 @@ export function MediaStack({
   };
 
   return (
-    <button
+    <AppButton
+      variant="ghost"
       type="button"
       className="lyra-agents-action-image-button lyra-agents-media-stack"
       title={t("tool.openImageInWorkbench")}
@@ -331,7 +334,7 @@ export function MediaStack({
         );
       })}
       <span className="lyra-agents-media-stack-count">{images.length}</span>
-    </button>
+    </AppButton>
   );
 }
 

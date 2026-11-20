@@ -738,8 +738,8 @@ fn model_loop_retries_reasoning_only_once_without_non_streaming_or_history_pollu
         }
     });
     let provider = NativeProviderProfile {
-        id: "opencode-free".to_string(),
-        label: "OpenCode Free".to_string(),
+        id: "zen-mirror".to_string(),
+        label: "Zen Mirror".to_string(),
         route_id: "custom_openai_compatible".to_string(),
         base_url: Some(format!("http://{addr}")),
         default_model: Some("deepseek-v4-flash-free".to_string()),

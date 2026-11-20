@@ -43,6 +43,7 @@ export type LyraAgentDataProviderAction =
   | { readonly type: "empty" }
   | { readonly type: "snapshot"; readonly snapshot: AgentSessionSnapshot }
   | { readonly type: "replaceSnapshot"; readonly snapshot: AgentSessionSnapshot }
+  | { readonly type: "prependSnapshot"; readonly snapshot: AgentSessionSnapshot }
   | { readonly type: "event"; readonly event: AgentRuntimeEvent }
   | { readonly type: "error"; readonly message: string };
 
@@ -317,6 +318,17 @@ export const normalizeClarificationOptions = (
   return normalized;
 };
 
+/** Prepend an older page, deduped by id; returns the same array when nothing is new. */
+const mergeEarlierById = <T extends { readonly id: string }>(
+  earlier: readonly T[],
+  current: readonly T[]
+): readonly T[] => {
+  if (earlier.length === 0) return current;
+  const known = new Set(current.map((item) => item.id));
+  const additions = earlier.filter((item) => !known.has(item.id));
+  return additions.length === 0 ? current : [...additions, ...current];
+};
+
 export const lyraAgentDataProviderReducer = (
   state: LyraAgentDataProviderState,
   action: LyraAgentDataProviderAction
@@ -344,6 +356,29 @@ export const lyraAgentDataProviderReducer = (
       session: normalizeAgentSessionSnapshot(action.snapshot),
       loading: false,
       error: null
+    };
+  }
+  if (action.type === "prependSnapshot") {
+    // History paging (rows/range shape): merge an older page in front of the
+    // loaded window. Dedupe by id so an overlapping page (or a runtime that
+    // fell back to the tail) can never duplicate rows; everything outside the
+    // row window stays owned by the live session.
+    const current = state.session;
+    if (current === null || current.id !== action.snapshot.id) {
+      return state;
+    }
+    const messages = mergeEarlierById(action.snapshot.messages, current.messages);
+    if (messages === current.messages) {
+      return state;
+    }
+    return {
+      ...state,
+      session: {
+        ...current,
+        messages,
+        tools: mergeEarlierById(action.snapshot.tools, current.tools),
+        messageWindow: action.snapshot.messageWindow ?? current.messageWindow
+      }
     };
   }
   if (action.type === "event") {

@@ -7,7 +7,7 @@ import {
   XCircle
 } from "@lyra/icons";
 import { FileTypeIcon } from "@lyra/icons/file-type";
-import { AppEmptyState } from "@renderer/ui/components";
+import { AppButton, AppEmptyState } from "@renderer/ui/components";
 
 import type { LspDiagnostic } from "../../../shared/desktop-bridge";
 import {
@@ -125,7 +125,8 @@ export const ProblemsList = ({
     if (row.kind === "file") {
       const expanded = collapsed.has(row.group.filePath) === false;
       return (
-        <button
+        <AppButton
+          variant="ghost"
           key={row.key}
           type="button"
           className="lyra-problems-row lyra-problems-file"
@@ -144,11 +145,12 @@ export const ProblemsList = ({
           <span className="lyra-problems-file-name">{row.group.fileName}</span>
           <span className="lyra-problems-file-dir">{row.group.directoryLabel}</span>
           <span className="lyra-problems-count">{row.group.items.length}</span>
-        </button>
+        </AppButton>
       );
     }
     return (
-      <button
+      <AppButton
+        variant="ghost"
         key={row.key}
         type="button"
         className={`lyra-problems-row lyra-problems-item ${severityClass(row.item.severity)}`}
@@ -168,7 +170,7 @@ export const ProblemsList = ({
         <span className="lyra-problems-location">
           {`[Ln ${row.item.startLine + 1}, Col ${row.item.startCharacter + 1}]`}
         </span>
-      </button>
+      </AppButton>
     );
   });
   const body = windowed.virtualized ? (

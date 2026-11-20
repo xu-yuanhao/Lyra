@@ -3,6 +3,7 @@ import {
   useState,
   type ReactNode
 } from "react";
+import { LyraAppState } from "@lyra/first-party-app-kit";
 import {
   Building2,
   Check,
@@ -24,6 +25,7 @@ import type {
   AuthMethodKind,
   CredentialSession,
   CredentialsMessages,
+  CredentialsSection,
   StoredCredential
 } from "./types";
 
@@ -142,39 +144,17 @@ const ObjectRow = ({
   </div>
 );
 
-const CollapseHead = ({
-  label,
-  expanded,
-  onToggle
-}: {
-  readonly label: string;
-  readonly expanded: boolean;
-  readonly onToggle: () => void;
-}): ReactNode => (
-  <button
-    type="button"
-    className="lyra-ui-button lyra-ui-button-ghost lyra-ui-button-size-sm lyra-login-manager-collapse-head"
-    aria-expanded={expanded}
-    onClick={onToggle}
-  >
-    <span className="lyra-login-manager-collapse-line" aria-hidden="true" />
-    <span className="lyra-login-manager-collapse-label">{label}</span>
-    <span className="lyra-login-manager-collapse-line" aria-hidden="true" />
-  </button>
-);
-
 export const CredentialsEmbeddedChrome = ({
   labels,
   locale,
+  section,
   sessions,
   reviewSessions,
   credentials,
   query,
   error,
   busyKey,
-  collapsedSections,
   onQueryChange,
-  onToggleSection,
   onOpenSite,
   onLogoutSite,
   onFillCredential,
@@ -183,15 +163,14 @@ export const CredentialsEmbeddedChrome = ({
 }: {
   readonly labels: CredentialsMessages;
   readonly locale: string;
+  readonly section: CredentialsSection;
   readonly sessions: readonly CredentialSession[];
   readonly reviewSessions: readonly CredentialSession[];
   readonly credentials: readonly StoredCredential[];
   readonly query: string;
   readonly error: string | null;
   readonly busyKey: string | null;
-  readonly collapsedSections: ReadonlySet<string>;
   readonly onQueryChange: (value: string) => void;
-  readonly onToggleSection: (key: string) => void;
   readonly onOpenSite: (url: string, title?: string) => void;
   readonly onLogoutSite: (session: CredentialSession) => void;
   readonly onFillCredential: (credential: StoredCredential) => void;
@@ -278,69 +257,64 @@ export const CredentialsEmbeddedChrome = ({
         </div>
       </form>
       <div className="lyra-login-manager-embedded-list">
-        <section className="lyra-login-manager-section" aria-label={labels.sessionsTab}>
-          <CollapseHead
-            label={labels.sessionsTab}
-            expanded={!collapsedSections.has("sessions")}
-            onToggle={() => onToggleSection("sessions")}
-          />
-          {collapsedSections.has("sessions") || sessions.length === 0 ? null : sessions.map((session) => (
-            <ObjectRow
-              key={session.id}
-              icon={(
-                <SiteIcon
-                  faviconUrl={session.faviconUrl}
-                  fallback={methodIcon(session.authMethod.kind)}
-                />
-              )}
-              title={session.hostname}
-              meta={formatTime(session.lastSeenAt, locale)}
-              actions={sessionActions(session)}
-            />
-          ))}
-        </section>
-        <section className="lyra-login-manager-section" aria-label={labels.reviewTab}>
-          <CollapseHead
-            label={labels.reviewTab}
-            expanded={!collapsedSections.has("review")}
-            onToggle={() => onToggleSection("review")}
-          />
-          {collapsedSections.has("review") || reviewSessions.length === 0 ? null : reviewSessions.map((session) => (
-            <ObjectRow
-              key={session.id}
-              icon={(
-                <SiteIcon
-                  faviconUrl={session.faviconUrl}
-                  fallback={methodIcon(session.authMethod.kind)}
-                />
-              )}
-              title={session.hostname}
-              meta={formatTime(session.lastSeenAt, locale)}
-              actions={sessionActions(session)}
-            />
-          ))}
-        </section>
-        <section className="lyra-login-manager-section" aria-label={labels.credentialsTab}>
-          <CollapseHead
-            label={labels.credentialsTab}
-            expanded={!collapsedSections.has("credentials")}
-            onToggle={() => onToggleSection("credentials")}
-          />
-          {collapsedSections.has("credentials") || credentials.length === 0 ? null : credentials.map((credential) => (
-            <ObjectRow
-              key={credential.id}
-              icon={(
-                <SiteIcon
-                  faviconUrl={credential.faviconUrl}
-                  fallback={methodIcon(credential.authMethod.kind)}
-                />
-              )}
-              title={credential.hostname}
-              meta={formatTime(credential.updatedAt, locale)}
-              actions={credentialActions(credential)}
-            />
-          ))}
-        </section>
+        {section === "sessions" ? (
+          <section className="lyra-login-manager-section" aria-label={labels.sessionsTab}>
+            {sessions.length === 0 ? (
+              <LyraAppState kind="empty" title={labels.emptySessions} />
+            ) : sessions.map((session) => (
+              <ObjectRow
+                key={session.id}
+                icon={(
+                  <SiteIcon
+                    faviconUrl={session.faviconUrl}
+                    fallback={methodIcon(session.authMethod.kind)}
+                  />
+                )}
+                title={session.hostname}
+                meta={formatTime(session.lastSeenAt, locale)}
+                actions={sessionActions(session)}
+              />
+            ))}
+          </section>
+        ) : section === "review" ? (
+          <section className="lyra-login-manager-section" aria-label={labels.reviewTab}>
+            {reviewSessions.length === 0 ? (
+              <LyraAppState kind="empty" title={labels.emptyReview} />
+            ) : reviewSessions.map((session) => (
+              <ObjectRow
+                key={session.id}
+                icon={(
+                  <SiteIcon
+                    faviconUrl={session.faviconUrl}
+                    fallback={methodIcon(session.authMethod.kind)}
+                  />
+                )}
+                title={session.hostname}
+                meta={formatTime(session.lastSeenAt, locale)}
+                actions={sessionActions(session)}
+              />
+            ))}
+          </section>
+        ) : (
+          <section className="lyra-login-manager-section" aria-label={labels.credentialsTab}>
+            {credentials.length === 0 ? (
+              <LyraAppState kind="empty" title={labels.emptyCredentials} />
+            ) : credentials.map((credential) => (
+              <ObjectRow
+                key={credential.id}
+                icon={(
+                  <SiteIcon
+                    faviconUrl={credential.faviconUrl}
+                    fallback={methodIcon(credential.authMethod.kind)}
+                  />
+                )}
+                title={credential.hostname}
+                meta={formatTime(credential.updatedAt, locale)}
+                actions={credentialActions(credential)}
+              />
+            ))}
+          </section>
+        )}
       </div>
     </section>
   );

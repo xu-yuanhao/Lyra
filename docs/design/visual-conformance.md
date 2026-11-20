@@ -2,12 +2,12 @@
 
 Audience: Internal
 Status: Active
-Last verified: 2026-07-28
+Last verified: 2026-10-21
 
 The Settings surface is the calibrated baseline. Every other surface must read as the same product. Audit each surface against these concrete checks. Cite `file:line` for every divergence.
 
 ## The canonical "ruler" (source of truth)
-All visual values must resolve from these tokens (defined in `apps/desktop/src/renderer/styles/material.scss`), never bespoke literals:
+All visual values must resolve from these tokens, never bespoke literals. Color and material tokens live in `apps/desktop/src/renderer/styles/material.scss`; the type scale lives in `tokens.css` and is mirrored at runtime by `theme/foundation.ts`:
 
 - Backgrounds: `--lyra-app-bg` `--lyra-app-sidebar-bg` `--lyra-app-panel-bg` `--lyra-app-surface-bg` `--lyra-app-muted-bg`
 - Rows: `--lyra-app-row-bg` (transparent) / hover `--lyra-app-row-hover-bg` (#dfdfe0) / active `--lyra-app-row-active-bg` (#d9d9da) / active border `--lyra-app-row-active-border`
@@ -17,7 +17,13 @@ All visual values must resolve from these tokens (defined in `apps/desktop/src/r
 - Primary: `--lyra-app-primary-button` (#2f3033, neutral-dark, NOT blue) / fg `--lyra-app-primary-button-fg`
 - Switch on: `--lyra-app-switch-on` (#52a66f)
 - Radii: card `--lyra-radius-10`, control `--lyra-radius-8`
-- Control heights: compact 28 / default 32 / prominent 40 (`--lyra-control-h-*`)
+- Control heights: 24 is the floor for anything clickable; compact 28 / default 32 / prominent 40 (`--lyra-control-h-*`). Only two shell exceptions exist: titlebar 34 and browser pill 52, each with a comment at its use site.
+- Line heights: never a bare ratio. Use a unitless `--lyra-text-line-*` tier (`flat` 1, `tight` 1.25, `snug` 1.35, `normal` 1.45, `comfortable` 1.5, `relaxed` 1.55, `loose` 1.65, `heading` 1.7, `body-copy` 1.75, `display` 1.05, `collapse` 0). Snap to the nearest tier instead of adding one.
+- Disabled controls: `opacity: var(--lyra-opacity-disabled)` only. Decorative dimming (icons, glows, watermarks) may use its own value.
+- Motion: `--lyra-motion-fast` (120ms), `--lyra-motion-standard` (190ms), `--lyra-motion-panel-layout` (260ms), `--lyra-motion-slow` (420ms, theme crossfade, number rolls and the installer slot only), `--lyra-motion-spin-duration` (1000ms). No raw `NNNms` in a transition or animation.
+- Type scale: five tiers at 100% zoom — `--lyra-text-size-12` (caption), `-14` (body, the default), `-16` (title-sm), `-20` (title-md), `-24` (display). No sixth tier: no 11/13/15/17/18 or fractional sizes, and 12px is the floor for secondary text. Build hierarchy with weight, color and spacing first; jump a tier only when those are exhausted.
+- Font scaling: every tier derives from `--lyra-ui-font-size` (Settings → Interface text size), so user font scaling and OS display scaling move the whole scale together. The values above are the 100% design baseline.
+- Page titles: `--lyra-text-size-title-md` (20px at 100%) for the top heading of a full-page surface, including `AppSurfaceHeader`.
 - List rows: compact 28 / default 36-40 (`--lyra-list-row-*`, AppObjectRow min 40)
 - Icon sizes: toolbar 14 / button 16 (`--lyra-icon-size-*`)
 

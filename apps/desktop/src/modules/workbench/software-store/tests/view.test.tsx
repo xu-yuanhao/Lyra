@@ -11,6 +11,11 @@ import type {
 } from "../../../../shared/desktop-bridge";
 import { createTranslator } from "../../i18n";
 import { useWorkbenchLabels } from "../../shell/use-workbench-labels";
+import {
+  WorkbenchTitlebarContextProvider,
+  WorkbenchTitlebarContextSlot,
+  WorkbenchTitlebarScopeProvider
+} from "../../shell/titlebar-context";
 import { resolveSoftwareStoreSettingsRouteTarget } from "../service";
 import { SoftwareStoreSurface } from "../view";
 import type { SoftwareStoreSurfaceProps } from "../types";
@@ -259,7 +264,14 @@ const renderStore = (
     onOpenSettingsRoute: vi.fn(),
     ...overrides
   };
-  render(<SoftwareStoreSurface {...props} />);
+  render(
+    <WorkbenchTitlebarContextProvider activeScopeId="tab-test">
+      <WorkbenchTitlebarContextSlot />
+      <WorkbenchTitlebarScopeProvider scopeId="tab-test">
+        <SoftwareStoreSurface {...props} />
+      </WorkbenchTitlebarScopeProvider>
+    </WorkbenchTitlebarContextProvider>
+  );
   return { props, ...calls };
 };
 
@@ -286,6 +298,23 @@ describe("SoftwareStoreSurface", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
 
     expect(onOpenBuiltinApp).toHaveBeenCalledWith("file-manager");
+  });
+
+  test("switches sections from the address-bar buttons", async () => {
+    renderStore(createResponse());
+
+    // Built-in rows are visible first; the built-in switcher button is pressed.
+    expect(await screen.findByRole("button", { name: /This PC/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Built-in" })).toHaveAttribute("aria-pressed", "true");
+
+    // Switching hides the built-in list and marks the component button active.
+    fireEvent.click(screen.getByRole("button", { name: "Components" }));
+    expect(screen.getByRole("button", { name: "Components" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: /This PC/ })).not.toBeInTheDocument();
+
+    // Switching back restores the built-in list.
+    fireEvent.click(screen.getByRole("button", { name: "Built-in" }));
+    expect(await screen.findByRole("button", { name: /This PC/ })).toBeInTheDocument();
   });
 
   test("installs a local UIUX pack through the existing bridge", async () => {
@@ -318,6 +347,7 @@ describe("SoftwareStoreSurface", () => {
       { onUiPackIdChange: setUiPackId }
     );
 
+    fireEvent.click(await screen.findByRole("button", { name: "UIUX packs" }));
     fireEvent.click(await screen.findByRole("button", { name: /Ocean UI/ }));
     fireEvent.click(screen.getByRole("button", { name: "Revoke trust" }));
 
@@ -346,6 +376,7 @@ describe("SoftwareStoreSurface", () => {
       createResponse([createInstalledPack("untrusted")])
     );
 
+    fireEvent.click(await screen.findByRole("button", { name: "UIUX packs" }));
     fireEvent.click(await screen.findByRole("button", { name: /Ocean UI/ }));
     fireEvent.click(screen.getByRole("button", { name: "Trust" }));
 
@@ -375,6 +406,7 @@ describe("SoftwareStoreSurface", () => {
     };
     const { activateComponent } = renderStore(createResponse(), {}, [component]);
 
+    fireEvent.click(await screen.findByRole("button", { name: "Components" }));
     fireEvent.click(await screen.findByRole("button", { name: /lyra\.images/ }));
     fireEvent.click(screen.getByRole("button", { name: "Activate" }));
 
@@ -396,6 +428,7 @@ describe("SoftwareStoreSurface", () => {
     };
     const { activateComponent } = renderStore(createResponse(), {}, [component]);
 
+    fireEvent.click(await screen.findByRole("button", { name: "Components" }));
     fireEvent.click(await screen.findByRole("button", { name: /lyra\.runtime/ }));
     fireEvent.click(screen.getByRole("button", { name: "Activate" }));
 
@@ -421,6 +454,7 @@ describe("SoftwareStoreSurface", () => {
     const confirm = vi.spyOn(globalThis, "confirm").mockReturnValue(true);
     const { applyCore, activateComponent } = renderStore(createResponse(), {}, [component]);
 
+    fireEvent.click(await screen.findByRole("button", { name: "Components" }));
     fireEvent.click(await screen.findByRole("button", { name: /lyra\.core/ }));
     expect(screen.queryByRole("button", { name: "Roll back" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Restart and apply" }));
@@ -505,6 +539,7 @@ describe("SoftwareStoreSurface", () => {
     const onOpenSettingsRoute = vi.fn();
     renderStore(createResponse(), { onOpenSettingsRoute }, [component]);
 
+    fireEvent.click(await screen.findByRole("button", { name: "Components" }));
     fireEvent.click(await screen.findByRole("button", { name: /dev\.store\.contributions/ }));
     expect(screen.getByText("Independent module loaded")).toBeInTheDocument();
     expect(screen.getByText("dev.store.contributions.ready")).toBeInTheDocument();
@@ -544,6 +579,7 @@ describe("SoftwareStoreSurface", () => {
     };
     const { resolveAppModule } = renderStore(createResponse(), {}, [component]);
 
+    fireEvent.click(await screen.findByRole("button", { name: "Components" }));
     fireEvent.click(await screen.findByRole("button", { name: /dev\.store\.missing/ }));
     expect(screen.getByText("Active module is not loaded")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Repair module" }));
@@ -584,6 +620,7 @@ describe("SoftwareStoreSurface", () => {
     };
     const { activateComponent } = renderStore(createResponse(), {}, [component]);
 
+    fireEvent.click(await screen.findByRole("button", { name: "Components" }));
     fireEvent.click(await screen.findByRole("button", { name: /dev\.store\.lifecycle/ }));
     fireEvent.click(screen.getByRole("button", { name: "Activate" }));
 

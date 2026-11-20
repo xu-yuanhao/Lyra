@@ -19,7 +19,7 @@ export const PopoverContent = forwardRef<
       ref={ref}
       align={align}
       sideOffset={sideOffset}
-      className={cn("lyra-ui-popover-content z-[10000] rounded-xl border border-popover-border bg-popover p-2.5 text-ui-base text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95", className)}
+      className={cn("lyra-ui-popover-content z-[10000] rounded-surface border border-popover-border bg-popover p-2.5 text-ui-base text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95", className)}
       {...props}
     />
   </PopoverPrimitive.Portal>

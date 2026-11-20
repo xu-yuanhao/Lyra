@@ -328,11 +328,6 @@ fn model_catalog_for_config_with_capabilities(
         if !available || provider.models.is_empty() {
             continue;
         }
-        let (free, source_label) = match provider.id.as_str() {
-            "opencode-free" => (true, Some("OpenCode".to_string())),
-            "mimo-free" => (true, Some("MiMo".to_string())),
-            _ => (false, None),
-        };
         for model in provider.models.clone() {
             let selected = provider.id == current_provider && model.id == current_model;
             let capability_record = capability_records
@@ -446,8 +441,6 @@ fn model_catalog_for_config_with_capabilities(
                 "agentUsable": agent_usable,
                 "enabled": model.enabled,
                 "selected": selected,
-                "free": free,
-                "sourceLabel": source_label,
                 "capabilities": {
                     "detected": capability_record.map(|record| &record.detected),
                     "overrides": capability_record.map(|record| &record.overrides),

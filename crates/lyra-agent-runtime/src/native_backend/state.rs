@@ -263,19 +263,7 @@ impl NativeRuntimeState {
         let free_provider_catalog_migration = config.providers.contains_key("mimo-free")
             || config
                 .providers
-                .get(providers::routes::opencode::ANONYMOUS_PROVIDER_ID)
-                .is_some_and(|provider| {
-                    provider.label != providers::routes::opencode::ANONYMOUS_PROVIDER_LABEL
-                        || provider.base_url.as_deref()
-                            != Some(providers::routes::opencode::ZEN_BASE_URL)
-                        || provider.route_id != providers::routes::opencode::ZEN_ROUTE_ID
-                        || provider.models.iter().any(|model| {
-                            providers::routes::opencode::is_retired_anonymous_model(&model.id)
-                        })
-                        || providers::routes::opencode::ANONYMOUS_MODELS
-                            .iter()
-                            .any(|spec| provider.models.iter().all(|model| model.id != spec.id))
-                });
+                .contains_key("opencode-free");
         install_default_providers(&mut config);
 
         let previous_tool_runtime_schema_version = state_file
@@ -1050,10 +1038,8 @@ pub(crate) fn install_default_providers(config: &mut NativeConfig) {
     // available through the normal provider setup flow.
     let removed_mimo_free = config.providers.remove("mimo-free").is_some();
     if removed_mimo_free && config.default_provider.as_deref() == Some("mimo-free") {
-        config.default_provider =
-            Some(providers::routes::opencode::ANONYMOUS_PROVIDER_ID.to_string());
-        config.default_model =
-            Some(providers::routes::opencode::ANONYMOUS_DEFAULT_MODEL.to_string());
+        config.default_provider = Some("openai".to_string());
+        config.default_model = None;
     }
     if config.memory_agent_provider.as_deref() == Some("mimo-free") {
         config.memory_agent_provider = None;
@@ -1500,88 +1486,25 @@ pub(crate) fn install_default_providers(config: &mut NativeConfig) {
             embedding_model: Some("lyra-hash-embedding-v1".to_string()),
             models: Vec::new(),
         });
-    // ponytail: 免费模型 provider，api_key="public" 通过 provider_profile_available 检查
-    // api_key 标了 skip_serializing，从 state.json 读回时为 None，需在 and_modify 中补回
-    const OPENCODE_PROVIDER_ID: &str = providers::routes::opencode::ANONYMOUS_PROVIDER_ID;
-    const OPENCODE_LABEL: &str = providers::routes::opencode::ANONYMOUS_PROVIDER_LABEL;
-    const OPENCODE_BASE_URL: &str = providers::routes::opencode::ZEN_BASE_URL;
-
-    // Preview.9 could mistake the built-in OpenCode profile for a newly added
-    // custom OpenAI-compatible profile because both use the same route. Preserve
-    // the user's endpoint as a separate profile before restoring the built-in.
-    let corrupted_opencode = config
+    // OpenCode's anonymous free endpoint is retired as a built-in. Remove the
+    // profile on startup for both new and existing installations. The paid
+    // OpenCode Zen / Go routes stay available through the normal provider
+    // setup flow.
+    let removed_opencode_free = config
         .providers
-        .get(OPENCODE_PROVIDER_ID)
-        .filter(|provider| {
-            provider.label != OPENCODE_LABEL
-                || provider.base_url.as_deref() != Some(OPENCODE_BASE_URL)
-        })
-        .cloned();
-    if let Some(mut recovered_profile) = corrupted_opencode {
-        let mut recovered_id = providers::routes::custom_openai_compatible::ROUTE_ID.to_string();
-        if config.providers.contains_key(&recovered_id) {
-            let mut suffix = 2usize;
-            loop {
-                let candidate = format!("custom-openai-compatible-{suffix}");
-                if !config.providers.contains_key(&candidate) {
-                    recovered_id = candidate;
-                    break;
-                }
-                suffix += 1;
-            }
-        }
-        recovered_profile.id = recovered_id.clone();
-        if config.default_provider.as_deref() == Some(OPENCODE_PROVIDER_ID) {
-            config.default_provider = Some(recovered_id.clone());
-        }
-        config.providers.insert(recovered_id, recovered_profile);
-        config.providers.remove(OPENCODE_PROVIDER_ID);
-    }
-
-    let opencode_provider = config
-        .providers
-        .entry(OPENCODE_PROVIDER_ID.to_string())
-        .and_modify(|p| {
-            p.id = OPENCODE_PROVIDER_ID.to_string();
-            p.label = OPENCODE_LABEL.to_string();
-            p.route_id = providers::routes::opencode::ZEN_ROUTE_ID.to_string();
-            p.base_url = Some(OPENCODE_BASE_URL.to_string());
-            p.api_key = Some("public".to_string());
-            p.api_key_ref = None;
-            p.api_key_env = None;
-            p.auth_header = None;
-            p.embedding_model = Some("lyra-hash-embedding-v1".to_string());
-            providers::routes::opencode::reconcile_anonymous_models(&mut p.models);
-            if p.default_model
-                .as_deref()
-                .is_none_or(|id| providers::routes::opencode::is_retired_anonymous_model(id))
-            {
-                p.default_model =
-                    Some(providers::routes::opencode::ANONYMOUS_DEFAULT_MODEL.to_string());
-            }
-        })
-        .or_insert_with(|| NativeProviderProfile {
-            id: OPENCODE_PROVIDER_ID.to_string(),
-            label: OPENCODE_LABEL.to_string(),
-            route_id: providers::routes::opencode::ZEN_ROUTE_ID.to_string(),
-            base_url: Some(OPENCODE_BASE_URL.to_string()),
-            default_model: Some(providers::routes::opencode::ANONYMOUS_DEFAULT_MODEL.to_string()),
-            api_key: Some("public".to_string()),
-            api_key_ref: None,
-            api_key_env: None,
-            auth_header: None,
-            embedding_model: Some("lyra-hash-embedding-v1".to_string()),
-            models: providers::routes::opencode::seed_anonymous_models(),
-        });
-    providers::routes::opencode::reconcile_anonymous_models(&mut opencode_provider.models);
-    if config.default_provider.as_deref() == Some(OPENCODE_PROVIDER_ID)
-        && config
-            .default_model
-            .as_deref()
-            .is_some_and(providers::routes::opencode::is_retired_anonymous_model)
+        .remove("opencode-free")
+        .is_some();
+    if removed_opencode_free && config.default_provider.as_deref()
+        == Some("opencode-free")
     {
-        config.default_model =
-            Some(providers::routes::opencode::ANONYMOUS_DEFAULT_MODEL.to_string());
+        config.default_provider = Some("openai".to_string());
+        config.default_model = None;
+    }
+    if config.memory_agent_provider.as_deref()
+        == Some("opencode-free")
+    {
+        config.memory_agent_provider = None;
+        config.memory_agent_model = None;
     }
     for provider in config.providers.values_mut() {
         if provider.embedding_model.is_none() {

@@ -114,6 +114,8 @@ pub(crate) fn update_resilience_from_tool_finish(session: &mut NativeSession, to
 }
 
 pub(crate) fn resume_context_lines(session: &NativeSession) -> Vec<String> {
+    // Milestones and todos are already pinned by `pinned_context`; repeating
+    // them here doubled the weight of earlier session work in every request.
     let mut lines = Vec::new();
     if let Some(blocked) = active_blocked_browser(session) {
         let region_count = blocked
@@ -124,43 +126,6 @@ pub(crate) fn resume_context_lines(session: &NativeSession) -> Vec<String> {
         lines.push(format!(
             "Browser automation is blocked by {region_count} active region(s). Ask the user to close upload/permission dialogs before more browser tools."
         ));
-    }
-    if let Some(milestones) = session
-        .snapshot
-        .get("taskMilestones")
-        .and_then(Value::as_array)
-    {
-        for milestone in milestones.iter().rev().take(6) {
-            let kind = milestone
-                .get("kind")
-                .and_then(Value::as_str)
-                .unwrap_or("milestone");
-            let detail = milestone
-                .get("detail")
-                .and_then(Value::as_str)
-                .unwrap_or("");
-            if !detail.is_empty() {
-                lines.push(format!("Completed milestone [{kind}]: {detail}"));
-            }
-        }
-    }
-    if let Some(todos) = session.snapshot.get("todos").and_then(Value::as_array) {
-        let pending: Vec<_> = todos
-            .iter()
-            .filter(|todo| {
-                !matches!(
-                    todo.get("status")
-                        .and_then(Value::as_str)
-                        .unwrap_or("pending"),
-                    "completed" | "done" | "cancelled"
-                )
-            })
-            .filter_map(|todo| todo.get("content").and_then(Value::as_str))
-            .take(4)
-            .collect();
-        if !pending.is_empty() {
-            lines.push(format!("Pending todos: {}", pending.join(" | ")));
-        }
     }
     lines
 }

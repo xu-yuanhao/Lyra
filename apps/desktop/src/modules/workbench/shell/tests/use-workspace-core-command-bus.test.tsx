@@ -479,6 +479,24 @@ describe("workspace Core command bridge", () => {
         reason: "user-copy"
       });
       expect(writeClipboardText).toHaveBeenCalledWith("secret");
+
+      // A nested instance mounted inside a tab resolves to its host tab; an
+      // unbound instance falls back to the tab that owns it as its app.
+      const hosted = await createWorkspaceAppInstance({
+        appId: "test-core-bridge", componentId: module.id,
+        instanceId: "hosted-logins-instance", route: "/",
+        hostTabId: "browser-tab-1"
+      });
+      try {
+        await expect(host.executeCommand(CORE_HOST_COMMANDS.workspaceResolveTab, {
+          instanceId: "hosted-logins-instance"
+        })).resolves.toEqual({ tabId: "browser-tab-1" });
+      } finally {
+        await hosted.close();
+      }
+      await expect(host.executeCommand(CORE_HOST_COMMANDS.workspaceResolveTab, {
+        instanceId: "unknown-instance"
+      })).resolves.toBeNull();
     } finally {
       hook.unmount();
       await instance.close();

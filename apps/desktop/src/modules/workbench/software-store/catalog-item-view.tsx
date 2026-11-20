@@ -175,50 +175,32 @@ export const StatusBadges = ({
 export const SoftwareStoreItemSection = ({
   title,
   items,
-  collapsed,
-  onToggle,
   onSelect
 }: {
   readonly title: string;
   readonly items: readonly SoftwareStoreItem[];
-  readonly collapsed: boolean;
-  readonly onToggle: () => void;
   readonly onSelect: (key: string) => void;
 }) => (
   <section className="lyra-software-store-item-section" aria-label={title}>
-    <AppButton
-      type="button"
-      variant="ghost"
-      size="sm"
-      className="lyra-software-store-collapse-head"
-      onClick={onToggle}
-      aria-expanded={!collapsed}
-    >
-      <span className="lyra-software-store-collapse-line" aria-hidden="true" />
-      <span className="lyra-software-store-collapse-label">{title}</span>
-      <span className="lyra-software-store-collapse-line" aria-hidden="true" />
-    </AppButton>
-    {collapsed ? null : (
-      <div className="lyra-software-store-item-list">
-        {items.map((item) => (
-          <AppObjectRow
-            key={item.key}
-            className="lyra-software-store-item"
-            icon={<ItemIcon item={item} />}
-            title={getItemTitle(item)}
-            badges={(
-              <ChevronRight
-                className="lyra-software-store-item-chevron"
-                size={14}
-                aria-hidden="true"
-              />
-            )}
-            onClick={() => {
-              onSelect(item.key);
-            }}
-          />
-        ))}
-      </div>
-    )}
+    <div className="lyra-software-store-item-list">
+      {items.map((item) => (
+        <AppObjectRow
+          key={item.key}
+          className="lyra-software-store-item"
+          icon={<ItemIcon item={item} />}
+          title={getItemTitle(item)}
+          badges={(
+            <ChevronRight
+              className="lyra-software-store-item-chevron"
+              size={14}
+              aria-hidden="true"
+            />
+          )}
+          onClick={() => {
+            onSelect(item.key);
+          }}
+        />
+      ))}
+    </div>
   </section>
 );

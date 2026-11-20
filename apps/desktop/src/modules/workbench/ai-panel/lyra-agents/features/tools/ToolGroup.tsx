@@ -125,8 +125,9 @@ export function ToolGroupBlock({
       </AppButton>
 
       {open && !anchorVisible && (
-        <button
-          type="button"
+        <AppButton
+          variant="ghost"
+          size="icon"
           className="lyra-agents-fold-line lyra-agents-fold-line-group"
           onClick={() => toggleGroup(group.id, true)}
           aria-label={t("tool.collapseGroup")}
@@ -257,8 +258,9 @@ function ToolCallRow({
       {open && hasDetails ? (
         <>
           {anchorVisible ? null : (
-            <button
-              type="button"
+            <AppButton
+              variant="ghost"
+              size="icon"
               className="lyra-agents-fold-line lyra-agents-fold-line-call"
               onClick={toggle}
               aria-label={t("tool.collapseCall")}
@@ -491,8 +493,9 @@ function ThinkingRow({
         </AppButton>
       </div>
       {open && !anchorVisible ? (
-        <button
-          type="button"
+        <AppButton
+          variant="ghost"
+          size="icon"
           className="lyra-agents-fold-line lyra-agents-fold-line-call"
           onClick={toggle}
           aria-label={t("tool.collapseCall")}

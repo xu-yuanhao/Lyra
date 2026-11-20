@@ -43,7 +43,6 @@ import { SettingsImportView } from "../settings-import";
 import { SettingsDownloadsView } from "../settings-downloads";
 import { LoginManagerSettingsSlot } from "../login-manager";
 import { SoftwareStoreSurface } from "../software-store";
-import { requestSoftwareStoreDetail } from "../software-store/service";
 import { SettingsAccountPage } from "./settings-account-view";
 import { LanguagePicker } from "./language-picker";
 import type { SettingsCategoryId } from "./settings-schema";
@@ -73,6 +72,12 @@ type SettingsSurfaceViewProps = {
   readonly accountLabels: SettingsAccountLabels;
   readonly desktopApi: LyraDesktopApi | null;
   readonly softwareStoreHeading?: string | null;
+  readonly onRepairLoginManager: () => void;
+};
+
+type SettingsControlActions = {
+  readonly onActivateCategory: (categoryId: SettingsCategoryId) => void;
+  readonly onRepairLoginManager: () => void;
 };
 
 const SETTINGS_CATEGORY_ICONS: Partial<Record<SettingsCategoryId, LucideIcon>> = {
@@ -343,8 +348,7 @@ const SettingsInlineStatusAction = ({
     </div>
     <AppButton
       variant="outline"
-      size="sm"
-      className="lyra-settings-ai-action"
+      size="md"
       type="button"
       disabled={control.actionDisabled}
       onClick={control.onAction}
@@ -371,8 +375,7 @@ const SettingsStatusList = ({
     {control.actionLabel !== undefined && control.onAction !== undefined ? (
       <AppButton
         variant="outline"
-        size="sm"
-        className="lyra-settings-ai-action"
+        size="md"
         type="button"
         onClick={control.onAction}
       >
@@ -384,7 +387,7 @@ const SettingsStatusList = ({
 
 const renderControl = (
   control: SettingsControlDescriptor,
-  onActivateCategory: (categoryId: SettingsCategoryId) => void
+  actions: SettingsControlActions
 ): ReactNode => {
   switch (control.kind) {
     case "boolean-choice":
@@ -401,13 +404,7 @@ const renderControl = (
             repairLabel={control.repairLabel}
             description={control.description}
             startFailedDescription={control.startFailedDescription}
-            onRepair={() => {
-              requestSoftwareStoreDetail({
-                kind: "component",
-                id: "lyra.credentials"
-              });
-              onActivateCategory("softwareStore");
-            }}
+            onRepair={actions.onRepairLoginManager}
           />
         );
       }
@@ -480,7 +477,7 @@ const resolveSectionTitlePlacement = (
 
 const renderSectionControlSlots = (
   section: SettingsRenderedSection,
-  onActivateCategory: (categoryId: SettingsCategoryId) => void
+  actions: SettingsControlActions
 ): readonly ReactNode[] =>
   section.controls.map((control, index) => (
     <div
@@ -491,7 +488,7 @@ const renderSectionControlSlots = (
       ].filter(Boolean).join(" ")}
       key={`${section.id}-${control.kind}-${index}`}
     >
-      {renderControl(control, onActivateCategory)}
+      {renderControl(control, actions)}
     </div>
   ));
 
@@ -500,9 +497,9 @@ const isCompactSection = (section: SettingsRenderedSection): boolean =>
 
 const renderSection = (
   section: SettingsRenderedSection,
-  onActivateCategory: (categoryId: SettingsCategoryId) => void
+  actions: SettingsControlActions
 ): ReactNode => {
-  const controls = renderSectionControlSlots(section, onActivateCategory);
+  const controls = renderSectionControlSlots(section, actions);
 
   if (section.frame === "none") {
     return controls;
@@ -521,7 +518,7 @@ const renderSection = (
 
 const renderCategorySections = (
   category: SettingsSurfaceModel["categories"][number],
-  onActivateCategory: (categoryId: SettingsCategoryId) => void
+  actions: SettingsControlActions
 ): readonly ReactNode[] => {
   const nodes: ReactNode[] = [];
   let compactRun: SettingsRenderedSection[] = [];
@@ -537,7 +534,7 @@ const renderCategorySections = (
         cluster
         titlePlacement="none"
       >
-        {run.flatMap((section) => renderSectionControlSlots(section, onActivateCategory))}
+        {run.flatMap((section) => renderSectionControlSlots(section, actions))}
       </AppSettingsSection>
     );
   };
@@ -548,7 +545,7 @@ const renderCategorySections = (
       continue;
     }
     flushCompactRun();
-    nodes.push(<div key={section.id}>{renderSection(section, onActivateCategory)}</div>);
+    nodes.push(<div key={section.id}>{renderSection(section, actions)}</div>);
   }
 
   flushCompactRun();
@@ -565,7 +562,8 @@ export const SettingsSurfaceView = ({
   account,
   accountLabels,
   desktopApi,
-  softwareStoreHeading
+  softwareStoreHeading,
+  onRepairLoginManager
 }: SettingsSurfaceViewProps) => {
   const selectedCategory =
     activeDestination === "account"
@@ -651,7 +649,7 @@ export const SettingsSurfaceView = ({
                     : selectedCategory.heading
                 }</h2>
               </header>
-              {renderCategorySections(selectedCategory, onActivateCategory)}
+              {renderCategorySections(selectedCategory, { onActivateCategory, onRepairLoginManager })}
             </section>
           )}
         </main>

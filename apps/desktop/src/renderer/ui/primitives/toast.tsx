@@ -18,7 +18,7 @@ export const Toast = forwardRef<
   <ToastPrimitive.Root
     ref={ref}
     className={cn(
-      "lyra-ui-toast rounded-xl border border-border bg-card text-card-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out",
+      "lyra-ui-toast rounded-surface border border-border bg-card text-card-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out",
       className
     )}
     {...props}

@@ -786,7 +786,7 @@ fn config_json_projects_prompt_delivery_settings() {
 }
 
 #[test]
-fn default_provider_install_only_seeds_current_opencode_anonymous_models() {
+fn default_provider_install_seeds_no_builtin_model_catalogs() {
     let mut config = NativeConfig::default();
     install_default_providers(&mut config);
 
@@ -794,134 +794,13 @@ fn default_provider_install_only_seeds_current_opencode_anonymous_models() {
         config
             .providers
             .values()
-            .filter(|provider| provider.id != "opencode-free")
             .all(|provider| provider.models.is_empty())
     );
     assert!(!config.providers.contains_key("mimo-free"));
-    let opencode_models = config
-        .providers
-        .get("opencode-free")
-        .expect("OpenCode anonymous provider")
-        .models
-        .iter()
-        .map(|model| model.id.as_str())
-        .collect::<Vec<_>>();
-    assert_eq!(
-        opencode_models,
-        vec![
-            "big-pickle",
-            "deepseek-v4-flash-free",
-            "mimo-v2.5-free",
-            "ling-3.0-flash-fin-free",
-            "nemotron-3-ultra-free",
-            "nemotron-3.5-lightning-free",
-            "muse-spark-1.3-contributor-free",
-            "muse-spark-1.2-contributor-free",
-        ]
-    );
+    assert!(!config.providers.contains_key("opencode-free"));
     let catalog = model_catalog_for_config(&config, json!({})).expect("model catalog");
-    assert_eq!(catalog["models"].as_array().map(Vec::len), Some(8));
-    assert_eq!(catalog["routes"].as_array().map(Vec::len), Some(8));
-}
-
-#[test]
-fn default_provider_install_adds_new_opencode_anonymous_models_to_existing_profiles() {
-    let mut config = NativeConfig::default();
-    install_default_providers(&mut config);
-    let provider = config
-        .providers
-        .get_mut("opencode-free")
-        .expect("OpenCode anonymous provider");
-    provider
-        .models
-        .retain(|model| model.id != "ling-3.0-flash-fin-free");
-
-    install_default_providers(&mut config);
-
-    assert!(
-        config
-            .providers
-            .get("opencode-free")
-            .expect("OpenCode anonymous provider")
-            .models
-            .iter()
-            .any(|model| model.id == "ling-3.0-flash-fin-free")
-    );
-}
-
-#[test]
-fn default_provider_install_recovers_custom_profile_that_overwrote_opencode() {
-    let mut config = NativeConfig {
-        default_provider: Some("opencode-free".to_string()),
-        default_model: Some("private-model".to_string()),
-        ..NativeConfig::default()
-    };
-    config.providers.insert(
-        "opencode-free".to_string(),
-        NativeProviderProfile {
-            id: "opencode-free".to_string(),
-            label: "Custom OpenAI-Compatible".to_string(),
-            route_id: providers::routes::custom_openai_compatible::ROUTE_ID.to_string(),
-            base_url: Some("https://private.example.com/v1".to_string()),
-            default_model: Some("private-model".to_string()),
-            api_key: Some("sk-private".to_string()),
-            api_key_ref: None,
-            api_key_env: None,
-            auth_header: None,
-            embedding_model: None,
-            models: vec![NativeProviderModel {
-                id: "private-model".to_string(),
-                label: Some("private-model".to_string()),
-                context_window: None,
-                supports_image_input: false,
-                supports_tool_calling: true,
-                supports_streaming: true,
-                supports_reasoning_effort: None,
-                reasoning_replay_field: ReasoningReplayField::Auto,
-                requires_reasoning_field_on_assistant_messages: None,
-                supports_tool_choice: None,
-                enabled: true,
-                api_npm: None,
-            }],
-        },
-    );
-
-    install_default_providers(&mut config);
-
-    let custom = config
-        .providers
-        .get("custom_openai_compatible")
-        .expect("recovered custom provider");
-    assert_eq!(custom.id, "custom_openai_compatible");
-    assert_eq!(
-        custom.base_url.as_deref(),
-        Some("https://private.example.com/v1")
-    );
-    assert!(
-        custom
-            .models
-            .iter()
-            .any(|model| model.id == "private-model")
-    );
-    assert_eq!(
-        config.default_provider.as_deref(),
-        Some("custom_openai_compatible")
-    );
-
-    let opencode = config
-        .providers
-        .get("opencode-free")
-        .expect("restored OpenCode provider");
-    assert_eq!(opencode.label, "OpenCode Free");
-    assert_eq!(
-        opencode.base_url.as_deref(),
-        Some("https://opencode.ai/zen/v1")
-    );
-    assert_eq!(opencode.route_id, providers::routes::opencode::ZEN_ROUTE_ID);
-    assert_eq!(opencode.models.len(), 8);
-
-    let catalog = model_catalog_for_config(&config, json!({})).expect("model catalog");
-    assert_eq!(catalog["models"].as_array().map(Vec::len), Some(9));
+    assert_eq!(catalog["models"].as_array().map(Vec::len), Some(0));
+    assert_eq!(catalog["routes"].as_array().map(Vec::len), Some(0));
 }
 
 #[test]
@@ -953,8 +832,41 @@ fn default_provider_install_removes_retired_anonymous_mimo_profile() {
     install_default_providers(&mut config);
 
     assert!(!config.providers.contains_key("mimo-free"));
-    assert_eq!(config.default_provider.as_deref(), Some("opencode-free"));
-    assert_eq!(config.default_model.as_deref(), Some("big-pickle"));
+    assert_eq!(config.default_provider.as_deref(), Some("openai"));
+    assert!(config.memory_agent_provider.is_none());
+    assert!(config.memory_agent_model.is_none());
+}
+
+#[test]
+fn default_provider_install_removes_retired_anonymous_opencode_profile() {
+    let mut config = NativeConfig {
+        default_provider: Some("opencode-free".to_string()),
+        default_model: Some("big-pickle".to_string()),
+        memory_agent_provider: Some("opencode-free".to_string()),
+        memory_agent_model: Some("big-pickle".to_string()),
+        ..NativeConfig::default()
+    };
+    config.providers.insert(
+        "opencode-free".to_string(),
+        NativeProviderProfile {
+            id: "opencode-free".to_string(),
+            label: "OpenCode Free".to_string(),
+            route_id: providers::routes::opencode::ZEN_ROUTE_ID.to_string(),
+            base_url: Some(providers::routes::opencode::ZEN_BASE_URL.to_string()),
+            default_model: Some("big-pickle".to_string()),
+            api_key: Some("public".to_string()),
+            api_key_ref: None,
+            api_key_env: None,
+            auth_header: None,
+            embedding_model: None,
+            models: Vec::new(),
+        },
+    );
+
+    install_default_providers(&mut config);
+
+    assert!(!config.providers.contains_key("opencode-free"));
+    assert_eq!(config.default_provider.as_deref(), Some("openai"));
     assert!(config.memory_agent_provider.is_none());
     assert!(config.memory_agent_model.is_none());
 }
@@ -1043,13 +955,13 @@ fn switch_model_rejects_unknown_provider_and_leaves_defaults_unchanged() {
     // producing default_provider=旧值 + default_model=新模型名 → 上游 400
     // "Model is unavailable". Now it rejects before mutating state.
     let backend = LyraAgentBackend;
-    let default_provider = "opencode-free".to_string();
-    let default_model = "deepseek-v4-flash-free".to_string();
-    {
-        let mut state = state().lock().expect("state lock");
-        state.config.default_provider = Some(default_provider.clone());
-        state.config.default_model = Some(default_model.clone());
-    }
+    let default_provider = "switch-reject-guard".to_string();
+    let default_model = "guard-model".to_string();
+    let mut locked = state().lock().expect("state lock");
+    let original_config = locked.config.clone();
+    locked.config.default_provider = Some(default_provider.clone());
+    locked.config.default_model = Some(default_model.clone());
+    drop(locked);
 
     let error = backend
         .call_agent_method(
@@ -1059,18 +971,20 @@ fn switch_model_rejects_unknown_provider_and_leaves_defaults_unchanged() {
         .expect_err("switch should reject unconfigured provider");
 
     // State must be untouched: default_model stays the original, not "ghost-model".
-    let state = state().lock().expect("state lock");
+    let mut locked = state().lock().expect("state lock");
     assert_eq!(
-        state.config.default_provider.as_deref(),
+        locked.config.default_provider.as_deref(),
         Some(default_provider.as_str()),
         "default_provider must not change on rejected switch; error was: {:?}",
         error
     );
     assert_eq!(
-        state.config.default_model.as_deref(),
+        locked.config.default_model.as_deref(),
         Some(default_model.as_str()),
         "default_model must not change on rejected switch"
     );
+    locked.config = original_config;
+    locked.save_state().expect("restore test config");
 }
 
 #[test]
@@ -1107,13 +1021,13 @@ fn model_catalog_uses_composite_provider_model_uid_for_same_named_models() {
         }
     }
     let mut config = NativeConfig {
-        default_provider: Some("opencode-free".to_string()),
+        default_provider: Some("provider-a".to_string()),
         default_model: Some(shared_model.clone()),
         ..NativeConfig::default()
     };
     config.providers.insert(
-        "opencode-free".to_string(),
-        profile_with("opencode-free", &shared_model),
+        "provider-a".to_string(),
+        profile_with("provider-a", &shared_model),
     );
     config.providers.insert(
         "custom_openai_compatible".to_string(),
@@ -1131,7 +1045,7 @@ fn model_catalog_uses_composite_provider_model_uid_for_same_named_models() {
     assert_eq!(
         ids,
         [
-            "opencode-free:deepseek-v4-flash-free",
+            "provider-a:deepseek-v4-flash-free",
             "custom_openai_compatible:deepseek-v4-flash-free"
         ]
         .into_iter()
@@ -1153,14 +1067,14 @@ fn switch_model_rejects_provider_that_does_not_own_model() {
     // ponytail: provider 存在但不拥有该 model 时必须拒绝，否则 default_provider 指向
     // 该 provider + default_model=它不提供的模型 → 上游 400 "Model is unavailable"。
     let backend = LyraAgentBackend;
-    let default_provider = "opencode-free".to_string();
-    let default_model = "deepseek-v4-flash-free".to_string();
-    {
-        let mut state = state().lock().expect("state lock");
-        state.config.default_provider = Some(default_provider.clone());
-        state.config.default_model = Some(default_model.clone());
-        // opencode-free 拥有 deepseek-v4-flash-free；custom-plain 不拥有
-        state.config.providers.insert(
+    let default_provider = "model-owner-guard".to_string();
+    let default_model = "owned-model".to_string();
+    let mut locked = state().lock().expect("state lock");
+    let original_config = locked.config.clone();
+    locked.config.default_provider = Some(default_provider.clone());
+    locked.config.default_model = Some(default_model.clone());
+    // model-owner-guard 拥有 owned-model；custom-plain 不拥有
+    locked.config.providers.insert(
             "custom-plain".to_string(),
             NativeProviderProfile {
                 id: "custom-plain".to_string(),
@@ -1189,27 +1103,29 @@ fn switch_model_rejects_provider_that_does_not_own_model() {
                 }],
             },
         );
-    }
+    drop(locked);
 
     let error = backend
         .call_agent_method(
             "agent.models.switch",
-            json!({ "model": "deepseek-v4-flash-free", "provider": "custom-plain" }),
+            json!({ "model": "owned-model", "provider": "custom-plain" }),
         )
         .expect_err("switch should reject provider that does not own the model");
 
-    let state = state().lock().expect("state lock");
+    let mut locked = state().lock().expect("state lock");
     assert_eq!(
-        state.config.default_provider.as_deref(),
+        locked.config.default_provider.as_deref(),
         Some(default_provider.as_str()),
         "default_provider must not change; error was: {:?}",
         error
     );
     assert_eq!(
-        state.config.default_model.as_deref(),
+        locked.config.default_model.as_deref(),
         Some(default_model.as_str()),
         "default_model must not change when provider does not own the model"
     );
+    locked.config = original_config;
+    locked.save_state().expect("restore test config");
 }
 
 #[test]

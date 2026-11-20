@@ -3,7 +3,9 @@
 }
 
 html {
-  font-size: 16px;
+  /* Fixed root: --lyra-ui-font-size scales UI text, but rem-based spacing and
+     icons must not follow the font-size preference (see ui-font-size.ts). */
+  font-size: var(--lyra-root-font-size);
 }
 
 html,
@@ -17,24 +19,30 @@ body,
 
 body {
   font-family: var(--lyra-font-ui);
-  font-size: var(--lyra-text-ui-base);
-  line-height: 1.5;
+  font-size: var(--lyra-text-size-body);
+  line-height: var(--lyra-text-line-comfortable);
   color: var(--lyra-text-primary);
   background: var(--lyra-app-bg);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: subpixel-antialiased;
 }
 
-button,
 input {
   font: inherit;
   color: inherit;
 }
 
-button {
-  border: 0;
-  background: transparent;
-  cursor: pointer;
+/* The button reset must live in Tailwind's base layer. As an unlayered rule it
+   outranked every layered utility, so `bg-primary`, `border-border` and the rest
+   of AppButton's variants never rendered and buttons read as plain text. */
+@layer base {
+  button {
+    font: inherit;
+    color: inherit;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
 }
 
 input {

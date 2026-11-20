@@ -17,7 +17,7 @@ import {
   powerMonitor,
   protocol
 } from "electron";
-import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync, appendFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { hostname, userInfo, platform, homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -815,6 +815,66 @@ const attachDevelopmentLogging = (window: BrowserWindow): void => {
           console.error(`[lyra-debug] capturePage failed ${String(error)}`);
         });
     }, 1200);
+
+    // TEMP chat-diagnosis probe: dumps chat DOM geometry + a screenshot.
+    const probeTimer = setInterval(() => {
+      void window.webContents
+        .executeJavaScript(
+          `(() => {
+            const scroller = document.querySelector(".lyra-agents-chat-scroll");
+            const virt = document.querySelector(".lyra-agents-chat-virtual");
+            if (scroller === null || virt === null) {
+              return { chatOpen: false };
+            }
+            const kids = Array.from(virt.children);
+            const spacers = kids
+              .filter((k) => !(k.className || "").includes("chat-message-slot"))
+              .map((k) => Math.round(k.getBoundingClientRect().height));
+            const slots = Array.from(document.querySelectorAll(".lyra-agents-chat-message-slot")).map((slot) => {
+              const r = slot.getBoundingClientRect();
+              const cs = window.getComputedStyle(slot);
+              const raw = slot.innerText || "";
+              return {
+                i: slot.getAttribute("data-index"),
+                author: slot.getAttribute("data-chat-message-author"),
+                top: Math.round(r.top),
+                h: Math.round(r.height),
+                op: cs.opacity,
+                vis: cs.visibility,
+                disp: cs.display,
+                len: raw.length,
+                sample: raw.replace(/\s+/g, " ").slice(0, 60)
+              };
+            });
+            return {
+              chatOpen: true,
+              scrollTop: Math.round(scroller.scrollTop),
+              scrollHeight: scroller.scrollHeight,
+              clientHeight: scroller.clientHeight,
+              spacers,
+              slots,
+              folds: document.querySelectorAll(".lyra-agents-message-process-fold").length,
+              groups: document.querySelectorAll(".lyra-agents-tool-group").length
+            };
+          })()`,
+          true
+        )
+        .then((probe) => {
+          const dir = join(process.cwd(), ".tmp");
+          mkdirSync(dir, { recursive: true });
+          appendFileSync(join(dir, "chat-probe.jsonl"), JSON.stringify({ at: Date.now(), probe }) + "\n");
+        })
+        .catch(() => {});
+      void window.webContents
+        .capturePage()
+        .then((image) => {
+          const dir = join(process.cwd(), ".tmp");
+          mkdirSync(dir, { recursive: true });
+          writeFileSync(join(dir, "chat-probe.png"), image.toPNG());
+        })
+        .catch(() => {});
+    }, 3000);
+    window.on("closed", () => clearInterval(probeTimer));
   });
 };
 

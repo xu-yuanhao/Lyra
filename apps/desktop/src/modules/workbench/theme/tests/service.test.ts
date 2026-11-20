@@ -129,10 +129,10 @@ describe("workbench theme service", () => {
     expect(vars["--lyra-shell-titlebar-h"]).toBe("var(--lyra-control-h-34)");
     expect(vars["--lyra-control-h-default"]).toBe("var(--lyra-control-h-32)");
     expect(vars["--lyra-font-sans"]).toContain("system-ui");
-    expect(vars["--lyra-text-size-body"]).toBe("var(--lyra-text-ui-base)");
+    expect(vars["--lyra-text-size-body"]).toBe("var(--lyra-text-size-14)");
     expect(vars["--lyra-ui-font-size"]).toBe("14px");
-    expect(vars["--lyra-text-ui-sm"]).toBe("calc(var(--lyra-ui-font-size) * 0.875)");
-    expect(vars["--lyra-text-line-chat"]).toBe("1.75");
+    expect(vars["--lyra-text-size-12"]).toBe("max(12px, calc(var(--lyra-ui-font-size) - 2px))");
+    expect(vars["--lyra-text-size-20"]).toBe("calc(var(--lyra-ui-font-size) + 6px)");
   });
 
   test("uses app theme tokens as the only product visual source", () => {

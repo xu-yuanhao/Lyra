@@ -8,6 +8,19 @@ import {
 export const MESSAGE_ROW_ESTIMATE_PX = 80;
 export const MESSAGE_ROW_OVERSCAN = 6;
 
+/** Prefetch older history two viewports before the edge (ZCode timeline). */
+export const HISTORY_PREFETCH_VIEWPORTS = 2;
+
+export const historyPrefetchTriggerPx = (
+  viewportHeight: number,
+  minimumPx: number
+): number => {
+  if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) {
+    return minimumPx;
+  }
+  return Math.max(minimumPx, viewportHeight * HISTORY_PREFETCH_VIEWPORTS);
+};
+
 const UNMEASURED_TAIL = 16;
 
 const VIEWPORT_FALLBACK = { width: 800, height: 600 };

@@ -36,7 +36,7 @@ export const DropdownMenuContent = forwardRef<
     <DropdownMenuPrimitive.Content
       ref={ref}
       className={cn(
-        "lyra-ui-menu-content z-[10000] overflow-auto rounded-lg border border-popover-border bg-menu p-1 text-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+        "lyra-ui-menu-content z-[10000] overflow-auto rounded-surface border border-popover-border bg-menu p-1 text-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
         className
       )}
       sideOffset={sideOffset}
@@ -55,7 +55,7 @@ export const DropdownMenuSubContent = forwardRef<
     <DropdownMenuPrimitive.SubContent
       ref={ref}
       className={cn(
-        "lyra-ui-menu-sub-content z-[10000] overflow-auto rounded-lg border border-popover-border bg-menu p-1 text-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "lyra-ui-menu-sub-content z-[10000] overflow-auto rounded-surface border border-popover-border bg-menu p-1 text-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out",
         className
       )}
       sideOffset={sideOffset}

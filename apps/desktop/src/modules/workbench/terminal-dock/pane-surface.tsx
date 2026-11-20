@@ -460,7 +460,7 @@ export const TerminalPaneSurface = ({
       return;
     }
 
-    const terminalFontSize = readCssNumber(host, "--lyra-text-size-meta", 12);
+    const terminalFontSize = readCssNumber(host, "--lyra-text-size-caption", 12);
     const terminalLineHeight =
       readCssNumber(host, "--lyra-text-line-body", 20) / Math.max(terminalFontSize, 1);
     const reusingRenderer = terminalRenderersBySession.has(pane.sessionId);

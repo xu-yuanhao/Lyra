@@ -175,15 +175,16 @@ export function AgentBrowserCapsule({
         <BrowserCapsuleIdentity preview={page} />
       </AppButton>
       {!isTurnRunning ? (
-        <button
-          type="button"
+        <AppButton
+          variant="ghost"
+          size="icon"
           className="lyra-agents-composer-browser-capsule-dismiss"
           aria-label={t("window.close")}
           title={t("window.close")}
           onClick={dismiss}
         >
-          <X size={11} strokeWidth={2.2} aria-hidden="true" />
-        </button>
+          <X size={11} strokeWidth={2.1} aria-hidden="true" />
+        </AppButton>
       ) : null}
     </div>
   );

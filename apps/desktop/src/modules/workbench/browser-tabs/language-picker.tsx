@@ -24,6 +24,7 @@ import {
   AppPopover,
   AppPopoverContent,
   AppPopoverTrigger,
+  AppStatusMessage,
   AppTooltip
 } from "@renderer/ui/components";
 import type { LyraDesktopApi } from "../../../shared/desktop-bridge";
@@ -378,9 +379,13 @@ export const LanguagePicker = ({
         </div>
         <div id={listboxId} className="lyra-language-picker-results" role="listbox">
           {results.length === 0 ? (
-            <p className="lyra-language-picker-empty" role={catalogError === undefined ? undefined : "alert"}>
+            <AppStatusMessage
+              className="lyra-language-picker-empty"
+              role={catalogError === undefined ? undefined : "alert"}
+              tone={catalogError === undefined ? "neutral" : "error"}
+            >
               {catalogError ?? labels.noResults}
-            </p>
+            </AppStatusMessage>
           ) : results.map((entry, index) => {
             const operation = operations[entry.locale];
             const error = errors[entry.locale];

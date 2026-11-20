@@ -11,12 +11,23 @@
   --lyra-font-mono: "Geist Mono", "Lyra Nerd Mono", "Iosevka Nerd Font Mono", "JetBrains Mono", "Cascadia Mono", "Microsoft YaHei UI", "PingFang SC", monospace;
   --lyra-font-ui: var(--lyra-font-sans);
   --lyra-ui-font-size: 14px;
-  --lyra-text-ui-xs: calc(var(--lyra-ui-font-size) * 0.75);
-  --lyra-text-ui-sm: calc(var(--lyra-ui-font-size) * 0.875);
-  --lyra-text-ui-base: var(--lyra-ui-font-size);
-  --lyra-text-ui-lg: calc(var(--lyra-ui-font-size) * 1.125);
-  --lyra-text-ui-xl: calc(var(--lyra-ui-font-size) * 1.25);
-  --lyra-text-line-chat: 1.75;
+  --lyra-root-font-size: 16px; /* browser root; never follows the UI font-size preference */
+  /* Type scale: five sizes at 100% zoom (12 / 14 / 16 / 20 / 24). Do not add a
+     sixth tier: build hierarchy with weight, color and spacing first.
+     Secondary text never drops below 12px, even at the smallest font-size
+     setting. Every tier derives from --lyra-ui-font-size, so the user's font
+     size and the OS display scale move the whole scale together. */
+  --lyra-text-size-12: max(12px, calc(var(--lyra-ui-font-size) - 2px));
+  --lyra-text-size-14: var(--lyra-ui-font-size);
+  --lyra-text-size-16: calc(var(--lyra-ui-font-size) + 2px);
+  --lyra-text-size-20: calc(var(--lyra-ui-font-size) + 6px);
+  --lyra-text-size-24: calc(var(--lyra-ui-font-size) + 10px);
+  /* Legacy names kept as aliases so Tailwind's text-ui-* utilities resolve to
+     the same five tiers. Prefer the semantic names below in new CSS. */
+  --lyra-text-ui-xs: var(--lyra-text-size-12);
+  --lyra-text-ui-sm: var(--lyra-text-size-12);
+  --lyra-text-ui-base: var(--lyra-text-size-14);
+  --lyra-text-ui-lg: var(--lyra-text-size-16);
   --lyra-text-tracking-wide: 0.025em;
 
   --lyra-text-primary: #171717;
@@ -27,9 +38,10 @@
   --lyra-window-close-hover-bg: #e46969;
   --lyra-window-close-hover-fg: #ffffff;
 
-  --lyra-status-success: #669f59;
-  --lyra-status-warning: #a48819;
-  --lyra-status-error: #d36151;
+  /* Text-bearing status colors: >=4.5:1 on light surfaces (#fafafa/#ffffff). */
+  --lyra-status-success: #3f7a3a;
+  --lyra-status-warning: #7a5f00;
+  --lyra-status-error: #b03a2e;
 
   --lyra-space-0: 0px;
   --lyra-space-1: 1px;
@@ -68,37 +80,27 @@
   --lyra-radius-16: 16px;
   --lyra-radius-20: 20px;
   --lyra-radius-pill: 999px;
-  --lyra-menu-bg: rgba(28, 31, 36, 0.72);
-  --lyra-menu-item-bg: rgba(36, 40, 47, 0.84);
-  --lyra-menu-border: rgba(108, 116, 132, 0.46);
-  --lyra-menu-hover-bg: rgba(75, 88, 112, 0.48);
-  --lyra-menu-shadow: 0 12px 34px rgba(18, 22, 32, 0.26);
-  --lyra-menu-frost-top: rgba(88, 95, 110, 0.22);
-  --lyra-menu-frost-bottom: rgba(52, 57, 68, 0.15);
-  --lyra-menu-inner-line: rgba(164, 170, 184, 0.22);
-  --lyra-menu-backdrop-filter: none;
-  --lyra-menu-danger: var(--lyra-window-close-hover-bg);
   --lyra-radius-sm: var(--lyra-radius-4);
   --lyra-radius-md: var(--lyra-radius-6);
   --lyra-radius-lg: var(--lyra-radius-10);
 
-  --lyra-space-1: var(--lyra-space-2);
-  --lyra-space-3: var(--lyra-space-10);
-  --lyra-space-5: var(--lyra-space-18);
+  --lyra-space-3: 3px;
+  --lyra-space-5: 5px;
 
-  --lyra-text-size-8: calc(var(--lyra-ui-font-size) - 6px);
-  --lyra-text-size-10: calc(var(--lyra-ui-font-size) - 4px);
-  --lyra-text-size-11: calc(var(--lyra-ui-font-size) - 3px);
-  --lyra-text-size-12: calc(var(--lyra-ui-font-size) - 2px);
-  --lyra-text-size-13: calc(var(--lyra-ui-font-size) - 1px);
-  --lyra-text-size-14: var(--lyra-ui-font-size);
-  --lyra-text-size-15: calc(var(--lyra-ui-font-size) + 1px);
-  --lyra-text-size-16: calc(var(--lyra-ui-font-size) + 2px);
-  --lyra-text-size-18: calc(var(--lyra-ui-font-size) + 4px);
-  --lyra-text-size-20: calc(var(--lyra-ui-font-size) + 6px);
-  --lyra-text-size-24: calc(var(--lyra-ui-font-size) + 10px);
+  /* Unitless ratios: use these for any rule that sets its own font-size.
+     Seven tiers; snap to the nearest rather than adding a new ratio. */
+  --lyra-text-line-flat: 1;
+  --lyra-text-line-collapse: 0; /* for icon slots only: removes the text line box */
+  --lyra-text-line-display: 1.05; /* splash wordmark only */
+  --lyra-text-line-tight: 1.25;
+  --lyra-text-line-snug: 1.35;
+  --lyra-text-line-normal: 1.45;
+  --lyra-text-line-comfortable: 1.5;
+  --lyra-text-line-relaxed: 1.55;
+  --lyra-text-line-loose: 1.65;
+  --lyra-text-line-heading: 1.7;
+  --lyra-text-line-body-copy: 1.75; /* reading text: markdown and streaming responses */
 
-  --lyra-text-line-1: 1;
   --lyra-text-line-14: calc(var(--lyra-ui-font-size) * 1);
   --lyra-text-line-16: calc(var(--lyra-ui-font-size) * 1.15);
   --lyra-text-line-18: calc(var(--lyra-ui-font-size) * 1.3);
@@ -114,11 +116,10 @@
   --lyra-icon-size-18: 18px;
   --lyra-icon-size-20: 20px;
 
-  --lyra-control-h-22: 22px;
+  /* Control heights: 24 is the floor for anything clickable. 34 (titlebar) and
+     52 (browser pill) are shell exceptions, documented at their use sites. */
   --lyra-control-h-24: 24px;
-  --lyra-control-h-26: 26px;
   --lyra-control-h-28: 28px;
-  --lyra-control-h-30: 30px;
   --lyra-control-h-32: 32px;
   --lyra-control-h-34: 34px;
   --lyra-control-h-36: 36px;
@@ -142,17 +143,31 @@
   --lyra-ease-fast: ease;
   --lyra-ease-standard: cubic-bezier(0.22, 0.82, 0.24, 1);
   --lyra-ease-panel: cubic-bezier(0.2, 0, 0, 1);
+  --lyra-ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);
+  --lyra-ease-tick: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* A disabled control keeps its shape and dims by this one value. */
+  --lyra-opacity-disabled: 0.48;
+  /* Decorative dimming tiers. Icon/ink softening uses 0.72; lifted or pulsing
+     states use 0.82. Everything below is a one-off decorative value and stays
+     local. Do not add a third workhorse tier. */
+  --lyra-opacity-icon-dim: 0.72;
+  --lyra-opacity-lifted: 0.82;
   --lyra-motion-fast-duration: 120ms;
   --lyra-motion-standard-duration: 190ms;
   --lyra-motion-panel-layout-duration: 260ms;
-  --lyra-motion-panel-hidden-offset: var(--lyra-space-10);
+  /* Deliberately slow: theme crossfade, number rolls, and the installer slot.
+     These are the only transitions allowed above 260ms. */
+  --lyra-motion-slow-duration: 420ms;
+  /* One turn per second: the app-wide spinner rhythm. */
+  --lyra-motion-spin-duration: 1000ms;
   --lyra-motion-fast: var(--lyra-motion-fast-duration) var(--lyra-ease-fast);
   --lyra-motion-standard: var(--lyra-motion-standard-duration) var(--lyra-ease-standard);
   --lyra-motion-panel-layout: var(--lyra-motion-panel-layout-duration) var(--lyra-ease-panel);
+  --lyra-motion-slow: var(--lyra-motion-slow-duration) var(--lyra-ease-emphasized);
   --lyra-transition-fast: var(--lyra-motion-fast);
 
   --lyra-shell-titlebar-h: var(--lyra-control-h-34);
-  --lyra-shell-titlebar-nav-h: var(--lyra-control-h-34);
+  --lyra-shell-titlebar-nav-h: var(--lyra-control-h-28);
   --lyra-shell-browser-tabbar-h: var(--lyra-control-h-34);
   --lyra-shell-terminal-tabbar-h: var(--lyra-control-h-34);
   --lyra-shell-panel-pad-x: var(--lyra-space-14);
@@ -178,7 +193,6 @@
   --lyra-list-row-pad-y: var(--lyra-space-10);
 
   --lyra-app-sidebar-rail-min-w: var(--lyra-unit-176);
-  --lyra-app-sidebar-rail-max-w: var(--lyra-unit-360);
   --lyra-app-sidebar-rail-w: var(--lyra-unit-220);
   --lyra-app-sidebar-rail-pad-y: var(--lyra-space-12);
   --lyra-app-sidebar-rail-pad-x: var(--lyra-space-8);
@@ -191,7 +205,6 @@
 
   --lyra-app-state-logo-min: var(--lyra-space-32);
   --lyra-app-state-logo-size: var(--lyra-space-40);
-  --lyra-app-state-logo-max: var(--lyra-space-48);
   --lyra-app-state-gap: var(--lyra-space-12);
   --lyra-app-state-pad: var(--lyra-space-20);
   --lyra-app-state-copy-max: 36ch;
@@ -206,7 +219,7 @@
 
   --lyra-tab-h: var(--lyra-shell-browser-tabbar-h);
   --lyra-tab-control-h: var(--lyra-control-h-28);
-  --lyra-tab-close-size: var(--lyra-control-h-22);
+  --lyra-tab-close-size: var(--lyra-control-h-24);
   --lyra-tab-radius: var(--lyra-radius-8);
   --lyra-tab-pad-x: var(--lyra-space-10);
   --lyra-tab-gap: var(--lyra-space-8);
@@ -217,10 +230,13 @@
   --lyra-tab-active-max-w: 240px;
   --lyra-tab-nav-slot-w: 32px;
 
-  --lyra-text-size-caption: var(--lyra-text-ui-xs);
-  --lyra-text-size-meta: var(--lyra-text-ui-sm);
-  --lyra-text-size-body: var(--lyra-text-ui-base);
-  --lyra-text-size-body-strong: var(--lyra-text-ui-base);
+  /* Page surface rhythm: the first thing every full-page surface shares. */
+  --lyra-page-pad-block-start: calc(var(--lyra-space-64) + var(--lyra-space-8));
+  --lyra-page-pad-block-end: var(--lyra-space-48);
+  --lyra-page-pad-inline: var(--lyra-space-32);
+
+  --lyra-text-size-caption: var(--lyra-text-size-12);
+  --lyra-text-size-body: var(--lyra-text-size-14);
   --lyra-text-size-title-sm: var(--lyra-text-size-16);
   --lyra-text-size-title-md: var(--lyra-text-size-20);
   --lyra-text-line-caption: var(--lyra-text-line-16);
@@ -235,8 +251,8 @@
   --lyra-size-titlebar-h: var(--lyra-shell-titlebar-h);
   --lyra-size-browser-tab-h: var(--lyra-shell-browser-tabbar-h);
   --lyra-size-terminal-tab-h: var(--lyra-shell-terminal-tabbar-h);
-  --lyra-size-icon-button-w: var(--lyra-control-h-26);
-  --lyra-size-icon-button-h: var(--lyra-control-h-26);
+  --lyra-size-icon-button-w: var(--lyra-control-h-24);
+  --lyra-size-icon-button-h: var(--lyra-control-h-24);
   --lyra-size-browser-nav-slot: var(--lyra-tab-nav-slot-w);
   --lyra-size-browser-pill-h: var(--lyra-control-h-52);
   --lyra-size-browser-pill-compact-h: var(--lyra-control-h-40);
@@ -245,9 +261,6 @@
   --lyra-size-results-sidebar-w: 320px;
   --lyra-size-notification-preview-min-w: 180px;
   --lyra-size-notification-preview-max-w: 360px;
-  --lyra-size-content-readable-w: 760px;
-  --lyra-size-popover-sm-w: 400px;
-  --lyra-size-popover-md-h: 560px;
   --lyra-size-diagram-min-w: 520px;
   --lyra-size-diagram-max-h: 720px;
   --lyra-effect-inset-fill: 9999px;
@@ -255,6 +268,19 @@
   --lyra-z-base: 0;
   --lyra-z-floating: 18;
   --lyra-z-dialog: 10000;
+  /* Cross-context stacking layers. Local stacks inside an isolated context
+     keep plain 0-6 integers; anything that must rise above siblings in
+     another context reads one of these. One layer per job, no ad-hoc
+     9/11/20/34/90/999/1300/9999 literals. */
+  --lyra-z-sticky-header: 10;
+  --lyra-z-sticky-rail: 9;
+  --lyra-z-scroll-affordance: 11;
+  --lyra-z-agent-overlay: 34;
+  --lyra-z-drag-float: 1300;
+  --lyra-z-ai-composer: 90;
+  --lyra-z-overlay-effect: 999;
+  --lyra-z-debug-panel: 999;
+  --lyra-z-menu-layer: 9999;
 
   --lyra-scrollbar-size: 10px;
   --lyra-scrollbar-radius: 999px;

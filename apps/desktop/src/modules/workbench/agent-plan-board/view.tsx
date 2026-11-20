@@ -16,6 +16,7 @@ import {
 
 import {
   AppButton,
+  AppEmptyState,
   AppIconButton,
   AppInput,
   AppMenu,
@@ -23,6 +24,7 @@ import {
   AppMenuItem,
   AppMenuLabel,
   AppMenuTrigger,
+  AppStatusMessage,
   AppTextarea
 } from "@renderer/ui/components";
 import type {
@@ -457,9 +459,9 @@ const PlanBoardNavigator = ({
           aria-label={labels.manager}
           title={labels.manager}
         >
-          <List size={13} strokeWidth={2.2} aria-hidden="true" />
+          <List size={13} strokeWidth={2.1} aria-hidden="true" />
           <span className="lyra-agent-plan-board-chat-menu-current">{triggerTitle}</span>
-          <ChevronDown size={13} strokeWidth={2.2} aria-hidden="true" />
+          <ChevronDown size={13} strokeWidth={2.1} aria-hidden="true" />
         </AppButton>
       </AppMenuTrigger>
       <AppMenuContent
@@ -562,9 +564,10 @@ const PlanWorkspace = ({
   <div className="lyra-agent-plan-board-workspace has-chat">
     <section className="lyra-agent-plan-board-workspace-document">
       {plan === null ? (
-        <p className="lyra-agent-plan-board-empty">
-          {plansLoading ? labels.loading : labels.noPlans}
-        </p>
+        <AppEmptyState
+          className="lyra-agent-plan-board-empty"
+          title={plansLoading ? labels.loading : labels.noPlans}
+        />
       ) : (
         <PlanTodoDetail
           labels={labels}
@@ -685,7 +688,9 @@ export const AgentPlanBoardSurface = ({
     return (
       <div className="lyra-agent-plan-board">
         {state.error !== null ? (
-          <div className="lyra-agent-plan-board-error">{state.error}</div>
+          <AppStatusMessage className="lyra-agent-plan-board-error lyra-app-status-message-boxed" role="alert" tone="error">
+            {state.error}
+          </AppStatusMessage>
         ) : null}
         <PlanWorkspace
           labels={labels}

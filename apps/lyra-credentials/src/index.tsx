@@ -2,13 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   createFirstPartyAppModule,
+  useFirstPartyWorkbenchChrome,
   type FirstPartySurfaceProps
 } from "@lyra/first-party-app-kit";
 
 import { resolveMessages } from "./l10n/resolve";
 import { parseCredentialsSnapshot } from "./parse";
 import { CredentialsEmbeddedChrome } from "./surface";
-import type { CredentialsSnapshot, CredentialSession, StoredCredential } from "./types";
+import type {
+  CredentialsMessages,
+  CredentialsSection,
+  CredentialsSnapshot,
+  CredentialSession,
+  StoredCredential
+} from "./types";
 
 const COMMANDS = {
   read: "lyra.core.credentials.read",
@@ -19,11 +26,56 @@ const COMMANDS = {
   navigate: "lyra.core.navigate"
 } as const;
 const CREDENTIALS_CHANGED_EVENT = "lyra.core.credentials-changed";
+const OWNER_ID = "lyra.credentials";
+const SECTION_COMMANDS: Readonly<Record<CredentialsSection, string>> = {
+  sessions: "lyra.credentials.show-sessions",
+  review: "lyra.credentials.show-review",
+  credentials: "lyra.credentials.show-passwords"
+};
 
 export { parseCredentialsSnapshot } from "./parse";
 export type { CredentialsSnapshot } from "./types";
 
 const normalize = (value: string): string => value.trim().toLocaleLowerCase();
+
+const SECTIONS: readonly CredentialsSection[] = ["sessions", "review", "credentials"];
+const SECTION_LABELS: Readonly<
+  Record<CredentialsSection, (labels: CredentialsMessages) => string>
+> = {
+  sessions: (labels) => labels.sessionsTab,
+  review: (labels) => labels.reviewTab,
+  credentials: (labels) => labels.credentialsTab
+};
+
+/**
+ * The address band owns the list switch, so its buttons must reach the mounted
+ * surface without a second Core round trip. One Logins page is mounted at a
+ * time; a broadcast keeps every listener consistent if that changes.
+ */
+const sectionStore = (() => {
+  let section: CredentialsSection = "sessions";
+  const listeners = new Set<() => void>();
+  return {
+    read: (): CredentialsSection => section,
+    subscribe: (listener: () => void): (() => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    set: (next: CredentialsSection): void => {
+      if (next === section) return;
+      section = next;
+      for (const listener of listeners) listener();
+    }
+  };
+})();
+
+const sectionCommandHandler = (section: CredentialsSection) =>
+  (): null => {
+    sectionStore.set(section);
+    return null;
+  };
 
 const sessionSearchText = (session: CredentialSession): string =>
   normalize([
@@ -59,7 +111,9 @@ const CredentialsSurface = ({
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [collapsedSections, setCollapsedSections] = useState<ReadonlySet<string>>(() => new Set());
+  const [section, setSection] = useState<CredentialsSection>(sectionStore.read);
+
+  useEffect(() => sectionStore.subscribe(() => setSection(sectionStore.read())), []);
 
   const refresh = useCallback(async () => {
     try {
@@ -100,15 +154,6 @@ const CredentialsSurface = ({
     return credentials.filter((credential) => credentialSearchText(credential).includes(text));
   }, [credentials, query]);
 
-  const toggleSection = useCallback((key: string) => {
-    setCollapsedSections((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
-
   const run = useCallback(async (key: string, work: () => Promise<unknown>) => {
     setBusyKey(key);
     try {
@@ -122,19 +167,34 @@ const CredentialsSurface = ({
     }
   }, [refresh]);
 
+  const buildChrome = useCallback(() => ({
+    toolbarContext: {
+      ariaLabel: labels.sectionsLabel,
+      actions: SECTIONS.map((id, index) => ({
+        id: `show-${id}`,
+        label: SECTION_LABELS[id](labels),
+        commandId: SECTION_COMMANDS[id],
+        order: index,
+        display: "text" as const,
+        active: id === section
+      }))
+    }
+  }), [labels, section]);
+
+  useFirstPartyWorkbenchChrome(OWNER_ID, buildChrome, [buildChrome]);
+
   return (
     <CredentialsEmbeddedChrome
       labels={labels}
       locale={presentation.locale}
+      section={section}
       sessions={filteredSessions}
       reviewSessions={filteredReviewSessions}
       credentials={filteredCredentials}
       query={query}
       error={error}
       busyKey={busyKey}
-      collapsedSections={collapsedSections}
       onQueryChange={setQuery}
-      onToggleSection={toggleSection}
       onOpenSite={(url, title) => {
         void host.executeCommand(COMMANDS.navigate, {
           address: url,
@@ -174,7 +234,10 @@ export const lyraAppModule = createFirstPartyAppModule({
   version: __LYRA_APP_VERSION__,
   contributions: {
     commands: [
-      { id: "lyra.credentials.refresh", title: "Refresh logins" }
+      { id: "lyra.credentials.refresh", title: "Refresh logins" },
+      { id: SECTION_COMMANDS.sessions, title: "Show login sessions" },
+      { id: SECTION_COMMANDS.review, title: "Show login sessions to review" },
+      { id: SECTION_COMMANDS.credentials, title: "Show saved passwords" }
     ],
     settings: [
       { id: "lyra.credentials.settings", title: "Logins", route: "/credentials" }
@@ -184,7 +247,10 @@ export const lyraAppModule = createFirstPartyAppModule({
     ]
   },
   commandHandlers: {
-    "lyra.credentials.refresh": (host) => host.executeCommand(COMMANDS.read, {})
+    "lyra.credentials.refresh": (host) => host.executeCommand(COMMANDS.read, {}),
+    [SECTION_COMMANDS.sessions]: sectionCommandHandler("sessions"),
+    [SECTION_COMMANDS.review]: sectionCommandHandler("review"),
+    [SECTION_COMMANDS.credentials]: sectionCommandHandler("credentials")
   },
   surfaces: {
     "login-manager": {

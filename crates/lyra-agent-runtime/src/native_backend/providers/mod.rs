@@ -1,8 +1,5 @@
 pub(crate) mod capabilities;
 pub(crate) mod catalog;
-pub(crate) mod cloud_code;
-pub(crate) mod copilot_acp;
-pub(crate) mod cursor_agent;
 pub(crate) mod errors;
 pub(crate) mod mimo_faults;
 pub(crate) mod model_capabilities;

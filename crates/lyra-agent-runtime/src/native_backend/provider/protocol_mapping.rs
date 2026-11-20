@@ -219,9 +219,6 @@ pub(crate) fn build_anthropic_messages_request(
         },
     )?;
     apply_model_tool_choice(&mut body, tools, tool_choice, ToolChoiceProtocol::Anthropic)?;
-    if providers::subscription::uses_claude_code_contract(&provider.route_id) {
-        providers::subscription::apply_claude_code_contract(&mut body);
-    }
     if providers::routes::mimo::is_anthropic_route(&provider.route_id) {
         let tool_calling = !tools.is_empty();
         providers::routes::mimo::apply_mimo_model_parameters(&mut body, model, tool_calling);
@@ -425,9 +422,6 @@ pub(crate) fn build_anthropic_messages_request_async(
         },
     )?;
     apply_model_tool_choice(&mut body, tools, tool_choice, ToolChoiceProtocol::Anthropic)?;
-    if providers::subscription::uses_claude_code_contract(&provider.route_id) {
-        providers::subscription::apply_claude_code_contract(&mut body);
-    }
     if providers::routes::mimo::is_anthropic_route(&provider.route_id) {
         let tool_calling = !tools.is_empty();
         providers::routes::mimo::apply_mimo_model_parameters(&mut body, model, tool_calling);

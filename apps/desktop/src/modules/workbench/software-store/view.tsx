@@ -63,6 +63,8 @@ import { useAppUpdate } from "./use-app-update";
 
 const SOFTWARE_STORE_OPERATION_CANCELLED = Symbol("software-store-operation-cancelled");
 
+type SoftwareStoreSectionId = "builtin" | "component" | "uiux";
+
 export const SoftwareStoreSurface = ({
   desktopApi,
   embedded = false,
@@ -81,7 +83,7 @@ export const SoftwareStoreSurface = ({
   const [pendingOperation, setPendingOperation] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [collapsedSections, setCollapsedSections] = useState<ReadonlySet<string>>(() => new Set());
+  const [activeSection, setActiveSection] = useState<SoftwareStoreSectionId>("builtin");
   const [updateChannel, setUpdateChannel] = useState<ComponentUpdateChannel>("preview");
   const [updateProgress, setUpdateProgress] = useState<ComponentUpdateProgress | null>(null);
   const [componentUpdateRunning, setComponentUpdateRunning] = useState(false);
@@ -227,6 +229,15 @@ export const SoftwareStoreSurface = ({
     () => subscribeSoftwareStoreDetailRequests((request) => {
       setQuery("");
       setSelectedKey(softwareStoreDetailKey(request));
+      // Jump straight to the owning section so a detail request (repair flow,
+      // store navigation) never lands on a hidden list.
+      if (request.kind === "component") {
+        setActiveSection("component");
+      } else if (request.kind === "uiux") {
+        setActiveSection("uiux");
+      } else if (request.kind === "software") {
+        setActiveSection("builtin");
+      }
     }),
     []
   );
@@ -596,11 +607,72 @@ export const SoftwareStoreSurface = ({
     }
   };
 
+  const canInstall = desktopApi?.uiux !== undefined;
+  const isBusy = pendingOperation !== null;
+  const builtinItems = useMemo(
+    () => filteredItems.filter((item) => item.kind === "software"),
+    [filteredItems]
+  );
+  const uiuxItems = useMemo(
+    () => filteredItems.filter((item) => item.kind === "uiux"),
+    [filteredItems]
+  );
+  const componentItems = useMemo(
+    () => filteredItems.filter((item) => item.kind === "component"),
+    [filteredItems]
+  );
+
+  // The address-bar switcher owns the visible section; land on the first
+  // section that actually has content so a component-only install never opens
+  // to an empty builtin list.
+  useEffect(() => {
+    setActiveSection((current) => {
+      if (current === "component") return current;
+      if (current === "uiux" && uiuxItems.length > 0) return current;
+      if (current === "builtin" && builtinItems.length > 0) return current;
+      if (componentItems.length > 0) return "component";
+      if (uiuxItems.length > 0) return "uiux";
+      return current;
+    });
+  }, [builtinItems.length, componentItems.length, uiuxItems.length]);
+
+  const SECTION_DEFS = useMemo<readonly { id: SoftwareStoreSectionId; label: string }[]>(
+    () => [
+      { id: "builtin", label: labels.builtinTab },
+      { id: "component", label: labels.componentsTab },
+      { id: "uiux", label: labels.uiuxTab }
+    ],
+    [labels.builtinTab, labels.componentsTab, labels.uiuxTab]
+  );
+
   const titlebarContribution = useMemo(
     () => ({
       ariaLabel: labels.title,
       content: (
         <>
+          <span className="lyra-titlebar-context-controls">
+            {SECTION_DEFS.map((def) => {
+              const visible = def.id === "builtin" ? builtinItems.length > 0
+                : def.id === "uiux" ? uiuxItems.length > 0
+                  : true;
+              return visible ? (
+                <AppButton
+                  key={def.id}
+                  variant="ghost"
+                  size="sm"
+                  className={activeSection === def.id
+                    ? "lyra-titlebar-context-text-button lyra-titlebar-context-button-active"
+                    : "lyra-titlebar-context-text-button"}
+                  aria-pressed={activeSection === def.id}
+                  onClick={() => {
+                    setActiveSection(def.id);
+                  }}
+                >
+                  {def.label}
+                </AppButton>
+              ) : null;
+            })}
+          </span>
           <span className="lyra-titlebar-context-chip">
             {String(items.length)}
           </span>
@@ -617,24 +689,9 @@ export const SoftwareStoreSurface = ({
         </>
       )
     }),
-    [items.length, labels.refresh, labels.title, refreshAll]
+    [activeSection, builtinItems.length, items.length, labels, refreshAll, SECTION_DEFS, uiuxItems.length]
   );
   useWorkbenchTitlebarContribution(titlebarContribution);
-
-  const canInstall = desktopApi?.uiux !== undefined;
-  const isBusy = pendingOperation !== null;
-  const builtinItems = useMemo(
-    () => filteredItems.filter((item) => item.kind === "software"),
-    [filteredItems]
-  );
-  const uiuxItems = useMemo(
-    () => filteredItems.filter((item) => item.kind === "uiux"),
-    [filteredItems]
-  );
-  const componentItems = useMemo(
-    () => filteredItems.filter((item) => item.kind === "component"),
-    [filteredItems]
-  );
 
   useEffect(() => {
     if (onHeadingChange === undefined) {
@@ -650,18 +707,6 @@ export const SoftwareStoreSurface = ({
       onHeadingChange(labels.title);
     }
   }, [labels.componentsTab, labels.title, labels.uiuxTab, onHeadingChange, selectedItem]);
-
-  const toggleSection = useCallback((id: string): void => {
-    setCollapsedSections((current) => {
-      const next = new Set(current);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
 
   return (
     <section
@@ -722,31 +767,27 @@ export const SoftwareStoreSurface = ({
               <AppEmptyState className="lyra-software-store-empty" title={labels.emptyTitle} />
             ) : (
               <div className="lyra-software-store-section-stack">
-                {builtinItems.length === 0 ? null : (
+                {(activeSection === "builtin" && builtinItems.length > 0) ? (
                   <SoftwareStoreItemSection
                     title={labels.builtinTab}
                     items={builtinItems}
-                    collapsed={collapsedSections.has("builtin")}
-                    onToggle={() => { toggleSection("builtin"); }}
                     onSelect={setSelectedKey}
                   />
-                )}
-                <SoftwareStoreItemSection
-                  title={labels.componentsTab}
-                  items={componentItems}
-                  collapsed={collapsedSections.has("component")}
-                  onToggle={() => { toggleSection("component"); }}
-                  onSelect={setSelectedKey}
-                />
-                {uiuxItems.length === 0 ? null : (
+                ) : null}
+                {activeSection === "component" ? (
+                  <SoftwareStoreItemSection
+                    title={labels.componentsTab}
+                    items={componentItems}
+                    onSelect={setSelectedKey}
+                  />
+                ) : null}
+                {activeSection === "uiux" && uiuxItems.length > 0 ? (
                   <SoftwareStoreItemSection
                     title={labels.uiuxTab}
                     items={uiuxItems}
-                    collapsed={collapsedSections.has("uiux")}
-                    onToggle={() => { toggleSection("uiux"); }}
                     onSelect={setSelectedKey}
                   />
-                )}
+                ) : null}
               </div>
             )}
           </>

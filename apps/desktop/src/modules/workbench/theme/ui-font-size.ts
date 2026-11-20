@@ -1,7 +1,10 @@
 export const DEFAULT_UI_FONT_SIZE_PX = 14;
 export const MIN_UI_FONT_SIZE_PX = 12;
 export const MAX_UI_FONT_SIZE_PX = 20;
-export const UI_FONT_SIZE_OPTIONS = [12, 13, 14, 15, 16, 18, 20] as const;
+// The user scaling control moves the same five-tier scale as a whole, so its
+// steps are the design tiers, not a second size menu. 24 is display-only text
+// and would make ordinary rows oversized, so the body range stops at 20.
+export const UI_FONT_SIZE_OPTIONS = [12, 14, 16, 20] as const;
 
 export type UiFontSizePx = (typeof UI_FONT_SIZE_OPTIONS)[number];
 
