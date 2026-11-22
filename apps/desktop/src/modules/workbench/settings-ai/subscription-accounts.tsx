@@ -5,6 +5,12 @@ import type { AgentModelCatalogSnapshot } from "../../../shared/agent";
 import { AppButton, AppInput, AppStatusMessage } from "@renderer/ui/components";
 
 import { getDesktopApi } from "../shell/service";
+import {
+  AI_DISCOVERY_ROW_CLASS,
+  AI_FIELD_CLASS,
+  AI_FIELD_SPAN2_CLASS,
+  AI_INPUT_CLASS,
+} from "./classes";
 
 export function SubscriptionRouteLogin({
   routeId,
@@ -79,9 +85,9 @@ export function SubscriptionRouteLogin({
   };
 
   return (
-    <div className="lyra-settings-ai-field lyra-settings-ai-field-span-2">
+    <div className={`${AI_FIELD_CLASS} ${AI_FIELD_SPAN2_CLASS}`}>
       {accountName === null ? null : (
-        <span className="lyra-settings-ai-model-discovery-action-row">
+        <span className={AI_DISCOVERY_ROW_CLASS}>
           {accountAvatar === null ? null : (
             <img
               alt=""
@@ -94,14 +100,14 @@ export function SubscriptionRouteLogin({
       )}
       {routeId === "snowflake_cortex" ? (
         <AppInput
-          className="lyra-settings-ai-input"
+          className={AI_INPUT_CLASS}
           aria-label={t("settings.aiSubscriptionAccount")}
           placeholder={t("settings.aiSubscriptionAccount")}
           value={account}
           onChange={(event) => setAccount(event.target.value)}
         />
       ) : null}
-      <span className="lyra-settings-ai-model-discovery-action-row">
+      <span className={AI_DISCOVERY_ROW_CLASS}>
         <AppButton
           variant="outline"
           size="md"
@@ -128,7 +134,7 @@ export function SubscriptionRouteLogin({
           {userCode === null ? null : <strong>{userCode}</strong>}
           {authUrl === null ? null : <span>{authUrl}</span>}
           <AppInput
-            className="lyra-settings-ai-input"
+            className={AI_INPUT_CLASS}
             aria-label={t("settings.aiSubscriptionCallback")}
             placeholder={t("settings.aiSubscriptionCallback")}
             value={callback}

@@ -48,6 +48,20 @@ import {
   useSettingsAiMcpViewModel,
   type McpEditDraft,
 } from "./use-settings-ai-mcp-view-model";
+import {
+  AI_CUSTOM_ROW_CLASS,
+  AI_DISCOVERY_ROW_CLASS,
+  AI_ERROR_CLASS,
+  AI_FIELD_ACTION_CLASS,
+  AI_FIELD_CLASS,
+  AI_FORM_CLASS,
+  AI_INPUT_CLASS,
+  AI_INPUT_MULTILINE_CLASS,
+  AI_MODELS_PANEL_CLASS,
+  AI_PAGE_HEADER_CLASS,
+  AI_SELECT_CLASS,
+  AI_STACK_CLASS,
+} from "./classes";
 
 type SettingsAiViewProps = {
   readonly labels: SettingsAiLabels;
@@ -112,10 +126,10 @@ const SettingsAiInputField = ({
   value,
   ...inputProps
 }: SettingsAiInputFieldProps) => (
-  <label className={["lyra-settings-ai-field", className ?? ""].filter(Boolean).join(" ")}>
+  <label className={[AI_FIELD_CLASS, className ?? ""].filter(Boolean).join(" ")}>
     <span>{label}</span>
     <AppInput
-      className={["lyra-settings-ai-input", inputClassName ?? ""].filter(Boolean).join(" ")}
+      className={[AI_INPUT_CLASS, inputClassName ?? ""].filter(Boolean).join(" ")}
       value={value}
       onChange={(event) => setValueFromEvent(event.target.value, onValueChange)}
       {...inputProps}
@@ -139,10 +153,10 @@ const SettingsAiTextareaField = ({
   value,
   ...textareaProps
 }: SettingsAiTextareaFieldProps) => (
-  <label className={["lyra-settings-ai-field", className ?? ""].filter(Boolean).join(" ")}>
+  <label className={[AI_FIELD_CLASS, className ?? ""].filter(Boolean).join(" ")}>
     <span>{label}</span>
     <AppTextarea
-      className={["lyra-settings-ai-input lyra-settings-ai-input-multiline", textareaClassName ?? ""].filter(Boolean).join(" ")}
+      className={[AI_INPUT_CLASS, AI_INPUT_MULTILINE_CLASS, textareaClassName ?? ""].filter(Boolean).join(" ")}
       value={value}
       onChange={(event) => setValueFromEvent(event.target.value, onValueChange)}
       {...textareaProps}
@@ -894,11 +908,11 @@ const SettingsAiMcpEditor = ({
           value={draft.name}
           onValueChange={(value) => setDraftValue("name", value)}
         />
-        <label className="lyra-settings-ai-field">
+        <label className={AI_FIELD_CLASS}>
           <span>{labels.mcpTransportLabel}</span>
           <AppSelect<McpTransportKind>
             ariaLabel={labels.mcpTransportLabel}
-            className="lyra-settings-ai-select"
+            className={AI_SELECT_CLASS}
             value={draft.transport}
             options={transportOptions}
             onValueChange={(value) => setDraftValue("transport", value)}
@@ -976,10 +990,10 @@ export const SettingsAiMcpView = ({ labels, model }: SettingsAiMcpViewProps) => 
   } = useSettingsAiMcpViewModel(model);
 
   return (
-    <section className="lyra-settings-ai-stack lyra-settings-ai-skills-page">
-      <div className="lyra-settings-ai-models-panel">
+    <section className={`${AI_STACK_CLASS} lyra-settings-ai-skills-page`}>
+      <div className={AI_MODELS_PANEL_CLASS}>
         <form
-          className="lyra-settings-ai-page-header"
+          className={AI_PAGE_HEADER_CLASS}
           onSubmit={(event) => {
             event.preventDefault();
             addServer();
@@ -1003,7 +1017,7 @@ export const SettingsAiMcpView = ({ labels, model }: SettingsAiMcpViewProps) => 
         </form>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="error" role="alert">
+          <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
@@ -1249,10 +1263,10 @@ export const SettingsAiSkillsView = ({ labels, model }: SettingsAiSkillsViewProp
   };
 
   return (
-    <section className="lyra-settings-ai-stack lyra-settings-ai-skills-page">
-      <div className="lyra-settings-ai-models-panel">
+    <section className={`${AI_STACK_CLASS} lyra-settings-ai-skills-page`}>
+      <div className={AI_MODELS_PANEL_CLASS}>
         <form
-          className="lyra-settings-ai-page-header"
+          className={AI_PAGE_HEADER_CLASS}
           data-drop-active={skillDropActive ? "true" : undefined}
           onDragEnter={handleSkillDragEnter}
           onDragOver={handleSkillDragOver}
@@ -1281,7 +1295,7 @@ export const SettingsAiSkillsView = ({ labels, model }: SettingsAiSkillsViewProp
         </form>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="error" role="alert">
+          <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
@@ -1811,9 +1825,9 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
     );
   };
   return (
-    <section className="lyra-settings-ai-stack lyra-settings-ai-models-page">
-      <div className="lyra-settings-ai-models-panel">
-        <div className="lyra-settings-ai-page-header">
+    <section className={`${AI_STACK_CLASS} lyra-settings-ai-models-page`}>
+      <div className={AI_MODELS_PANEL_CLASS}>
+        <div className={AI_PAGE_HEADER_CLASS}>
           <AppSearchField
             ariaLabel={activeSearchLabel}
             className="lyra-settings-ai-model-search"
@@ -1857,7 +1871,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
         </div>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="error" role="alert">
+          <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
@@ -1898,7 +1912,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
 
             {selectedProviderRoute === null ? null : (
               <>
-                <div className="lyra-settings-ai-form lyra-settings-ai-model-provider-form">
+                <div className={`${AI_FORM_CLASS} lyra-settings-ai-model-provider-form`}>
                   {selectedRouteNeedsUrl ? (
                     <SettingsAiInputField
                       label={labels.urlLabel}
@@ -1946,8 +1960,8 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                       onValueChange={setProviderApiKey}
                     />
                   ) : null}
-                  <div className="lyra-settings-ai-field lyra-settings-ai-field-action lyra-settings-ai-model-discovery-actions">
-                    <span className="lyra-settings-ai-model-discovery-action-row">
+                  <div className={`${AI_FIELD_CLASS} ${AI_FIELD_ACTION_CLASS} lyra-settings-ai-model-discovery-actions`}>
+                    <span className={AI_DISCOVERY_ROW_CLASS}>
                       <AppButton
                         variant="default"
                         size="md"
@@ -1983,15 +1997,15 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                 </div>
 
                 {discoveryReturnedEmpty ? (
-                  <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="neutral">
+                  <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="neutral">
                     {labels.modelsDiscoverEmptyDescription}
                   </AppStatusMessage>
                 ) : null}
 
                 {isAddingCustomModel ? (
-                  <div className="lyra-settings-ai-custom-model-row">
+                  <div className={AI_CUSTOM_ROW_CLASS}>
                     <AppInput
-                      className="lyra-settings-ai-input"
+                      className={AI_INPUT_CLASS}
                       aria-label={labels.modelsCustomModel}
                       placeholder={labels.modelsCustomModelPlaceholder}
                       value={customModelId}

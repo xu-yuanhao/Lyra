@@ -16,6 +16,11 @@ import type {
 import type { SettingsAiLabels, SettingsAiModel } from "./types";
 
 export type { SettingsAiLabels, SettingsAiModel } from "./types";
+import {
+  AI_ERROR_CLASS,
+  AI_INPUT_CLASS,
+  AI_SELECT_CLASS,
+} from "./classes";
 
 export type SettingsAiRenderedModelEntry = Pick<
   AgentModelEntry,
@@ -191,7 +196,7 @@ export const SettingsAiModelCapabilitiesView = ({
         onClick={onBack}
       />
       {entry.capabilities?.runtimeConflict == null ? null : (
-        <AppStatusMessage className="lyra-settings-ai-error lyra-app-status-message-boxed" tone="error" role="alert">
+        <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="error" role="alert">
           {entry.capabilities.runtimeConflict}
         </AppStatusMessage>
       )}
@@ -203,7 +208,7 @@ export const SettingsAiModelCapabilitiesView = ({
           control={(
             <AppInput
               key={`${entry.id}:${entry.capabilities?.contextWindowOverride ?? "auto"}`}
-              className="lyra-settings-ai-input"
+              className={AI_INPUT_CLASS}
               type="number"
               min={1}
               defaultValue={entry.capabilities?.contextWindowOverride ?? ""}
@@ -226,7 +231,7 @@ export const SettingsAiModelCapabilitiesView = ({
           control={(
             <AppSelect<AgentReasoningReplayField>
               ariaLabel={labels.reasoningReplayFieldAriaLabel}
-              className="lyra-settings-ai-select"
+              className={AI_SELECT_CLASS}
               value={entry.capabilities?.reasoningReplayFieldOverride ?? "auto"}
               options={localizeOptions(REASONING_REPLAY_OPTIONS, labels)}
               onValueChange={(value) => {
@@ -247,7 +252,7 @@ export const SettingsAiModelCapabilitiesView = ({
           control={(
             <AppSelect<AssistantReasoningRequirement>
               ariaLabel={labels.assistantReasoningFieldAriaLabel}
-              className="lyra-settings-ai-select"
+              className={AI_SELECT_CLASS}
               value={entry.capabilities?.assistantReasoningFieldRequiredOverride == null
                 ? "auto"
                 : entry.capabilities.assistantReasoningFieldRequiredOverride
@@ -300,7 +305,7 @@ export const SettingsAiModelCapabilitiesView = ({
                   <span className="lyra-settings-ai-model-actions">
                     <AppSelect<AgentCapabilityOverride>
                       ariaLabel={labels[labelKey]}
-                      className="lyra-settings-ai-select"
+                      className={AI_SELECT_CLASS}
                       value={override}
                       options={localizeOptions(CAPABILITY_OVERRIDE_OPTIONS, labels)}
                       onValueChange={(value) => {
