@@ -22,7 +22,12 @@ type AppStateProps = Omit<HTMLAttributes<HTMLDivElement>, "title"> & {
   readonly tone?: AppStateTone;
 };
 
-const LYRA_STATE_LOGO = <LyraLogo className="lyra-app-state-logo" alt="" />;
+const LYRA_STATE_LOGO = (
+  <LyraLogo
+    className="lyra-app-state-logo size-[var(--lyra-app-state-logo-size)] [--lyra-app-logo-size:var(--lyra-app-state-logo-size)]"
+    alt=""
+  />
+);
 
 export type AppEmptyStateProps = AppStateProps;
 export type AppLoadingStateProps = Omit<AppStateProps, "tone"> & {
@@ -30,6 +35,14 @@ export type AppLoadingStateProps = Omit<AppStateProps, "tone"> & {
 };
 export type AppErrorStateProps = Omit<AppStateProps, "tone"> & {
   readonly tone?: Extract<AppStateTone, "error" | "warning">;
+};
+
+const ICON_TONE_CLASS: Record<AppStateTone, string> = {
+  neutral: "text-[color-mix(in_srgb,var(--lyra-text-primary)_72%,transparent)]",
+  info: "text-[var(--lyra-text-secondary)]",
+  success: "text-[var(--lyra-status-success)]",
+  warning: "text-[var(--lyra-status-warning)]",
+  error: "text-[var(--lyra-status-error)]"
 };
 
 const renderState = (
@@ -49,6 +62,7 @@ const renderState = (
   ref: ForwardedRef<HTMLDivElement>
 ) => {
   const iconNode = icon === false ? null : icon;
+  const alignStart = align === "start";
 
   return (
     <div
@@ -59,23 +73,53 @@ const renderState = (
         `lyra-app-state-density-${density}`,
         `lyra-app-state-align-${align}`,
         `lyra-app-state-tone-${tone}`,
+        "grid h-full min-h-0 w-full min-w-0 flex-1 basis-auto content-center items-center justify-center gap-[var(--lyra-app-state-gap)] rounded-[var(--lyra-radius-10)] border border-transparent p-[var(--lyra-app-state-pad)] text-center text-[var(--lyra-text-secondary)]",
+        density === "compact" &&
+          "h-auto min-h-0 flex-none self-auto gap-[var(--lyra-space-8)] p-[var(--lyra-space-12)] [--lyra-app-state-logo-size:var(--lyra-app-state-logo-min)]",
+        density === "spacious" && "p-[var(--lyra-space-24)]",
+        alignStart && "justify-items-start justify-start text-left",
         className
       )}
       {...props}
     >
       {iconNode === undefined || iconNode === null ? null : (
-        <span className="lyra-app-state-icon" aria-hidden="true">
+        <span
+          className={cn(
+            "lyra-app-state-icon inline-flex size-[var(--lyra-app-state-logo-size)] items-center justify-center",
+            "[&_svg]:size-[var(--lyra-app-state-logo-size)] [&_svg]:[stroke-width:1.8] [&_.lyra-app-logo-mark]:size-[var(--lyra-app-state-logo-size)]",
+            kind === "loading" &&
+              "animate-[lyra-app-state-pulse_1200ms_var(--lyra-ease-standard)_infinite] motion-reduce:animate-none",
+            ICON_TONE_CLASS[tone]
+          )}
+          aria-hidden="true"
+        >
           {iconNode}
         </span>
       )}
-      <span className="lyra-app-state-copy">
-        <strong className="lyra-app-state-title">{title}</strong>
+      <span className="lyra-app-state-copy grid min-w-0 max-w-[var(--lyra-app-state-copy-max)] gap-[var(--lyra-space-4)]">
+        <strong
+          className={cn(
+            "lyra-app-state-title text-[length:var(--lyra-text-size-14)] font-medium leading-[var(--lyra-text-line-body)]",
+            kind === "empty" ? "text-[var(--lyra-text-muted)]" : "text-[var(--lyra-text-primary)]"
+          )}
+        >
+          {title}
+        </strong>
         {description === undefined ? null : (
-          <span className="lyra-app-state-description">{description}</span>
+          <span className="lyra-app-state-description text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-caption)] text-[var(--lyra-text-muted)]">
+            {description}
+          </span>
         )}
       </span>
       {actions === undefined ? null : (
-        <span className="lyra-app-state-actions">{actions}</span>
+        <span
+          className={cn(
+            "lyra-app-state-actions inline-flex min-w-0 max-w-[var(--lyra-app-state-copy-max)] flex-wrap items-center justify-center gap-[var(--lyra-space-8)]",
+            alignStart && "justify-start"
+          )}
+        >
+          {actions}
+        </span>
       )}
     </div>
   );
