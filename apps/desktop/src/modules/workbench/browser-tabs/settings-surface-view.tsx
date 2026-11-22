@@ -65,7 +65,7 @@ import {
   ST_NAV_LIST_CLASS,
   ST_NAV_CLASS,
   ST_SHELL_CLASS,
-  ST_SURFACE_CLASS
+  ST_SURFACE_CLASS,
   ST_CONTROL_SLOT_CLASS,
   ST_ENGINE_BRAND_ICON_CLASS,
   ST_INLINE_INPUT_CLASS,
@@ -75,7 +75,12 @@ import {
   ST_ROW_LIST_CLASS,
   ST_STATUS_LIST_CLASS,
   ST_STATUS_ROW_CLASS,
-  ST_STATUS_ROWS_CLASS
+  ST_STATUS_ROWS_CLASS,
+  ST_INPUT_CLASS,
+  ST_SELECT_CONTENT_CLASS,
+  ST_SELECT_CONTENT_RICH_CLASS,
+  ST_SELECT_TRIGGER_CLASS,
+  ST_TEXTAREA_CLASS,
 } from "./settings-classes";
 import { LanguagePicker } from "./language-picker";
 import type { SettingsCategoryId } from "./settings-schema";
@@ -235,10 +240,10 @@ const SettingsChoiceSelect = ({ control }: { readonly control: SettingsChoiceCon
     control={(
       <AppSelect
         ariaLabel={control.label}
-        className="lyra-settings-select"
+        className={ST_SELECT_TRIGGER_CLASS}
         contentClassName={control.options.some((option) => option.description !== undefined)
-          ? "lyra-settings-select-content lyra-settings-select-content-rich"
-          : "lyra-settings-select-content"}
+          ? `${ST_SELECT_CONTENT_CLASS} ${ST_SELECT_CONTENT_RICH_CLASS}`
+          : ST_SELECT_CONTENT_CLASS}
         value={control.value}
         options={buildSelectOptions(control)}
         onValueChange={control.onChange}
@@ -289,7 +294,7 @@ const SettingsTextControl = ({ control }: { readonly control: SettingsTextContro
         control={(
           <AppTextarea
             aria-label={control.label}
-            className="lyra-settings-textarea"
+            className={ST_TEXTAREA_CLASS}
             value={control.value}
             placeholder={control.placeholder}
             onChange={(event) => {
@@ -307,7 +312,7 @@ const SettingsTextControl = ({ control }: { readonly control: SettingsTextContro
       control={(
         <AppInput
           aria-label={control.label}
-          className={`lyra-settings-input ${ST_INLINE_INPUT_CLASS}`}
+          className={`${ST_INPUT_CLASS} ${ST_INLINE_INPUT_CLASS}`}
           value={control.value}
           placeholder={control.placeholder}
           onChange={(event) => {

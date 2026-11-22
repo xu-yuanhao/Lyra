@@ -20,7 +20,7 @@ export const ST_NAV_ACTIONS_CLASS = `lyra-settings-nav-actions relative grid gap
 export const ST_NAV_DOCS_CLASS = `lyra-settings-nav-docs relative mt-[var(--lyra-space-6)] pt-[var(--lyra-space-10)] ${ST_NAV_RULE_BEFORE}`;
 
 export const ST_NAV_ITEM_CLASS =
-  "lyra-settings-nav-item relative inline-flex min-h-[var(--lyra-app-sidebar-row-h)] w-full items-center justify-start gap-[var(--lyra-space-8)] border-0 bg-transparent px-[var(--lyra-app-sidebar-row-pad-x)] py-0 text-left font-[family-name:var(--lyra-font-ui)] text-[length:var(--lyra-text-size-body)] font-medium text-[var(--lyra-text-secondary)] rounded-[var(--lyra-app-sidebar-row-radius)] transition-[background-color,border-color,color,box-shadow] duration-[var(--lyra-motion-fast)] enabled:hover:text-[var(--lyra-text-primary)] enabled:hover:bg-[var(--lyra-settings-row-hover-bg)]";
+  "lyra-settings-nav-item relative inline-flex min-h-[var(--lyra-app-sidebar-row-h)] w-full items-center justify-start gap-[var(--lyra-space-8)] border-0 bg-transparent px-[var(--lyra-app-sidebar-row-pad-x)] py-0 text-left font-[family-name:var(--lyra-font-ui)] text-[length:var(--lyra-text-size-body)] font-medium text-[var(--lyra-text-secondary)] rounded-[var(--lyra-app-sidebar-row-radius)] transition-[background-color,border-color,color,box-shadow] duration-[var(--lyra-motion-fast)] enabled:hover:text-[var(--lyra-text-primary)] enabled:hover:bg-[var(--lyra-settings-row-hover-bg)] focus-visible:outline-0 focus-visible:text-[var(--lyra-text-primary)] focus-visible:bg-[var(--lyra-settings-row-hover-bg)] focus-visible:shadow-[inset_0_0_0_var(--lyra-stroke-thin)_color-mix(in_srgb,var(--lyra-settings-border-strong)_72%,transparent)]";
 
 export const ST_NAV_ITEM_ACTIVE_CLASS =
   "lyra-settings-nav-item-active font-medium text-[var(--lyra-text-primary)] bg-[var(--lyra-settings-row-active-bg)] [&::before]:hidden";
@@ -209,3 +209,20 @@ export const ST_IMPORT_SOURCE_ICON_CLASS =
 
 export const ST_IMPORT_SOURCE_AVATAR_CLASS =
   "lyra-settings-import-source-avatar absolute -bottom-[var(--lyra-space-2)] -right-[var(--lyra-space-2)] size-[var(--lyra-icon-size-14)] rounded-[var(--lyra-radius-pill)] border border-[var(--lyra-stroke-thin)] border-[var(--lyra-settings-card-bg)] bg-[var(--lyra-settings-card-bg)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-caption)] font-semibold leading-[var(--lyra-text-line-flat)] [&_.lyra-identity-icon-image]:rounded-[inherit]";
+
+const ST_CONTROL_SKIN =
+  "w-full min-w-0 rounded-[var(--lyra-control-radius-default)] border border-[var(--lyra-stroke-thin)] border-[var(--lyra-settings-input-border)] bg-[var(--lyra-settings-input-bg)] text-[var(--lyra-text-primary)] font-[family-name:var(--lyra-font-ui)] text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-body)] transition-[background-color,border-color,box-shadow] duration-[var(--lyra-motion-fast)] not-disabled:hover:bg-[var(--lyra-settings-input-hover-bg)] not-disabled:hover:border-[var(--lyra-settings-input-focus-border)] placeholder:text-[var(--lyra-settings-input-placeholder)] focus-visible:outline-0 focus-visible:bg-[var(--lyra-settings-input-focus-bg)] focus-visible:border-[var(--lyra-settings-input-focus-border)] focus-visible:shadow-none";
+
+export const ST_INPUT_CLASS = `lyra-settings-input ${ST_CONTROL_SKIN} h-[var(--lyra-control-h-default)] px-[var(--lyra-space-8)] py-0`;
+
+export const ST_TEXTAREA_CLASS =
+  `lyra-settings-textarea ${ST_CONTROL_SKIN} min-h-[var(--lyra-unit-108)] resize-y px-[var(--lyra-space-12)] py-[var(--lyra-space-10)] font-[family-name:var(--lyra-font-mono)]`;
+
+export const ST_SELECT_TRIGGER_CLASS =
+  "lyra-settings-select w-full [--lyra-select-trigger-bg:var(--lyra-app-input-bg)] [--lyra-select-trigger-hover-bg:var(--lyra-app-input-hover-bg)] [--lyra-select-trigger-open-bg:var(--lyra-app-input-hover-bg)] [--lyra-select-border:var(--lyra-app-input-border)] [--lyra-select-hover-border:var(--lyra-app-input-focus-border)] [--lyra-select-focus-border:var(--lyra-app-input-focus-border)] [--lyra-select-focus:transparent] bg-[var(--lyra-select-trigger-bg)]! border-[var(--lyra-select-border)]! rounded-[var(--lyra-control-radius-default)]! hover:bg-[var(--lyra-select-trigger-hover-bg)]! hover:border-[var(--lyra-select-hover-border)]! hover:shadow-none! data-[state=open]:bg-[var(--lyra-select-trigger-open-bg)]! data-[state=open]:border-[var(--lyra-select-focus-border)]! data-[state=open]:shadow-none! focus-visible:outline-0 focus-visible:bg-[var(--lyra-select-trigger-open-bg)]! focus-visible:border-[var(--lyra-select-focus-border)]! focus-visible:shadow-none!";
+
+export const ST_SELECT_CONTENT_CLASS =
+  "lyra-settings-select-content [--lyra-select-content-bg:var(--lyra-app-popover-bg)] [--lyra-select-border:var(--lyra-app-border)] [--lyra-select-item-hover-bg:var(--lyra-app-row-hover-bg)] min-w-[max(var(--radix-dropdown-menu-trigger-width,var(--lyra-unit-200)),var(--lyra-unit-200))] bg-[var(--lyra-select-content-bg)]! border-[var(--lyra-select-border)]! [&_.lyra-ui-select-item[data-highlighted]]:bg-[var(--lyra-select-item-hover-bg)]! [&_.lyra-ui-select-item[data-state=checked]]:bg-transparent! [&_.lyra-ui-select-item[data-state=checked][data-highlighted]]:bg-[var(--lyra-select-item-hover-bg)]!";
+
+export const ST_SELECT_CONTENT_RICH_CLASS =
+  "lyra-settings-select-content-rich min-w-[max(var(--radix-dropdown-menu-trigger-width,var(--lyra-unit-220)),var(--lyra-unit-220))]";

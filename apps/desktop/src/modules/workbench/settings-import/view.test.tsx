@@ -53,7 +53,7 @@ describe("SettingsImportView", () => {
     expect(detect).toBeDefined();
     expect(detectButtons).toHaveLength(5);
     for (const button of detectButtons) {
-      expect(button).toHaveClass("lyra-ui-button");
+      expect(button).toHaveAttribute("data-slot", "button");
     }
     const sourceRows = document.querySelectorAll(".lyra-settings-row-list > .lyra-settings-import-source");
     expect(sourceRows).toHaveLength(5);

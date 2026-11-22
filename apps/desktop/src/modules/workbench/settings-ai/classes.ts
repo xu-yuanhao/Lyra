@@ -20,7 +20,7 @@ export const AI_CUSTOM_ROW_CLASS =
   "lyra-settings-ai-custom-model-row grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--lyra-space-8)]";
 
 export const AI_INPUT_CLASS =
-  "lyra-settings-ai-input min-h-[var(--lyra-control-h-default)] w-full min-w-0 rounded-[var(--lyra-control-radius-default)] border border-[var(--lyra-stroke-thin)] border-[var(--lyra-settings-input-border)] bg-[var(--lyra-settings-input-bg)] px-[var(--lyra-space-8)] py-0 font-[family-name:var(--lyra-font-ui)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-body)] transition-[background-color,border-color,box-shadow] duration-[var(--lyra-motion-fast)] hover:border-[var(--lyra-settings-input-focus-border)] hover:bg-[var(--lyra-settings-input-hover-bg)] placeholder:text-[var(--lyra-settings-input-placeholder)] read-only:text-[var(--lyra-text-secondary)]";
+  "lyra-settings-ai-input min-h-[var(--lyra-control-h-default)] w-full min-w-0 rounded-[var(--lyra-control-radius-default)] border border-[var(--lyra-stroke-thin)] border-[var(--lyra-settings-input-border)] bg-[var(--lyra-settings-input-bg)] px-[var(--lyra-space-8)] py-0 font-[family-name:var(--lyra-font-ui)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-body)] transition-[background-color,border-color,box-shadow] duration-[var(--lyra-motion-fast)] hover:border-[var(--lyra-settings-input-focus-border)] hover:bg-[var(--lyra-settings-input-hover-bg)] placeholder:text-[var(--lyra-settings-input-placeholder)] read-only:text-[var(--lyra-text-secondary)] focus-visible:outline-0 focus-visible:bg-[var(--lyra-settings-input-focus-bg)] focus-visible:border-[var(--lyra-settings-input-focus-border)] focus-visible:shadow-none";
 
 export const AI_INPUT_MULTILINE_CLASS =
   "lyra-settings-ai-input-multiline min-h-[var(--lyra-unit-96)] resize-y px-[var(--lyra-space-12)] py-[var(--lyra-space-10)]";
@@ -30,7 +30,8 @@ export const AI_MODEL_INPUT_CLASS = "lyra-settings-ai-model-input min-h-[var(--l
 export const AI_SWITCH_ROW_CLASS =
   "lyra-settings-ai-switch-row grid min-h-[var(--lyra-control-h-36)] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--lyra-space-12)] border-0 bg-transparent p-0 text-[var(--lyra-text-secondary)] text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-body)] [&>span]:min-w-0 [&>span]:overflow-hidden [&>span]:text-ellipsis [&>span]:whitespace-nowrap";
 
-export const AI_SELECT_CLASS = "lyra-settings-ai-select w-full";
+export const AI_SELECT_CLASS =
+  "lyra-settings-ai-select w-full [--lyra-select-trigger-bg:var(--lyra-app-input-bg)] [--lyra-select-trigger-hover-bg:var(--lyra-app-input-hover-bg)] [--lyra-select-trigger-open-bg:var(--lyra-app-input-hover-bg)] [--lyra-select-border:var(--lyra-app-input-border)] [--lyra-select-hover-border:var(--lyra-app-input-focus-border)] [--lyra-select-focus-border:var(--lyra-app-input-focus-border)] [--lyra-select-focus:transparent] bg-[var(--lyra-select-trigger-bg)]! border-[var(--lyra-select-border)]! rounded-[var(--lyra-control-radius-default)]! hover:bg-[var(--lyra-select-trigger-hover-bg)]! hover:border-[var(--lyra-select-hover-border)]! hover:shadow-none! data-[state=open]:bg-[var(--lyra-select-trigger-open-bg)]! data-[state=open]:border-[var(--lyra-select-focus-border)]! data-[state=open]:shadow-none! focus-visible:outline-0 focus-visible:bg-[var(--lyra-select-trigger-open-bg)]! focus-visible:border-[var(--lyra-select-focus-border)]! focus-visible:shadow-none!";
 export const AI_MODEL_MODE_PICKER_CLASS = "lyra-settings-ai-model-mode-picker w-full";
 
 export const AI_ACTIONS_CLASS =

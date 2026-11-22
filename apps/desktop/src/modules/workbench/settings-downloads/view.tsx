@@ -20,7 +20,11 @@ import type { SettingsDownloadsLabels } from "./types";
 import {
   ST_DOWNLOADS_GRID_CLASS,
   ST_INLINE_INPUT_CLASS,
-  ST_ROW_BLOCK_CONTROL_CLASS
+  ST_ROW_BLOCK_CONTROL_CLASS,
+  ST_INPUT_CLASS,
+  ST_SELECT_CONTENT_CLASS,
+  ST_SELECT_TRIGGER_CLASS,
+  ST_TEXTAREA_CLASS,
 } from "../browser-tabs/settings-classes";
 
 type Props = {
@@ -148,8 +152,8 @@ export const SettingsDownloadsView = ({ desktopApi, labels, onChooseDirectory }:
           control={(
             <AppSelect
               ariaLabel={labels.proxyMode}
-              className="lyra-settings-select"
-              contentClassName="lyra-settings-select-content"
+              className={ST_SELECT_TRIGGER_CLASS}
+              contentClassName={ST_SELECT_CONTENT_CLASS}
               value={settings.proxy.mode}
               options={[
                 { value: "system", label: labels.proxyModeSystem },
@@ -171,7 +175,7 @@ export const SettingsDownloadsView = ({ desktopApi, labels, onChooseDirectory }:
             control={(
               <AppInput
                 aria-label={labels.proxyUrl}
-                className={`lyra-settings-input ${ST_INLINE_INPUT_CLASS}`}
+                className={`${ST_INPUT_CLASS} ${ST_INLINE_INPUT_CLASS}`}
                 value={proxyUrlDraft}
                 placeholder={labels.proxyUrlPlaceholder}
                 onChange={(event) => {
@@ -225,7 +229,7 @@ export const SettingsDownloadsView = ({ desktopApi, labels, onChooseDirectory }:
           control={(
             <AppInput
               aria-label={labels.btSeedTime}
-              className={`lyra-settings-input ${ST_INLINE_INPUT_CLASS}`}
+              className={`${ST_INPUT_CLASS} ${ST_INLINE_INPUT_CLASS}`}
               inputMode="numeric"
               value={seedTimeDraft}
               onChange={(event) => {
@@ -241,7 +245,7 @@ export const SettingsDownloadsView = ({ desktopApi, labels, onChooseDirectory }:
           control={(
             <AppTextarea
               aria-label={labels.btTrackers}
-              className="lyra-settings-textarea"
+              className={ST_TEXTAREA_CLASS}
               value={trackersDraft}
               placeholder={labels.btTrackersPlaceholder}
               onChange={(event) => {
