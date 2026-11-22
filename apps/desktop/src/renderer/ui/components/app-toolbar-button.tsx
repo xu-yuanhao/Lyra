@@ -15,11 +15,19 @@ export const AppToolbarButton = forwardRef<HTMLButtonElement, AppToolbarButtonPr
 }, ref) => (
   <AppIconButton
     ref={ref}
-    className={cn("lyra-app-toolbar-button", label !== undefined && "lyra-app-toolbar-button-with-label", className)}
+    className={cn(
+      "lyra-app-toolbar-button",
+      label !== undefined && "lyra-app-toolbar-button-with-label w-auto px-[var(--lyra-space-8)]",
+      className
+    )}
     {...props}
   >
     {children}
-    {label === undefined ? null : <span className="lyra-app-toolbar-button-label">{label}</span>}
+    {label === undefined ? null : (
+      <span className="lyra-app-toolbar-button-label min-w-0 overflow-hidden text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-caption)] text-inherit text-ellipsis whitespace-nowrap">
+        {label}
+      </span>
+    )}
   </AppIconButton>
 ));
 

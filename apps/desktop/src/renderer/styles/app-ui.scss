@@ -1,104 +1,3 @@
-.lyra-ui-button {
-  min-width: 0;
-  font-family: var(--lyra-font-ui);
-}
-
-.lyra-ui-button:focus-visible,
-.lyra-ui-input:focus-visible,
-.lyra-ui-textarea:focus-visible,
-.lyra-ui-choice-card:focus-visible {
-  outline: 0;
-}
-
-.lyra-ui-button:disabled,
-.lyra-ui-input:disabled,
-.lyra-ui-textarea:disabled,
-.lyra-ui-choice-card:disabled {
-  cursor: not-allowed;
-  opacity: var(--lyra-opacity-disabled);
-}
-
-.lyra-ui-button-size-sm {
-  height: var(--lyra-control-h-28);
-  padding-inline: var(--lyra-space-10);
-}
-
-.lyra-ui-button-size-md {
-  height: var(--lyra-control-h-32);
-  padding-inline: var(--lyra-space-12);
-}
-
-.lyra-ui-button-size-lg {
-  height: var(--lyra-control-h-40);
-  padding-inline: var(--lyra-space-16);
-}
-
-.lyra-ui-button-size-icon {
-  width: var(--lyra-control-h-32);
-  height: var(--lyra-control-h-32);
-  padding: 0;
-}
-
-.lyra-app-icon-button {
-  width: var(--lyra-control-h-28);
-  height: var(--lyra-control-h-28);
-  border-radius: var(--lyra-radius-8);
-  color: var(--lyra-text-muted);
-  background: transparent;
-  border-color: transparent;
-  opacity: 0.78;
-}
-
-.lyra-app-icon-button svg {
-  width: var(--lyra-icon-size-14);
-  height: var(--lyra-icon-size-14);
-  stroke-width: 1.8;
-}
-
-.lyra-app-icon-button:hover:not(:disabled),
-.lyra-app-icon-button[data-active="true"] {
-  color: var(--lyra-text-primary);
-  background: transparent;
-  border-color: transparent;
-  opacity: 1;
-}
-
-.lyra-app-icon-button:active:not(:disabled) {
-  background: transparent;
-  transform: scale(0.94);
-}
-
-.lyra-app-icon-button[data-tone="danger"]:hover:not(:disabled) {
-  color: var(--lyra-status-error);
-  background: transparent;
-  border-color: transparent;
-}
-
-.lyra-app-toolbar-button {
-  width: var(--lyra-control-h-28);
-  height: var(--lyra-control-h-28);
-}
-
-.lyra-app-toolbar-button-with-label {
-  width: auto;
-  padding-inline: var(--lyra-space-8);
-  grid-auto-flow: column;
-}
-
-.lyra-app-toolbar-button-label {
-  min-width: 0;
-  overflow: hidden;
-  color: inherit;
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lyra-app-window-button {
-  width: var(--lyra-size-icon-button-w);
-  height: var(--lyra-size-icon-button-h);
-}
 .lyra-app-logo-mark {
   display: inline-block;
   width: var(--lyra-app-logo-size, var(--lyra-icon-size-16));
@@ -155,23 +54,6 @@
   color: var(--lyra-text-primary);
 }
 
-.lyra-ui-input,
-.lyra-ui-textarea {
-  font-family: var(--lyra-font-ui);
-}
-
-.lyra-ui-input {
-  height: var(--lyra-control-h-default);
-  padding-inline: var(--lyra-space-12);
-  border-radius: var(--lyra-control-radius-default);
-}
-
-.lyra-ui-textarea {
-  min-height: var(--lyra-unit-92);
-  padding: var(--lyra-space-10) var(--lyra-space-12);
-  border-radius: var(--lyra-control-radius-default);
-}
-
 .lyra-app-module {
   box-sizing: border-box;
   width: 100%;
@@ -205,28 +87,10 @@
   line-height: var(--lyra-text-line-caption);
 }
 
-.lyra-app-module-toolbar .lyra-ui-input,
-.lyra-app-module-compound .lyra-ui-input,
-.lyra-app-module-dialog .lyra-ui-input {
-  width: auto;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 .lyra-app-module-compound {
   display: flex;
   min-width: var(--lyra-space-64);
   flex: 1 1 auto;
-}
-
-.lyra-app-module-compound > .lyra-ui-input {
-  border-start-end-radius: 0;
-  border-end-end-radius: 0;
-}
-
-.lyra-app-module-compound > .lyra-ui-button {
-  border-start-start-radius: 0;
-  border-end-start-radius: 0;
 }
 
 .lyra-app-module-aside {
@@ -240,32 +104,6 @@
 .lyra-app-module-aside[data-edge="end"] {
   border-inline-end: 0;
   border-inline-start: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-}
-
-.lyra-ui-button.lyra-app-module-nav,
-.lyra-ui-button.lyra-app-module-tile {
-  width: 100%;
-  height: auto;
-  justify-content: flex-start;
-  white-space: normal;
-  text-align: start;
-}
-
-.lyra-ui-button.lyra-app-module-nav {
-  min-height: var(--lyra-control-h-28);
-  padding-block: var(--lyra-space-8);
-}
-
-.lyra-ui-button.lyra-app-module-tile {
-  padding: var(--lyra-space-12);
-  align-items: flex-start;
-  flex-direction: column;
-}
-
-.lyra-app-module .lyra-ui-button[data-active="true"],
-.lyra-app-module .lyra-ui-button[aria-pressed="true"] {
-  color: var(--lyra-text-primary);
-  background: var(--lyra-app-row-active-bg);
 }
 
 .lyra-app-module-card {
@@ -1064,47 +902,6 @@
   word-break: break-word;
 }
 
-.lyra-ui-tooltip-content {
-  z-index: var(--lyra-z-dialog);
-  max-width: min(var(--lyra-unit-280), calc(100vw - var(--lyra-space-24)));
-  padding: var(--lyra-space-6) var(--lyra-space-8);
-  border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-6);
-  background: var(--lyra-app-popover-bg);
-  color: var(--lyra-text-primary);
-  box-shadow: var(--lyra-shadow-elevated-sm);
-  font-family: var(--lyra-font-ui);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-  overflow-wrap: anywhere;
-}
-
-.lyra-ui-dialog-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--lyra-z-dialog);
-  background: var(--lyra-app-material-overlay-bg);
-  backdrop-filter: var(--lyra-app-material-blur-sm) var(--lyra-app-material-saturate);
-}
-
-.lyra-ui-dialog-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  z-index: calc(var(--lyra-z-dialog) + 1);
-  width: min(var(--lyra-unit-520), calc(100vw - var(--lyra-space-32)));
-  max-height: calc(100vh - var(--lyra-space-48));
-  overflow: hidden;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-10);
-  color: var(--lyra-text-primary);
-  background: var(--lyra-app-popover-bg);
-  box-shadow: var(--lyra-shadow-elevated-lg);
-  transform: translate(-50%, -50%);
-}
-
 .lyra-app-dialog-header {
   min-width: 0;
   min-height: var(--lyra-control-h-52);
@@ -1119,23 +916,6 @@
   min-width: 0;
   display: grid;
   gap: var(--lyra-space-4);
-}
-
-.lyra-ui-dialog-title {
-  min-width: 0;
-  margin: 0;
-  color: var(--lyra-text-primary);
-  font-size: var(--lyra-text-size-14);
-  font-weight: 600;
-  line-height: var(--lyra-text-line-20);
-}
-
-.lyra-ui-dialog-description {
-  min-width: 0;
-  margin: 0;
-  color: var(--lyra-text-secondary);
-  font-size: var(--lyra-text-size-body);
-  line-height: var(--lyra-text-line-body);
 }
 
 .lyra-app-dialog-description-hidden {
