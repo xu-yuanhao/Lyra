@@ -20,6 +20,34 @@ import {
 } from "./app-select";
 import { cn } from "../utils";
 
+const MODEL_MENU_SCROLLBAR_CLASS = cn(
+  "[scrollbar-width:thin] [scrollbar-color:var(--lyra-scrollbar-thumb-idle)_transparent]",
+  "[&::-webkit-scrollbar]:size-[var(--lyra-space-6)] [&::-webkit-scrollbar-track]:bg-transparent",
+  "[&::-webkit-scrollbar-thumb]:min-h-[var(--lyra-space-32)] [&::-webkit-scrollbar-thumb]:rounded-[var(--lyra-radius-pill)] [&::-webkit-scrollbar-thumb]:bg-[var(--lyra-scrollbar-thumb-idle)]",
+  "[&::-webkit-scrollbar-thumb:hover]:bg-[var(--lyra-scrollbar-thumb-hover)]"
+);
+
+const MODEL_MENU_CONTENT_CLASS = cn(
+  "lyra-app-model-menu-content lyra-app-model-menu-sub-content",
+  "min-w-[min(max(var(--radix-dropdown-menu-trigger-width,var(--lyra-unit-180)),var(--lyra-unit-180)),var(--radix-dropdown-menu-content-available-width,calc(100vw_-_var(--lyra-space-24))))]",
+  "max-w-[min(var(--lyra-app-model-menu-max-width,var(--lyra-unit-320)),var(--radix-dropdown-menu-content-available-width,calc(100vw_-_var(--lyra-space-24))))]",
+  MODEL_MENU_SCROLLBAR_CLASS
+);
+
+const MODEL_MENU_ITEM_CLASS =
+  "lyra-app-model-menu-item grid min-h-[var(--lyra-control-h-28)] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-[var(--lyra-space-8)] rounded-[var(--lyra-radius-6)] px-[var(--lyra-space-8)] py-0 text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-body)] text-[var(--lyra-text-secondary)] outline-none select-none";
+
+const MODEL_MENU_ITEM_WITH_ICON_CLASS =
+  "lyra-app-model-menu-item-with-icon grid-cols-[var(--lyra-icon-size-16)_minmax(0,1fr)_auto]";
+
+const MODEL_MENU_OPTION_ICON_CLASS = cn(
+  "lyra-app-model-menu-option-icon inline-flex size-[var(--lyra-icon-size-16)] shrink-0 items-center justify-center text-[var(--lyra-text-secondary)]",
+  "[&_svg]:size-[var(--lyra-icon-size-16)] [&_.lyra-agent-provider-brand-icon]:size-[var(--lyra-icon-size-16)]"
+);
+
+const MODEL_MENU_LABEL_CLASS =
+  "lyra-app-model-menu-item-label min-w-0 overflow-hidden text-left text-ellipsis whitespace-nowrap";
+
 type DropdownMenuContentProps = ComponentProps<typeof DropdownMenuContent>;
 
 export type AppModelMenuOption<TValue extends string = string> = {
@@ -141,8 +169,9 @@ export const AppModelMenu = <TModelValue extends string = string>({
       <DropdownMenuItem
         key={option.value}
         className={cn(
-          "lyra-app-model-menu-item",
-          option.icon === undefined ? "" : "lyra-app-model-menu-item-with-icon"
+          MODEL_MENU_ITEM_CLASS,
+          "group/model-menu-item",
+          option.icon === undefined ? "" : MODEL_MENU_ITEM_WITH_ICON_CLASS
         )}
         data-active={active ? "true" : undefined}
         onSelect={() => {
@@ -153,11 +182,11 @@ export const AppModelMenu = <TModelValue extends string = string>({
         {...textValueProps}
       >
         {option.icon === undefined ? null : (
-          <span className="lyra-app-model-menu-option-icon" aria-hidden="true">
+          <span className={cn(MODEL_MENU_OPTION_ICON_CLASS, "group-data-[highlighted]/model-menu-item:text-[var(--lyra-text-primary)] group-data-[active=true]/model-menu-item:text-[var(--lyra-text-primary)]")} aria-hidden="true">
             {option.icon}
           </span>
         )}
-        <span className="lyra-app-model-menu-item-label">
+        <span className={MODEL_MENU_LABEL_CLASS}>
           {option.label}
         </span>
         {active ? (
@@ -176,23 +205,25 @@ export const AppModelMenu = <TModelValue extends string = string>({
       <DropdownMenuSub key={`${option.value}:${submenuGeneration}`}>
         <DropdownMenuSubTrigger
           className={cn(
-            "lyra-app-model-menu-item lyra-app-model-menu-sub-trigger",
-            option.icon === undefined ? "" : "lyra-app-model-menu-item-with-icon"
+            MODEL_MENU_ITEM_CLASS,
+            "lyra-app-model-menu-sub-trigger grid-cols-[minmax(0,1fr)_auto_var(--lyra-icon-size-14)]",
+            "group/model-menu-item",
+            option.icon === undefined ? "" : cn(MODEL_MENU_ITEM_WITH_ICON_CLASS, "grid-cols-[var(--lyra-icon-size-16)_minmax(0,1fr)_var(--lyra-icon-size-14)]")
           )}
           data-active={option.value === value ? "true" : undefined}
           {...(optionText === undefined ? {} : { textValue: optionText })}
         >
           {option.icon === undefined ? null : (
-            <span className="lyra-app-model-menu-option-icon" aria-hidden="true">
+            <span className={cn(MODEL_MENU_OPTION_ICON_CLASS, "group-data-[highlighted]/model-menu-item:text-[var(--lyra-text-primary)] group-data-[active=true]/model-menu-item:text-[var(--lyra-text-primary)]")} aria-hidden="true">
               {option.icon}
             </span>
           )}
-          <span className="lyra-app-model-menu-item-label">
+          <span className={MODEL_MENU_LABEL_CLASS}>
             {option.label}
           </span>
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent
-          className="lyra-app-model-menu-sub-content"
+          className={cn(MODEL_MENU_CONTENT_CLASS, contentClassName)}
           alignOffset={-4}
           collisionPadding={collisionPadding}
           hideWhenDetached
@@ -206,7 +237,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
               return (
                 <DropdownMenuItem
                   key={`${submenu.id}:${effort.value}`}
-                  className="lyra-app-model-menu-item"
+                  className={cn(MODEL_MENU_ITEM_CLASS, "lyra-app-model-menu-item")}
                   data-active={active ? "true" : undefined}
                   onSelect={() => {
                     if (onOptionSubmenuSelect === undefined) {
@@ -220,7 +251,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
                   {...(effort.disabled === undefined ? {} : { disabled: effort.disabled })}
                   {...(effortText === undefined ? {} : { textValue: effortText })}
                 >
-                  <span className="lyra-app-model-menu-item-label">
+                  <span className={MODEL_MENU_LABEL_CLASS}>
                     {effort.label}
                   </span>
                   {active ? (
@@ -242,15 +273,15 @@ export const AppModelMenu = <TModelValue extends string = string>({
       modal={false}
     >
       <DropdownMenuTrigger
-        className={cn(APP_SELECT_TRIGGER_CLASS, "lyra-app-model-menu-trigger", className)}
+        className={cn(APP_SELECT_TRIGGER_CLASS, "lyra-app-model-menu-trigger cursor-default", className)}
         aria-label={ariaLabel}
         title={labelText(effectiveTriggerLabel) ?? ariaLabel}
         disabled={disabled || allOptions.length === 0}
         data-has-icon={triggerIcon === undefined ? undefined : "true"}
       >
-        <span className={APP_SELECT_TRIGGER_VALUE_CLASS}>
+        <span className={cn(APP_SELECT_TRIGGER_VALUE_CLASS, triggerIcon !== undefined && "inline-flex min-w-0 items-center gap-[var(--lyra-space-6)]")}>
           {triggerIcon === undefined ? null : (
-            <span className="lyra-app-model-menu-option-icon" aria-hidden="true">
+            <span className={MODEL_MENU_OPTION_ICON_CLASS} aria-hidden="true">
               {triggerIcon}
             </span>
           )}
@@ -259,7 +290,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
         <ChevronDown className={APP_SELECT_CHEVRON_CLASS} aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className={cn("lyra-app-model-menu-content", contentClassName)}
+        className={cn(MODEL_MENU_CONTENT_CLASS, contentClassName)}
         align="start"
         collisionPadding={collisionPadding}
         {...(side === undefined ? {} : { side })}
@@ -316,7 +347,10 @@ export const AppModelMenu = <TModelValue extends string = string>({
                 return (
                   <DropdownMenuSub key={`${submenu.id}:${submenuGeneration}`}>
                     <DropdownMenuSubTrigger
-                      className="lyra-app-model-menu-sub-trigger"
+                      className={cn(
+                        MODEL_MENU_ITEM_CLASS,
+                        "lyra-app-model-menu-sub-trigger grid-cols-[minmax(0,1fr)_auto_var(--lyra-icon-size-14)]"
+                      )}
                       aria-label={
                         currentLabelText === undefined
                           ? submenu.ariaLabel
@@ -324,15 +358,15 @@ export const AppModelMenu = <TModelValue extends string = string>({
                       }
                       {...submenuDisabledProps}
                     >
-                      <span className="lyra-app-model-menu-sub-label">
+                      <span className="lyra-app-model-menu-sub-label min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                         {submenu.label}
                       </span>
-                      <span className="lyra-app-model-menu-sub-value">
+                      <span className="lyra-app-model-menu-sub-value min-w-0 max-w-[var(--lyra-unit-80)] overflow-hidden text-ellipsis whitespace-nowrap text-[length:var(--lyra-text-size-caption)] text-[var(--lyra-text-muted)]">
                         {currentLabel}
                       </span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent
-                      className="lyra-app-model-menu-sub-content"
+                      className={MODEL_MENU_CONTENT_CLASS}
                       alignOffset={-4}
                       collisionPadding={collisionPadding}
                       hideWhenDetached
@@ -353,8 +387,9 @@ export const AppModelMenu = <TModelValue extends string = string>({
                           <DropdownMenuItem
                             key={option.value}
                             className={cn(
-                              "lyra-app-model-menu-item",
-                              option.icon === undefined ? "" : "lyra-app-model-menu-item-with-icon"
+                              MODEL_MENU_ITEM_CLASS,
+                              "group/model-menu-item",
+                              option.icon === undefined ? "" : MODEL_MENU_ITEM_WITH_ICON_CLASS
                             )}
                             data-active={active ? "true" : undefined}
                             onSelect={() => {
@@ -365,11 +400,11 @@ export const AppModelMenu = <TModelValue extends string = string>({
                             {...textValueProps}
                           >
                             {option.icon === undefined ? null : (
-                              <span className="lyra-app-model-menu-option-icon" aria-hidden="true">
+                              <span className={cn(MODEL_MENU_OPTION_ICON_CLASS, "group-data-[highlighted]/model-menu-item:text-[var(--lyra-text-primary)] group-data-[active=true]/model-menu-item:text-[var(--lyra-text-primary)]")} aria-hidden="true">
                                 {option.icon}
                               </span>
                             )}
-                            <span className="lyra-app-model-menu-item-label">
+                            <span className={MODEL_MENU_LABEL_CLASS}>
                               {option.label}
                             </span>
                             {active ? (
