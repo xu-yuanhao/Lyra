@@ -98,31 +98,7 @@
 .lyra-app-window-button {
   width: var(--lyra-size-icon-button-w);
   height: var(--lyra-size-icon-button-h);
-  border-color: transparent;
-  border-radius: var(--lyra-radius-6);
-  color: var(--lyra-text-secondary);
-  background: transparent;
-  opacity: var(--lyra-opacity-icon-dim);
 }
-
-.lyra-app-window-button:hover:not(:disabled),
-.lyra-app-window-button[data-active="true"] {
-  color: var(--lyra-text-primary);
-  background: transparent;
-  opacity: 1;
-}
-
-.lyra-app-window-button:active:not(:disabled) {
-  background: transparent;
-  transform: none;
-}
-
-.lyra-app-window-button[data-window-action="close"]:hover:not(:disabled) {
-  color: var(--lyra-window-close-hover-bg);
-  background: transparent;
-  opacity: 1;
-}
-
 .lyra-app-logo-mark {
   display: inline-block;
   width: var(--lyra-app-logo-size, var(--lyra-icon-size-16));
@@ -727,46 +703,6 @@
   max-width: calc(var(--lyra-unit-108) + var(--lyra-space-2));
 }
 
-.lyra-app-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  min-height: var(--lyra-control-h-24);
-  padding: 0 var(--lyra-space-8);
-  border: var(--lyra-stroke-thin) solid color-mix(in srgb, var(--lyra-app-border) 80%, transparent);
-  border-radius: var(--lyra-radius-pill);
-  color: var(--lyra-text-secondary);
-  background: var(--lyra-app-surface-strong-bg);
-  font-size: var(--lyra-text-size-caption);
-  font-weight: 500;
-  line-height: var(--lyra-text-line-caption);
-  white-space: nowrap;
-}
-
-.lyra-app-badge-success {
-  border-color: color-mix(in srgb, var(--lyra-status-success) 32%, var(--lyra-app-border));
-  color: var(--lyra-status-success);
-  background: color-mix(in srgb, var(--lyra-status-success) 10%, transparent);
-}
-
-.lyra-app-badge-warning {
-  border-color: color-mix(in srgb, var(--lyra-status-warning) 34%, var(--lyra-app-border));
-  color: var(--lyra-status-warning);
-  background: color-mix(in srgb, var(--lyra-status-warning) 10%, transparent);
-}
-
-.lyra-app-badge-error {
-  border-color: color-mix(in srgb, var(--lyra-status-error) 34%, var(--lyra-app-border));
-  color: var(--lyra-status-error);
-  background: color-mix(in srgb, var(--lyra-status-error) 10%, transparent);
-}
-
-.lyra-app-badge-info {
-  border-color: color-mix(in srgb, var(--lyra-text-secondary) 34%, var(--lyra-app-border));
-  color: var(--lyra-text-secondary);
-  background: color-mix(in srgb, var(--lyra-text-secondary) 9%, transparent);
-}
 
 .lyra-app-sidebar-nav {
   --lyra-app-sidebar-row-hover-bg: var(--lyra-app-row-hover-bg);

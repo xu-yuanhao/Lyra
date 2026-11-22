@@ -21,7 +21,10 @@ export const AppWindowButton = forwardRef<HTMLButtonElement, AppWindowButtonProp
     active={active}
     tone={action === "close" ? "danger" : "muted"}
     data-window-action={action}
-    className={cn("lyra-app-window-button", className)}
+    className={cn(
+      "lyra-app-window-button size-[var(--lyra-size-icon-button-w)] border-transparent text-[var(--lyra-text-secondary)] opacity-[var(--lyra-opacity-icon-dim)] hover:bg-transparent hover:opacity-100 data-[active=true]:opacity-100 data-[window-action=close]:hover:text-[var(--lyra-window-close-hover-bg)]",
+      className
+    )}
     {...props}
   />
 ));
