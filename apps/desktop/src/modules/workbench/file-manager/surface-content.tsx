@@ -1,4 +1,4 @@
-import { AppErrorState, AppLoadingState } from "@renderer/ui/components";
+import { Spinner } from "@renderer/ui/components/spinner";
 
 import { FileManagerDirectoryContent } from "./surface-directory";
 import { FileManagerDownloadsSlot } from "./downloads-slot";
@@ -27,11 +27,10 @@ export const FileManagerContent = ({
     <div className="lyra-file-manager-content-scroll">
       {renderModel.body.kind === "loading" ? (
         <>
-          <AppLoadingState
-            className="lyra-file-manager-empty-state"
-            density="compact"
-            title={labels.loading}
-          />
+          <div className="lyra-file-manager-empty-state flex items-center justify-center gap-[var(--lyra-space-8)] text-sm text-muted-foreground">
+            <Spinner className="size-4" />
+            <span>{labels.loading}</span>
+          </div>
           <FileManagerLoadingSkeleton
             viewKind={renderModel.viewKind}
             presentationMode={renderModel.presentationMode}
@@ -41,10 +40,9 @@ export const FileManagerContent = ({
       ) : null}
 
       {renderModel.body.kind === "error" ? (
-        <AppErrorState
-          className="lyra-file-manager-empty-state"
-          title={renderModel.body.message ?? labels.unavailable}
-        />
+        <div className="lyra-file-manager-empty-state flex items-center justify-center text-sm text-muted-foreground">
+          {renderModel.body.message ?? labels.unavailable}
+        </div>
       ) : null}
 
       <FileManagerHomeContent
