@@ -56,6 +56,8 @@ export type BrowserResultSurfaceProps = {
   readonly onSharedAnimationDone?: () => void;
 };
 
+const RS_SHELL_CLASS = "lyra-results-shell grid h-full min-h-0 grid-rows-[minmax(0,1fr)]";
+
 export const BrowserResultSurface = ({
   logoUrl,
   inputValue,
@@ -181,6 +183,6 @@ export const BrowserResultSurface = ({
   void channelErrorLabel;
 
   return (
-    <section className="lyra-results-shell" aria-label="search-results-surface" />
+    <section className={RS_SHELL_CLASS} aria-label="search-results-surface" />
   );
 };

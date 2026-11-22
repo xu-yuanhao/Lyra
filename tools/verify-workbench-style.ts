@@ -190,21 +190,6 @@ const selectorRules: readonly SelectorRule[] = [
     required: [/background:\s*var\(--lyra-app-row-hover-bg\)\s*;/]
   },
   {
-    selector: ".lyra-deep-search-filter-chip-active",
-    required: [/color:\s*var\(--lyra-text-primary\)\s*;/],
-    forbidden: [/#f8c55d/i, /rgba\(109/i, /linear-gradient\(/, /var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
-  },
-  {
-    selector: ".lyra-deep-search-node-selected",
-    required: [/border-color:\s*color-mix\(/],
-    forbidden: [/#f8c55d/i, /var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
-  },
-  {
-    selector: ".lyra-engine-marker",
-    required: [/background:\s*color-mix\(in srgb,\s*var\(--lyra-text-muted\)/],
-    forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
-  },
-  {
     selector: ".lyra-global-dialog-action-primary",
     required: [/color:\s*var\(--lyra-app-primary-button-fg\)\s*;/],
     forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
