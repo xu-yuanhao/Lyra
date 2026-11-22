@@ -17,6 +17,12 @@ import {
 } from "./icon-registry";
 import { OverflowMarqueeText } from "./overflow-marquee";
 import {
+  FM_LARGE_TILE_BODY_CLASS,
+  FM_LARGE_TILE_CLASS,
+  FM_LARGE_TILE_DRAFT_CLASS,
+  FM_LARGE_TILE_IMAGE_CLASS,
+  FM_LARGE_TILE_PREVIEW_CLASS,
+  FM_LARGE_TILE_TITLE_CLASS,
   FM_LIST_CELL_PRIMARY_CLASS,
   FM_LIST_CELL_PRIMARY_DRAFT_CLASS,
   FM_LIST_ROW_DRAFT_CLASS
@@ -90,9 +96,9 @@ export const FileManagerDraftInput = ({
 
   if (variant === "large") {
     return (
-      <div className="lyra-file-manager-large-tile lyra-file-manager-large-tile-draft">
-        <div className="lyra-file-manager-large-tile-preview">{icon}</div>
-        <div className="lyra-file-manager-large-tile-body">
+      <div className={FM_LARGE_TILE_DRAFT_CLASS}>
+        <div className={FM_LARGE_TILE_PREVIEW_CLASS}>{icon}</div>
+        <div className={FM_LARGE_TILE_BODY_CLASS}>
           {input}
           {actionButtons}
         </div>
@@ -130,11 +136,7 @@ export const FileManagerLargeEntryTile = ({
 }) => (
   <AppButton
     variant="ghost"
-    className={
-      isActive
-        ? "lyra-file-manager-large-tile lyra-file-manager-large-tile-active"
-        : "lyra-file-manager-large-tile"
-    }
+    className={isActive ? `${FM_LARGE_TILE_CLASS} lyra-file-manager-large-tile-active` : FM_LARGE_TILE_CLASS}
     data-active={isActive ? "true" : undefined}
     data-lyra-allow-web-drag="true"
     draggable
@@ -144,19 +146,19 @@ export const FileManagerLargeEntryTile = ({
     onDragStart={onDragStart}
     onDragEnd={onDragEnd}
   >
-    <div className="lyra-file-manager-large-tile-preview">
+    <div className={FM_LARGE_TILE_PREVIEW_CLASS}>
       {isPreviewableImageEntry(entry) ? (
         <FileManagerImagePreview
           entry={entry}
-          className="lyra-file-manager-large-tile-image"
+          className={FM_LARGE_TILE_IMAGE_CLASS}
         />
       ) : renderFileManagerEntryIcon(entry)}
     </div>
-    <div className="lyra-file-manager-large-tile-body">
+    <div className={FM_LARGE_TILE_BODY_CLASS}>
       <OverflowMarqueeText
         text={entry.name}
         active={isActive}
-        className="lyra-file-manager-large-tile-title"
+        className={FM_LARGE_TILE_TITLE_CLASS}
       />
     </div>
   </AppButton>
@@ -179,11 +181,7 @@ export const FileManagerLargeTrashTile = ({
 }) => (
   <AppButton
     variant="ghost"
-    className={
-      isActive
-        ? "lyra-file-manager-large-tile lyra-file-manager-large-tile-active"
-        : "lyra-file-manager-large-tile"
-    }
+    className={isActive ? `${FM_LARGE_TILE_CLASS} lyra-file-manager-large-tile-active` : FM_LARGE_TILE_CLASS}
     data-active={isActive ? "true" : undefined}
     data-lyra-allow-web-drag="true"
     draggable
@@ -192,19 +190,19 @@ export const FileManagerLargeTrashTile = ({
     onDragStart={onDragStart}
     onDragEnd={onDragEnd}
   >
-    <div className="lyra-file-manager-large-tile-preview">
+    <div className={FM_LARGE_TILE_PREVIEW_CLASS}>
       {isPreviewableImageEntry(entry) ? (
         <FileManagerImagePreview
           entry={entry}
-          className="lyra-file-manager-large-tile-image"
+          className={FM_LARGE_TILE_IMAGE_CLASS}
         />
       ) : renderFileManagerEntryIcon(entry)}
     </div>
-    <div className="lyra-file-manager-large-tile-body">
+    <div className={FM_LARGE_TILE_BODY_CLASS}>
       <OverflowMarqueeText
         text={entry.name}
         active={isActive}
-        className="lyra-file-manager-large-tile-title"
+        className={FM_LARGE_TILE_TITLE_CLASS}
       />
     </div>
   </AppButton>

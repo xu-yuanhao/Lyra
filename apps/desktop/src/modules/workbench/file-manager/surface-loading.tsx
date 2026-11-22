@@ -1,5 +1,9 @@
 import {
   FM_LARGE_GRID_CLASS,
+  FM_LARGE_TILE_BODY_CLASS,
+  FM_LARGE_TILE_CLASS,
+  FM_LARGE_TILE_PREVIEW_CLASS,
+  FM_LARGE_TILE_TITLE_CLASS,
   FM_LIST_CELL_PRIMARY_CLASS,
   FM_LIST_GRID_CLASS
 } from "./surface-classes";
@@ -94,12 +98,12 @@ export const FileManagerLoadingSkeleton = ({
           {tiles.map((tileId) => (
             <article
               key={`fm-large-skeleton-tile-${tileId}`}
-              className="lyra-file-manager-large-tile lyra-file-manager-large-tile-skeleton pointer-events-none"
+              className={`${FM_LARGE_TILE_CLASS} lyra-file-manager-large-tile-skeleton pointer-events-none`}
             >
-              <div className="lyra-file-manager-large-tile-preview">
+              <div className={FM_LARGE_TILE_PREVIEW_CLASS}>
                 <span className={SKELETON_LARGE_PREVIEW} />
               </div>
-              <div className="lyra-file-manager-large-tile-body">
+              <div className={FM_LARGE_TILE_BODY_CLASS}>
                 <span className={SKELETON_LARGE_TITLE} />
                 {viewKind === "trash" ? (
                   <span className={SKELETON_LARGE_SUBTITLE} />
