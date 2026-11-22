@@ -166,6 +166,9 @@ const BASELINE_VIOLATION_PATTERNS: readonly RegExp[] = [
   /apps\/desktop\/src\/modules\/workbench\/ai-panel\/lyra-agents\/features\/chat\/ProjectDirChip\.tsx:34 uses raw px inline style for padding$/u,
   /apps\/desktop\/src\/modules\/workbench\/ai-panel\/lyra-agents\/features\/chat\/ProjectDirChip\.tsx:34 uses raw numeric inline style for fontSize$/u,
   /^apps\/desktop\/src\/modules\/workbench\/browser-tabs\/settings-surface-view\.tsx:1 Presentational workbench views must not own React state\/effect hooks\. Move runtime behavior into a model or runtime hook\.$/u,
+  // ponytail: startup gates predate the kit mandate and are being rebuilt in
+  // the UI refactor; path-scoped baselines keep the guard green until then.
+  /apps\/desktop\/src\/renderer\/startup\/(?:InstallerGate|StartupGate|UninstallerGate|startup-chrome)\.tsx:\d+ Workbench business TSX must use Lyra App components instead of bare </u,
 ];
 
 const APPROVED_DESKTOP_ICON_MODULES = new Set([
@@ -423,6 +426,16 @@ const isWorkbenchBusinessTsxPath = (filePath: string): boolean => {
   const normalizedPath = normalizePath(filePath);
   return normalizedPath.endsWith(".tsx")
     && /apps\/desktop\/src\/modules\/workbench\//.test(normalizedPath)
+    && !/\/tests\/|\.test\./.test(normalizedPath);
+};
+
+// Every desktop TSX outside the component kit itself must render through the
+// kit (renderer/ui app-* components) instead of bare interactive elements.
+const isDesktopUiConsumerTsxPath = (filePath: string): boolean => {
+  const normalizedPath = normalizePath(filePath);
+  return normalizedPath.endsWith(".tsx")
+    && /apps\/desktop\/src\//.test(normalizedPath)
+    && !/apps\/desktop\/src\/renderer\/ui\//.test(normalizedPath)
     && !/\/tests\/|\.test\./.test(normalizedPath);
 };
 
@@ -1216,7 +1229,8 @@ export const scanUiImportBoundaries = (filePath: string, text: string): string[]
   const relativePath = reportPath(filePath);
   const isPrimitiveLayer = isWithinDir(filePath, RENDERER_UI_PRIMITIVES_DIR);
   const isLyraUiLayer = isWithinDir(filePath, RENDERER_UI_COMPONENTS_DIR);
-  const enforceAppComponentControls = isWorkbenchBusinessTsxPath(normalizedPath);
+  const enforceAppComponentControls =
+    isWorkbenchBusinessTsxPath(normalizedPath) || isDesktopUiConsumerTsxPath(normalizedPath);
 
   const pushViolation = (node: ts.Node, message: string): void => {
     const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
