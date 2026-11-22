@@ -244,15 +244,6 @@ const selectorRules: readonly SelectorRule[] = [
     forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
   },
   {
-    selector: ".lyra-notification-topbar-preview",
-    required: [/background:\s*var\(--lyra-app-input-bg\)\s*;/, /backdrop-filter:\s*none\s*;/],
-    forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/, /linear-gradient\(/]
-  },
-  {
-    selector: ".lyra-notification-topbar-preview-marquee",
-    required: [/animation:\s*none\s*;/]
-  },
-  {
     selector: ".lyra-file-manager-disk-kind-system",
     required: [/color:\s*var\(--lyra-text-secondary\)\s*;/],
     forbidden: [/var\(--lyra-terminal-green/]

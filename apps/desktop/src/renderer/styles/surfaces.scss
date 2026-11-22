@@ -5182,97 +5182,6 @@
 
 /* Source: notification-center.css */
 /* Workbench notification topbar and center tab */
-.lyra-notification-topbar {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--lyra-space-6);
-  -webkit-app-region: no-drag;
-}
-
-.lyra-notification-topbar-entry,
-.lyra-notification-topbar-quick-action {
-  width: var(--lyra-control-h-28);
-  height: var(--lyra-control-h-28);
-  flex: 0 0 auto;
-}
-
-.lyra-notification-topbar-entry {
-  position: relative;
-}
-
-.lyra-notification-topbar-entry[data-active="true"] {
-  color: var(--lyra-text-primary);
-  background: var(--lyra-app-row-active-bg);
-}
-
-.lyra-notification-topbar-unread-dot {
-  position: absolute;
-  top: var(--lyra-space-6);
-  right: var(--lyra-space-6);
-  width: var(--lyra-space-6);
-  height: var(--lyra-space-6);
-  border-radius: var(--lyra-radius-pill);
-  background: var(--lyra-status-error);
-  box-shadow: 0 0 0 var(--lyra-stroke-strong) var(--lyra-app-sidebar-bg);
-}
-
-.lyra-notification-topbar-preview {
-  width: min(var(--lyra-size-notification-preview-max-w), 34vw);
-  min-width: var(--lyra-size-notification-preview-min-w);
-  height: var(--lyra-control-h-28);
-  justify-content: flex-start;
-  padding: 0 var(--lyra-space-10);
-  border: var(--lyra-stroke-thin) solid color-mix(in srgb, var(--lyra-app-border) 72%, transparent);
-  border-radius: var(--lyra-radius-pill);
-  color: var(--lyra-text-secondary);
-  background: var(--lyra-app-input-bg);
-  overflow: hidden;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-.lyra-notification-topbar-preview:hover:not(:disabled) {
-  color: var(--lyra-text-primary);
-  background: var(--lyra-app-input-hover-bg);
-  border-color: var(--lyra-app-border-strong);
-}
-
-.lyra-notification-topbar-preview-source {
-  width: var(--lyra-icon-size-14);
-  height: var(--lyra-icon-size-14);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  color: var(--lyra-text-muted);
-}
-
-.lyra-notification-topbar-preview-track {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  overflow: hidden;
-}
-
-.lyra-notification-topbar-preview-marquee {
-  min-width: 0;
-  overflow: hidden;
-  color: inherit;
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  animation: none;
-}
-
-.lyra-notification-topbar-quick-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--lyra-space-2);
-  flex: 0 0 auto;
-}
-
 .lyra-notification-center {
   width: 100%;
   height: 100%;
@@ -5500,17 +5409,7 @@
   background: color-mix(in srgb, var(--lyra-app-border) 72%, transparent);
 }
 
-@media (max-width: 1180px) {
-  .lyra-notification-topbar-preview {
-    width: min(var(--lyra-unit-300), 33vw);
-  }
-}
-
 @media (max-width: 980px) {
-  .lyra-notification-topbar {
-    display: none;
-  }
-
   .lyra-notification-center-body {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(var(--lyra-unit-180), 44%) minmax(0, 1fr);
