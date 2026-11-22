@@ -33,7 +33,7 @@ const FileManagerBreadcrumbs = ({
   }
 
   return (
-    <div className="lyra-titlebar-context-group lyra-file-manager-titlebar-breadcrumbs" aria-label="file-manager-breadcrumbs">
+    <div className="lyra-titlebar-context-group lyra-file-manager-titlebar-breadcrumbs max-w-[min(var(--lyra-unit-420),42vw)] overflow-hidden" aria-label="file-manager-breadcrumbs">
       {breadcrumb.kind === "trash" && breadcrumb.title.length > 0 ? (
         <span className="lyra-titlebar-context-text">
           {breadcrumb.title}
@@ -42,14 +42,14 @@ const FileManagerBreadcrumbs = ({
         breadcrumb.parts.map((part, index) => (
           <Fragment key={part.id}>
             {index === breadcrumb.parts.length - 1 ? (
-              <span className="lyra-titlebar-context-text lyra-file-manager-titlebar-breadcrumb-current">
+              <span className="lyra-titlebar-context-text lyra-file-manager-titlebar-breadcrumb-current max-w-[var(--lyra-unit-150)] overflow-hidden text-ellipsis">
                 {part.title}
               </span>
             ) : (
               <AppButton
                 variant="ghost"
                 size="sm"
-                className="lyra-file-manager-titlebar-breadcrumb-button"
+                className="lyra-file-manager-titlebar-breadcrumb-button h-[var(--lyra-control-h-24)] min-w-0 max-w-[var(--lyra-unit-150)] px-[var(--lyra-space-6)] text-[length:var(--lyra-text-size-caption)] text-[var(--lyra-text-muted)]"
                 title={part.path}
                 onClick={() => {
                   onOpenBreadcrumb(part.path);
@@ -59,7 +59,7 @@ const FileManagerBreadcrumbs = ({
               </AppButton>
             )}
             {index < breadcrumb.parts.length - 1 && part.title !== "/" ? (
-              <span className="lyra-file-manager-titlebar-breadcrumb-separator" aria-hidden="true">/</span>
+              <span className="lyra-file-manager-titlebar-breadcrumb-separator text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-14)] text-[var(--lyra-text-muted)]" aria-hidden="true">/</span>
             ) : null}
           </Fragment>
         ))

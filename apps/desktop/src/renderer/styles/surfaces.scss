@@ -4159,32 +4159,6 @@
   align-content: stretch;
 }
 
-.lyra-file-manager-titlebar-breadcrumbs {
-  max-width: min(var(--lyra-unit-420), 42vw);
-  overflow: hidden;
-}
-
-.lyra-file-manager-titlebar-breadcrumb-current {
-  max-width: var(--lyra-unit-150);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.lyra-file-manager-titlebar-breadcrumb-separator {
-  color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-14);
-}
-
-.lyra-file-manager-titlebar-breadcrumb-button {
-  max-width: var(--lyra-unit-150);
-  min-width: 0;
-  height: var(--lyra-control-h-24);
-  padding: 0 var(--lyra-space-6);
-  color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-caption);
-}
-
 .lyra-overflow-marquee {
   min-width: 0;
   width: 100%;
