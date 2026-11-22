@@ -49,8 +49,10 @@ export const OverflowMarqueeText = ({
   const classNames = useMemo(
     () =>
       [
-        "lyra-overflow-marquee",
-        shouldAnimate ? "lyra-overflow-marquee-active" : "",
+        "lyra-overflow-marquee min-w-0 block w-full overflow-hidden whitespace-nowrap",
+        shouldAnimate
+          ? "lyra-overflow-marquee-active data-[overflow=true]:animate-[lyra-overflow-marquee_var(--lyra-marquee-duration,6s)_linear_infinite]"
+          : "",
         className ?? ""
       ]
         .filter((value) => value.length > 0)
@@ -74,7 +76,7 @@ export const OverflowMarqueeText = ({
       style={style}
       title={text}
     >
-      <span ref={trackRef} className="lyra-overflow-marquee-track">
+      <span ref={trackRef} className="lyra-overflow-marquee-track inline-block min-w-0 translate-x-0 will-change-transform">
         {text}
       </span>
     </span>

@@ -28,19 +28,19 @@ import type {
   FileManagerSurfaceRenderModel
 } from "./surface-model";
 
-const SKELETON_HOST_ICON = "lyra-skeleton-block size-[var(--lyra-control-h-40)] rounded-[var(--lyra-radius-8)]";
-const SKELETON_HOST_NAME = "lyra-skeleton-block w-[min(42%,var(--lyra-unit-180))] h-[var(--lyra-text-line-22)]";
-const SKELETON_HOST_OS = "lyra-skeleton-block w-[min(58%,var(--lyra-unit-240))] h-[var(--lyra-text-line-16)]";
-const SKELETON_HOST_FACT = "lyra-skeleton-block w-full h-[var(--lyra-control-h-28)]";
-const SKELETON_ICON_16 = "lyra-skeleton-block size-[var(--lyra-icon-size-16)]";
-const SKELETON_LINE_16 = "lyra-skeleton-block w-[65%] h-[var(--lyra-text-line-16)]";
-const SKELETON_LINE_14 = "lyra-skeleton-block w-[82%] h-[var(--lyra-text-line-14)]";
-const SKELETON_DISK_ICON = "lyra-skeleton-block size-[var(--lyra-control-h-28)] rounded-[var(--lyra-radius-8)]";
-const SKELETON_DISK_METER = "lyra-skeleton-block w-full h-[var(--lyra-space-4)] rounded-[var(--lyra-radius-pill)]";
-const SKELETON_DISK_KIND = "lyra-skeleton-block w-[var(--lyra-space-56)] h-[var(--lyra-text-line-16)] rounded-[var(--lyra-radius-pill)]";
-const SKELETON_LARGE_PREVIEW = "lyra-skeleton-block w-full h-full rounded-[var(--lyra-radius-8)]";
-const SKELETON_LARGE_TITLE = "lyra-skeleton-block w-[70%] h-[var(--lyra-text-line-16)]";
-const SKELETON_LARGE_SUBTITLE = "lyra-skeleton-block w-[52%] h-[var(--lyra-text-line-16)]";
+const SKELETON_HOST_ICON = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] size-[var(--lyra-control-h-40)] rounded-[var(--lyra-radius-8)]";
+const SKELETON_HOST_NAME = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-[min(42%,var(--lyra-unit-180))] h-[var(--lyra-text-line-22)]";
+const SKELETON_HOST_OS = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-[min(58%,var(--lyra-unit-240))] h-[var(--lyra-text-line-16)]";
+const SKELETON_HOST_FACT = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-full h-[var(--lyra-control-h-28)]";
+const SKELETON_ICON_16 = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] size-[var(--lyra-icon-size-16)]";
+const SKELETON_LINE_16 = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-[65%] h-[var(--lyra-text-line-16)]";
+const SKELETON_LINE_14 = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-[82%] h-[var(--lyra-text-line-14)]";
+const SKELETON_DISK_ICON = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] size-[var(--lyra-control-h-28)] rounded-[var(--lyra-radius-8)]";
+const SKELETON_DISK_METER = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-full h-[var(--lyra-space-4)] rounded-[var(--lyra-radius-pill)]";
+const SKELETON_DISK_KIND = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-[var(--lyra-space-56)] h-[var(--lyra-text-line-16)] rounded-[var(--lyra-radius-pill)]";
+const SKELETON_LARGE_PREVIEW = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-full h-full rounded-[var(--lyra-radius-8)]";
+const SKELETON_LARGE_TITLE = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-[70%] h-[var(--lyra-text-line-16)]";
+const SKELETON_LARGE_SUBTITLE = "lyra-skeleton-block block rounded-[var(--lyra-radius-6)] bg-[var(--lyra-app-muted-bg)] w-[52%] h-[var(--lyra-text-line-16)]";
 
 export const FileManagerLoadingSkeleton = ({
   viewKind,

@@ -4,7 +4,9 @@ import { FileManagerDirectoryContent } from "./surface-directory";
 import { FileManagerDownloadsSlot } from "./downloads-slot";
 import {
   FM_CONTENT_CLASS,
-  FM_CONTENT_SCROLL_CLASS
+  FM_CONTENT_SCROLL_CLASS,
+  FM_EMPTY_STATE_CLASS,
+  FM_OS_WATERMARK_CLASS
 } from "./surface-classes";
 import { FileManagerFavoritesContent, FileManagerHomeContent } from "./surface-home";
 import { FileManagerLoadingSkeleton } from "./surface-loading";
@@ -31,7 +33,7 @@ export const FileManagerContent = ({
     <div className={FM_CONTENT_SCROLL_CLASS}>
       {renderModel.body.kind === "loading" ? (
         <>
-          <div className="lyra-file-manager-empty-state flex items-center justify-center gap-[var(--lyra-space-8)] text-sm text-muted-foreground">
+          <div className={`${FM_EMPTY_STATE_CLASS} flex items-center justify-center gap-[var(--lyra-space-8)] text-sm text-muted-foreground`}>
             <Spinner className="size-4" />
             <span>{labels.loading}</span>
           </div>
@@ -44,7 +46,7 @@ export const FileManagerContent = ({
       ) : null}
 
       {renderModel.body.kind === "error" ? (
-        <div className="lyra-file-manager-empty-state flex items-center justify-center text-sm text-muted-foreground">
+        <div className={`${FM_EMPTY_STATE_CLASS} flex items-center justify-center text-sm text-muted-foreground`}>
           {renderModel.body.message ?? labels.unavailable}
         </div>
       ) : null}
@@ -82,7 +84,7 @@ export const FileManagerContent = ({
     </div>
     {renderModel.osBrandUrl === null ? null : (
       <img
-        className="lyra-file-manager-os-watermark"
+        className={FM_OS_WATERMARK_CLASS}
         src={renderModel.osBrandUrl}
         alt=""
         aria-hidden="true"

@@ -17,6 +17,9 @@ import {
 } from "./icon-registry";
 import { OverflowMarqueeText } from "./overflow-marquee";
 import {
+  FM_CREATE_ACTIONS_CLASS,
+  FM_CREATE_BUTTON_CLASS,
+  FM_CREATE_INPUT_CLASS,
   FM_LARGE_TILE_BODY_CLASS,
   FM_LARGE_TILE_CLASS,
   FM_LARGE_TILE_DRAFT_CLASS,
@@ -61,7 +64,7 @@ export const FileManagerDraftInput = ({
       : renderFileManagerEntryIcon({ id: "draft", name: "", path: "", kind: "file", isHidden: false });
   const input = (
     <AppInput
-      className="lyra-file-manager-create-input"
+      className={FM_CREATE_INPUT_CLASS}
       value={draft.value}
       placeholder={
         draft.kind === "directory"
@@ -76,16 +79,16 @@ export const FileManagerDraftInput = ({
     />
   );
   const actionButtons = (
-    <div className="lyra-file-manager-create-actions">
+    <div className={FM_CREATE_ACTIONS_CLASS}>
       <AppIconButton
-        className="lyra-file-manager-create-button"
+        className={FM_CREATE_BUTTON_CLASS}
         aria-label={labels.createConfirm}
         onClick={actions.onCommitCreateDraft}
       >
         <Check size={14} aria-hidden="true" />
       </AppIconButton>
       <AppIconButton
-        className="lyra-file-manager-create-button"
+        className={FM_CREATE_BUTTON_CLASS}
         aria-label={labels.createCancel}
         onClick={actions.onCancelCreateDraft}
       >

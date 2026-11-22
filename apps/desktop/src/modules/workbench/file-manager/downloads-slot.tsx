@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AppButton, AppEmptyState, AppErrorState } from "@renderer/ui/components";
 
 import { DynamicWorkspaceAppSurface } from "../shell/dynamic-workspace-app-surface";
+import { FM_EMPTY_STATE_CLASS } from "./surface-classes";
 import {
   createWorkspaceAppInstance,
   isWorkspaceAppModuleSurfaceReady,
@@ -78,7 +79,7 @@ export const FileManagerDownloadsSlot = ({
   if (!ready) {
     return (
       <AppEmptyState
-        className="lyra-file-manager-empty-state"
+        className={FM_EMPTY_STATE_CLASS}
         title={title}
         description={description}
         actions={(
@@ -92,7 +93,7 @@ export const FileManagerDownloadsSlot = ({
   if (error !== null) {
     return (
       <AppErrorState
-        className="lyra-file-manager-empty-state"
+        className={FM_EMPTY_STATE_CLASS}
         title={title}
         description={`${startFailedDescription} ${error}`}
         actions={(

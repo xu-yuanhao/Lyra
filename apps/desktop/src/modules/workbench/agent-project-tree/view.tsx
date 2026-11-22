@@ -30,6 +30,7 @@ import {
   clearFileManagerEntryDragPayload,
   writeFileManagerEntryDragPayload
 } from "../file-manager/drag-transfer";
+import { FM_DRAG_PREVIEW_CLASS } from "../file-manager/surface-classes";
 import { FilePreviewModeButton } from "../file-preview/view-mode-button";
 import { useWorkspaceProblemsActive } from "../bottom-aux/problems";
 import { useEditorChromeVisible } from "../file-preview/use-region-active";
@@ -223,7 +224,7 @@ const startTreeEntryDrag = (
 ): void => {
   clearTreeDragPreview();
   const preview = event.currentTarget.ownerDocument.createElement("div");
-  preview.className = "lyra-file-manager-drag-preview";
+  preview.className = FM_DRAG_PREVIEW_CLASS;
   preview.textContent = entry.name;
   event.currentTarget.ownerDocument.body.append(preview);
   treeDragPreview = preview;

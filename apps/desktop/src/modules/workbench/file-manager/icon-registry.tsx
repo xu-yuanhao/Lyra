@@ -31,6 +31,11 @@ import {
   resolveFileManagerEntryIconKind,
   type FileManagerEntryIconKind
 } from "./entry-icon-classifier";
+import {
+  FM_FAVORITE_FAVICON_CLASS,
+  FM_ICON_SHELL_CLASS,
+  FM_ICON_SHELL_DISK_CLASS
+} from "./surface-classes";
 import type { FileManagerAppIconKey } from "./types";
 
 const DEFAULT_ICON_SIZE = 14;
@@ -94,8 +99,8 @@ const renderIcon = (node: ReactNode, className?: string) => (
   <span
     className={
       className === undefined
-        ? "lyra-file-manager-icon-shell"
-        : `lyra-file-manager-icon-shell ${className}`
+        ? FM_ICON_SHELL_CLASS
+        : `${FM_ICON_SHELL_CLASS} ${className}`
     }
     aria-hidden="true"
   >
@@ -153,7 +158,7 @@ export const renderFileManagerFavoriteIcon = (favorite: FileManagerFavorite) => 
     if (faviconUrl !== undefined && faviconUrl.length > 0) {
       return renderIcon(
         <img
-          className="lyra-file-manager-favorite-favicon"
+          className={FM_FAVORITE_FAVICON_CLASS}
           src={faviconUrl}
           alt=""
           aria-hidden="true"
@@ -207,7 +212,7 @@ export const renderFileManagerEntryIcon = (entry: FileManagerEntry | FileManager
 export const renderFileManagerDiskIcon = (_disk: FileManagerDisk | FileManagerDevice) => (
   renderIcon(
     <HardDrive size={20} strokeWidth={1.85} />,
-    "lyra-file-manager-icon-shell-disk lyra-file-manager-icon-shell-disk-glyph"
+    `${FM_ICON_SHELL_DISK_CLASS} lyra-file-manager-icon-shell-disk-glyph`
   )
 );
 

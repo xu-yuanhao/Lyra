@@ -11,6 +11,7 @@ import {
   FileManagerLargeEntryTile
 } from "./surface-entry-tiles";
 import {
+  FM_EMPTY_STATE_CLASS,
   FM_LARGE_GRID_CLASS,
   FM_LIST_GRID_CLASS,
   FM_LIST_NAME_CLASS,
@@ -53,7 +54,7 @@ export const FileManagerDirectoryContent = ({
           )}
 
           {directory.isEmpty ? (
-            <AppEmptyState className="lyra-file-manager-empty-state" title={labels.emptyDirectory} />
+            <AppEmptyState className={FM_EMPTY_STATE_CLASS} title={labels.emptyDirectory} />
           ) : directory.entries.map(({ entry, active }) => (
             <FileManagerLargeEntryTile
               key={entry.id}
@@ -94,7 +95,7 @@ export const FileManagerDirectoryContent = ({
 
         {directory.isEmpty ? (
           <AppEmptyState
-            className="lyra-file-manager-empty-state"
+            className={FM_EMPTY_STATE_CLASS}
             title={labels.emptyDirectory}
           />
         ) : directory.entries.map(({ entry, active }) => (

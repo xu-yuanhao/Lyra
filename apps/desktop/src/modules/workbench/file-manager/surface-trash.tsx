@@ -8,6 +8,7 @@ import {
   FileManagerLargeTrashTile
 } from "./surface-entry-tiles";
 import {
+  FM_EMPTY_STATE_CLASS,
   FM_LARGE_GRID_CLASS,
   FM_LIST_GRID_CLASS,
   FM_LIST_NAME_CLASS,
@@ -32,7 +33,7 @@ export const FileManagerTrashContent = ({
       <div className={`lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`}>
         <div className={`lyra-app-group ${FM_LARGE_GRID_CLASS}`}>
           {trash.isEmpty ? (
-            <AppEmptyState className="lyra-file-manager-empty-state" title={labels.emptyTrashState} />
+            <AppEmptyState className={FM_EMPTY_STATE_CLASS} title={labels.emptyTrashState} />
           ) : trash.entries.map(({ entry, active }) => (
             <FileManagerLargeTrashTile
               key={entry.id}
@@ -61,7 +62,7 @@ export const FileManagerTrashContent = ({
       <AppList className={FM_LIST_GRID_CLASS}>
         {trash.isEmpty ? (
           <AppEmptyState
-            className="lyra-file-manager-empty-state"
+            className={FM_EMPTY_STATE_CLASS}
             title={labels.emptyTrashState}
           />
         ) : trash.entries.map(({ entry, active }) => (

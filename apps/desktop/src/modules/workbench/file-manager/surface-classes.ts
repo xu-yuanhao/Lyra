@@ -8,7 +8,7 @@ export const FM_LAYOUT_CLASS =
   "lyra-file-manager-layout grid min-h-0 min-w-0 grid-cols-[var(--lyra-app-sidebar-rail-w)_minmax(0,1fr)]";
 
 export const FM_CONTENT_CLASS =
-  "lyra-file-manager-content relative grid min-h-0 min-w-0 overflow-hidden bg-transparent [--lyra-app-content-padding-block-start:var(--lyra-space-28)] [--lyra-app-content-padding-block-end:var(--lyra-page-pad-block-end)] [--lyra-app-content-padding-inline:var(--lyra-page-pad-inline)] [--lyra-app-content-gap:var(--lyra-space-18)]";
+  "lyra-file-manager-content relative grid min-h-0 min-w-0 overflow-hidden bg-transparent [--lyra-app-content-padding-block-start:var(--lyra-space-28)] [--lyra-app-content-padding-block-end:var(--lyra-page-pad-block-end)] [--lyra-app-content-padding-inline:var(--lyra-page-pad-inline)] [--lyra-app-content-gap:var(--lyra-space-18)] max-[860px]:[--lyra-app-content-padding-block-start:var(--lyra-space-18)] max-[860px]:[--lyra-app-content-padding-block-end:var(--lyra-space-24)] max-[860px]:[--lyra-app-content-padding-inline:var(--lyra-space-14)]";
 
 export const FM_CONTENT_SCROLL_CLASS =
   "lyra-file-manager-content-scroll col-start-1 row-start-1 min-h-0 min-w-0 overflow-auto";
@@ -21,10 +21,10 @@ export const FM_LIST_SHELL_CLASS = "min-h-full min-w-0 grid";
 export const FM_SECTION_GAP_CLASS = "grid min-w-0 gap-[var(--lyra-space-10)]";
 
 export const FM_LIST_GRID_CLASS =
-  "lyra-file-manager-list-grid grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-0 p-[var(--lyra-space-6)] border border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)] [--lyra-app-row-list-row-min-height:var(--lyra-app-sidebar-row-h)]";
+  "lyra-file-manager-list-grid grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-0 p-[var(--lyra-space-6)] border border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)] [--lyra-app-row-list-row-min-height:var(--lyra-app-sidebar-row-h)] has-[>.lyra-app-state:only-child]:min-h-full has-[>.lyra-app-state:only-child]:auto-rows-[minmax(0,1fr)] has-[>.lyra-app-state:only-child]:content-stretch";
 
 export const FM_LARGE_GRID_CLASS =
-  "lyra-file-manager-large-grid grid min-w-0 grid-cols-[repeat(auto-fill,minmax(var(--lyra-unit-132),1fr))] content-start gap-[var(--lyra-space-6)] p-[var(--lyra-space-6)] border border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)]";
+  "lyra-file-manager-large-grid grid min-w-0 grid-cols-[repeat(auto-fill,minmax(var(--lyra-unit-132),1fr))] content-start gap-[var(--lyra-space-6)] p-[var(--lyra-space-6)] border border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)] has-[>.lyra-app-state:only-child]:min-h-full has-[>.lyra-app-state:only-child]:auto-rows-[minmax(0,1fr)] has-[>.lyra-app-state:only-child]:content-stretch";
 
 export const FM_LIST_ROW_CLASS =
   "lyra-file-manager-list-row min-h-[var(--lyra-app-sidebar-row-h)] grid-cols-[var(--lyra-control-h-28)_minmax(0,1fr)_auto_auto] gap-x-[var(--lyra-space-8)] rounded-[var(--lyra-radius-6)] border-transparent bg-transparent px-[var(--lyra-space-8)] py-0 text-[var(--lyra-text-secondary)] [content-visibility:auto] [contain-intrinsic-size:var(--lyra-app-sidebar-row-h)] enabled:hover:text-[var(--lyra-text-primary)] enabled:hover:bg-[var(--lyra-app-row-hover-bg)] data-[active=true]:text-[var(--lyra-text-primary)] data-[active=true]:bg-[var(--lyra-app-row-active-bg)] [&_.lyra-app-object-row-icon]:size-[var(--lyra-control-h-28)] [&_.lyra-app-object-row-icon]:bg-transparent [&_.lyra-app-object-row-icon]:text-current [&_.lyra-app-object-row-icon]:shadow-none [&_.lyra-app-object-row-title]:text-inherit [&_.lyra-app-object-row-title]:text-[length:var(--lyra-text-size-body)] [&_.lyra-app-object-row-title]:font-medium [&_.lyra-app-object-row-title]:leading-[var(--lyra-text-line-18)]";
@@ -128,3 +128,24 @@ export const FM_DISK_FOOTER_CLASS = "lyra-file-manager-disk-footer flex min-w-0 
 
 export const FM_DISK_KIND_CLASS =
   "lyra-file-manager-disk-kind ml-auto shrink-0 rounded-[var(--lyra-radius-pill)] bg-[var(--lyra-app-muted-bg)] px-[var(--lyra-space-6)] py-[var(--lyra-space-2)] text-[var(--lyra-text-secondary)] text-[length:var(--lyra-text-size-caption)] font-semibold leading-[var(--lyra-text-line-14)]";
+
+export const FM_EMPTY_STATE_CLASS = "lyra-file-manager-empty-state col-span-full";
+
+export const FM_CREATE_INPUT_CLASS = "lyra-file-manager-create-input min-w-0";
+export const FM_CREATE_ACTIONS_CLASS =
+  "lyra-file-manager-create-actions inline-flex items-center justify-end gap-[var(--lyra-space-2)]";
+export const FM_CREATE_BUTTON_CLASS =
+  "lyra-file-manager-create-button size-[var(--lyra-control-h-24)]";
+
+export const FM_ICON_SHELL_CLASS =
+  "lyra-file-manager-icon-shell inline-flex size-[var(--lyra-icon-size-16)] shrink-0 items-center justify-center";
+export const FM_ICON_SHELL_DISK_CLASS =
+  "lyra-file-manager-icon-shell-disk size-[var(--lyra-control-h-28)] basis-[var(--lyra-control-h-28)]";
+export const FM_FAVORITE_FAVICON_CLASS =
+  "lyra-file-manager-favorite-favicon size-[var(--lyra-icon-size-14)] rounded-[var(--lyra-radius-6)] object-cover";
+
+export const FM_OS_WATERMARK_CLASS =
+  "lyra-file-manager-os-watermark pointer-events-none col-start-1 row-start-1 z-[1] aspect-square w-[min(42%,var(--lyra-unit-240))] self-end justify-self-end object-contain opacity-[0.22] [mix-blend-mode:multiply] [filter:grayscale(1)] [margin:0_var(--lyra-space-20)_var(--lyra-space-16)_0] select-none dark:opacity-[0.26] dark:[filter:brightness(0)_invert(1)_grayscale(1)] dark:[mix-blend-mode:screen]";
+
+export const FM_DRAG_PREVIEW_CLASS =
+  "lyra-file-manager-drag-preview pointer-events-none fixed top-[calc(var(--lyra-unit-10000)*-1)] left-[calc(var(--lyra-unit-10000)*-1)] inline-flex min-h-[var(--lyra-control-h-24)] max-w-[var(--lyra-unit-260)] items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--lyra-radius-pill)] border border-[var(--lyra-app-border)] bg-[var(--lyra-app-popover-bg)] px-[var(--lyra-space-10)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-16)] [box-shadow:var(--lyra-shadow-elevated-md)]";

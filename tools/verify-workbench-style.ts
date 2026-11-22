@@ -240,11 +240,6 @@ const selectorRules: readonly SelectorRule[] = [
     forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
   },
   {
-    selector: ".lyra-file-manager-disk-vector-system",
-    required: [/color:\s*var\(--lyra-text-secondary\)\s*;/],
-    forbidden: [/var\(--lyra-terminal-green/]
-  },
-  {
     selector: ".lyra-global-dialog-action-primary",
     required: [/color:\s*var\(--lyra-app-primary-button-fg\)\s*;/],
     forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]

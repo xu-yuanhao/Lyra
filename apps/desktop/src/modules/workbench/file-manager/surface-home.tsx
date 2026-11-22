@@ -21,6 +21,7 @@ import {
   FM_DISK_METER_FILL_CLASS,
   FM_DISK_METER_TONE_CLASS,
   FM_DISK_PATH_CLASS,
+  FM_EMPTY_STATE_CLASS,
   FM_DEVICE_CARD_CLASS,
   FM_FAVORITE_ROW_CLASS,
   FM_FAVORITES_LIST_CLASS,
@@ -216,7 +217,7 @@ export const FileManagerFavoritesContent = ({
         <h3 className={FM_SECTION_TITLE_CLASS}>{labels.homeSectionFavorites}</h3>
       </header>
       {favorites.isEmpty ? (
-        <AppEmptyState className="lyra-file-manager-empty-state" title={labels.noFavorites} />
+        <AppEmptyState className={FM_EMPTY_STATE_CLASS} title={labels.noFavorites} />
       ) : (
         <div className={`lyra-app-group lyra-app-row-list ${FM_FAVORITES_LIST_CLASS}`}>
           {favorites.favorites.map((favorite) => (

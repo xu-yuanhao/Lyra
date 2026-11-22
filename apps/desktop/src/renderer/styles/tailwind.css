@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@custom-variant dark (&:where([data-lyra-theme-tone="dark"], [data-lyra-theme-tone="dark"] *));
+
 @source "../main.tsx";
 @source "../ui/**/*.{ts,tsx}";
 @source "../../modules/workbench/**/*.{ts,tsx}";
