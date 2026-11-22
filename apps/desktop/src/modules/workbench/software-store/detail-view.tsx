@@ -33,6 +33,21 @@ import type {
   SoftwareStoreLabels,
   SoftwareStoreSurfaceProps
 } from "./types";
+import {
+  SS_ACTION_LIST_CLASS,
+  SS_CHIP_LIST_CLASS,
+  SS_CONTRIBUTION_ACTIONS_CLASS,
+  SS_CONTRIBUTION_COPY_CLASS,
+  SS_CONTRIBUTION_META_CLASS,
+  SS_CONTRIBUTIONS_CLASS,
+  SS_DETAIL_ACTIONS_CLASS,
+  SS_DETAIL_COPY_CLASS,
+  SS_DETAIL_HEAD_CLASS,
+  SS_DETAIL_ICON_CLASS,
+  SS_DETAIL_PANEL_CLASS,
+  SS_FACTS_CLASS,
+  SS_PERMISSIONS_CLASS,
+} from "./classes";
 
 export const SoftwareDetail = ({
   item,
@@ -47,15 +62,15 @@ export const SoftwareDetail = ({
   const builtinApp = findBuiltinApp(labels, software);
   const openable = software.source === "builtin" && builtinApp?.openable === true;
   return (
-    <article className="lyra-software-store-detail-panel">
-      <header className="lyra-software-store-detail-head">
-        <span className="lyra-software-store-detail-icon" aria-hidden="true">
+    <article className={SS_DETAIL_PANEL_CLASS}>
+      <header className={SS_DETAIL_HEAD_CLASS}>
+        <span className={SS_DETAIL_ICON_CLASS} aria-hidden="true">
           <ItemIcon item={item} size={20} />
         </span>
-        <div className="lyra-software-store-detail-copy">
+        <div className={SS_DETAIL_COPY_CLASS}>
           <h2>{software.title}</h2>
         </div>
-        <span className="lyra-software-store-detail-actions">
+        <span className={SS_DETAIL_ACTIONS_CLASS}>
           <AppButton
             variant="outline"
             size="sm"
@@ -72,7 +87,7 @@ export const SoftwareDetail = ({
           </AppButton>
         </span>
       </header>
-      <dl className="lyra-software-store-facts">
+      <dl className={SS_FACTS_CLASS}>
         <DetailFact label={labels.typeLabel}>
           {software.source === "builtin" ? labels.builtinType : labels.uiuxType}
         </DetailFact>
@@ -82,12 +97,12 @@ export const SoftwareDetail = ({
           {getAgentAccessLabel(getSoftwareAgentAccess(software), labels)}
         </DetailFact>
       </dl>
-      <section className="lyra-software-store-permissions">
+      <section className={SS_PERMISSIONS_CLASS}>
         <strong>{labels.actionsLabel}</strong>
         {software.actions.length === 0 ? (
           <span>{labels.noActions}</span>
         ) : (
-          <ul className="lyra-software-store-action-list">
+          <ul className={SS_ACTION_LIST_CLASS}>
             {software.actions.map((action) => (
               <li key={action.id}>
                 <span>{action.title}</span>
@@ -114,10 +129,10 @@ const ModuleContributionGroup = ({
   readonly hasItems: boolean;
   readonly children: ReactNode;
 }) => (
-  <section className="lyra-software-store-permissions">
+  <section className={SS_PERMISSIONS_CLASS}>
     <strong>{title}</strong>
     {hasItems ? (
-      <ul className="lyra-software-store-action-list">
+      <ul className={SS_ACTION_LIST_CLASS}>
         {children}
       </ul>
     ) : (
@@ -137,7 +152,7 @@ const ModuleContributionMetadata = ({
   readonly capability?: string;
   readonly labels: SoftwareStoreLabels;
 }) => (
-  <span className="lyra-software-store-contribution-meta">
+  <span className={SS_CONTRIBUTION_META_CLASS}>
     <AppBadge title={id}>{id}</AppBadge>
     <AppBadge tone="success">{version}</AppBadge>
     {capability === undefined ? null : (
@@ -162,7 +177,7 @@ const ActiveModuleContributions = ({
   readonly onOpenSettings: (route: string) => void;
 }) => (
   <section
-    className="lyra-software-store-contributions"
+    className={SS_CONTRIBUTIONS_CLASS}
     aria-label={labels.contributionsLabel}
   >
     <ModuleContributionGroup
@@ -172,11 +187,11 @@ const ActiveModuleContributions = ({
     >
       {snapshot.commands.map((command) => (
         <li key={command.id}>
-          <span className="lyra-software-store-contribution-copy">
+          <span className={SS_CONTRIBUTION_COPY_CLASS}>
             <span>{command.title}</span>
             <code>{command.id}</code>
           </span>
-          <span className="lyra-software-store-contribution-actions">
+          <span className={SS_CONTRIBUTION_ACTIONS_CLASS}>
             {command.requiredCapability === undefined ? null : (
               <AppBadge tone="info">
                 {labels.requiredCapabilityLabel}: {command.requiredCapability}
@@ -204,7 +219,7 @@ const ActiveModuleContributions = ({
     >
       {snapshot.settings.map((setting) => (
         <li key={setting.id}>
-          <span className="lyra-software-store-contribution-copy">
+          <span className={SS_CONTRIBUTION_COPY_CLASS}>
             <span>{setting.title}</span>
             <code>{setting.id} · {setting.route}</code>
           </span>
@@ -316,15 +331,15 @@ export const ComponentDetail = ({
     && component.active !== undefined
     && !independentlyLoaded;
   return (
-    <article className="lyra-software-store-detail-panel">
-      <header className="lyra-software-store-detail-head">
-        <span className="lyra-software-store-detail-icon" aria-hidden="true">
+    <article className={SS_DETAIL_PANEL_CLASS}>
+      <header className={SS_DETAIL_HEAD_CLASS}>
+        <span className={SS_DETAIL_ICON_CLASS} aria-hidden="true">
           <ItemIcon item={item} size={20} />
         </span>
-        <div className="lyra-software-store-detail-copy">
+        <div className={SS_DETAIL_COPY_CLASS}>
           <h2>{component.componentId}</h2>
         </div>
-        <span className="lyra-software-store-detail-actions">
+        <span className={SS_DETAIL_ACTIONS_CLASS}>
           {component.kind !== "app" ? null : (
             <AppButton
               variant="outline"
@@ -362,7 +377,7 @@ export const ComponentDetail = ({
           </AppButton>
         </span>
       </header>
-      <dl className="lyra-software-store-facts">
+      <dl className={SS_FACTS_CLASS}>
         <DetailFact label={labels.typeLabel}>{labels.componentType}</DetailFact>
         <DetailFact label={labels.categoryLabel}>{component.kind}</DetailFact>
         <DetailFact label={labels.versionLabel}>{component.active ?? "-"}</DetailFact>
@@ -375,9 +390,9 @@ export const ComponentDetail = ({
           <DetailFact label={labels.contributionsLabel}>{rendererStatus}</DetailFact>
         )}
       </dl>
-      <section className="lyra-software-store-permissions">
+      <section className={SS_PERMISSIONS_CLASS}>
         <strong>{labels.versionLabel}</strong>
-        <ul className="lyra-software-store-action-list">
+        <ul className={SS_ACTION_LIST_CLASS}>
           {component.versions.map((version) => (
             <li key={`${version.version}:${version.target}`}>
               <span>{version.version} · {version.target}</span>
@@ -417,15 +432,15 @@ export const UiuxDetail = ({
   const installed = item.installed;
   const canActivate = installed === undefined || installed.trustState === "trusted";
   return (
-    <article className="lyra-software-store-detail-panel">
-      <header className="lyra-software-store-detail-head">
-        <span className="lyra-software-store-detail-icon" aria-hidden="true">
+    <article className={SS_DETAIL_PANEL_CLASS}>
+      <header className={SS_DETAIL_HEAD_CLASS}>
+        <span className={SS_DETAIL_ICON_CLASS} aria-hidden="true">
           <ItemIcon item={item} size={20} />
         </span>
-        <div className="lyra-software-store-detail-copy">
+        <div className={SS_DETAIL_COPY_CLASS}>
           <h2>{item.name}</h2>
         </div>
-        <span className="lyra-software-store-detail-actions">
+        <span className={SS_DETAIL_ACTIONS_CLASS}>
           {installed === undefined ? null : installed.trustState === "trusted" ? (
             <AppButton variant="outline" size="sm" disabled={busy} onClick={onRevoke}>
               <ShieldOff size={14} aria-hidden="true" />
@@ -450,7 +465,7 @@ export const UiuxDetail = ({
           </AppButton>
         </span>
       </header>
-      <dl className="lyra-software-store-facts">
+      <dl className={SS_FACTS_CLASS}>
         <DetailFact label={labels.typeLabel}>{labels.uiuxType}</DetailFact>
         <DetailFact label={labels.versionLabel}>{item.version}</DetailFact>
         <DetailFact label={labels.sourceLabel}>{item.sourceLabel}</DetailFact>
@@ -472,12 +487,12 @@ export const UiuxDetail = ({
           </>
         )}
       </dl>
-      <section className="lyra-software-store-permissions">
+      <section className={SS_PERMISSIONS_CLASS}>
         <strong>{labels.permissionsLabel}</strong>
         {item.permissions.length === 0 ? (
           <span>{labels.noPermissions}</span>
         ) : (
-          <ul className="lyra-software-store-chip-list">
+          <ul className={SS_CHIP_LIST_CLASS}>
             {item.permissions.map((permission) => (
               <li key={permission}>
                 <AppBadge>{permission}</AppBadge>

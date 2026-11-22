@@ -8,6 +8,11 @@ import { GitBranch, Package, RefreshCw } from "@lyra/icons";
 import type { FormEvent } from "react";
 
 import type { SoftwareStoreLabels } from "./types";
+import {
+  SS_INSTALL_CLASS,
+  SS_INSTALL_GRID_CLASS,
+  SS_INSTALL_TITLE_CLASS,
+} from "./classes";
 
 export const SoftwareStoreInstallPanel = ({
   labels,
@@ -48,7 +53,7 @@ export const SoftwareStoreInstallPanel = ({
   readonly onInstallNpm: (event: FormEvent) => void;
   readonly onRefresh: () => void;
 }) => (
-  <section className="lyra-software-store-install" aria-label={labels.installLocal}>
+  <section className={SS_INSTALL_CLASS} aria-label={labels.installLocal}>
     <AppSurfaceHeader
       title={labels.installLocal}
       description={labels.uiuxTab}
@@ -63,9 +68,9 @@ export const SoftwareStoreInstallPanel = ({
       )}
     />
 
-    <div className="lyra-software-store-install-grid">
+    <div className={SS_INSTALL_GRID_CLASS}>
       <form onSubmit={onInstallGit}>
-        <strong className="lyra-software-store-install-title">
+        <strong className={SS_INSTALL_TITLE_CLASS}>
           <GitBranch size={14} aria-hidden="true" />
           {labels.installGit}
         </strong>
@@ -110,7 +115,7 @@ export const SoftwareStoreInstallPanel = ({
       </form>
 
       <form onSubmit={onInstallNpm}>
-        <strong className="lyra-software-store-install-title">
+        <strong className={SS_INSTALL_TITLE_CLASS}>
           <Package size={14} aria-hidden="true" />
           {labels.installNpm}
         </strong>

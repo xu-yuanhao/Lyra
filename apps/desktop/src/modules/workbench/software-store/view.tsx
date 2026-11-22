@@ -60,6 +60,19 @@ import type {
   SoftwareStoreSurfaceProps
 } from "./types";
 import { useAppUpdate } from "./use-app-update";
+import {
+  SS_BROWSE_HEAD_CLASS,
+  SS_CONTENT_CLASS,
+  SS_CONTROLS_CLASS,
+  SS_DETAIL_CLASS,
+  SS_EMPTY_CLASS,
+  SS_SEARCH_CLASS,
+  SS_SECTION_STACK_CLASS,
+  SS_STATUS_CLASS,
+  SS_STATUS_STACK_CLASS,
+  SS_STORE_CLASS,
+  SS_TITLE_BLOCK_CLASS,
+} from "./classes";
 
 const SOFTWARE_STORE_OPERATION_CANCELLED = Symbol("software-store-operation-cancelled");
 
@@ -710,15 +723,15 @@ export const SoftwareStoreSurface = ({
 
   return (
     <section
-      className={embedded ? "lyra-software-store lyra-software-store-embedded" : "lyra-software-store"}
+      className={embedded ? `${SS_STORE_CLASS} ${SS_STORE_EMBEDDED_CLASS}` : SS_STORE_CLASS}
       aria-label={labels.title}
     >
-      <div className="lyra-software-store-content">
+      <div className={SS_CONTENT_CLASS}>
         {selectedItem === null ? (
           <>
             {embedded ? null : (
-              <header className="lyra-software-store-browse-head">
-                <div className="lyra-software-store-title-block">
+              <header className={SS_BROWSE_HEAD_CLASS}>
+                <div className={SS_TITLE_BLOCK_CLASS}>
                   <h1>{labels.title}</h1>
                 </div>
                 <AppButton
@@ -733,9 +746,9 @@ export const SoftwareStoreSurface = ({
               </header>
             )}
 
-            <form className="lyra-software-store-controls" onSubmit={installFromInput}>
+            <form className={SS_CONTROLS_CLASS} onSubmit={installFromInput}>
               <AppSearchField
-                className="lyra-software-store-search"
+                className={SS_SEARCH_CLASS}
                 ariaLabel={labels.searchPlaceholder}
                 placeholder={labels.searchPlaceholder}
                 value={query}
@@ -764,9 +777,9 @@ export const SoftwareStoreSurface = ({
             />
 
             {filteredItems.length === 0 ? (
-              <AppEmptyState className="lyra-software-store-empty" title={labels.emptyTitle} />
+              <AppEmptyState className={SS_EMPTY_CLASS} title={labels.emptyTitle} />
             ) : (
-              <div className="lyra-software-store-section-stack">
+              <div className={SS_SECTION_STACK_CLASS}>
                 {(activeSection === "builtin" && builtinItems.length > 0) ? (
                   <SoftwareStoreItemSection
                     title={labels.builtinTab}
@@ -792,7 +805,7 @@ export const SoftwareStoreSurface = ({
             )}
           </>
         ) : (
-          <section className="lyra-software-store-detail" aria-label={labels.detailsTitle}>
+          <section className={SS_DETAIL_CLASS} aria-label={labels.detailsTitle}>
             <AppSubPageBack
               className="lyra-software-store-back"
               label={labels.title}
@@ -843,19 +856,19 @@ export const SoftwareStoreSurface = ({
           </section>
         )}
 
-        <div className="lyra-software-store-status-stack">
+        <div className={SS_STATUS_STACK_CLASS}>
           {pendingOperation === null ? null : (
-            <AppStatusMessage className="lyra-software-store-status">
+            <AppStatusMessage className={SS_STATUS_CLASS}>
               {labels.activating}
             </AppStatusMessage>
           )}
           {message === null ? null : (
-            <AppStatusMessage className="lyra-software-store-status" tone="success">
+            <AppStatusMessage className={SS_STATUS_CLASS} tone="success">
               {message}
             </AppStatusMessage>
           )}
           {error === null ? null : (
-            <AppStatusMessage className="lyra-software-store-status" tone="error">
+            <AppStatusMessage className={SS_STATUS_CLASS} tone="error">
               {error}
             </AppStatusMessage>
           )}

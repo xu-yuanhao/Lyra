@@ -37,6 +37,14 @@ import type {
   SoftwareStoreBuiltinAppId,
   SoftwareStoreLabels
 } from "./types";
+import {
+  SS_FACT_CLASS,
+  SS_ITEM_CHEVRON_CLASS,
+  SS_ITEM_CLASS,
+  SS_ITEM_LIST_CLASS,
+  SS_ITEM_SECTION_CLASS,
+  SS_PRODUCT_ICON_CLASS,
+} from "./classes";
 
 const BuiltinSoftwareIcon = ({
   id,
@@ -75,7 +83,7 @@ export const ItemIcon = ({
         ? <Palette size={size} />
         : <PackageOpen size={size} />;
   return (
-    <span className="lyra-software-store-product-icon" aria-hidden="true">
+    <span className={SS_PRODUCT_ICON_CLASS} aria-hidden="true">
       {icon}
     </span>
   );
@@ -106,7 +114,7 @@ export const DetailFact = ({
   readonly label: string;
   readonly children: ReactNode;
 }) => (
-  <div className="lyra-software-store-fact">
+  <div className={SS_FACT_CLASS}>
     <dt>{label}</dt>
     <dd>{children}</dd>
   </div>
@@ -181,17 +189,17 @@ export const SoftwareStoreItemSection = ({
   readonly items: readonly SoftwareStoreItem[];
   readonly onSelect: (key: string) => void;
 }) => (
-  <section className="lyra-software-store-item-section" aria-label={title}>
-    <div className="lyra-software-store-item-list">
+  <section className={SS_ITEM_SECTION_CLASS} aria-label={title}>
+    <div className={SS_ITEM_LIST_CLASS}>
       {items.map((item) => (
         <AppObjectRow
           key={item.key}
-          className="lyra-software-store-item"
+          className={SS_ITEM_CLASS}
           icon={<ItemIcon item={item} />}
           title={getItemTitle(item)}
           badges={(
             <ChevronRight
-              className="lyra-software-store-item-chevron"
+              className={SS_ITEM_CHEVRON_CLASS}
               size={14}
               aria-hidden="true"
             />

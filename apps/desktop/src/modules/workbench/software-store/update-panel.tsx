@@ -14,6 +14,13 @@ import type {
   ComponentUpdateProgress
 } from "../../../shared/desktop-bridge";
 import type { SoftwareStoreLabels } from "./types";
+import {
+  SS_UPDATE_ACTIONS_CLASS,
+  SS_UPDATE_BODY_CLASS,
+  SS_UPDATE_CHANNEL_LABEL_CLASS,
+  SS_UPDATE_CLASS,
+  SS_UPDATE_PROGRESS_CLASS,
+} from "./classes";
 
 export const SoftwareStoreComponentUpdatePanel = ({
   labels,
@@ -39,11 +46,11 @@ export const SoftwareStoreComponentUpdatePanel = ({
     { value: "preview", label: labels.previewChannel }
   ], [labels.previewChannel, labels.stableChannel]);
   return (
-    <section className="lyra-software-store-update" aria-label={labels.updateTitle}>
+    <section className={SS_UPDATE_CLASS} aria-label={labels.updateTitle}>
       <AppSurfaceHeader
         title={labels.updateTitle}
         actions={(
-          <span className="lyra-software-store-update-actions">
+          <span className={SS_UPDATE_ACTIONS_CLASS}>
             <AppButton
               variant="outline"
               size="sm"
@@ -62,8 +69,8 @@ export const SoftwareStoreComponentUpdatePanel = ({
           </span>
         )}
       />
-      <div className="lyra-software-store-update-body">
-        <span className="lyra-software-store-update-channel-label">
+      <div className={SS_UPDATE_BODY_CLASS}>
+        <span className={SS_UPDATE_CHANNEL_LABEL_CLASS}>
           {labels.updateChannelLabel}
         </span>
         <AppTabs
@@ -73,7 +80,7 @@ export const SoftwareStoreComponentUpdatePanel = ({
           onValueChange={onChannelChange}
         />
         {progress === null ? null : (
-          <AppStatusMessage className="lyra-software-store-update-progress">
+          <AppStatusMessage className={SS_UPDATE_PROGRESS_CLASS}>
             {labels.updateProgressLabel}: {progress.phase}
             {" · "}
             {progress.completedComponents}/{progress.totalComponents}
@@ -110,11 +117,11 @@ export const SoftwareStoreAppUpdatePanel = ({
     : state === "available" ? `${labels.appUpdateAvailableVersion}: ${status?.availableVersion ?? "-"}`
     : labels.appUpdateLatest;
   return (
-    <section className="lyra-software-store-update" aria-label={labels.appUpdateTitle}>
+    <section className={SS_UPDATE_CLASS} aria-label={labels.appUpdateTitle}>
       <AppSurfaceHeader
         title={labels.appUpdateTitle}
         actions={(
-          <span className="lyra-software-store-update-actions">
+          <span className={SS_UPDATE_ACTIONS_CLASS}>
             <AppButton variant="outline" size="sm" disabled={!available || busy} onClick={onCheck}>
               <RefreshCw size={14} aria-hidden="true" />
               <span>{state === "error" ? labels.appUpdateRetry : labels.appUpdateCheck}</span>
@@ -128,7 +135,7 @@ export const SoftwareStoreAppUpdatePanel = ({
           </span>
         )}
       />
-      <div className="lyra-software-store-update-body">
+      <div className={SS_UPDATE_BODY_CLASS}>
         <AppStatusMessage>{labels.appUpdateCurrentVersion}: {status?.currentVersion ?? "-"}</AppStatusMessage>
         <AppStatusMessage className={state === "error" ? "lyra-software-store-error" : undefined}>{description}</AppStatusMessage>
       </div>
