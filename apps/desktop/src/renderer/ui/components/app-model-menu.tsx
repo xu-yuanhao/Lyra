@@ -12,6 +12,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from "./dropdown-menu";
+import {
+  APP_SELECT_CHEVRON_CLASS,
+  APP_SELECT_TRIGGER_CLASS,
+  APP_SELECT_TRIGGER_LABEL_CLASS,
+  APP_SELECT_TRIGGER_VALUE_CLASS
+} from "./app-select";
 import { cn } from "../utils";
 
 type DropdownMenuContentProps = ComponentProps<typeof DropdownMenuContent>;
@@ -236,21 +242,21 @@ export const AppModelMenu = <TModelValue extends string = string>({
       modal={false}
     >
       <DropdownMenuTrigger
-        className={cn("lyra-ui-select-trigger lyra-app-model-menu-trigger", className)}
+        className={cn(APP_SELECT_TRIGGER_CLASS, "lyra-app-model-menu-trigger", className)}
         aria-label={ariaLabel}
         title={labelText(effectiveTriggerLabel) ?? ariaLabel}
         disabled={disabled || allOptions.length === 0}
         data-has-icon={triggerIcon === undefined ? undefined : "true"}
       >
-        <span className="lyra-ui-select-trigger-value">
+        <span className={APP_SELECT_TRIGGER_VALUE_CLASS}>
           {triggerIcon === undefined ? null : (
             <span className="lyra-app-model-menu-option-icon" aria-hidden="true">
               {triggerIcon}
             </span>
           )}
-          <span className="lyra-ui-select-trigger-label">{effectiveTriggerLabel}</span>
+          <span className={APP_SELECT_TRIGGER_LABEL_CLASS}>{effectiveTriggerLabel}</span>
         </span>
-        <ChevronDown className="lyra-ui-select-chevron" aria-hidden="true" />
+        <ChevronDown className={APP_SELECT_CHEVRON_CLASS} aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className={cn("lyra-app-model-menu-content", contentClassName)}

@@ -195,10 +195,6 @@ const selectorRules: readonly SelectorRule[] = [
     required: [/display:\s*none\s*;/]
   },
   {
-    selector: ".lyra-settings-group",
-    required: [/border:\s*var\(--lyra-stroke-thin\)\s+solid\s+var\(--lyra-settings-border\)\s*;/, /background:\s*/, /box-shadow\s*:/]
-  },
-  {
     selector: ".lyra-settings-choice",
     required: [/border:\s*var\(--lyra-stroke-thin\)\s+solid\s+transparent\s*;/, /background:\s*var\(--lyra-settings-row-bg\)\s*;/, /border-radius:\s*var\(--lyra-settings-radius-control\)\s*;/]
   },
@@ -328,8 +324,6 @@ const iconOnlyHoverRules: readonly IconOnlyHoverRule[] = [
   { selector: ".lyra-titlebar-navigation-action:hover" },
   { selector: ".lyra-titlebar-context-icon-button:hover:enabled" },
   { selector: ".lyra-titlebar-context-text-button:hover:enabled" },
-  { selector: ".lyra-app-window-button:hover:not(:disabled)" },
-  { selector: ".lyra-app-window-button[data-window-action=\"close\"]:hover:not(:disabled)" },
   { selector: ".lyra-browser-nav-button:hover" },
   { selector: ".lyra-browser-tab-close:hover" },
   { selector: ".lyra-browser-tab-add:hover" },
