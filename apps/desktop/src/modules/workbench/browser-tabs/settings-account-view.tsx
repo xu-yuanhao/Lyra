@@ -5,6 +5,7 @@ import type { AgentUsageDailyBucket, AgentUsageStats, LyraDesktopApi } from "../
 import { AppButton, AppEmptyState, AppIconButton, AppInput, AppStatusMessage, AppTooltip } from "@renderer/ui/components";
 import { IdentityIconView } from "../identity";
 import type { SettingsAccount, SettingsAccountLabels } from "./settings-surface-types";
+import { ST_CATEGORY_ACCOUNT_CLASS } from "./settings-classes";
 
 type TokenActivityView = "daily" | "weekly" | "cumulative";
 
@@ -299,7 +300,7 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
     : Math.round((stats.coverage.reportedTurns / stats.coverage.eligibleTurns) * 100);
 
   return (
-    <section className="lyra-settings-category lyra-settings-category-account" aria-labelledby="lyra-settings-account-heading">
+    <section className={`lyra-settings-category lyra-settings-category-account ${ST_CATEGORY_ACCOUNT_CLASS}`} aria-labelledby="lyra-settings-account-heading">
       <header className="lyra-settings-category-header">
         <h2 id="lyra-settings-account-heading">{labels.title}</h2>
       </header>

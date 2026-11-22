@@ -182,19 +182,6 @@ const ICON_PACKAGE_MODULE_PATTERN =
 
 const selectorRules: readonly SelectorRule[] = [
   {
-    selector: ".lyra-settings-nav-item:hover",
-    required: [/background:\s*var\(--lyra-settings-row-hover-bg\)\s*;/]
-  },
-  {
-    selector: ".lyra-settings-nav-item-active",
-    required: [/background:\s*var\(--lyra-settings-row-active-bg\)\s*;/],
-    forbidden: [/border-color\s*:/]
-  },
-  {
-    selector: ".lyra-settings-nav-item-active::before",
-    required: [/display:\s*none\s*;/]
-  },
-  {
     selector: ".lyra-settings-choice",
     required: [/border:\s*var\(--lyra-stroke-thin\)\s+solid\s+transparent\s*;/, /background:\s*var\(--lyra-settings-row-bg\)\s*;/, /border-radius:\s*var\(--lyra-settings-radius-control\)\s*;/]
   },
@@ -1279,7 +1266,7 @@ export const runUiStyleGuard = (): string[] => {
 
   const resolvableTokens = collectResolvableLyraProperties(
     [...cssByPath.values()],
-    collectFiles(DESKTOP_SRC_DIR, (filePath) => filePath.endsWith(".tsx")).map((filePath) => fs.readFileSync(filePath, "utf8"))
+    collectFiles(DESKTOP_SRC_DIR, (filePath) => filePath.endsWith(".ts") || filePath.endsWith(".tsx")).map((filePath) => fs.readFileSync(filePath, "utf8"))
   );
 
   for (const [cssPath, cssText] of cssByPath) {

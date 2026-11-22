@@ -44,6 +44,29 @@ import { SettingsDownloadsView } from "../settings-downloads";
 import { LoginManagerSettingsSlot } from "../login-manager";
 import { SoftwareStoreSurface } from "../software-store";
 import { SettingsAccountPage } from "./settings-account-view";
+import {
+  ST_ACCOUNT_ACTION_CLASS,
+  ST_ACCOUNT_ACTIVE_CLASS,
+  ST_ACCOUNT_AVATAR_CLASS,
+  ST_ACCOUNT_CLASS,
+  ST_ACCOUNT_IDENTITY_CLASS,
+  ST_ACCOUNT_LOCAL_LOGO_CLASS,
+  ST_ACCOUNT_NAME_CLASS,
+  ST_CATEGORY_CLASS,
+  ST_CATEGORY_HEADER_CLASS,
+  ST_MAIN_CLASS,
+  ST_NAV_ACTIONS_CLASS,
+  ST_NAV_DOCS_CLASS,
+  ST_NAV_ICON_CLASS,
+  ST_NAV_ITEM_ACTIVE_CLASS,
+  ST_NAV_ITEM_CLASS,
+  ST_NAV_JUMP_ICON_CLASS,
+  ST_NAV_JUMP_LABEL_CLASS,
+  ST_NAV_LIST_CLASS,
+  ST_NAV_CLASS,
+  ST_SHELL_CLASS,
+  ST_SURFACE_CLASS
+} from "./settings-classes";
 import { LanguagePicker } from "./language-picker";
 import type { SettingsCategoryId } from "./settings-schema";
 import type { SettingsAccount, SettingsAccountLabels } from "./settings-surface-types";
@@ -118,28 +141,28 @@ const SettingsAccountView = ({
   readonly active: boolean;
   readonly onOpen: () => void;
 }) => (
-  <div className={active ? "lyra-settings-account lyra-settings-account-active" : "lyra-settings-account"}>
+  <div className={active ? `${ST_ACCOUNT_CLASS} ${ST_ACCOUNT_ACTIVE_CLASS}` : ST_ACCOUNT_CLASS}>
     <AppButton
-      className="lyra-settings-account-identity"
+      className={ST_ACCOUNT_IDENTITY_CLASS}
       variant="ghost"
       size="sm"
       aria-label={account.displayName}
       onClick={onOpen}
     >
       <IdentityIconView
-        className="lyra-settings-account-avatar"
+        className={ST_ACCOUNT_AVATAR_CLASS}
         iconUrl={account.avatarUrl}
         label={account.displayName}
         fallback={account.kind === "local"
-          ? <span className="lyra-settings-account-local-logo lyra-settings-nav-logo" />
+          ? <span className={`${ST_ACCOUNT_LOCAL_LOGO_CLASS} lyra-settings-nav-logo`} />
           : account.displayName.slice(0, 1).toUpperCase()}
       />
-      <span className="lyra-settings-account-name" title={account.displayName}>
+      <span className={ST_ACCOUNT_NAME_CLASS} title={account.displayName}>
         {account.displayName}
       </span>
     </AppButton>
     <AppButton
-      className="lyra-settings-account-action"
+      className={ST_ACCOUNT_ACTION_CLASS}
       variant="ghost"
       size="icon"
       aria-label={account.actionLabel}
@@ -573,10 +596,10 @@ export const SettingsSurfaceView = ({
         ?? null;
 
   return (
-    <section className="lyra-settings-surface" aria-label="settings-surface">
-      <div className="lyra-app-sidebar-split lyra-settings-shell">
-        <aside className="lyra-settings-nav" aria-label="settings-nav">
-          <div className="lyra-settings-nav-list">
+    <section className={ST_SURFACE_CLASS} aria-label="settings-surface">
+      <div className={`lyra-app-sidebar-split ${ST_SHELL_CLASS}`}>
+        <aside className={ST_NAV_CLASS} aria-label="settings-nav">
+          <div className={ST_NAV_LIST_CLASS}>
             {model.categories.map((category) => (
               (() => {
                 const Icon = SETTINGS_CATEGORY_ICONS[category.id];
@@ -586,8 +609,8 @@ export const SettingsSurfaceView = ({
                     variant="ghost"
                     size="sm"
                     className={category.id === selectedCategory?.id
-                      ? "lyra-app-sidebar-row lyra-settings-nav-item lyra-settings-nav-item-active"
-                      : "lyra-app-sidebar-row lyra-settings-nav-item"}
+                      ? `${ST_NAV_ITEM_CLASS} ${ST_NAV_ITEM_ACTIVE_CLASS}`
+                      : ST_NAV_ITEM_CLASS}
                     onClick={() => {
                       onActivateCategory(category.id);
                     }}
@@ -595,25 +618,25 @@ export const SettingsSurfaceView = ({
                     {category.id === "ai" ? (
                       <span className="lyra-settings-nav-icon lyra-settings-nav-logo" aria-hidden="true" />
                     ) : Icon === undefined ? null : (
-                      <Icon className="lyra-settings-nav-icon" size={14} aria-hidden="true" />
+                      <Icon className={ST_NAV_ICON_CLASS} size={14} aria-hidden="true" />
                     )}
                     <span className="lyra-app-sidebar-group-name">{category.navLabel}</span>
                   </AppButton>
                 );
               })()
             ))}
-            <div className="lyra-settings-nav-docs">
+            <div className={ST_NAV_DOCS_CLASS}>
               <AppButton
-                className="lyra-app-sidebar-row lyra-settings-nav-item lyra-settings-nav-item-jump"
+                className={`lyra-app-sidebar-row lyra-settings-nav-item-jump ${ST_NAV_ITEM_CLASS}`}
                 variant="ghost"
                 size="sm"
                 onClick={onOpenDocs}
               >
-                <BookText className="lyra-settings-nav-icon" size={14} aria-hidden="true" />
-                <span className="lyra-app-sidebar-group-name lyra-settings-nav-jump-label">
+                <BookText className={ST_NAV_ICON_CLASS} size={14} aria-hidden="true" />
+                <span className={`${ST_NAV_JUMP_LABEL_CLASS} lyra-app-sidebar-group-name`}>
                   <span>{docsNavLabel}</span>
                   <ArrowUpRight
-                    className="lyra-settings-nav-jump-icon"
+                    className={ST_NAV_JUMP_ICON_CLASS}
                     size={12}
                     aria-hidden="true"
                   />
@@ -622,7 +645,7 @@ export const SettingsSurfaceView = ({
             </div>
           </div>
           {account === null ? null : (
-            <div className="lyra-settings-nav-actions">
+            <div className={ST_NAV_ACTIONS_CLASS}>
               <SettingsAccountView
                 account={account}
                 active={activeDestination === "account"}
@@ -632,17 +655,17 @@ export const SettingsSurfaceView = ({
           )}
         </aside>
 
-        <main className="lyra-settings-main">
+        <main className={ST_MAIN_CLASS}>
           {activeDestination === "account" && account !== null ? (
             <SettingsAccountPage account={account} desktopApi={desktopApi} labels={accountLabels} />
           ) : selectedCategory === null ? null : (
             <section
               key={selectedCategory.id}
               id={selectedCategory.domId}
-              className={`lyra-settings-category lyra-settings-category-${selectedCategory.id}`}
+              className={`lyra-settings-category lyra-settings-category-${selectedCategory.id} ${ST_CATEGORY_CLASS}`}
               aria-labelledby={`${selectedCategory.domId}-heading`}
             >
-              <header className="lyra-settings-category-header">
+              <header className={ST_CATEGORY_HEADER_CLASS}>
                 <h2 id={`${selectedCategory.domId}-heading`}>{
                   selectedCategory.id === "softwareStore" && softwareStoreHeading != null
                     ? softwareStoreHeading
