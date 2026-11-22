@@ -899,42 +899,6 @@
   padding: 0;
 }
 
-.lyra-settings-row {
-  min-width: 0;
-  min-height: var(--lyra-unit-58);
-  padding: var(--lyra-space-10) var(--lyra-space-14);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--lyra-space-16);
-  align-items: center;
-}
-
-.lyra-settings-row-copy {
-  min-width: 0;
-  display: grid;
-  gap: var(--lyra-space-2);
-}
-
-.lyra-settings-row-copy strong {
-  color: var(--lyra-text-primary);
-  font-size: var(--lyra-text-size-body);
-  font-weight: 500;
-  line-height: var(--lyra-text-line-body);
-}
-
-/* Secondary line under the row title: one step down, not a colour-only cue. */
-.lyra-settings-row-copy small {
-  color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-}
-
-.lyra-settings-row-control {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
 .lyra-settings-row-list {
   min-width: 0;
   display: grid;

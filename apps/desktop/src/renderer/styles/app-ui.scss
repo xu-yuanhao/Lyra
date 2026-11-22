@@ -502,29 +502,6 @@
   line-height: var(--lyra-text-line-body);
 }
 
-.lyra-app-row-list {
-  --lyra-app-row-list-row-min-height: var(--lyra-control-h-40);
-  min-width: 0;
-  display: grid;
-  gap: 0;
-  padding: var(--lyra-space-4);
-}
-
-.lyra-app-row-list > .lyra-app-object-row {
-  min-height: var(--lyra-app-row-list-row-min-height);
-  border-color: transparent;
-  border-radius: var(--lyra-radius-6);
-  background: transparent;
-}
-
-.lyra-app-row-list > .lyra-app-object-row:hover:not(:disabled) {
-  background: var(--lyra-app-row-hover-bg);
-}
-
-.lyra-app-row-list > .lyra-app-object-row[data-active="true"] {
-  background: var(--lyra-app-row-active-bg);
-}
-
 .lyra-app-form-grid {
   --lyra-app-form-grid-columns: repeat(2, minmax(0, 1fr));
   min-width: 0;
