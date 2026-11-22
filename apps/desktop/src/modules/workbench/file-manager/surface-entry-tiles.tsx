@@ -16,6 +16,11 @@ import {
   renderFileManagerLocationIcon
 } from "./icon-registry";
 import { OverflowMarqueeText } from "./overflow-marquee";
+import {
+  FM_LIST_CELL_PRIMARY_CLASS,
+  FM_LIST_CELL_PRIMARY_DRAFT_CLASS,
+  FM_LIST_ROW_DRAFT_CLASS
+} from "./surface-classes";
 import { FileManagerImagePreview, isPreviewableImageEntry } from "./preview";
 import type { FileManagerSurfaceActions } from "./surface-view-types";
 import type {
@@ -96,8 +101,8 @@ export const FileManagerDraftInput = ({
   }
 
   return (
-    <div className="lyra-file-manager-list-row lyra-file-manager-list-row-draft">
-      <div className="lyra-file-manager-list-cell-primary lyra-file-manager-list-cell-primary-draft">
+    <div className={FM_LIST_ROW_DRAFT_CLASS}>
+      <div className={`${FM_LIST_CELL_PRIMARY_CLASS} ${FM_LIST_CELL_PRIMARY_DRAFT_CLASS}`}>
         {icon}
         {input}
         {actionButtons}

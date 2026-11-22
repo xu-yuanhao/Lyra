@@ -10,6 +10,12 @@ import {
   FileManagerDraftInput,
   FileManagerLargeEntryTile
 } from "./surface-entry-tiles";
+import {
+  FM_LARGE_GRID_CLASS,
+  FM_LIST_GRID_CLASS,
+  FM_LIST_NAME_CLASS,
+  FM_LIST_ROW_CLASS
+} from "./surface-classes";
 import { preventContextMenuDefaults } from "./surface-view-events";
 import type { FileManagerSurfaceChromeProps } from "./surface-view-types";
 
@@ -34,7 +40,7 @@ export const FileManagerDirectoryContent = ({
   if (renderModel.toolbar.isLargeMode) {
     return (
       <div className="lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell">
-        <div className="lyra-app-group lyra-file-manager-large-grid">
+        <div className={`lyra-app-group ${FM_LARGE_GRID_CLASS}`}>
           {directory.createDraft === undefined ? null : (
             <FileManagerDraftInput
               draft={directory.createDraft}
@@ -74,7 +80,7 @@ export const FileManagerDirectoryContent = ({
 
   return (
     <div className="lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell">
-      <AppList className="lyra-app-group lyra-file-manager-list-grid">
+      <AppList className={FM_LIST_GRID_CLASS}>
         {directory.createDraft === undefined ? null : (
           <FileManagerDraftInput
             draft={directory.createDraft}
@@ -92,7 +98,7 @@ export const FileManagerDirectoryContent = ({
         ) : directory.entries.map(({ entry, active }) => (
           <AppObjectRow
             key={entry.id}
-            className="lyra-file-manager-list-row"
+            className={FM_LIST_ROW_CLASS}
             active={active}
             data-lyra-allow-web-drag="true"
             draggable
@@ -115,7 +121,7 @@ export const FileManagerDirectoryContent = ({
               <OverflowMarqueeText
                 text={entry.name}
                 active={active}
-                className="lyra-file-manager-list-name"
+                className={FM_LIST_NAME_CLASS}
               />
             )}
           />

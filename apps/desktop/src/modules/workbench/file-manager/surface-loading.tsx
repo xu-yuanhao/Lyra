@@ -1,3 +1,8 @@
+import {
+  FM_LARGE_GRID_CLASS,
+  FM_LIST_CELL_PRIMARY_CLASS,
+  FM_LIST_GRID_CLASS
+} from "./surface-classes";
 import type {
   FileManagerSkeletonSlots,
   FileManagerSurfaceRenderModel
@@ -52,7 +57,7 @@ export const FileManagerLoadingSkeleton = ({
             {slots.deviceSlots.map((cardId) => (
               <article
                 key={`devices-card-${cardId}`}
-                className="lyra-file-manager-home-card lyra-file-manager-home-card-skeleton lyra-file-manager-disk-card lyra-file-manager-disk-card-skeleton"
+                className="lyra-file-manager-home-card lyra-file-manager-home-card-skeleton lyra-file-manager-disk-card lyra-file-manager-disk-card-skeleton pointer-events-none"
               >
                 <div className="lyra-file-manager-disk-summary">
                   <div className="lyra-file-manager-disk-summary-icon">
@@ -85,11 +90,11 @@ export const FileManagerLoadingSkeleton = ({
     const tiles = viewKind === "trash" ? slots.trashLargeSlots : slots.directoryLargeSlots;
     return (
       <div className="lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell" aria-label="file-manager-loading-skeleton">
-        <div className="lyra-app-group lyra-file-manager-large-grid">
+        <div className={`lyra-app-group ${FM_LARGE_GRID_CLASS}`}>
           {tiles.map((tileId) => (
             <article
               key={`fm-large-skeleton-tile-${tileId}`}
-              className="lyra-file-manager-large-tile lyra-file-manager-large-tile-skeleton"
+              className="lyra-file-manager-large-tile lyra-file-manager-large-tile-skeleton pointer-events-none"
             >
               <div className="lyra-file-manager-large-tile-preview">
                 <span className={SKELETON_LARGE_PREVIEW} />
@@ -111,13 +116,13 @@ export const FileManagerLoadingSkeleton = ({
 
   return (
     <div className="lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell" aria-label="file-manager-loading-skeleton">
-      <div className="lyra-app-group lyra-app-row-list lyra-file-manager-list-grid lyra-file-manager-list-grid-skeleton">
+      <div className={`lyra-app-group lyra-app-row-list ${FM_LIST_GRID_CLASS} lyra-file-manager-list-grid-skeleton pointer-events-none`}>
         {rows.map((rowId) => (
           <article
             key={`fm-list-skeleton-row-${rowId}`}
-            className="lyra-file-manager-list-row lyra-file-manager-list-row-skeleton"
+            className="lyra-file-manager-list-row lyra-file-manager-list-row-skeleton text-transparent"
           >
-            <div className="lyra-file-manager-list-cell-primary">
+            <div className={FM_LIST_CELL_PRIMARY_CLASS}>
               <span className={SKELETON_ICON_16} />
               <span className={SKELETON_LINE_16} />
             </div>
