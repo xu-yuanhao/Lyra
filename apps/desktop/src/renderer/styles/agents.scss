@@ -5381,8 +5381,7 @@
   pointer-events: none;
 }
 
-.lyra-agents-composer-rail-chip,
-.lyra-agents-todo-capsule {
+.lyra-agents-composer-rail-chip {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
@@ -5400,8 +5399,7 @@
   cursor: pointer;
 }
 
-.lyra-agents-composer-rail-chip:hover,
-.lyra-agents-todo-capsule:hover {
+.lyra-agents-composer-rail-chip:hover {
   /* The chips float over the transcript. `--lyra-app-row-hover-bg` is a
      translucent wash meant to be composited over a surface, so using it here
      made the pill see-through on hover; composite the tint onto the chip's
@@ -5410,14 +5408,12 @@
   color: var(--lyra-text-primary);
 }
 
-.lyra-agents-composer-rail-chip:disabled,
-.lyra-agents-todo-capsule:disabled {
+.lyra-agents-composer-rail-chip:disabled {
   opacity: var(--lyra-opacity-disabled);
   cursor: default;
 }
 
-.lyra-agents-composer-rail-chip svg,
-.lyra-agents-todo-capsule svg {
+.lyra-agents-composer-rail-chip svg {
   flex: 0 0 auto;
 }
 
@@ -5429,21 +5425,6 @@
 
 .lyra-agents-composer-toprow:empty {
   display: none;
-}
-
-.lyra-agents-composer-toprow > .lyra-agents-todo-capsule {
-  margin-left: auto;
-}
-
-.lyra-agents-todo-capsule-progress {
-  display: inline-flex;
-  align-items: center;
-  font-weight: 500;
-}
-
-.lyra-agents-todo-capsule-sep {
-  margin: 0 var(--lyra-space-2);
-  opacity: 0.45;
 }
 
 .lyra-agents-composer-browser-capsule-wrap {

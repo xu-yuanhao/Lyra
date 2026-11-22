@@ -4266,46 +4266,6 @@
   align-content: stretch;
 }
 
-.lyra-file-manager-chooser-bar {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--lyra-space-12);
-  padding: var(--lyra-space-10) var(--lyra-space-16);
-  border-top: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  background: var(--lyra-app-surface-bg);
-}
-
-.lyra-file-manager-chooser-copy {
-  min-width: 0;
-  display: grid;
-  gap: var(--lyra-space-2);
-}
-
-.lyra-file-manager-chooser-label {
-  color: var(--lyra-text-secondary);
-  font-size: var(--lyra-text-size-caption);
-  font-weight: 600;
-  line-height: var(--lyra-text-line-16);
-}
-
-.lyra-file-manager-chooser-path {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-16);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lyra-file-manager-chooser-confirm {
-  flex: 0 0 auto;
-  background: transparent;
-  color: var(--lyra-text-secondary);
-}
-
 .lyra-file-manager-titlebar-breadcrumbs {
   max-width: min(var(--lyra-unit-420), 42vw);
   overflow: hidden;

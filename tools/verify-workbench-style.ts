@@ -260,11 +260,6 @@ const selectorRules: readonly SelectorRule[] = [
     forbidden: [/var\(--lyra-terminal-green/]
   },
   {
-    selector: ".lyra-file-manager-chooser-confirm",
-    required: [/background:\s*transparent\s*;/, /color:\s*var\(--lyra-text-secondary\)\s*;/],
-    forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
-  },
-  {
     selector: ".lyra-global-dialog-action-primary",
     required: [/color:\s*var\(--lyra-app-primary-button-fg\)\s*;/],
     forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
