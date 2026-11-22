@@ -31,6 +31,35 @@ export type AppObjectRowDivProps = AppObjectRowBaseProps &
 
 export type AppObjectRowProps = AppObjectRowButtonProps | AppObjectRowDivProps;
 
+const ROW_CLASS = cn(
+  "group lyra-app-object-row",
+  "grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-[var(--lyra-space-10)] rounded-[var(--lyra-radius-8)] border border-transparent bg-[var(--lyra-app-row-bg)] px-[var(--lyra-space-10)] py-[var(--lyra-space-8)] text-left font-[family-name:var(--lyra-font-ui)] text-[var(--lyra-text-primary)]",
+  "min-h-[var(--lyra-control-h-52)] transition-[background-color,border-color,color,opacity] duration-[var(--lyra-motion-fast)]",
+  "hover:not(:disabled):bg-[var(--lyra-app-row-hover-bg)]",
+  "data-[active=true]:bg-[var(--lyra-app-row-active-bg)]",
+  "focus-visible:outline-0 focus-visible:shadow-[0_0_0_var(--lyra-stroke-strong)_var(--lyra-app-focus)]",
+  "disabled:cursor-not-allowed disabled:opacity-[var(--lyra-opacity-disabled)]",
+  "aria-disabled:cursor-not-allowed aria-disabled:opacity-[var(--lyra-opacity-disabled)]"
+);
+
+const ROW_ICON_CLASS = cn(
+  "lyra-app-object-row-icon",
+  "inline-flex size-[var(--lyra-control-h-default)] items-center justify-center rounded-[var(--lyra-radius-8)] bg-[var(--lyra-app-input-bg)] text-[var(--lyra-text-secondary)] shadow-[inset_0_0_0_var(--lyra-stroke-thin)_color-mix(in_srgb,var(--lyra-app-border)_62%,transparent)]",
+  "[&_svg]:size-[var(--lyra-icon-size-16)] [&_svg]:[stroke-width:1.8]",
+  "group-hover:not(:disabled):text-[var(--lyra-text-primary)] group-hover:not(:disabled):bg-[var(--lyra-app-input-hover-bg)]",
+  "group-data-[active=true]:text-[var(--lyra-text-primary)] group-data-[active=true]:bg-[var(--lyra-app-input-hover-bg)]"
+);
+
+const ROW_MAIN_CLASS = "lyra-app-object-row-main grid min-w-0";
+const ROW_HEAD_CLASS = "lyra-app-object-row-head grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-[var(--lyra-space-8)]";
+const ROW_TITLE_CLASS = "lyra-app-object-row-title min-w-0 truncate text-[length:var(--lyra-text-size-body)] font-semibold leading-[var(--lyra-text-line-body)] text-[var(--lyra-text-primary)]";
+const ROW_META_CLASS = "lyra-app-object-row-meta min-w-0 truncate text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-caption)] text-[var(--lyra-text-muted)]";
+const ROW_DESCRIPTION_CLASS = cn(
+  "lyra-app-object-row-description min-w-0 truncate text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-caption)] text-[var(--lyra-text-muted)]",
+  "group-hover:not(:disabled):text-[var(--lyra-text-secondary)] group-data-[active=true]:text-[var(--lyra-text-secondary)]"
+);
+const ROW_EDGE_CLASS = "inline-flex min-w-0 flex-nowrap items-center justify-end gap-[var(--lyra-space-6)]";
+
 const activateDivButton = (
   event: KeyboardEvent<HTMLDivElement>
 ): void => {
@@ -57,30 +86,36 @@ export const AppObjectRow = forwardRef<HTMLButtonElement | HTMLDivElement, AppOb
   title,
   ...props
 }, ref) => {
+  const hasIcon = icon !== undefined;
+  const rowClassName = cn(
+    ROW_CLASS,
+    hasIcon && "grid-cols-[var(--lyra-control-h-default)_minmax(0,1fr)_auto_auto]",
+    className
+  );
   const content = (
     <>
       {icon === undefined ? null : (
-        <span className="lyra-app-object-row-icon" aria-hidden="true">
+        <span className={ROW_ICON_CLASS} aria-hidden="true">
           {icon}
         </span>
       )}
-      <span className="lyra-app-object-row-main">
-        <span className="lyra-app-object-row-head">
-          <span className="lyra-app-object-row-title">{title}</span>
+      <span className={ROW_MAIN_CLASS}>
+        <span className={ROW_HEAD_CLASS}>
+          <span className={ROW_TITLE_CLASS}>{title}</span>
           {meta === undefined ? null : (
-            <span className="lyra-app-object-row-meta">{meta}</span>
+            <span className={ROW_META_CLASS}>{meta}</span>
           )}
         </span>
         {description === undefined ? null : (
-          <span className="lyra-app-object-row-description">{description}</span>
+          <span className={ROW_DESCRIPTION_CLASS}>{description}</span>
         )}
       </span>
       {badges === undefined ? null : (
-        <span className="lyra-app-object-row-badges">{badges}</span>
+        <span className={cn("lyra-app-object-row-badges", ROW_EDGE_CLASS)}>{badges}</span>
       )}
       {actions === undefined ? null : (
         <span
-          className="lyra-app-object-row-actions"
+          className={cn("lyra-app-object-row-actions", ROW_EDGE_CLASS)}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
@@ -89,7 +124,6 @@ export const AppObjectRow = forwardRef<HTMLButtonElement | HTMLDivElement, AppOb
       )}
     </>
   );
-  const rowClassName = cn("lyra-app-object-row", className);
 
   if (as === "div") {
     const divProps = props as Omit<HTMLAttributes<HTMLDivElement>, "title">;
@@ -104,7 +138,7 @@ export const AppObjectRow = forwardRef<HTMLButtonElement | HTMLDivElement, AppOb
         className={rowClassName}
         data-active={active ? "true" : undefined}
         data-has-actions={actions === undefined ? undefined : "true"}
-        data-has-icon={icon === undefined ? undefined : "true"}
+        data-has-icon={hasIcon ? "true" : undefined}
         role={role}
         onKeyDown={(event) => {
           onKeyDown?.(event);
@@ -127,7 +161,7 @@ export const AppObjectRow = forwardRef<HTMLButtonElement | HTMLDivElement, AppOb
       className={rowClassName}
       data-active={active ? "true" : undefined}
       data-has-actions={actions === undefined ? undefined : "true"}
-      data-has-icon={icon === undefined ? undefined : "true"}
+      data-has-icon={hasIcon ? "true" : undefined}
       {...buttonProps}
     >
       {content}
