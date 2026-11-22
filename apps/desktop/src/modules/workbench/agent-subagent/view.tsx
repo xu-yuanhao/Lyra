@@ -13,7 +13,7 @@ import {
   DataContextProvider,
   Message
 } from "../ai-panel/lyra-agents";
-import { AppEmptyState, AppLoadingState } from "@renderer/ui/components";
+import { Spinner } from "@renderer/ui/components/spinner";
 import { useWorkbenchTitlebarContribution } from "../shell/titlebar-context";
 import type { AgentSubagentSurfaceProps } from "./types";
 
@@ -63,9 +63,9 @@ export const AgentSubagentSurface = ({
   useWorkbenchTitlebarContribution({
     ariaLabel: state.title,
     content: (
-      <div className="lyra-agent-subagent-titlebar">
+      <div className="inline-flex min-w-0 items-center gap-[var(--lyra-space-8)]">
         <span>{state.title}</span>
-        <span className="lyra-agent-subagent-titlebar-meta">{labels.readOnly}</span>
+        <span className="text-[length:var(--lyra-text-size-caption)] text-[var(--lyra-text-muted)]">{labels.readOnly}</span>
       </div>
     )
   });
@@ -152,7 +152,10 @@ export const AgentSubagentSurface = ({
   if (loading && snapshot === null) {
     return (
       <div className="lyra-agent-subagent lyra-agents-host">
-        <AppLoadingState className="lyra-agent-subagent-state" title={labels.loading} />
+        <div className="flex min-h-0 flex-1 items-center justify-center gap-[var(--lyra-space-8)] text-sm text-muted-foreground">
+          <Spinner />
+          <span>{labels.loading}</span>
+        </div>
       </div>
     );
   }
@@ -160,10 +163,9 @@ export const AgentSubagentSurface = ({
   if (snapshot === null) {
     return (
       <div className="lyra-agent-subagent lyra-agents-host">
-        <AppEmptyState
-          className="lyra-agent-subagent-empty"
-          title={error ?? labels.unavailable}
-        />
+        <div className="flex min-h-0 flex-1 items-center justify-center text-sm text-muted-foreground">
+          {error ?? labels.unavailable}
+        </div>
       </div>
     );
   }
@@ -177,10 +179,9 @@ export const AgentSubagentSurface = ({
           aria-label={state.title}
         >
           {messages.length === 0 ? (
-            <AppEmptyState
-              className="lyra-agent-subagent-empty"
-              title={labels.loading}
-            />
+            <div className="flex min-h-0 flex-1 items-center justify-center text-sm text-muted-foreground">
+              {labels.loading}
+            </div>
           ) : (
             <div className="lyra-agent-subagent-chat-inner lyra-agents-chat-inner">
               {messages.map((message) => (
