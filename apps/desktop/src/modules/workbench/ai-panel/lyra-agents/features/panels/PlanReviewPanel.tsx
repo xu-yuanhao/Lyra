@@ -5,6 +5,19 @@ import type {
 } from "../../../../../../shared/agent";
 import { Button } from "@renderer/ui/components/button";
 import { t } from "@workbench/i18n";
+import {
+  PANEL_BASE_CLASS,
+  PANEL_HEADER_CLASS,
+  PANEL_ICON_CLASS,
+  PANEL_TITLE_BLOCK_CLASS,
+  PANEL_QUESTION_CLASS,
+  PANEL_DETAIL_CLASS,
+  PLAN_REVIEW_PANEL_CLASS,
+  PLAN_REVIEW_ACTIONS_CLASS,
+  PLAN_REVIEW_BTN_CLASS,
+  PLAN_REVIEW_BTN_APPROVE_CLASS,
+  PLAN_REVIEW_BTN_SET_ASIDE_CLASS,
+} from "./classes";
 
 export function PlanReviewPanel({
   plan,
@@ -24,22 +37,22 @@ export function PlanReviewPanel({
     plan.review.status === "changed" ? t("planReview.revise") : t("planReview.approve");
 
   return (
-    <div className="lyra-agents-decision-panel lyra-agents-plan-review-panel">
-      <div className="lyra-agents-decision-header">
-        <span className="lyra-agents-decision-icon">
+    <div className={`${PANEL_BASE_CLASS} ${PLAN_REVIEW_PANEL_CLASS}`}>
+      <div className={PANEL_HEADER_CLASS}>
+        <span className={PANEL_ICON_CLASS}>
           <BookText size={14} strokeWidth={2} />
         </span>
-        <div className="lyra-agents-decision-title-block">
-          <p className="lyra-agents-decision-question">{plan.title}</p>
-          <p className="lyra-agents-decision-detail">{summary}</p>
+        <div className={PANEL_TITLE_BLOCK_CLASS}>
+          <p className={PANEL_QUESTION_CLASS}>{plan.title}</p>
+          <p className={PANEL_DETAIL_CLASS}>{summary}</p>
         </div>
       </div>
-      <div className="lyra-agents-plan-review-actions">
+      <div className={PLAN_REVIEW_ACTIONS_CLASS}>
         <Button
           variant="ghost"
           size="sm"
           type="button"
-          className="lyra-agents-plan-review-btn"
+          className={PLAN_REVIEW_BTN_CLASS}
           onClick={() => { void onReview(plan); }}
         >
           <Eye size={13} strokeWidth={2.1} />
@@ -49,7 +62,7 @@ export function PlanReviewPanel({
           variant="ghost"
           size="sm"
           type="button"
-          className="lyra-agents-plan-review-btn lyra-agents-plan-review-btn-set-aside"
+          className={`${PLAN_REVIEW_BTN_CLASS} ${PLAN_REVIEW_BTN_SET_ASIDE_CLASS}`}
           onClick={() => { void onRespond("set_aside"); }}
         >
           <Archive size={13} strokeWidth={2.1} />
@@ -59,7 +72,7 @@ export function PlanReviewPanel({
           variant="ghost"
           size="sm"
           type="button"
-          className="lyra-agents-plan-review-btn lyra-agents-plan-review-btn-approve"
+          className={`${PLAN_REVIEW_BTN_CLASS} ${PLAN_REVIEW_BTN_APPROVE_CLASS}`}
           onClick={() => { void onRespond(primaryAction); }}
         >
           <Check size={13} strokeWidth={2.1} />

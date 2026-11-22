@@ -4,6 +4,13 @@ import { t } from "@workbench/i18n";
 import { Button } from "@renderer/ui/components/button";
 import { Checkbox } from "@renderer/ui/components/checkbox";
 import { Label } from "@renderer/ui/components/label";
+import {
+  DEBUG_PANEL_CLASS,
+  DEBUG_TOGGLE_CLASS,
+  DEBUG_BODY_CLASS,
+  DEBUG_TITLE_CLASS,
+  DEBUG_ROW_CLASS,
+} from "../panels/classes";
 
 /**
  * Floating debug panel (top-right corner) for local panel diagnostics.
@@ -23,10 +30,10 @@ export function DebugPanel({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="lyra-agents-debug-panel">
+    <div className={DEBUG_PANEL_CLASS}>
       <Button variant="ghost" size="sm"
         type="button"
-        className="lyra-agents-debug-toggle"
+        className={DEBUG_TOGGLE_CLASS}
         onClick={() => setOpen((v) => !v)}
         aria-label={t("debug.title")}
       >
@@ -34,16 +41,16 @@ export function DebugPanel({
       </Button>
 
       {open && (
-        <div className="lyra-agents-debug-body">
-          <div className="lyra-agents-debug-title">{t("debug.title")}</div>
-          <Label className="lyra-agents-debug-row">
+        <div className={DEBUG_BODY_CLASS}>
+          <div className={DEBUG_TITLE_CLASS}>{t("debug.title")}</div>
+          <Label className={DEBUG_ROW_CLASS}>
             <Checkbox
               checked={decisionsVisible}
               onCheckedChange={onToggleDecisions}
             />
             <span>{t("debug.decisions")}</span>
           </Label>
-          <Label className="lyra-agents-debug-row">
+          <Label className={DEBUG_ROW_CLASS}>
             <Checkbox
               checked={permissionVisible}
               onCheckedChange={onTogglePermission}

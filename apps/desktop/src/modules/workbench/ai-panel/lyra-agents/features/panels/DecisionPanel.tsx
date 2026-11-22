@@ -3,6 +3,28 @@ import { ChevronLeft, ChevronRight, ArrowUp, HelpCircle, Info } from "@lyra/icon
 import { t } from "@workbench/i18n";
 import type { DecisionQuestion } from "../../core/types";
 import { AppButton, AppInput, AppTooltip } from "@renderer/ui/components";
+import {
+  PANEL_BASE_CLASS,
+  PANEL_HEADER_CLASS,
+  PANEL_ICON_CLASS,
+  PANEL_TITLE_BLOCK_CLASS,
+  PANEL_QUESTION_CLASS,
+  PANEL_DETAIL_CLASS,
+  PANEL_NAV_CLASS,
+  PANEL_COUNTER_CLASS,
+  PANEL_BODY_CLASS,
+  PANEL_BODY_CONTENT_CLASS,
+  PANEL_OPTIONS_CLASS,
+  PANEL_OPTION_CLASS,
+  PANEL_OPTION_CUSTOM_CLASS,
+  PANEL_OPTION_LABEL_CLASS,
+  PANEL_OPTION_INFO_CLASS,
+  PANEL_CUSTOM_INPUT_CLASS,
+  PANEL_ANSWER_ROW_CLASS,
+  PANEL_ANSWER_SPACER_CLASS,
+  PANEL_NAV_BTN_CLASS,
+  PANEL_SUBMIT_CLASS,
+} from "./classes";
 
 export type { DecisionQuestion } from "../../core/types";
 
@@ -82,36 +104,36 @@ export function DecisionPanel({
 
   return (
     <div
-      className="lyra-agents-decision-panel"
+      className={PANEL_BASE_CLASS}
       onClick={isCollapsed ? onTap : undefined}
       style={{ cursor: isCollapsed ? "pointer" : undefined }}
     >
       {/* Header: always visible */}
-      <div className="lyra-agents-decision-header">
-        <span className="lyra-agents-decision-icon">
+      <div className={PANEL_HEADER_CLASS}>
+        <span className={PANEL_ICON_CLASS}>
           <HelpCircle size={14} strokeWidth={2} />
         </span>
-        <div className="lyra-agents-decision-title-block">
-          <p className="lyra-agents-decision-question">{questionText}</p>
-          {detailText ? <p className="lyra-agents-decision-detail">{detailText}</p> : null}
+        <div className={PANEL_TITLE_BLOCK_CLASS}>
+          <p className={PANEL_QUESTION_CLASS}>{questionText}</p>
+          {detailText ? <p className={PANEL_DETAIL_CLASS}>{detailText}</p> : null}
         </div>
         {hasMultipleQuestions ? (
-          <div className="lyra-agents-decision-nav">
+          <div className={PANEL_NAV_CLASS}>
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-decision-nav-btn"
+              className={PANEL_NAV_BTN_CLASS}
               disabled={!canPrev}
               onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i - 1); }}
               aria-label={t("decision.prevQuestion")}
             >
               <ChevronLeft size={14} strokeWidth={2.1} />
             </AppButton>
-            <span className="lyra-agents-decision-counter">
+            <span className={PANEL_COUNTER_CLASS}>
               {currentIndex + 1}/{questions.length}
             </span>
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-decision-nav-btn"
+              className={PANEL_NAV_BTN_CLASS}
               disabled={!canNext}
               onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i + 1); }}
               aria-label={t("decision.nextQuestion")}
@@ -124,7 +146,7 @@ export function DecisionPanel({
 
       {/* Body: height controlled by progress */}
       <div
-        className="lyra-agents-decision-body"
+        className={PANEL_BODY_CLASS}
         style={{
           maxHeight: `${progress * 520}px`,
           opacity: progress,
@@ -132,26 +154,26 @@ export function DecisionPanel({
           "--panel-progress": progress,
         } as CSSProperties}
       >
-        <div className="lyra-agents-decision-body-content">
-          <div className="lyra-agents-decision-options">
+        <div className={PANEL_BODY_CONTENT_CLASS}>
+          <div className={PANEL_OPTIONS_CLASS}>
             {q.options.map((opt) => (
               <AppButton variant="ghost" size="sm"
                 key={opt.value}
                 type="button"
-                className={`lyra-agents-decision-option ${selectedOption === opt.value && !isCustom ? "active" : ""}`}
+                className={`${PANEL_OPTION_CLASS} ${selectedOption === opt.value && !isCustom ? "active" : ""}`}
                 onClick={() => selectOption(opt.value)}
               >
-                <span className="lyra-agents-decision-option-label">{opt.displayLabel ?? opt.label}</span>
+                <span className={PANEL_OPTION_LABEL_CLASS}>{opt.displayLabel ?? opt.label}</span>
                 {(opt.displayDescription ?? opt.description) ? (
                   <AppTooltip
                     content={opt.displayDescription ?? opt.description}
-                    contentClassName="lyra-agents-decision-option-tooltip"
+                    contentClassName="lyra-agents-decision-option-tooltip max-w-[min(var(--lyra-unit-260),calc(100vw-var(--lyra-space-32)))] text-[var(--lyra-text-secondary)]"
                     delayDuration={160}
                     side="top"
                     sideOffset={8}
                   >
                     <span
-                      className="lyra-agents-decision-option-info"
+                      className={PANEL_OPTION_INFO_CLASS}
                       aria-label={opt.displayDescription ?? opt.description ?? ""}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -164,7 +186,7 @@ export function DecisionPanel({
             {q.options.length > 0 && customAllowed ? (
               <AppButton variant="ghost" size="sm"
                 type="button"
-                className={`lyra-agents-decision-option lyra-agents-decision-option-custom ${isCustom ? "active" : ""}`}
+                className={`${PANEL_OPTION_CUSTOM_CLASS} ${isCustom ? "active" : ""}`}
                 onClick={activateCustom}
               >
                 {t("decision.custom")}
@@ -172,10 +194,10 @@ export function DecisionPanel({
             ) : null}
           </div>
 
-          <div className="lyra-agents-decision-answer-row">
+          <div className={PANEL_ANSWER_ROW_CLASS}>
             {isCustom && customAllowed ? (
               <AppInput
-                className="lyra-agents-decision-custom-input"
+                className={PANEL_CUSTOM_INPUT_CLASS}
                 type="text"
                 placeholder={t("decision.customPlaceholder")}
                 value={customValue}
@@ -189,11 +211,11 @@ export function DecisionPanel({
                 autoFocus
               />
             ) : (
-              <span className="lyra-agents-decision-answer-spacer" aria-hidden="true" />
+              <span className={PANEL_ANSWER_SPACER_CLASS} aria-hidden="true" />
             )}
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-decision-submit"
+              className={PANEL_SUBMIT_CLASS}
               disabled={!allAnswered}
               onClick={handleSubmit}
               aria-label={t("decision.submit")}

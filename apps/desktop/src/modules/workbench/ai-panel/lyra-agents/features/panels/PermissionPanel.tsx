@@ -4,6 +4,24 @@ import { useState, type CSSProperties } from "react";
 import { t } from "@workbench/i18n";
 import type { PermissionRequest } from "../../core/types";
 import { AppButton } from "@renderer/ui/components";
+import {
+  PANEL_BASE_CLASS,
+  PANEL_HEADER_CLASS,
+  PANEL_ICON_CLASS,
+  PANEL_TITLE_BLOCK_CLASS,
+  PANEL_PERMISSION_QUESTION_CLASS,
+  PANEL_NAV_CLASS,
+  PANEL_COUNTER_CLASS,
+  PANEL_BODY_CLASS,
+  PANEL_BODY_CONTENT_CLASS,
+  PANEL_NAV_BTN_CLASS,
+  PERMISSION_PANEL_CLASS,
+  PERMISSION_CMD_CLASS,
+  PERMISSION_ACTIONS_CLASS,
+  PERMISSION_BTN_CLASS,
+  PERMISSION_BTN_APPROVE_CLASS,
+  PERMISSION_BTN_DENY_CLASS,
+} from "./classes";
 
 export type { PermissionRequest } from "../../core/types";
 
@@ -51,37 +69,37 @@ export function PermissionPanel({
 
   return (
     <div
-      className="lyra-agents-decision-panel lyra-agents-permission-panel"
+      className={`${PANEL_BASE_CLASS} ${PERMISSION_PANEL_CLASS}`}
       onClick={isCollapsed ? onTap : undefined}
       style={{ cursor: isCollapsed ? "pointer" : undefined }}
     >
       {/* Header: icon + title + command inline */}
-      <div className="lyra-agents-decision-header">
-        <span className={`lyra-agents-decision-icon permission-icon-${req.type}`}>
+      <div className={PANEL_HEADER_CLASS}>
+        <span className={`${PANEL_ICON_CLASS} permission-icon-${req.type}`}>
           {renderPermissionIcon(req.type)}
         </span>
-        <div className="lyra-agents-decision-title-block">
-          <p className="lyra-agents-decision-question">
-            {req.title} <code className="lyra-agents-permission-cmd">{req.detail}</code>
+        <div className={PANEL_TITLE_BLOCK_CLASS}>
+          <p className={PANEL_PERMISSION_QUESTION_CLASS}>
+            {req.title} <code className={PERMISSION_CMD_CLASS}>{req.detail}</code>
           </p>
         </div>
         {showNav && (
-          <div className="lyra-agents-decision-nav">
+          <div className={PANEL_NAV_CLASS}>
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-decision-nav-btn"
+              className={PANEL_NAV_BTN_CLASS}
               disabled={!canPrev}
               onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i - 1); }}
               aria-label={t("permission.prev")}
             >
               <ChevronLeft size={14} strokeWidth={2.1} />
             </AppButton>
-            <span className="lyra-agents-decision-counter">
+            <span className={PANEL_COUNTER_CLASS}>
               {currentIndex + 1}/{requests.length}
             </span>
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-decision-nav-btn"
+              className={PANEL_NAV_BTN_CLASS}
               disabled={!canNext}
               onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => i + 1); }}
               aria-label={t("permission.next")}
@@ -94,7 +112,7 @@ export function PermissionPanel({
 
       {/* Body: approve/deny buttons */}
       <div
-        className="lyra-agents-decision-body"
+        className={PANEL_BODY_CLASS}
         style={{
           maxHeight: `${progress * 200}px`,
           opacity: progress,
@@ -102,11 +120,11 @@ export function PermissionPanel({
           "--panel-progress": progress,
         } as CSSProperties}
       >
-        <div className="lyra-agents-decision-body-content">
-          <div className="lyra-agents-permission-actions">
+        <div className={PANEL_BODY_CONTENT_CLASS}>
+          <div className={PERMISSION_ACTIONS_CLASS}>
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-permission-btn lyra-agents-permission-btn-deny"
+              className={`${PERMISSION_BTN_CLASS} ${PERMISSION_BTN_DENY_CLASS}`}
               onClick={() => handleAction("deny")}
               aria-label={t("permission.deny")}
             >
@@ -114,7 +132,7 @@ export function PermissionPanel({
             </AppButton>
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-permission-btn lyra-agents-permission-btn-approve"
+              className={`${PERMISSION_BTN_CLASS} ${PERMISSION_BTN_APPROVE_CLASS}`}
               onClick={() => handleAction("approve")}
               aria-label={t("permission.approve")}
             >

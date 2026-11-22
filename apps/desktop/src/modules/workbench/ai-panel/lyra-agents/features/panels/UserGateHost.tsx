@@ -5,6 +5,9 @@ import type { ComposerPermissionMode, DecisionQuestion, PermissionRequest } from
 import { DecisionPanel } from "./DecisionPanel";
 import { PermissionPanel } from "./PermissionPanel";
 import { PlanReviewPanel } from "./PlanReviewPanel";
+import {
+  USER_GATE_HOST_CLASS,
+} from "./classes";
 
 export const USER_GATE_IDLE_MS = 10_000;
 
@@ -142,7 +145,7 @@ export function UserGateHost({
   return (
     <div
       ref={hostRef}
-      className="lyra-agents-user-gate-host"
+      className={USER_GATE_HOST_CLASS}
       data-user-gate-count={String(visibleGates.length)}
     >
       {showPermission && permissions.length > 0 ? (
