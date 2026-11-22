@@ -2,6 +2,11 @@ import { useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } 
 
 import { PanelResizer } from "../ui-primitives";
 import type { FilePreviewLayout } from "./kinds";
+import {
+  FP_SPLIT_CLASS,
+  FP_FILL_CLASS,
+  FP_PANE_CLASS,
+} from "./classes";
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -67,14 +72,12 @@ export const FilePreviewSplit = ({
       ref={hostRef}
       className={
         split
-          ? orientation === "vertical"
-            ? "lyra-file-preview-split lyra-file-preview-split-vertical"
-            : "lyra-file-preview-split lyra-file-preview-split-horizontal"
-          : "lyra-file-preview-fill"
+          ? `${FP_SPLIT_CLASS} ${orientation === "vertical" ? "lyra-file-preview-split-vertical" : "lyra-file-preview-split-horizontal"}`
+          : FP_FILL_CLASS
       }
       style={style}
     >
-      <div className="lyra-file-preview-pane" hidden={showSource === false}>
+      <div className={FP_PANE_CLASS} hidden={showSource === false}>
         {source}
       </div>
       {split ? (
@@ -85,7 +88,7 @@ export const FilePreviewSplit = ({
         />
       ) : null}
       {showPreview ? (
-        <div className="lyra-file-preview-pane">{preview}</div>
+        <div className={FP_PANE_CLASS}>{preview}</div>
       ) : null}
     </div>
   );

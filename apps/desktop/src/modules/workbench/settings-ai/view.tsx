@@ -2135,7 +2135,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                     as="div"
                     role="listitem"
                     active={false}
-                    className={`${AI_MODEL_OPTION_CLASS} lyra-settings-ai-provider-group-row`}
+                    className={`${AI_MODEL_OPTION_CLASS} SETTINGS_PROVIDER_GROUP_ROW_CLASS`}
                     icon={(
                       <AgentProviderBrandIcon
                         baseUrl={providerConfig?.baseUrl ?? null}
@@ -2185,7 +2185,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
         ) : null}
 
         {hasConfiguredModels && !isAddingModel && drilledProviderGroup !== null && drilledModel === null ? (
-          <div className={`${AI_MODEL_FLOW_CLASS} lyra-settings-ai-models-surface lyra-settings-ai-provider-drill-in`}>
+          <div className={`${AI_MODEL_FLOW_CLASS} lyra-settings-ai-models-surface SETTINGS_PROVIDER_DRILL_IN_CLASS`}>
             <AppSubPageBack
               label={labels.modelsTitle}
               onClick={() => {

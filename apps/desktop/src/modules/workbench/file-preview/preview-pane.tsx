@@ -10,6 +10,13 @@ import {
   type HtmlPreviewPlan
 } from "./detect-html-preview";
 import { filePreviewUrl, type FilePreviewKind } from "./kinds";
+import {
+  FP_FRAME_CLASS,
+  FP_IMAGE_CLASS,
+  FP_IMAGE_STAGE_CLASS,
+  FP_MARKDOWN_CLASS,
+  FP_EMPTY_CLASS,
+} from "./classes";
 
 const mermaidDocument = (content: string): string => {
   const trimmed = content.trim();
@@ -28,7 +35,7 @@ const MarkdownPreview = ({
 }) => (
   <LyraMarkdown
     arrangeMedia={false}
-    className="lyra-file-preview-markdown"
+    className={FP_MARKDOWN_CLASS}
     content={content}
     documentKey={documentKey}
   />
@@ -71,7 +78,7 @@ const HtmlPreview = ({
   if (plan.kind === "command" && frameUrl !== null) {
     return (
       <iframe
-        className="lyra-file-preview-frame"
+        className={FP_FRAME_CLASS}
         title={t("editor.viewPreview")}
         src={frameUrl}
       />
@@ -79,7 +86,7 @@ const HtmlPreview = ({
   }
   return (
     <iframe
-      className="lyra-file-preview-frame"
+      className={FP_FRAME_CLASS}
       title={t("editor.viewPreview")}
       sandbox="allow-scripts"
       srcDoc={content}
@@ -98,7 +105,7 @@ const siblingWithExtension = (filePath: string, extension: string): string => {
 
 const PdfFrame = ({ filePath }: { readonly filePath: string }) => (
   <iframe
-    className="lyra-file-preview-frame"
+    className={FP_FRAME_CLASS}
     title={t("editor.viewPreview")}
     src={`lyra-file://preview?path=${encodeURIComponent(filePath)}`}
   />
@@ -192,14 +199,14 @@ const ImageFilePreview = ({
   return (
     <div
       ref={stageRef}
-      className="lyra-file-preview-image-stage"
+      className={FP_IMAGE_STAGE_CLASS}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd}
       onPointerCancel={onPointerEnd}
     >
       <img
-        className="lyra-file-preview-image"
+        className={FP_IMAGE_CLASS}
         alt=""
         src={src}
         draggable={false}
@@ -295,7 +302,7 @@ export const FilePreviewPane = ({
   if (content.trim().length === 0) {
     return (
       <AppEmptyState
-        className="lyra-file-preview-empty"
+        className={FP_EMPTY_CLASS}
         title={t("editor.viewPreview")}
       />
     );

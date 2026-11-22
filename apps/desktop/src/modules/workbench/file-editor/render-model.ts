@@ -5,6 +5,15 @@ import type {
   FileEditorLabels,
   FileEditorSurfaceVariant
 } from "./types";
+import {
+  FE_SURFACE_BASE_CLASS,
+  FE_SURFACE_AI_WORKSPACE_CLASS,
+  FE_SURFACE_AI_MINIATURE_CLASS,
+  FE_HOST_CLASS,
+  FE_HOST_HIDDEN_CLASS,
+  FE_DIFF_HOST_CLASS,
+  FE_DIFF_HOST_HIDDEN_CLASS,
+} from "./classes";
 
 export type FileEditorReviewDecisionState = "accepted" | "rejected" | "pending";
 
@@ -182,7 +191,7 @@ export const createFileEditorRenderModel = ({
   });
 
   return {
-    surfaceClassName: `lyra-file-editor-surface lyra-file-editor-surface-${surfaceVariant} lyra-file-editor-control-${controlMode}`,
+    surfaceClassName: `${FE_SURFACE_BASE_CLASS} ${surfaceVariant === "ai-workspace" ? FE_SURFACE_AI_WORKSPACE_CLASS : surfaceVariant === "ai-miniature" ? FE_SURFACE_AI_MINIATURE_CLASS : ""} lyra-file-editor-surface-${surfaceVariant} lyra-file-editor-control-${controlMode}`,
     stateInstanceId: state.instanceId,
     filePath: state.filePath,
     content: state.content,
@@ -224,11 +233,11 @@ export const createFileEditorRenderModel = ({
           showLoadingSkeleton,
           hostClassName:
             isDiffMode
-              ? "lyra-file-editor-host lyra-file-editor-host-hidden"
-              : "lyra-file-editor-host",
+              ? `${FE_HOST_CLASS} ${FE_HOST_HIDDEN_CLASS}`
+              : FE_HOST_CLASS,
           diffHostClassName: isDiffMode
-            ? "lyra-file-editor-diff-host"
-            : "lyra-file-editor-diff-host lyra-file-editor-diff-host-hidden"
+            ? FE_DIFF_HOST_CLASS
+            : `${FE_DIFF_HOST_CLASS} ${FE_DIFF_HOST_HIDDEN_CLASS}`
         }
   };
 };

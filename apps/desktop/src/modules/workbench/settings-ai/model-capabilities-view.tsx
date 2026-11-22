@@ -207,7 +207,7 @@ export const SettingsAiModelCapabilitiesView = ({
   };
 
   return (
-    <div className={`${AI_MODEL_FLOW_CLASS} lyra-settings-ai-models-surface lyra-settings-ai-provider-drill-in`}>
+    <div className={`${AI_MODEL_FLOW_CLASS} lyra-settings-ai-models-surface SETTINGS_PROVIDER_DRILL_IN_CLASS`}>
       <AppSubPageBack
         label={entry.providerLabel ?? entry.providerKey ?? labels.modelsTitle}
         onClick={onBack}

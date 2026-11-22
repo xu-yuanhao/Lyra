@@ -12,6 +12,15 @@ import { parseUnifiedDiff } from "../agent-session-view-model/tool-parsing/diff"
 import { VirtualizedDiffView } from "../ai-panel/lyra-agents/features/tools/VirtualizedDiffView";
 import type { FileEditorRenderModel } from "./render-model";
 import type { FileEditorChangeReviewItem } from "./types";
+import {
+  FE_HOST_HIDDEN_CLASS,
+  FE_EMPTY_STATE_CLASS,
+  FE_BODY_CLASS,
+  FE_UNIFIED_DIFF_CLASS,
+  FE_AI_WORK_DELTA_CLASS,
+  FE_AI_WORK_DELTA_ADDED_CLASS,
+  FE_AI_WORK_DELTA_REMOVED_CLASS,
+} from "./classes";
 
 const FilePreviewPane = lazy(async () => {
   const module = await import("../file-preview/preview-pane");
@@ -56,11 +65,11 @@ export const FileEditorTitlebarContent = ({
   return (
     <div className="lyra-titlebar-context-controls">
       {toolbar.delta === null ? null : (
-        <span className="lyra-file-editor-ai-work-delta" aria-label={toolbar.delta.ariaLabel}>
-          <span className="lyra-file-editor-ai-work-delta-added">
+        <span className={FE_AI_WORK_DELTA_CLASS} aria-label={toolbar.delta.ariaLabel}>
+          <span className={FE_AI_WORK_DELTA_ADDED_CLASS}>
             {toolbar.delta.addedText}
           </span>
-          <span className="lyra-file-editor-ai-work-delta-removed">
+          <span className={FE_AI_WORK_DELTA_REMOVED_CLASS}>
             {toolbar.delta.removedText}
           </span>
         </span>
@@ -212,7 +221,7 @@ export const FileEditorSurfaceView = ({
   const source = body.kind === "empty"
     ? (
       <AppEmptyState
-        className="lyra-file-editor-empty-state"
+        className={FE_EMPTY_STATE_CLASS}
         title={body.message}
         actions={(
           <AppButton
@@ -227,12 +236,12 @@ export const FileEditorSurfaceView = ({
       />
     )
     : (
-      <section className="lyra-file-editor-body">
+      <section className={FE_BODY_CLASS}>
         <div
           ref={attachHost}
           className={
             unifiedDiffHunks.length > 0
-              ? `${body.hostClassName} lyra-file-editor-host-hidden`
+              ? `${body.hostClassName} ${FE_HOST_HIDDEN_CLASS}`
               : body.hostClassName
           }
         />
@@ -241,7 +250,7 @@ export const FileEditorSurfaceView = ({
           className={body.diffHostClassName}
         />
         {unifiedDiffHunks.length > 0 ? (
-          <section className="lyra-file-editor-unified-diff" aria-label={renderModel.filePath}>
+          <section className={FE_UNIFIED_DIFF_CLASS} aria-label={renderModel.filePath}>
             <VirtualizedDiffView fill hunks={unifiedDiffHunks} />
           </section>
         ) : null}

@@ -226,3 +226,10 @@ export const ST_SELECT_CONTENT_CLASS =
 
 export const ST_SELECT_CONTENT_RICH_CLASS =
   "lyra-settings-select-content-rich min-w-[max(var(--radix-dropdown-menu-trigger-width,var(--lyra-unit-220)),var(--lyra-unit-220))]";
+
+export const SETTINGS_BACK_ROW_CLASS =
+  "justify-self-start self-start gap-[var(--lyra-space-2)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-body)] font-medium hover:text-[var(--lyra-text-primary)]";
+export const SETTINGS_PROVIDER_GROUP_ROW_CLASS =
+  "lyra-settings-ai-provider-group-row cursor-pointer hover:bg-[color-mix(in_srgb,var(--lyra-app-border)_40%,transparent)]";
+export const SETTINGS_PROVIDER_DRILL_IN_CLASS =
+  "lyra-settings-ai-provider-drill-in gap-[var(--lyra-space-8)]";
