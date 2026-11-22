@@ -12,6 +12,30 @@ import {
 import {
   resolveFileManagerDiskKindLabel
 } from "./surface-model";
+import {
+  FM_DISK_CARD_CLASS,
+  FM_DISK_DESCRIPTION_CLASS,
+  FM_DISK_KIND_CLASS,
+  FM_DISK_META_CLASS,
+  FM_DISK_METER_CLASS,
+  FM_DISK_METER_FILL_CLASS,
+  FM_DISK_METER_TONE_CLASS,
+  FM_DISK_PATH_CLASS,
+  FM_DEVICE_CARD_CLASS,
+  FM_FAVORITE_ROW_CLASS,
+  FM_FAVORITES_LIST_CLASS,
+  FM_HOME_CARD_CLASS,
+  FM_HOME_GRID_CLASS,
+  FM_HOST_CARD_CLASS,
+  FM_HOST_COPY_CLASS,
+  FM_HOST_FACTS_CLASS,
+  FM_HOST_FACT_CLASS,
+  FM_HOST_IDENTITY_CLASS,
+  FM_HOST_NAME_CLASS,
+  FM_HOST_OS_CLASS,
+  FM_SECTION_HEADER_CLASS,
+  FM_SECTION_TITLE_CLASS
+} from "./surface-classes";
 import { preventContextMenuDefaults } from "./surface-view-events";
 import type { FileManagerSurfaceChromeProps } from "./surface-view-types";
 
@@ -25,11 +49,11 @@ const HomeSection = ({
   readonly section: "devices";
 }) => (
   <section className="lyra-app-section lyra-file-manager-home-section">
-    <header className="lyra-app-section-title lyra-file-manager-home-section-header">
+    <header className={`lyra-app-section-title lyra-file-manager-home-section-header ${FM_SECTION_HEADER_CLASS}`}>
       {renderFileManagerSectionIcon(section)}
-      <h3>{title}</h3>
+      <h3 className={FM_SECTION_TITLE_CLASS}>{title}</h3>
     </header>
-    <div className="lyra-app-group lyra-app-row-list lyra-file-manager-home-grid">{children}</div>
+    <div className={`lyra-app-group lyra-app-row-list ${FM_HOME_GRID_CLASS}`}>{children}</div>
   </section>
 );
 
@@ -53,34 +77,34 @@ export const FileManagerHomeContent = ({
   return (
     <div className="lyra-app-content-column lyra-file-manager-home">
       {host === null ? null : (
-        <article className="lyra-file-manager-host-card">
-          <div className="lyra-file-manager-host-identity">
+        <article className={FM_HOST_CARD_CLASS}>
+          <div className={FM_HOST_IDENTITY_CLASS}>
             {renderFileManagerAppIcon("file-manager-home")}
-            <div className="lyra-file-manager-host-copy">
-              <h2 className="lyra-file-manager-host-name">{host.name}</h2>
+            <div className={FM_HOST_COPY_CLASS}>
+              <h2 className={FM_HOST_NAME_CLASS}>{host.name}</h2>
               {hostOs.length === 0 ? null : (
-                <p className="lyra-file-manager-host-os">{hostOs}</p>
+                <p className={FM_HOST_OS_CLASS}>{hostOs}</p>
               )}
             </div>
           </div>
-          <dl className="lyra-file-manager-host-facts">
+          <dl className={FM_HOST_FACTS_CLASS}>
             {typeof host.cpuBrand === "string" && host.cpuBrand.length > 0 ? (
-              <div className="lyra-file-manager-host-fact">
+              <div className={FM_HOST_FACT_CLASS}>
                 <dt>{labels.hostProcessor}</dt>
                 <dd>{host.cpuBrand}</dd>
               </div>
             ) : null}
-            <div className="lyra-file-manager-host-fact">
+            <div className={FM_HOST_FACT_CLASS}>
               <dt>{labels.hostMemory}</dt>
               <dd>
-                <span className="lyra-file-manager-disk-description">
-                  <span className="lyra-file-manager-disk-meter" aria-hidden="true">
+                <span className={FM_DISK_DESCRIPTION_CLASS}>
+                  <span className={FM_DISK_METER_CLASS} aria-hidden="true">
                     <span
-                      className={`lyra-file-manager-disk-meter-fill lyra-file-manager-disk-meter-fill-${host.memoryUsageTone}`}
+                      className={`${FM_DISK_METER_FILL_CLASS} ${FM_DISK_METER_TONE_CLASS[host.memoryUsageTone] ?? FM_DISK_METER_TONE_CLASS.healthy}`}
                       style={{ width: `${host.memoryUsagePercent}%` }}
                     />
                   </span>
-                  <span className="lyra-file-manager-disk-meta">
+                  <span className={FM_DISK_META_CLASS}>
                     <span>{host.memoryLabel}</span>
                     <span>
                       {labels.diskAvailable} {host.memoryAvailableLabel}
@@ -98,7 +122,7 @@ export const FileManagerHomeContent = ({
         {home.disks.map((item) => (
           <AppObjectRow
             key={item.disk.id}
-            className="lyra-file-manager-home-card lyra-file-manager-disk-card"
+            className={`${FM_HOME_CARD_CLASS} ${FM_DISK_CARD_CLASS}`}
             onClick={() => {
               actions.onOpenDisk(item.disk);
             }}
@@ -109,20 +133,20 @@ export const FileManagerHomeContent = ({
             icon={renderFileManagerDiskIcon(item.disk)}
             title={item.disk.title}
             meta={(
-              <AppBadge className={`lyra-file-manager-disk-kind lyra-file-manager-disk-kind-${item.disk.kind}`}>
+              <AppBadge className={FM_DISK_KIND_CLASS}>
                 {resolveFileManagerDiskKindLabel(item.disk.kind, labels)}
               </AppBadge>
             )}
             description={(
-              <span className="lyra-file-manager-disk-description">
-                <span className="lyra-file-manager-disk-path">{item.disk.mountPath}</span>
-                <span className="lyra-file-manager-disk-meter" aria-hidden="true">
+              <span className={FM_DISK_DESCRIPTION_CLASS}>
+                <span className={FM_DISK_PATH_CLASS}>{item.disk.mountPath}</span>
+                <span className={FM_DISK_METER_CLASS} aria-hidden="true">
                   <span
-                    className={`lyra-file-manager-disk-meter-fill lyra-file-manager-disk-meter-fill-${item.usageTone}`}
+                    className={`${FM_DISK_METER_FILL_CLASS} ${FM_DISK_METER_TONE_CLASS[item.usageTone] ?? FM_DISK_METER_TONE_CLASS.healthy}`}
                     style={{ width: `${item.usagePercent}%` }}
                   />
                 </span>
-                <span className="lyra-file-manager-disk-meta">
+                <span className={FM_DISK_META_CLASS}>
                   <span>{item.usageLabel}</span>
                   <span>
                     {labels.diskAvailable} {item.availableLabel}
@@ -137,7 +161,7 @@ export const FileManagerHomeContent = ({
           <AppObjectRow
             as="div"
             key={item.device.id}
-            className="lyra-file-manager-home-card lyra-file-manager-disk-card lyra-file-manager-device-card"
+            className={`${FM_HOME_CARD_CLASS} ${FM_DISK_CARD_CLASS} ${FM_DEVICE_CARD_CLASS}`}
             onContextMenu={(event) => {
               preventContextMenuDefaults(event);
               if (item.device.canMount === false && item.device.canEject === false) {
@@ -148,16 +172,16 @@ export const FileManagerHomeContent = ({
             icon={renderFileManagerDiskIcon(item.device)}
             title={item.device.title}
             meta={(
-              <AppBadge className={`lyra-file-manager-disk-kind lyra-file-manager-disk-kind-${item.device.kind}`}>
+              <AppBadge className={FM_DISK_KIND_CLASS}>
                 {resolveFileManagerDiskKindLabel(item.device.kind, labels)}
               </AppBadge>
             )}
             description={(
-              <span className="lyra-file-manager-disk-description">
-                <span className="lyra-file-manager-disk-path">
+              <span className={FM_DISK_DESCRIPTION_CLASS}>
+                <span className={FM_DISK_PATH_CLASS}>
                   {item.device.displayPath ?? item.device.devicePath}
                 </span>
-                <span className="lyra-file-manager-disk-meta">
+                <span className={FM_DISK_META_CLASS}>
                   <span>{labels.deviceUnmounted}</span>
                   {item.totalBytesLabel === null ? null : <span>{item.totalBytesLabel}</span>}
                 </span>
@@ -184,18 +208,18 @@ export const FileManagerFavoritesContent = ({
 
   return (
     <div className="lyra-app-content-column lyra-file-manager-favorites-page">
-      <header className="lyra-app-section-title lyra-file-manager-favorites-header">
+      <header className={`lyra-app-section-title lyra-file-manager-favorites-header ${FM_SECTION_HEADER_CLASS}`}>
         {renderFileManagerSectionIcon("favorites")}
-        <h3>{labels.homeSectionFavorites}</h3>
+        <h3 className={FM_SECTION_TITLE_CLASS}>{labels.homeSectionFavorites}</h3>
       </header>
       {favorites.isEmpty ? (
         <AppEmptyState className="lyra-file-manager-empty-state" title={labels.noFavorites} />
       ) : (
-        <div className="lyra-app-group lyra-app-row-list lyra-file-manager-favorites-list">
+        <div className={`lyra-app-group lyra-app-row-list ${FM_FAVORITES_LIST_CLASS}`}>
           {favorites.favorites.map((favorite) => (
             <AppObjectRow
               key={favorite.id}
-              className="lyra-file-manager-favorite-row"
+              className={FM_FAVORITE_ROW_CLASS}
               onClick={() => {
                 actions.onOpenFavorite(favorite);
               }}

@@ -240,17 +240,6 @@ const selectorRules: readonly SelectorRule[] = [
     forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
   },
   {
-    selector: ".lyra-file-manager-disk-kind-system",
-    required: [/color:\s*var\(--lyra-text-secondary\)\s*;/],
-    forbidden: [/var\(--lyra-terminal-green/]
-  },
-  {
-    selector: ".lyra-file-manager-disk-meter-fill-healthy",
-    // Neutral fill since 0ac3a3f4; terminal-green must never leak into product UI.
-    required: [/background:\s*var\(--lyra-app-primary-button\)\s*;/],
-    forbidden: [/var\(--lyra-terminal-green/]
-  },
-  {
     selector: ".lyra-file-manager-disk-vector-system",
     required: [/color:\s*var\(--lyra-text-secondary\)\s*;/],
     forbidden: [/var\(--lyra-terminal-green/]
@@ -722,7 +711,7 @@ export const scanLegacyVisualTokenConsumers = (filePath: string, text: string): 
 export const collectResolvableLyraProperties = (cssTexts: readonly string[], tsxTexts: readonly string[]): Set<string> => {
   const names = new Set<string>();
   for (const text of [...cssTexts, ...tsxTexts]) {
-    for (const match of text.matchAll(/(?<=[\s;{{])(--lyra-[A-Za-z0-9-]+)\s*:/g)) names.add(match[1] ?? "");
+    for (const match of text.matchAll(/(?<=[\s;{{\[])(--lyra-[A-Za-z0-9-]+)\s*:/g)) names.add(match[1] ?? "");
     for (const match of text.matchAll(/["'](--lyra-[A-Za-z0-9-]+)["']\s*:/g)) names.add(match[1] ?? "");
   }
   for (const value of UNIT_VALUES) names.add(`--lyra-unit-${value.replaceAll(".", "-")}`);

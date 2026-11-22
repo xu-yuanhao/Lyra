@@ -38,3 +38,74 @@ export const FM_LARGE_TILE_BODY_CLASS =
 
 export const FM_LARGE_TILE_TITLE_CLASS =
   "lyra-file-manager-large-tile-title text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-16)] font-semibold text-inherit";
+
+export const FM_SECTION_HEADER_CLASS =
+  "inline-flex min-w-0 items-center gap-[var(--lyra-space-8)] px-[var(--lyra-space-4)] text-[var(--lyra-text-secondary)]";
+
+export const FM_SECTION_TITLE_CLASS =
+  "m-0 text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-body)] font-semibold leading-[var(--lyra-text-line-18)]";
+
+export const FM_HOME_GRID_CLASS =
+  "lyra-file-manager-home-grid grid min-w-0 grid-cols-[minmax(0,1fr)] gap-[var(--lyra-space-2)]";
+
+export const FM_FAVORITES_LIST_CLASS =
+  "lyra-file-manager-favorites-list grid min-w-0 gap-[var(--lyra-space-2)] p-[var(--lyra-space-6)] border border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)]";
+
+export const FM_HOST_CARD_CLASS =
+  "lyra-file-manager-host-card grid min-w-0 gap-[var(--lyra-space-12)] border border-[var(--lyra-app-border)] bg-[var(--lyra-app-surface-bg)] px-[var(--lyra-space-12)] py-[var(--lyra-space-14)] rounded-[var(--lyra-radius-10)]";
+
+export const FM_HOST_IDENTITY_CLASS =
+  "lyra-file-manager-host-identity grid min-w-0 grid-cols-[var(--lyra-control-h-40)_minmax(0,1fr)] items-center gap-[var(--lyra-space-12)] [&_.lyra-file-manager-icon-shell]:size-[var(--lyra-control-h-40)] [&_.lyra-file-manager-icon-shell_svg]:size-[var(--lyra-icon-size-20)]";
+
+export const FM_HOST_COPY_CLASS = "lyra-file-manager-host-copy grid min-w-0 gap-[var(--lyra-space-2)]";
+
+export const FM_HOST_NAME_CLASS =
+  "lyra-file-manager-host-name m-0 overflow-hidden text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-16)] font-semibold leading-[var(--lyra-text-line-22)] text-ellipsis whitespace-nowrap";
+
+export const FM_HOST_OS_CLASS =
+  "lyra-file-manager-host-os m-0 overflow-hidden text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-16)] text-ellipsis whitespace-nowrap";
+
+export const FM_HOST_FACTS_CLASS = "lyra-file-manager-host-facts m-0 grid gap-[var(--lyra-space-10)]";
+
+export const FM_HOST_FACT_CLASS =
+  "lyra-file-manager-host-fact grid min-w-0 gap-[var(--lyra-space-4)] [&_dt]:m-0 [&_dt]:text-[var(--lyra-text-secondary)] [&_dt]:text-[length:var(--lyra-text-size-caption)] [&_dt]:font-semibold [&_dt]:leading-[var(--lyra-text-line-16)] [&_dd]:m-0 [&_dd]:text-[var(--lyra-text-primary)] [&_dd]:text-[length:var(--lyra-text-size-body)] [&_dd]:leading-[var(--lyra-text-line-18)]";
+
+const FM_CARD_ROW_BASE =
+  "min-h-[var(--lyra-control-h-40)] border-transparent bg-transparent px-[var(--lyra-space-10)] py-[var(--lyra-space-8)] [content-visibility:auto] [contain-intrinsic-size:var(--lyra-control-h-40)] enabled:hover:bg-[var(--lyra-app-row-hover-bg)] [&_.lyra-app-object-row-title]:text-[var(--lyra-text-primary)] [&_.lyra-app-object-row-title]:text-[length:var(--lyra-text-size-body)] [&_.lyra-app-object-row-title]:font-semibold [&_.lyra-app-object-row-title]:leading-[var(--lyra-text-line-18)] [&_.lyra-app-object-row-description]:text-[var(--lyra-text-muted)]";
+
+export const FM_HOME_CARD_CLASS = `lyra-file-manager-home-card ${FM_CARD_ROW_BASE}`;
+export const FM_FAVORITE_ROW_CLASS = `lyra-file-manager-favorite-row ${FM_CARD_ROW_BASE}`;
+
+export const FM_DISK_CARD_CLASS =
+  "lyra-file-manager-disk-card min-h-[calc(var(--lyra-control-h-52)_+_var(--lyra-space-8))] items-center [&_.lyra-app-object-row-description]:whitespace-normal [&_.lyra-app-object-row-icon]:size-[var(--lyra-control-h-28)]";
+
+export const FM_DEVICE_CARD_CLASS = "lyra-file-manager-device-card cursor-default";
+
+export const FM_DISK_DESCRIPTION_CLASS = "lyra-file-manager-disk-description grid min-w-0 gap-[var(--lyra-space-4)]";
+export const FM_DISK_SUMMARY_CLASS =
+  "lyra-file-manager-disk-summary grid w-full min-w-0 grid-cols-[var(--lyra-control-h-40)_minmax(0,1fr)] items-start gap-[var(--lyra-space-12)]";
+export const FM_DISK_SUMMARY_ICON_CLASS =
+  "lyra-file-manager-disk-summary-icon grid size-[var(--lyra-control-h-40)] place-items-center";
+export const FM_DISK_SUMMARY_BODY_CLASS = "lyra-file-manager-disk-summary-body grid min-w-0 gap-[var(--lyra-space-4)]";
+
+export const FM_DISK_PATH_CLASS =
+  "lyra-file-manager-disk-path min-w-0 overflow-hidden text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-16)] text-ellipsis whitespace-nowrap";
+
+export const FM_DISK_METER_CLASS =
+  "lyra-file-manager-disk-meter block h-[var(--lyra-space-8)] w-full overflow-hidden rounded-[var(--lyra-radius-pill)] bg-[color-mix(in_srgb,var(--lyra-text-primary)_18%,var(--lyra-app-input-bg))]";
+
+export const FM_DISK_METER_FILL_CLASS = "lyra-file-manager-disk-meter-fill block h-full rounded-[inherit]";
+
+export const FM_DISK_METER_TONE_CLASS: Record<string, string> = {
+  healthy: "bg-[var(--lyra-app-primary-button)]",
+  warning: "bg-[var(--lyra-status-warning)]",
+  danger: "bg-[var(--lyra-status-error)]"
+};
+
+export const FM_DISK_META_CLASS =
+  "lyra-file-manager-disk-meta flex min-w-0 flex-wrap gap-x-[var(--lyra-space-8)] gap-y-[var(--lyra-space-4)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-16)]";
+
+export const FM_DISK_FOOTER_CLASS = "lyra-file-manager-disk-footer flex min-w-0 items-center gap-[var(--lyra-space-8)]";
+
+export const FM_DISK_KIND_CLASS =
+  "lyra-file-manager-disk-kind ml-auto shrink-0 rounded-[var(--lyra-radius-pill)] bg-[var(--lyra-app-muted-bg)] px-[var(--lyra-space-6)] py-[var(--lyra-space-2)] text-[var(--lyra-text-secondary)] text-[length:var(--lyra-text-size-caption)] font-semibold leading-[var(--lyra-text-line-14)]";

@@ -1,11 +1,25 @@
 import {
+  FM_DISK_CARD_CLASS,
+  FM_DISK_FOOTER_CLASS,
+  FM_DISK_META_CLASS,
+  FM_DISK_METER_CLASS,
+  FM_DISK_SUMMARY_BODY_CLASS,
+  FM_DISK_SUMMARY_CLASS,
+  FM_DISK_SUMMARY_ICON_CLASS,
+  FM_HOME_CARD_CLASS,
+  FM_HOME_GRID_CLASS,
+  FM_HOST_CARD_CLASS,
+  FM_HOST_COPY_CLASS,
+  FM_HOST_FACTS_CLASS,
+  FM_HOST_IDENTITY_CLASS,
   FM_LARGE_GRID_CLASS,
   FM_LARGE_TILE_BODY_CLASS,
   FM_LARGE_TILE_CLASS,
   FM_LARGE_TILE_PREVIEW_CLASS,
   FM_LARGE_TILE_TITLE_CLASS,
   FM_LIST_CELL_PRIMARY_CLASS,
-  FM_LIST_GRID_CLASS
+  FM_LIST_GRID_CLASS,
+  FM_SECTION_HEADER_CLASS
 } from "./surface-classes";
 import type {
   FileManagerSkeletonSlots,
@@ -38,48 +52,48 @@ export const FileManagerLoadingSkeleton = ({
   if (viewKind === "home") {
     return (
       <div className="lyra-app-content-column lyra-file-manager-skeleton-home" aria-label="file-manager-loading-skeleton">
-        <article className="lyra-file-manager-host-card lyra-file-manager-host-card-skeleton pointer-events-none">
-          <div className="lyra-file-manager-host-identity">
+        <article className={`${FM_HOST_CARD_CLASS} lyra-file-manager-host-card-skeleton pointer-events-none`}>
+          <div className={FM_HOST_IDENTITY_CLASS}>
             <span className={SKELETON_HOST_ICON} />
-            <div className="lyra-file-manager-host-copy">
+            <div className={FM_HOST_COPY_CLASS}>
               <span className={SKELETON_HOST_NAME} />
               <span className={SKELETON_HOST_OS} />
             </div>
           </div>
-          <div className="lyra-file-manager-host-facts">
+          <div className={FM_HOST_FACTS_CLASS}>
             <span className={SKELETON_HOST_FACT} />
             <span className={SKELETON_HOST_FACT} />
           </div>
         </article>
 
         <section className="lyra-app-section lyra-file-manager-skeleton-home-section">
-          <header className="lyra-app-section-title lyra-file-manager-skeleton-home-header">
+          <header className={`lyra-app-section-title lyra-file-manager-skeleton-home-header ${FM_SECTION_HEADER_CLASS}`}>
             <span className={SKELETON_ICON_16} />
             <span className={SKELETON_LINE_16} />
           </header>
-          <div className="lyra-app-group lyra-app-row-list lyra-file-manager-home-grid">
+          <div className={`lyra-app-group lyra-app-row-list ${FM_HOME_GRID_CLASS}`}>
             {slots.deviceSlots.map((cardId) => (
               <article
                 key={`devices-card-${cardId}`}
-                className="lyra-file-manager-home-card lyra-file-manager-home-card-skeleton lyra-file-manager-disk-card lyra-file-manager-disk-card-skeleton pointer-events-none"
+                className={`${FM_HOME_CARD_CLASS} lyra-file-manager-home-card-skeleton ${FM_DISK_CARD_CLASS} lyra-file-manager-disk-card-skeleton pointer-events-none`}
               >
-                <div className="lyra-file-manager-disk-summary">
-                  <div className="lyra-file-manager-disk-summary-icon">
+                <div className={FM_DISK_SUMMARY_CLASS}>
+                  <div className={FM_DISK_SUMMARY_ICON_CLASS}>
                     <span className={SKELETON_DISK_ICON} />
                   </div>
-                  <div className="lyra-file-manager-disk-summary-body">
+                  <div className={FM_DISK_SUMMARY_BODY_CLASS}>
                     <span className={SKELETON_LINE_16} />
                     <span className={SKELETON_LINE_14} />
                   </div>
                 </div>
-                <div className="lyra-file-manager-disk-meter">
+                <div className={FM_DISK_METER_CLASS}>
                   <span className={SKELETON_DISK_METER} />
                 </div>
-                <div className="lyra-file-manager-disk-meta">
+                <div className={FM_DISK_META_CLASS}>
                   <span className={SKELETON_LINE_14} />
                   <span className={`${SKELETON_LINE_14} w-[58%]`} />
                 </div>
-                <div className="lyra-file-manager-disk-footer">
+                <div className={FM_DISK_FOOTER_CLASS}>
                   <span className={SKELETON_DISK_KIND} />
                 </div>
               </article>
