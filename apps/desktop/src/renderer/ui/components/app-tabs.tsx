@@ -24,14 +24,24 @@ export type AppTabsProps<TValue extends string = string> = {
   readonly value: TValue;
 };
 
+const APP_TAB_CLASS = cn(
+  "lyra-app-tab inline-flex h-[var(--lyra-control-h-24)] min-w-0 items-center justify-center gap-[var(--lyra-space-6)] px-[var(--lyra-space-8)] py-0",
+  "border-0 rounded-[var(--lyra-radius-6)] bg-transparent text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-caption)] text-[var(--lyra-text-muted)] whitespace-nowrap cursor-default",
+  "[font-family:var(--lyra-font-ui)] transition-[background-color,color,opacity] duration-[var(--lyra-motion-fast)]",
+  "enabled:hover:text-[var(--lyra-text-primary)] enabled:hover:bg-[var(--lyra-app-row-hover-bg)]",
+  "data-[active=true]:text-[var(--lyra-text-primary)] data-[active=true]:bg-[var(--lyra-app-row-active-bg)]",
+  "focus-visible:outline-none focus-visible:shadow-[0_0_0_var(--lyra-stroke-strong)_var(--lyra-app-focus)]",
+  "disabled:cursor-not-allowed disabled:opacity-[var(--lyra-opacity-disabled)]"
+);
+
 const renderTabContent = <TValue extends string = string>(option: AppTabOption<TValue>) => (
   <>
     {option.icon === undefined ? null : (
-      <span className="lyra-app-tab-icon" aria-hidden="true">
+      <span className="lyra-app-tab-icon inline-flex size-[var(--lyra-icon-size-14)] items-center justify-center [&_svg]:size-[var(--lyra-icon-size-14)]" aria-hidden="true">
         {option.icon}
       </span>
     )}
-    <span className="lyra-app-tab-label">{option.label}</span>
+    <span className="lyra-app-tab-label min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{option.label}</span>
   </>
 );
 
@@ -52,7 +62,13 @@ export const AppTabs = <TValue extends string = string>({
   size = "sm",
   value
 }: AppTabsProps<TValue>) => {
-  const rootClassName = cn("lyra-app-tabs", `lyra-app-tabs-size-${size}`, className);
+  const rootClassName = cn(
+    "lyra-app-tabs inline-flex min-w-0 items-center gap-[var(--lyra-space-2)] border border-[color-mix(in_srgb,var(--lyra-app-border)_72%,transparent)] bg-[var(--lyra-app-input-bg)] p-[var(--lyra-space-2)]",
+    "rounded-[var(--lyra-radius-8)]",
+    size === "md" ? "lyra-app-tabs-size-md min-h-[var(--lyra-control-h-32)]" : "lyra-app-tabs-size-sm min-h-[var(--lyra-control-h-28)]",
+    size === "md" && "[&_.lyra-app-tab]:h-[var(--lyra-control-h-28)]",
+    className
+  );
 
   // Multiple mode is a toggle-button group, not tabs: each option is an
   // independent pressed toggle; the parent owns the selected set.
@@ -69,7 +85,7 @@ export const AppTabs = <TValue extends string = string>({
               disabled={option.disabled}
               aria-label={option.ariaLabel}
               title={option.title}
-              className="lyra-app-tab"
+              className={APP_TAB_CLASS}
               data-active={selected ? "true" : undefined}
               onPressedChange={() => {
                 if (option.disabled) return;
@@ -92,7 +108,7 @@ export const AppTabs = <TValue extends string = string>({
         onValueChange(nextValue as TValue);
       }}
     >
-      <TabsList className="lyra-app-tabs-list inline-flex items-center" aria-label={ariaLabel}>
+      <TabsList className="lyra-app-tabs-list contents" aria-label={ariaLabel}>
         {options.map((option) => (
           <TabsTrigger
             key={option.value}
@@ -100,7 +116,7 @@ export const AppTabs = <TValue extends string = string>({
             aria-label={option.ariaLabel}
             disabled={option.disabled}
             title={option.title}
-            className="lyra-app-tab"
+            className={APP_TAB_CLASS}
             data-active={isSelected(option, value, activeValues) ? "true" : undefined}
           >
             {renderTabContent(option)}
