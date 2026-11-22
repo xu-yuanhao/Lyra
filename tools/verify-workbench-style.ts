@@ -1244,6 +1244,9 @@ export const scanUiImportBoundaries = (filePath: string, text: string): string[]
     if (
       ICON_PACKAGE_MODULE_PATTERN.test(moduleSpecifier)
       && APPROVED_DESKTOP_ICON_MODULES.has(moduleSpecifier) === false
+      // Vendored kit internals (renderer/ui) may use the component library's
+      // own icon set; business code stays on @lyra/icons.
+      && !/apps\/desktop\/src\/renderer\/ui\//.test(normalizedPath)
     ) {
       pushViolation(node, "Desktop icon imports are limited to @lyra/icons.");
     }
