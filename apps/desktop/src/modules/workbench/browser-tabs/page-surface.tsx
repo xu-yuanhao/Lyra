@@ -26,6 +26,11 @@ export type BrowserPageSurfaceProps = {
   readonly onHostChange?: (tabId: string, element: HTMLElement | null) => void;
 };
 
+const PH_HOST_CLASS =
+  "lyra-page-host relative flex h-full min-h-0 w-full min-w-0 overflow-hidden rounded-[inherit] bg-[var(--lyra-app-panel-bg)]";
+const PH_LOADING_CLASS =
+  "lyra-page-loading-state pointer-events-none absolute inset-0 z-[2] grid place-content-center bg-[color-mix(in_srgb,var(--lyra-app-panel-bg)_82%,transparent)]";
+
 export const BrowserPageSurface = ({
   tabId,
   searchQuery,
@@ -122,14 +127,14 @@ export const BrowserPageSurface = ({
   return (
     <section
       ref={handleHostRef}
-      className="lyra-page-host"
+      className={PH_HOST_CLASS}
       aria-label="page-surface"
       data-browser-page-host="true"
       data-tab-id={tabId}
     >
       {isLoading ? (
         <AppLoadingState
-          className="lyra-page-loading-state"
+          className={PH_LOADING_CLASS}
           title={loadingLabel}
         />
       ) : null}

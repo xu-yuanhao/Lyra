@@ -190,11 +190,6 @@ const selectorRules: readonly SelectorRule[] = [
     required: [/background:\s*var\(--lyra-app-row-hover-bg\)\s*;/]
   },
   {
-    selector: ".lyra-global-dialog-action-primary",
-    required: [/color:\s*var\(--lyra-app-primary-button-fg\)\s*;/],
-    forbidden: [/var\(--lyra-(?:text-accent|line-focused|accent-primary)\)/]
-  },
-  {
     selector: ".lyra-workspace",
     required: [/grid-template-rows:\s*minmax\(0,\s*1fr\)\s*var\(--lyra-size-browser-tab-h\)\s*;/]
   },

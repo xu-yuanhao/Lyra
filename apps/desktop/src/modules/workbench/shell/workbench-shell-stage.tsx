@@ -36,6 +36,9 @@ import { promoteAgentBrowserPreviewTab } from "../ai-panel/lyra-agents/hooks/age
 
 type WorkbenchShellStageProps = Record<string, any>;
 
+const PARKED_HOST_CLASS =
+  "lyra-agent-browser-parked-page-host pointer-events-none fixed left-[-100vw] top-0 h-screen w-screen";
+
 export const WorkbenchShellStage = ({
   activeBrowserTabId,
   activeFileEditorState,
@@ -558,7 +561,7 @@ export const WorkbenchShellStage = ({
               ref={(element) => {
                 registerPageHost(page.tabId, element);
               }}
-              className="lyra-agent-browser-parked-page-host"
+              className={PARKED_HOST_CLASS}
               data-browser-page-host="true"
               data-tab-id={page.tabId}
               aria-hidden="true"
