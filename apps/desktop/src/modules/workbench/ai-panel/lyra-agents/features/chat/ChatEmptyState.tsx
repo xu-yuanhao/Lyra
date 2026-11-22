@@ -8,7 +8,7 @@
 // are always bound (to a chosen project, or to Home by default).
 
 import { useRef, useState } from "react";
-import { AppButton } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
 import { LYRA_ASCII_LOGO } from "./ascii-logo";
 import { useAsciiFlicker } from "./use-ascii-flicker";
 import { t } from "@workbench/i18n";
@@ -40,15 +40,15 @@ export function ChatEmptyState({
       >{LYRA_ASCII_LOGO}</pre>
       <p className="lyra-agents-chat-empty-question">
         {t("lyra-agents-empty.questionPrefix")}
-        <AppButton
+        <Button
           variant="ghost"
           size="sm"
           type="button"
-          className="lyra-agents-chat-empty-project"
+          className="lyra-agents-chat-empty-project font-semibold text-[var(--lyra-text-primary)]"
           onClick={() => void onChooseProject()}
         >
           {displayName}
-        </AppButton>
+        </Button>
         {t("lyra-agents-empty.questionSuffix")}
       </p>
     </div>
