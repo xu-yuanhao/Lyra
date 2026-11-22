@@ -43,8 +43,11 @@ export const spawnCommand = (
     // .cmd/.bat shims can only run through a shell. cmd.exe /S /C is used
     // with windowsVerbatimArguments so Node quotes the command path once;
     // /S keeps the outer quote pair intact even when the path contains
-    // spaces.
-    return spawn("cmd.exe", ["/d", "/s", "/c", `"${resolved}"`, ...args], {
+    // spaces. The entire tail must be wrapped in one outer quote pair:
+    // cmd /c otherwise strips the quotes around a spaced path and fails
+    // with "'C:\Program' is not recognized".
+    const tail = [`"${resolved}"`, ...args].join(" ");
+    return spawn("cmd.exe", ["/d", "/s", "/c", `"${tail}"`], {
       ...options,
       windowsVerbatimArguments: true
     });

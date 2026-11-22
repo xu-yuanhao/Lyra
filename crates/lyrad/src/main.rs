@@ -301,13 +301,21 @@ impl DaemonSessionManager {
                 "runtime connection already completed its handshake",
             ));
         }
-        if connections.iter().any(|(other_id, connection)| {
-            *other_id != id && connection.lease_id.as_deref() == Some(lease_id.as_str())
-        }) {
-            return Err(router::runtime_error(
-                "RUNTIME_DUPLICATE_LEASE",
-                "runtime connection lease is already active",
-            ));
+        // A reconnecting client reuses its lease id while the daemon may not
+        // have reaped the previous connection yet. Lease ids are random UUIDs
+        // generated per client instance, so a same-lease claim is always the
+        // same client taking over — evict the stale registration instead of
+        // deadlocking it on RUNTIME_DUPLICATE_LEASE. A genuinely different
+        // client still cannot collide, and a second primary host is still
+        // rejected below.
+        let stale_id = connections
+            .iter()
+            .find(|(other_id, connection)| {
+                **other_id != id && connection.lease_id.as_deref() == Some(lease_id.as_str())
+            })
+            .map(|(other_id, _)| *other_id);
+        if let Some(stale_id) = stale_id {
+            connections.remove(&stale_id);
         }
         if role == RuntimeConnectionRole::PrimaryHost
             && connections.iter().any(|(other_id, connection)| {
@@ -1468,7 +1476,7 @@ mod tests {
     }
 
     #[test]
-    fn permits_one_primary_host_and_rejects_duplicate_leases() {
+    fn permits_one_primary_host_and_reclaims_duplicate_leases() {
         let manager = DaemonSessionManager::default();
         let (first_sender, _first_receiver) = channel(8);
         let (second_sender, _second_receiver) = channel(8);
@@ -1492,14 +1500,16 @@ mod tests {
             )
             .expect_err("second primary host must be rejected");
         assert_eq!(duplicate_primary.code, "RUNTIME_PRIMARY_HOST_EXISTS");
-        let duplicate_lease = manager
+        // Same lease = same client reconnecting before the daemon reaped its
+        // previous connection: the new claim takes over the stale slot.
+        manager
             .claim(
                 third,
                 RuntimeConnectionRole::AuxiliaryClient,
                 "desktop-lease".to_string(),
             )
-            .expect_err("duplicate lease must be rejected");
-        assert_eq!(duplicate_lease.code, "RUNTIME_DUPLICATE_LEASE");
+            .expect("same-lease reconnect must reclaim the stale connection");
+        assert_eq!(manager.connection_count(), 2);
     }
 
     #[test]

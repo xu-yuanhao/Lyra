@@ -537,19 +537,29 @@ const main = async (): Promise<void> => {
   };
   delete desktopEnv.ELECTRON_RUN_AS_NODE;
   // Windows needs pnpm's JS entry to avoid cmd.exe truncating paths that
-  // contain spaces. Corepack's Linux packages do not share that layout (for
-  // example, /usr/bin/node and /usr/share/nodejs/corepack), so POSIX systems
-  // must resolve the pnpm executable normally through PATH.
-  const desktopCommand = process.platform === "win32" ? process.execPath : "pnpm";
-  const desktopArgs = process.platform === "win32"
-    ? [
-        path.join(
-          path.dirname(process.execPath),
-          "node_modules", "corepack", "dist", "pnpm.js"
-        ),
-        "--filter", "@lyra/desktop", "dev"
-      ]
-    : ["--filter", "@lyra/desktop", "dev"];
+  // contain spaces. npm_execpath is set by pnpm itself when this script runs
+  // under `pnpm run`, so reuse it; fall back to the legacy bundled-corepack
+  // layout for older Node versions that still ship corepack under nodejs/.
+  const pnpmJsEntry = (): string | null => {
+    const execpath = process.env.npm_execpath;
+    if (
+      execpath !== undefined
+      && /\.(cjs|mjs|js)$/i.test(execpath)
+      && fs.existsSync(execpath)
+    ) {
+      return execpath;
+    }
+    const corepackEntry = path.join(
+      path.dirname(process.execPath),
+      "node_modules", "corepack", "dist", "pnpm.js"
+    );
+    return fs.existsSync(corepackEntry) ? corepackEntry : null;
+  };
+  const pnpmEntry = process.platform === "win32" ? pnpmJsEntry() : null;
+  const desktopCommand = pnpmEntry === null ? "pnpm" : process.execPath;
+  const desktopArgs = pnpmEntry === null
+    ? ["--filter", "@lyra/desktop", "dev"]
+    : [pnpmEntry, "--filter", "@lyra/desktop", "dev"];
   processes.push(
     startProcess(
       "desktop",
