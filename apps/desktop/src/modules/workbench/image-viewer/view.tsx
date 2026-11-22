@@ -36,6 +36,54 @@ import { formatBytes, t } from "@workbench/i18n";
 
 export type { ImageViewerSurfaceProps } from "./surface-types";
 
+const IV_SURFACE_CLASS =
+  "lyra-image-viewer-surface grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] bg-[var(--lyra-app-panel-bg)] text-[var(--lyra-text-primary)] [&>.lyra-file-preview-split]:min-h-0 [&>.lyra-file-preview-fill]:min-h-0";
+
+const IV_STATUS_CLASS =
+  "lyra-image-viewer-status flex min-w-0 items-center justify-between gap-[var(--lyra-space-8)] border-t border-b-0 border-[var(--lyra-divider-faint)] px-[var(--lyra-space-12)] py-[var(--lyra-space-8)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-12)]";
+
+const IV_STATUS_ZOOM_CLASS = "lyra-image-viewer-status-zoom flex items-center gap-[var(--lyra-space-4)]";
+const IV_STATUS_ZOOM_BUTTON_CLASS = "lyra-image-viewer-status-zoom-button size-[var(--lyra-control-h-24)]";
+
+const IV_STAGE_BASE =
+  "lyra-image-viewer-stage relative h-full min-h-0 min-w-0 cursor-grab touch-none overflow-hidden active:cursor-grabbing";
+
+const IV_STAGE_BG_CLASS: Record<string, string> = {
+  dark: "bg-[color-mix(in_srgb,var(--lyra-app-bg)_82%,var(--lyra-text-primary)_18%)]",
+  light: "bg-[var(--lyra-app-panel-bg)]",
+  checkerboard:
+    "bg-[color-mix(in_srgb,var(--lyra-app-bg)_76%,var(--lyra-text-primary)_24%)] [background-image:linear-gradient(45deg,color-mix(in_srgb,var(--lyra-app-panel-bg)_10%,transparent)_25%,transparent_25%),linear-gradient(-45deg,color-mix(in_srgb,var(--lyra-app-panel-bg)_10%,transparent)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,color-mix(in_srgb,var(--lyra-app-panel-bg)_10%,transparent)_75%),linear-gradient(-45deg,transparent_75%,color-mix(in_srgb,var(--lyra-app-panel-bg)_10%,transparent)_75%)] [background-size:var(--lyra-space-24)_var(--lyra-space-24)] [background-position:0_0,0_var(--lyra-space-12),var(--lyra-space-12)_calc(var(--lyra-space-12)*-1),calc(var(--lyra-space-12)*-1)_0]"
+};
+
+const IV_SOURCE_CLASS =
+  "lyra-image-viewer-source pointer-events-none absolute left-1/2 top-1/2 max-h-none max-w-none select-none [transform-origin:center] [translate:-50%_-50%] [image-rendering:auto] will-change-transform";
+const IV_SOURCE_VECTOR_CLASS = "lyra-image-viewer-source-vector h-auto max-h-full w-auto max-w-full";
+const IV_CANVAS_CLASS = "lyra-image-viewer-canvas block h-full w-full";
+
+const IV_EMPTY_CLASS = "lyra-image-viewer-empty min-h-0 min-w-0 p-[var(--lyra-space-16)]";
+const IV_STAGE_MESSAGE_CLASS =
+  "lyra-image-viewer-stage-message absolute inset-0 z-[4] bg-[color-mix(in_srgb,var(--lyra-app-bg)_82%,transparent)]";
+
+const IV_LOADING_FLOW_CLASS =
+  "lyra-image-viewer-loading-flow relative grid min-h-0 min-w-0 place-items-center overflow-hidden text-[var(--lyra-text-primary)] [background:linear-gradient(135deg,color-mix(in_srgb,var(--lyra-app-surface-bg)_42%,transparent),transparent_34%),linear-gradient(225deg,color-mix(in_srgb,var(--lyra-app-border)_24%,transparent),transparent_38%),color-mix(in_srgb,var(--lyra-app-bg)_86%,var(--lyra-app-panel-bg)_14%)]";
+const IV_LOADING_OVERLAY_CLASS = "absolute inset-0 z-[2]";
+
+const IV_RIBBONS_CLASS =
+  "lyra-image-viewer-loading-ribbons absolute -inset-[18%] opacity-[0.48] [filter:blur(var(--lyra-space-18))] [&>span]:absolute [&>span]:h-[var(--lyra-space-64)] [&>span]:w-[68%] [&>span]:rounded-[var(--lyra-radius-pill)] [&>span]:[background:linear-gradient(90deg,transparent,color-mix(in_srgb,var(--lyra-app-border)_40%,transparent),color-mix(in_srgb,var(--lyra-text-muted)_36%,transparent),transparent)] [&>span]:[animation:lyra-image-viewer-flow_3.2s_var(--lyra-ease-standard)_infinite] [&>span]:rotate-[-18deg] [&>span:nth-child(1)]:top-[18%] [&>span:nth-child(1)]:left-[-20%] [&>span:nth-child(2)]:top-[46%] [&>span:nth-child(2)]:left-[20%] [&>span:nth-child(2)]:[animation-delay:-1.1s] [&>span:nth-child(3)]:top-[70%] [&>span:nth-child(3)]:left-[-10%] [&>span:nth-child(3)]:[animation-delay:-2.1s]";
+
+const IV_LOADING_COPY_CLASS =
+  "lyra-image-viewer-loading-copy relative z-[1] h-auto w-auto flex-none rounded-[var(--lyra-radius-8)] border border-[color-mix(in_srgb,var(--lyra-app-border)_42%,transparent)] bg-[color-mix(in_srgb,var(--lyra-app-panel-bg)_84%,transparent)] px-[var(--lyra-space-18)] py-[var(--lyra-space-14)] [box-shadow:var(--lyra-shadow-elevated-md)]";
+
+const IV_IMPORT_OVERLAY_CLASS =
+  "lyra-image-viewer-import-overlay pointer-events-none absolute inset-x-[var(--lyra-space-14)] bottom-[var(--lyra-space-14)] z-[3]";
+
+const IV_IMPORT_METER_CLASS =
+  "lyra-image-viewer-import-meter block h-[var(--lyra-space-4)] overflow-hidden rounded-[var(--lyra-radius-pill)] bg-[color-mix(in_srgb,var(--lyra-app-bg)_68%,transparent)] [box-shadow:var(--lyra-shadow-elevated-sm)] [&>span]:block [&>span]:h-full [&>span]:rounded-[inherit] [&>span]:bg-[linear-gradient(90deg,var(--lyra-app-border),var(--lyra-text-muted))] [&>span]:[transition:inline-size_var(--lyra-motion-standard)]";
+
+const IV_SOURCE_PANE_CLASS =
+  "lyra-image-viewer-source-pane grid h-full w-full place-items-center overflow-hidden bg-[var(--lyra-app-panel-bg)]";
+const IV_SOURCE_ORIGINAL_CLASS = "lyra-image-viewer-source-original max-h-full max-w-full object-contain";
+
 const FileEditorSurfaceLazy = lazy(async () => {
   const module = await import("../file-editor/view");
   return { default: module.FileEditorSurface };
@@ -491,14 +539,14 @@ const pruneTextureCache = (runtime: TileRuntime): void => {
 };
 
 const ImageViewerLoadingOverlay = ({ labels, progress }: LoadingOverlayProps) => (
-  <section className="lyra-image-viewer-loading-flow lyra-image-viewer-loading-overlay" aria-label="image-viewer-loading">
-    <div className="lyra-image-viewer-loading-ribbons" aria-hidden="true">
+  <section className={`${IV_LOADING_FLOW_CLASS} ${IV_LOADING_OVERLAY_CLASS}`} aria-label="image-viewer-loading">
+    <div className={IV_RIBBONS_CLASS} aria-hidden="true">
       <span />
       <span />
       <span />
     </div>
     <AppLoadingState
-      className="lyra-image-viewer-loading-copy"
+      className={IV_LOADING_COPY_CLASS}
       title={labels.loading}
       description={progress === undefined ? undefined : `${Math.round(Math.max(0, Math.min(1, progress)) * 100)}%`}
     />
@@ -631,7 +679,7 @@ const ImageViewerTileCanvas = ({ openResult, state, model, labels }: TileCanvasP
   if (failed) {
     return (
       <img
-        className="lyra-image-viewer-source"
+        className={IV_SOURCE_CLASS}
         src={openResult.sourceUrl}
         width={openResult.width || undefined}
         height={openResult.height || undefined}
@@ -645,7 +693,7 @@ const ImageViewerTileCanvas = ({ openResult, state, model, labels }: TileCanvasP
     <>
     <canvas
       ref={canvasRef}
-      className="lyra-image-viewer-canvas"
+      className={IV_CANVAS_CLASS}
       style={{
         transform: `rotate(${state.view.rotation}deg)`,
         transformOrigin: "center"
@@ -838,7 +886,7 @@ export const ImageViewerSurface = ({
 
   if (state === null) {
     return (
-      <section className="lyra-image-viewer-surface" aria-label="image-viewer-surface">
+      <section className={IV_SURFACE_CLASS} aria-label="image-viewer-surface">
         <ImageViewerLoadingOverlay labels={labels} />
       </section>
     );
@@ -885,8 +933,8 @@ export const ImageViewerSurface = ({
       ? localSourceUrl(state.filePath)
       : "";
     const sourceClassName = previewKind === "svg"
-      ? "lyra-image-viewer-source lyra-image-viewer-source-vector"
-      : "lyra-image-viewer-source";
+      ? `${IV_SOURCE_CLASS} ${IV_SOURCE_VECTOR_CLASS}`
+      : IV_SOURCE_CLASS;
     const sourceWidth = previewKind === "svg" ? undefined : openWidth || undefined;
     const sourceHeight = previewKind === "svg" ? undefined : openHeight || undefined;
     if (state.status === "loading" || state.status === "idle") {
@@ -894,7 +942,7 @@ export const ImageViewerSurface = ({
         return (
           <div
             ref={bodyRef}
-            className={`lyra-image-viewer-stage lyra-image-viewer-stage-${state.view.background}`}
+            className={`${IV_STAGE_BASE} ${IV_STAGE_BG_CLASS[state.view.background] ?? ""}`}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerEnd}
@@ -917,14 +965,14 @@ export const ImageViewerSurface = ({
         );
       }
       return (
-        <section className="lyra-image-viewer-loading-flow" aria-label="image-viewer-loading">
-          <div className="lyra-image-viewer-loading-ribbons" aria-hidden="true">
+        <section className={IV_LOADING_FLOW_CLASS} aria-label="image-viewer-loading">
+          <div className={IV_RIBBONS_CLASS} aria-hidden="true">
             <span />
             <span />
             <span />
           </div>
           <AppLoadingState
-            className="lyra-image-viewer-loading-copy"
+            className={IV_LOADING_COPY_CLASS}
             title={labels.loading}
             description={importProgress === undefined ? undefined : `${Math.round(Math.max(0, Math.min(1, importProgress)) * 100)}%`}
           />
@@ -934,7 +982,7 @@ export const ImageViewerSurface = ({
     if (state.status === "error" || state.status === "unsupported" || openResult === null) {
       return (
         <AppErrorState
-          className="lyra-image-viewer-empty"
+          className={IV_EMPTY_CLASS}
           title={state.message ?? labels.unsupported}
           actions={(
             <AppButton
@@ -955,7 +1003,7 @@ export const ImageViewerSurface = ({
     return (
       <div
         ref={bodyRef}
-        className={`lyra-image-viewer-stage lyra-image-viewer-stage-${state.view.background}`}
+        className={`${IV_STAGE_BASE} ${IV_STAGE_BG_CLASS[state.view.background] ?? ""}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerEnd}
@@ -992,7 +1040,7 @@ export const ImageViewerSurface = ({
         ) : null}
         {sourceImageFailed ? (
           <AppErrorState
-            className="lyra-image-viewer-empty lyra-image-viewer-stage-message"
+            className={`${IV_EMPTY_CLASS} ${IV_STAGE_MESSAGE_CLASS}`}
             title={labels.unavailable}
             actions={(
               <AppButton
@@ -1011,8 +1059,8 @@ export const ImageViewerSurface = ({
           />
         ) : null}
         {openResult.cacheState === "importing" ? (
-          <div className="lyra-image-viewer-import-overlay" aria-label="image-viewer-import-progress">
-            <div className="lyra-image-viewer-import-meter">
+          <div className={IV_IMPORT_OVERLAY_CLASS} aria-label="image-viewer-import-progress">
+            <div className={IV_IMPORT_METER_CLASS}>
               <span
                 style={{
                   inlineSize: `${Math.round(Math.max(0, Math.min(1, importProgress ?? 0)) * 100)}%`
@@ -1026,7 +1074,7 @@ export const ImageViewerSurface = ({
   };
 
   return (
-    <section className="lyra-image-viewer-surface" aria-label="image-viewer-surface">
+    <section className={IV_SURFACE_CLASS} aria-label="image-viewer-surface">
       {contributeTitlebar ? (
         <ImageViewerTitlebarBridge
           state={state}
@@ -1059,12 +1107,12 @@ export const ImageViewerSurface = ({
             </Suspense>
             )
           ) : (
-            <div className="lyra-image-viewer-source-pane">
+            <div className={IV_SOURCE_PANE_CLASS}>
               {isBrowserImageSourcePath(state.filePath) || (
                 openResult !== null && (openResult.sourceUrl ?? "").length > 0
               ) ? (
                 <img
-                  className="lyra-image-viewer-source-original"
+                  className={IV_SOURCE_ORIGINAL_CLASS}
                   src={
                     openResult !== null && (openResult.sourceUrl ?? "").length > 0
                       ? openResult.sourceUrl
@@ -1082,12 +1130,12 @@ export const ImageViewerSurface = ({
         preview={renderBody()}
         resizerLabel={t("editor.viewMode")}
       />
-      <footer className="lyra-image-viewer-status">
+      <footer className={IV_STATUS_CLASS}>
         <span>{useNativeTiles ? labels.nativeTiles : labels.sourceOnly}</span>
-        <div className="lyra-image-viewer-status-zoom">
+        <div className={IV_STATUS_ZOOM_CLASS}>
           <AppToolbarButton
             type="button"
-            className="lyra-image-viewer-status-zoom-button"
+            className={IV_STATUS_ZOOM_BUTTON_CLASS}
             aria-label={labels.zoomOut}
             onClick={() => model.setViewport(state.instanceId, { zoom: state.view.zoom * 0.8 })}
           >
@@ -1096,7 +1144,7 @@ export const ImageViewerSurface = ({
           <span>{Math.round(state.view.zoom * 100)}%</span>
           <AppToolbarButton
             type="button"
-            className="lyra-image-viewer-status-zoom-button"
+            className={IV_STATUS_ZOOM_BUTTON_CLASS}
             aria-label={labels.zoomIn}
             onClick={() => model.setViewport(state.instanceId, { zoom: state.view.zoom * 1.25 })}
           >
@@ -1104,7 +1152,7 @@ export const ImageViewerSurface = ({
           </AppToolbarButton>
           <AppToolbarButton
             type="button"
-            className="lyra-image-viewer-status-zoom-button"
+            className={IV_STATUS_ZOOM_BUTTON_CLASS}
             aria-label={labels.fit}
             onClick={() => {
               fitToViewport();
