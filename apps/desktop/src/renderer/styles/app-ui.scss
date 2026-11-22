@@ -1230,53 +1230,6 @@
   background: color-mix(in srgb, var(--lyra-app-border) 42%, transparent);
 }
 
-.lyra-app-status-message {
-  min-width: 0;
-  display: flex;
-  align-items: flex-start;
-  gap: var(--lyra-space-8);
-  margin: 0;
-  color: var(--lyra-text-secondary);
-  font-size: var(--lyra-text-size-body);
-  line-height: var(--lyra-text-line-body);
-}
-
-.lyra-app-status-message-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--lyra-icon-size-16);
-  height: var(--lyra-icon-size-16);
-  margin-top: var(--lyra-space-2);
-  color: currentColor;
-  flex: 0 0 auto;
-}
-
-.lyra-app-status-message-icon svg {
-  width: var(--lyra-icon-size-14);
-  height: var(--lyra-icon-size-14);
-}
-
-.lyra-app-status-message-content {
-  min-width: 0;
-}
-
-.lyra-app-status-message-success {
-  color: var(--lyra-status-success);
-}
-
-.lyra-app-status-message-warning {
-  color: var(--lyra-status-warning);
-}
-
-.lyra-app-status-message-error {
-  color: var(--lyra-status-error);
-}
-
-.lyra-app-status-message-info {
-  color: var(--lyra-text-secondary);
-}
-
 /* Optional container for statuses that need to stand out from surrounding copy. */
 .lyra-app-status-message-boxed {
   padding: var(--lyra-space-8) var(--lyra-space-10);
