@@ -66,6 +66,16 @@ import {
   ST_NAV_CLASS,
   ST_SHELL_CLASS,
   ST_SURFACE_CLASS
+  ST_CONTROL_SLOT_CLASS,
+  ST_ENGINE_BRAND_ICON_CLASS,
+  ST_INLINE_INPUT_CLASS,
+  ST_INLINE_STATUS_COPY_CLASS,
+  ST_INLINE_STATUS_ROW_CLASS,
+  ST_ROW_BLOCK_CONTROL_CLASS,
+  ST_ROW_LIST_CLASS,
+  ST_STATUS_LIST_CLASS,
+  ST_STATUS_ROW_CLASS,
+  ST_STATUS_ROWS_CLASS
 } from "./settings-classes";
 import { LanguagePicker } from "./language-picker";
 import type { SettingsCategoryId } from "./settings-schema";
@@ -210,7 +220,7 @@ const buildSelectOptions = (
           icon: (
             <BrandIcon
               size={14}
-              className="lyra-settings-engine-brand-icon"
+              className={ST_ENGINE_BRAND_ICON_CLASS}
               aria-hidden="true"
             />
           )
@@ -274,7 +284,7 @@ const SettingsTextControl = ({ control }: { readonly control: SettingsTextContro
   if (control.kind === "textarea") {
     return (
       <AppSettingsRow
-        className="lyra-settings-row-block-control"
+        className={ST_ROW_BLOCK_CONTROL_CLASS}
         title={control.label}
         control={(
           <AppTextarea
@@ -297,7 +307,7 @@ const SettingsTextControl = ({ control }: { readonly control: SettingsTextContro
       control={(
         <AppInput
           aria-label={control.label}
-          className="lyra-settings-input lyra-settings-inline-input"
+          className={`lyra-settings-input ${ST_INLINE_INPUT_CLASS}`}
           value={control.value}
           placeholder={control.placeholder}
           onChange={(event) => {
@@ -311,7 +321,7 @@ const SettingsTextControl = ({ control }: { readonly control: SettingsTextContro
 
 const SettingsToggleGroup = ({ control }: { readonly control: SettingsToggleGroupControlDescriptor }) => (
   <div
-    className="lyra-settings-row-list"
+    className={ST_ROW_LIST_CLASS}
     role="group"
     aria-label={control.label}
   >
@@ -332,7 +342,7 @@ const SettingsToggleGroup = ({ control }: { readonly control: SettingsToggleGrou
 );
 
 const SettingsMultiChoice = ({ control }: { readonly control: SettingsMultiChoiceControlDescriptor }) => (
-  <div className="lyra-settings-row-list" role="group" aria-label={control.label}>
+  <div className={ST_ROW_LIST_CLASS} role="group" aria-label={control.label}>
     {control.options.map((option) => {
       const checked = control.selectedValues.includes(option.value);
       return (
@@ -364,8 +374,8 @@ const SettingsInlineStatusAction = ({
 }: {
   readonly control: SettingsInlineStatusActionControlDescriptor;
 }) => (
-  <div className="lyra-settings-inline-status-row" role="group" aria-label={control.label}>
-    <div className="lyra-settings-inline-status-copy">
+  <div className={ST_INLINE_STATUS_ROW_CLASS} role="group" aria-label={control.label}>
+    <div className={ST_INLINE_STATUS_COPY_CLASS}>
       <small>{control.statusLabel}</small>
       <strong>{control.statusValue}</strong>
     </div>
@@ -386,10 +396,10 @@ const SettingsStatusList = ({
 }: {
   readonly control: SettingsStatusListControlDescriptor;
 }) => (
-  <div className="lyra-settings-status-list" role="group" aria-label={control.label}>
-    <div className="lyra-settings-status-list-rows">
+  <div className={ST_STATUS_LIST_CLASS} role="group" aria-label={control.label}>
+    <div className={ST_STATUS_ROWS_CLASS}>
       {control.rows.map((row) => (
-        <div key={row.label} className="lyra-settings-status-list-row">
+        <div key={row.label} className={ST_STATUS_ROW_CLASS}>
           <small>{row.label}</small>
           <strong>{row.value}</strong>
         </div>
@@ -505,7 +515,7 @@ const renderSectionControlSlots = (
   section.controls.map((control, index) => (
     <div
       className={[
-        "lyra-settings-control-slot",
+        ST_CONTROL_SLOT_CLASS,
         `lyra-settings-control-slot-${control.kind}`,
         control.kind === "custom" ? `lyra-settings-control-slot-custom-${control.customKind}` : ""
       ].filter(Boolean).join(" ")}

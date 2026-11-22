@@ -17,6 +17,11 @@ import {
   AppTextarea
 } from "@renderer/ui/components";
 import type { SettingsDownloadsLabels } from "./types";
+import {
+  ST_DOWNLOADS_GRID_CLASS,
+  ST_INLINE_INPUT_CLASS,
+  ST_ROW_BLOCK_CONTROL_CLASS
+} from "../browser-tabs/settings-classes";
 
 type Props = {
   readonly desktopApi: LyraDesktopApi | null;
@@ -120,7 +125,7 @@ export const SettingsDownloadsView = ({ desktopApi, labels, onChooseDirectory }:
   };
 
   return (
-    <div className="lyra-settings-downloads">
+    <div className={ST_DOWNLOADS_GRID_CLASS}>
       <AppSettingsSection label={labels.title}>
         <AppSettingsRow
           title={labels.defaultDirectory}
@@ -166,7 +171,7 @@ export const SettingsDownloadsView = ({ desktopApi, labels, onChooseDirectory }:
             control={(
               <AppInput
                 aria-label={labels.proxyUrl}
-                className="lyra-settings-input lyra-settings-inline-input"
+                className={`lyra-settings-input ${ST_INLINE_INPUT_CLASS}`}
                 value={proxyUrlDraft}
                 placeholder={labels.proxyUrlPlaceholder}
                 onChange={(event) => {
@@ -220,7 +225,7 @@ export const SettingsDownloadsView = ({ desktopApi, labels, onChooseDirectory }:
           control={(
             <AppInput
               aria-label={labels.btSeedTime}
-              className="lyra-settings-input lyra-settings-inline-input"
+              className={`lyra-settings-input ${ST_INLINE_INPUT_CLASS}`}
               inputMode="numeric"
               value={seedTimeDraft}
               onChange={(event) => {
@@ -231,7 +236,7 @@ export const SettingsDownloadsView = ({ desktopApi, labels, onChooseDirectory }:
           )}
         />
         <AppSettingsRow
-          className="lyra-settings-row-block-control"
+          className={ST_ROW_BLOCK_CONTROL_CLASS}
           title={labels.btTrackers}
           control={(
             <AppTextarea

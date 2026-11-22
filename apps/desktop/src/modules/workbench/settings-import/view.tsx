@@ -31,6 +31,15 @@ import {
   AppSwitch
 } from "@renderer/ui/components";
 import { IdentityIconView } from "../identity";
+import {
+  ST_IMPORT_DETAIL_CLASS,
+  ST_IMPORT_GRID_CLASS,
+  ST_IMPORT_SOURCE_AVATAR_CLASS,
+  ST_IMPORT_SOURCE_ICON_CLASS,
+  ST_IMPORT_SOURCE_ICON_FRAME_CLASS,
+  ST_IMPORT_SOURCE_TITLE_CLASS,
+  ST_ROW_LIST_CLASS
+} from "../browser-tabs/settings-classes";
 
 export type SettingsImportLabels = {
   readonly title: string;
@@ -90,7 +99,7 @@ const accountBadge = (profile: BrowserImportProfile): ReactNode => {
   if (initial === undefined && profile.avatarDataUrl === undefined) return null;
   return (
     <IdentityIconView
-      className="lyra-settings-import-source-avatar"
+      className={ST_IMPORT_SOURCE_AVATAR_CLASS}
       iconUrl={profile.avatarDataUrl}
       fallback={initial ?? ""}
     />
@@ -106,11 +115,11 @@ const ImportSourceIcon = ({
   readonly monochrome?: boolean;
   readonly badge?: ReactNode;
 }) => (
-  <span className="lyra-settings-import-source-icon-frame">
+  <span className={ST_IMPORT_SOURCE_ICON_FRAME_CLASS}>
     <img
       alt=""
       aria-hidden="true"
-      className="lyra-settings-import-source-icon"
+      className={ST_IMPORT_SOURCE_ICON_CLASS}
       data-monochrome={monochrome ? "true" : undefined}
       src={src}
     />
@@ -119,7 +128,7 @@ const ImportSourceIcon = ({
 );
 
 const SourceTitle = ({ source }: { readonly source: AgentImportSource }) => (
-  <span className="lyra-settings-import-source-title">
+  <span className={ST_IMPORT_SOURCE_TITLE_CLASS}>
     <ImportSourceIcon
       monochrome={monochromeSourceIds.includes(source.id)}
       src={sourceIconUrls[source.id]}
@@ -129,7 +138,7 @@ const SourceTitle = ({ source }: { readonly source: AgentImportSource }) => (
 );
 
 const BrowserTitle = ({ profile }: { readonly profile: BrowserImportProfile }) => (
-  <span className="lyra-settings-import-source-title">
+  <span className={ST_IMPORT_SOURCE_TITLE_CLASS}>
     <ImportSourceIcon badge={accountBadge(profile)} src={browserIconUrls[profile.browser]} />
     <span>{`${profile.browserLabel} · ${profile.profileName}`}</span>
   </span>
@@ -324,7 +333,7 @@ export const SettingsImportView = ({ desktopApi, labels }: Props) => {
     const preference = preferences.sources[selectedSource.id] ?? { skills: true, mcp: true };
     const detection = detections[selectedSource.id];
     return (
-      <div className="lyra-settings-import-detail">
+      <div className={ST_IMPORT_DETAIL_CLASS}>
         <AppSubPageBack label={labels.back} onClick={() => setSelectedSourceId(null)} />
         <AppSettingsSection label={selectedSource.label}>
           <AppSettingsRow
@@ -343,9 +352,9 @@ export const SettingsImportView = ({ desktopApi, labels }: Props) => {
   }
 
   return (
-    <div className="lyra-settings-import">
+    <div className={ST_IMPORT_GRID_CLASS}>
       <AppSettingsSection label={labels.title} titlePlacement="none">
-        <div className="lyra-settings-row-list" role="group" aria-label={labels.title}>
+        <div className={ST_ROW_LIST_CLASS} role="group" aria-label={labels.title}>
           {sources.map((source) => {
             const state = actionState(detections[source.id]);
             const actionLabel = state === "detect" ? labels.detect : state === "sync" ? labels.sync : state === "synced" ? labels.synced : labels.needsAttention;

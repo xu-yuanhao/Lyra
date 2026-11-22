@@ -47,149 +47,8 @@
   box-shadow: inset 0 0 0 var(--lyra-stroke-thin) color-mix(in srgb, var(--lyra-settings-border-strong) 72%, transparent);
 }
 
-.lyra-settings-import,
-.lyra-settings-import-detail,
-.lyra-settings-downloads {
-  min-width: 0;
-  display: grid;
-  gap: var(--lyra-space-16);
-}
-
-.lyra-settings-projects {
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: var(--lyra-space-16);
-}
-
-.lyra-settings-projects-tabs {
-  justify-self: start;
-}
-
-.lyra-settings-import-source-title {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--lyra-space-10);
-}
-
-.lyra-settings-import-source-icon-frame {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-}
-
-.lyra-settings-import-source-icon {
-  width: var(--lyra-icon-size-20);
-  height: var(--lyra-icon-size-20);
-  flex: none;
-  object-fit: contain;
-}
-
-/* Account picture of the profile, sitting on the browser mark's bottom-right corner. */
-.lyra-settings-import-source-icon-frame .lyra-settings-import-source-avatar {
-  position: absolute;
-  right: calc(-1 * var(--lyra-space-2));
-  bottom: calc(-1 * var(--lyra-space-2));
-  width: var(--lyra-icon-size-14);
-  height: var(--lyra-icon-size-14);
-  border: var(--lyra-stroke-thin) solid var(--lyra-settings-card-bg);
-  border-radius: var(--lyra-radius-pill);
-  background: var(--lyra-settings-card-bg);
-  color: var(--lyra-text-primary);
-  font-size: var(--lyra-text-size-caption);
-  font-weight: 600;
-  line-height: var(--lyra-text-line-flat);
-}
-
-.lyra-settings-import-source-avatar .lyra-identity-icon-image {
-  border-radius: inherit;
-}
-
 :root[data-lyra-theme-tone="dark"] .lyra-settings-import-source-icon[data-monochrome="true"] {
   filter: invert(1) hue-rotate(180deg);
-}
-
-.lyra-settings-engine-brand-icon {
-  width: var(--lyra-icon-size-14);
-  height: var(--lyra-icon-size-14);
-  display: block;
-  flex: none;
-  color: currentColor;
-}
-
-.lyra-settings-group-cluster {
-  gap: 0;
-}
-
-.lyra-settings-description,
-.lyra-settings-inline-note {
-  margin: 0;
-  color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-}
-
-.lyra-settings-inline-note strong {
-  color: var(--lyra-text-secondary);
-  font-weight: 600;
-}
-
-.lyra-settings-control-slot {
-  min-width: 0;
-  padding: 0;
-}
-
-.lyra-settings-control-slot + .lyra-settings-control-slot {
-  position: relative;
-}
-
-.lyra-settings-control-slot + .lyra-settings-control-slot::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: var(--lyra-space-14);
-  right: var(--lyra-space-14);
-  height: var(--lyra-stroke-thin);
-  background: color-mix(in srgb, var(--lyra-settings-border) 72%, transparent);
-}
-
-.lyra-settings-control-slot-boolean-choice {
-  padding: 0;
-}
-
-.lyra-settings-row-list {
-  min-width: 0;
-  display: grid;
-  gap: 0;
-}
-
-/* One divider rule for every boundary inside a settings card, whether the rows
-   are direct children (custom views) or wrapped in `.lyra-settings-row-list`
-   (toggle / multi-choice groups). Without this, rows in custom views had no
-   separators at all while generic groups did. */
-.lyra-settings-group .lyra-settings-row + .lyra-settings-row {
-  position: relative;
-}
-
-.lyra-settings-group .lyra-settings-row + .lyra-settings-row::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: var(--lyra-space-14);
-  right: var(--lyra-space-14);
-  height: var(--lyra-stroke-thin);
-  background: color-mix(in srgb, var(--lyra-settings-border) 72%, transparent);
-}
-
-.lyra-settings-row-block-control {
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-}
-
-.lyra-settings-row-block-control .lyra-settings-row-control {
-  width: 100%;
-  justify-content: stretch;
 }
 
 .lyra-settings-select,
@@ -403,10 +262,6 @@
   color: var(--lyra-text-muted);
   font-size: var(--lyra-text-size-caption);
   text-align: center;
-}
-
-.lyra-settings-inline-input {
-  width: min(var(--lyra-unit-320), 38vw);
 }
 
 .lyra-settings-choice-grid {
@@ -790,49 +645,6 @@
   height: var(--lyra-space-10);
   border-radius: var(--lyra-radius-pill);
   border: var(--lyra-stroke-thin) solid var(--lyra-settings-border);
-}
-
-/* These controls render directly inside a settings section card, so they are
-   rows of that card, not cards of their own. */
-.lyra-settings-inline-status-row,
-.lyra-settings-status-list {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--lyra-space-12);
-  align-items: center;
-  padding: var(--lyra-space-12) var(--lyra-space-14);
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-
-.lyra-settings-status-list {
-  align-items: start;
-}
-
-.lyra-settings-inline-status-copy,
-.lyra-settings-status-list-rows,
-.lyra-settings-status-list-row {
-  min-width: 0;
-  display: grid;
-  gap: var(--lyra-space-4);
-}
-
-.lyra-settings-inline-status-copy small,
-.lyra-settings-status-list-row small {
-  color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-}
-
-.lyra-settings-inline-status-copy strong,
-.lyra-settings-status-list-row strong {
-  color: var(--lyra-text-secondary);
-  font-size: var(--lyra-text-size-body);
-  font-weight: 600;
-  line-height: var(--lyra-text-line-body);
-  word-break: break-word;
 }
 
 .lyra-settings-ai-stack {

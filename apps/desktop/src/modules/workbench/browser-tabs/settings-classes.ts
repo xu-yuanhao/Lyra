@@ -152,3 +152,60 @@ export const AC_MUTED_CLASS = "lyra-account-muted text-[var(--lyra-text-muted)]"
 
 export const AC_MODEL_LIST_CLASS =
   "lyra-account-model-list mt-[var(--lyra-space-14)] grid list-none gap-[var(--lyra-space-12)] p-0 [&_li]:flex [&_li]:min-w-0 [&_li]:items-center [&_li]:justify-between [&_li]:gap-[var(--lyra-space-12)] [&_li>span:first-child]:grid [&_li>span:first-child]:min-w-0 [&_li>span:first-child]:gap-[var(--lyra-space-2)] [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_small]:overflow-hidden [&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_small]:text-[var(--lyra-text-muted)] [&_small]:text-[length:var(--lyra-text-size-caption)] [&_li>span:last-child]:text-[var(--lyra-text-muted)] [&_li>span:last-child]:text-[length:var(--lyra-text-size-caption)]";
+
+const ST_SLOT_RULE =
+  "[.lyra-settings-control-slot+&::before]:absolute [.lyra-settings-control-slot+&::before]:top-0 [.lyra-settings-control-slot+&::before]:left-[var(--lyra-space-14)] [.lyra-settings-control-slot+&::before]:right-[var(--lyra-space-14)] [.lyra-settings-control-slot+&::before]:h-[var(--lyra-stroke-thin)] [.lyra-settings-control-slot+&::before]:bg-[color-mix(in_srgb,var(--lyra-settings-border)_72%,transparent)] [.lyra-settings-control-slot+&::before]:content-['']";
+
+export const ST_CONTROL_SLOT_CLASS = `lyra-settings-control-slot relative min-w-0 p-0 ${ST_SLOT_RULE}`;
+export const ST_CONTROL_SLOT_BOOLEAN_CLASS = "lyra-settings-control-slot-boolean-choice p-0";
+export const ST_ROW_LIST_CLASS = "lyra-settings-row-list grid min-w-0 gap-0";
+
+export const ST_ROW_BLOCK_CONTROL_CLASS =
+  "lyra-settings-row-block-control grid-cols-[minmax(0,1fr)] items-start [&_.lyra-settings-row-control]:w-full [&_.lyra-settings-row-control]:justify-stretch";
+
+export const ST_INLINE_INPUT_CLASS = "lyra-settings-inline-input w-[min(var(--lyra-unit-320),38vw)]";
+
+const ST_STATUS_TEXT =
+  "[&_small]:text-[var(--lyra-text-muted)] [&_small]:text-[length:var(--lyra-text-size-caption)] [&_small]:leading-[var(--lyra-text-line-caption)] [&_strong]:text-[var(--lyra-text-secondary)] [&_strong]:text-[length:var(--lyra-text-size-body)] [&_strong]:font-semibold [&_strong]:leading-[var(--lyra-text-line-body)] [&_strong]:break-words";
+
+export const ST_INLINE_STATUS_COPY_CLASS =
+  `lyra-settings-inline-status-copy grid min-w-0 gap-[var(--lyra-space-4)] ${ST_STATUS_TEXT}`;
+
+export const ST_INLINE_STATUS_ROW_CLASS =
+  `lyra-settings-inline-status-row grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--lyra-space-12)] border-0 bg-transparent px-[var(--lyra-space-14)] py-[var(--lyra-space-12)] ${ST_STATUS_TEXT}`;
+
+export const ST_STATUS_LIST_CLASS =
+  `lyra-settings-status-list grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-[var(--lyra-space-12)] border-0 bg-transparent px-[var(--lyra-space-14)] py-[var(--lyra-space-12)]`;
+
+export const ST_STATUS_ROWS_CLASS = `lyra-settings-status-list-rows grid min-w-0 gap-[var(--lyra-space-4)] ${ST_STATUS_TEXT}`;
+export const ST_STATUS_ROW_CLASS = `lyra-settings-status-list-row grid min-w-0 gap-[var(--lyra-space-4)] ${ST_STATUS_TEXT}`;
+
+export const ST_DESCRIPTION_CLASS =
+  "lyra-settings-description m-0 text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-caption)]";
+
+export const ST_INLINE_NOTE_CLASS =
+  "lyra-settings-inline-note m-0 text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-caption)] [&_strong]:text-[var(--lyra-text-secondary)] [&_strong]:font-semibold";
+
+export const ST_GROUP_CLUSTER_CLASS = "lyra-settings-group-cluster gap-0";
+
+export const ST_ENGINE_BRAND_ICON_CLASS =
+  "lyra-settings-engine-brand-icon block size-[var(--lyra-icon-size-14)] shrink-0 text-current";
+
+export const ST_IMPORT_GRID_CLASS = "lyra-settings-import grid min-w-0 gap-[var(--lyra-space-16)]";
+export const ST_IMPORT_DETAIL_CLASS = "lyra-settings-import-detail grid min-w-0 gap-[var(--lyra-space-16)]";
+export const ST_DOWNLOADS_GRID_CLASS = "lyra-settings-downloads grid min-w-0 gap-[var(--lyra-space-16)]";
+export const ST_PROJECTS_GRID_CLASS =
+  "lyra-settings-projects grid min-w-0 content-start gap-[var(--lyra-space-16)]";
+export const ST_PROJECTS_TABS_CLASS = "lyra-settings-projects-tabs justify-self-start";
+
+export const ST_IMPORT_SOURCE_TITLE_CLASS =
+  "lyra-settings-import-source-title inline-flex min-w-0 items-center gap-[var(--lyra-space-10)]";
+
+export const ST_IMPORT_SOURCE_ICON_FRAME_CLASS =
+  "lyra-settings-import-source-icon-frame relative inline-flex shrink-0";
+
+export const ST_IMPORT_SOURCE_ICON_CLASS =
+  "lyra-settings-import-source-icon size-[var(--lyra-icon-size-20)] shrink-0 object-contain";
+
+export const ST_IMPORT_SOURCE_AVATAR_CLASS =
+  "lyra-settings-import-source-avatar absolute -bottom-[var(--lyra-space-2)] -right-[var(--lyra-space-2)] size-[var(--lyra-icon-size-14)] rounded-[var(--lyra-radius-pill)] border border-[var(--lyra-stroke-thin)] border-[var(--lyra-settings-card-bg)] bg-[var(--lyra-settings-card-bg)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-caption)] font-semibold leading-[var(--lyra-text-line-flat)] [&_.lyra-identity-icon-image]:rounded-[inherit]";

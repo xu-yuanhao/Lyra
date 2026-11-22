@@ -11,7 +11,9 @@ export type AppSettingsSectionProps = HTMLAttributes<HTMLElement> & {
 
 const GROUP_CARD_CLASS = cn(
   "grid min-w-0 gap-0 overflow-hidden rounded-[var(--lyra-settings-radius-card)] border border-[var(--lyra-settings-border)] bg-[color-mix(in_srgb,var(--lyra-settings-card-bg)_96%,transparent)] p-0 shadow-[var(--lyra-settings-shadow-card)] backdrop-blur-[var(--lyra-app-material-blur-sm)] backdrop-saturate-[var(--lyra-app-material-saturate)]",
-  "[:root[data-lyra-window-material=opaque]_&]:bg-[var(--lyra-settings-card-bg)] [:root[data-lyra-window-material=opaque]_&]:[backdrop-filter:none]"
+  "[:root[data-lyra-window-material=opaque]_&]:bg-[var(--lyra-settings-card-bg)] [:root[data-lyra-window-material=opaque]_&]:[backdrop-filter:none]",
+  "[&_.lyra-settings-row+.lyra-settings-row]:relative",
+  "[&_.lyra-settings-row+.lyra-settings-row::before]:absolute [&_.lyra-settings-row+.lyra-settings-row::before]:top-0 [&_.lyra-settings-row+.lyra-settings-row::before]:left-[var(--lyra-space-14)] [&_.lyra-settings-row+.lyra-settings-row::before]:right-[var(--lyra-space-14)] [&_.lyra-settings-row+.lyra-settings-row::before]:h-[var(--lyra-stroke-thin)] [&_.lyra-settings-row+.lyra-settings-row::before]:bg-[color-mix(in_srgb,var(--lyra-settings-border)_72%,transparent)] [&_.lyra-settings-row+.lyra-settings-row::before]:content-['']"
 );
 
 export const AppSettingsSection = forwardRef<HTMLElement, AppSettingsSectionProps>(({

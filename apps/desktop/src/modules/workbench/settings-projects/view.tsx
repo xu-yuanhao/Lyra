@@ -4,6 +4,10 @@ import type { LyraDesktopApi } from "../../../shared/desktop-bridge";
 import { AppButton, AppSearchField, AppSettingsRow, AppSettingsSection, AppSubPageBack, AppSwitch, AppTabs } from "@renderer/ui/components";
 import { t } from "../i18n";
 import { useProjects } from "./use-projects";
+import {
+  ST_PROJECTS_GRID_CLASS,
+  ST_PROJECTS_TABS_CLASS
+} from "../browser-tabs/settings-classes";
 
 export const SettingsProjectsView = ({ desktopApi }: { readonly desktopApi: LyraDesktopApi | null }) => {
   const { projects, loading, error: listError } = useProjects(desktopApi);
@@ -69,10 +73,10 @@ export const SettingsProjectsView = ({ desktopApi }: { readonly desktopApi: Lyra
   );
   const items = (tab === "mcp" ? detail?.mcp : detail?.skills) ?? [];
   const filtered = items.filter((item) => `${item.name} ${item.description} ${item.id}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
-  return <div className="lyra-settings-projects">
+  return <div className={ST_PROJECTS_GRID_CLASS}>
     <AppSubPageBack label={t("settings.projectsBack")} onClick={() => setProjectId(null)} />
     {detail ? <AppSettingsRow title={detail.project.name} description={`${detail.project.path}${detail.project.available ? "" : ` · ${t("settings.projectsUnavailable")}`}`} /> : null}
-    <AppTabs className="lyra-settings-projects-tabs" ariaLabel={t("settings.projectsCategoryLabel")} value={tab} onValueChange={setTab} options={[{ value: "mcp", label: "MCP" }, { value: "skill", label: "Skill" }]} />
+    <AppTabs className={ST_PROJECTS_TABS_CLASS} ariaLabel={t("settings.projectsCategoryLabel")} value={tab} onValueChange={setTab} options={[{ value: "mcp", label: "MCP" }, { value: "skill", label: "Skill" }]} />
     <AppSearchField ariaLabel={t("settings.projectsSearch")} placeholder={t("settings.projectsSearch")} value={query} onValueChange={setQuery} />
     <AppSettingsSection label={tab === "mcp" ? "MCP" : "Skill"}>
       {filtered.map((item) => <AppSettingsRow key={item.id} title={item.name} description={<>{item.description}{item.sourceLabel ? ` · ${item.sourceLabel}` : ""}<br />{t(item.globalEnabled ? "settings.projectsGlobalOn" : "settings.projectsGlobalOff")} · {t(item.override === null ? "settings.projectsFollowGlobal" : "settings.projectsOverride")}</>} control={<>
