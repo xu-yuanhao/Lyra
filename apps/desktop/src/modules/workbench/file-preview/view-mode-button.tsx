@@ -1,11 +1,11 @@
 import { BookOpen, Check, Eye, FileCode, SplitSquareHorizontal, SplitSquareVertical } from "@lyra/icons";
+import { Button } from "@renderer/ui/components/button";
 import {
-  AppMenu,
-  AppMenuContent,
-  AppMenuItem,
-  AppMenuTrigger,
-  AppToolbarButton
-} from "@renderer/ui/components";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@renderer/ui/components/dropdown-menu";
 import { t } from "@workbench/i18n";
 
 import { previewKindFromPath, type FilePreviewLayout } from "./kinds";
@@ -38,35 +38,35 @@ export const FilePreviewModeButton = ({
   }
   const TriggerIcon = kind === "paper" ? BookOpen : Eye;
   return (
-    <AppMenu>
-      <AppMenuTrigger asChild>
-        <AppToolbarButton
-          type="button"
-          className="lyra-titlebar-context-icon-button"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-[var(--lyra-shell-titlebar-nav-h)] rounded-full p-0 text-[var(--lyra-text-muted)] hover:bg-transparent hover:text-[var(--lyra-text-primary)]"
           aria-label={t("editor.viewMode")}
           title={t("editor.viewMode")}
         >
           <TriggerIcon size={14} />
-        </AppToolbarButton>
-      </AppMenuTrigger>
-      <AppMenuContent align="end" className="lyra-file-preview-mode-menu">
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
         {OPTIONS.map((option) => {
           const Icon = option.icon;
           return (
-            <AppMenuItem
+            <DropdownMenuItem
               key={option.value}
-              className="lyra-app-menu-item-with-icon"
               onSelect={() => {
                 setFilePreviewLayout(filePath, option.value);
               }}
             >
               <Icon size={14} aria-hidden="true" />
-              <span className="lyra-app-menu-item-label">{t(option.labelKey)}</span>
-              {layout === option.value ? <Check size={14} aria-hidden="true" /> : null}
-            </AppMenuItem>
+              <span>{t(option.labelKey)}</span>
+              {layout === option.value ? <Check size={14} aria-hidden="true" className="ml-auto" /> : null}
+            </DropdownMenuItem>
           );
         })}
-      </AppMenuContent>
-    </AppMenu>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
