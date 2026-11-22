@@ -19,6 +19,8 @@ import {
   FM_LARGE_TILE_TITLE_CLASS,
   FM_LIST_CELL_PRIMARY_CLASS,
   FM_LIST_GRID_CLASS,
+  FM_LIST_SHELL_CLASS,
+  FM_PAGE_CLASS,
   FM_SECTION_HEADER_CLASS
 } from "./surface-classes";
 import type {
@@ -107,7 +109,7 @@ export const FileManagerLoadingSkeleton = ({
   if (presentationMode === "large") {
     const tiles = viewKind === "trash" ? slots.trashLargeSlots : slots.directoryLargeSlots;
     return (
-      <div className="lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell" aria-label="file-manager-loading-skeleton">
+      <div className={`lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`} aria-label="file-manager-loading-skeleton">
         <div className={`lyra-app-group ${FM_LARGE_GRID_CLASS}`}>
           {tiles.map((tileId) => (
             <article
@@ -133,7 +135,7 @@ export const FileManagerLoadingSkeleton = ({
   const rows = viewKind === "trash" ? slots.trashListSlots : slots.directoryListSlots;
 
   return (
-    <div className="lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell" aria-label="file-manager-loading-skeleton">
+    <div className={`lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`} aria-label="file-manager-loading-skeleton">
       <div className={`lyra-app-group lyra-app-row-list ${FM_LIST_GRID_CLASS} lyra-file-manager-list-grid-skeleton pointer-events-none`}>
         {rows.map((rowId) => (
           <article

@@ -3275,90 +3275,14 @@
 
 /* Source: file-manager.css */
 /* File Manager: Cursor-like product surface built on Lyra App tokens. */
-.lyra-file-manager-surface {
-  min-width: 0;
-  min-height: 0;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  background: var(--lyra-app-material-panel-bg);
-  -webkit-backdrop-filter: var(--lyra-app-material-blur-md) var(--lyra-app-material-saturate);
-  backdrop-filter: var(--lyra-app-material-blur-md) var(--lyra-app-material-saturate);
-}
-
-.lyra-file-manager-layout {
-  min-width: 0;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: var(--lyra-app-sidebar-rail-w) minmax(0, 1fr);
-}
-
-.lyra-file-manager-content {
-  /* Compact tier: a browser-style list keeps the toolbar close to the rows. */
-  --lyra-app-content-padding-block-start: var(--lyra-space-28);
-  --lyra-app-content-padding-block-end: var(--lyra-page-pad-block-end);
-  --lyra-app-content-padding-inline: var(--lyra-page-pad-inline);
-  --lyra-app-content-gap: var(--lyra-space-18);
-  position: relative;
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: transparent;
-}
-
-.lyra-file-manager-content-scroll {
-  grid-area: 1 / 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: auto;
-}
-
-.lyra-file-manager-pane {
-  min-width: 0;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-}
-
-.lyra-file-manager-embedded-toolbar {
-  min-width: 0;
-  min-height: var(--lyra-control-h-36);
-  display: flex;
-  align-items: center;
-  gap: var(--lyra-space-8);
-  padding: 0 var(--lyra-space-12);
-}
-
-.lyra-file-manager-downloads-slot {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-}
-
-.lyra-file-manager-home,
-.lyra-file-manager-favorites-page,
-.lyra-file-manager-downloads-page,
-.lyra-file-manager-skeleton-home,
-.lyra-file-manager-list-shell {
+.lyra-file-manager-downloads-page {
   width: min(100%, var(--lyra-unit-10000));
-  /* Edge-gap basis, not a fixed pixel column: a fixed cap left the sides
-     emptier and emptier as the window gains CSS pixels at small OS scale
-     factors. The old cap stays as the floor for narrow panes. */
   max-width: max(
     calc(var(--lyra-unit-720) + var(--lyra-unit-280)),
     calc(100% - var(--lyra-space-64) * 2)
   );
   margin: 0 auto;
   padding: var(--lyra-space-20) var(--lyra-space-24) var(--lyra-space-28);
-}
-
-.lyra-file-manager-home,
-.lyra-file-manager-favorites-page,
-.lyra-file-manager-downloads-page,
-.lyra-file-manager-skeleton-home {
   min-width: 0;
   min-height: 100%;
   display: grid;
@@ -3366,14 +3290,6 @@
   gap: var(--lyra-space-18);
 }
 
-.lyra-file-manager-list-shell {
-  min-width: 0;
-  min-height: 100%;
-  display: grid;
-}
-
-.lyra-file-manager-home-section,
-.lyra-file-manager-skeleton-home-section,
 .lyra-file-manager-download-advanced,
 .lyra-file-manager-download-settings,
 .lyra-file-manager-download-save-rules {

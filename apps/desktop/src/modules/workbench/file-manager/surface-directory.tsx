@@ -14,7 +14,9 @@ import {
   FM_LARGE_GRID_CLASS,
   FM_LIST_GRID_CLASS,
   FM_LIST_NAME_CLASS,
-  FM_LIST_ROW_CLASS
+  FM_LIST_ROW_CLASS,
+  FM_LIST_SHELL_CLASS,
+  FM_PAGE_CLASS
 } from "./surface-classes";
 import { preventContextMenuDefaults } from "./surface-view-events";
 import type { FileManagerSurfaceChromeProps } from "./surface-view-types";
@@ -39,7 +41,7 @@ export const FileManagerDirectoryContent = ({
   const directory = renderModel.body.directory;
   if (renderModel.toolbar.isLargeMode) {
     return (
-      <div className="lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell">
+      <div className={`lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`}>
         <div className={`lyra-app-group ${FM_LARGE_GRID_CLASS}`}>
           {directory.createDraft === undefined ? null : (
             <FileManagerDraftInput
@@ -79,7 +81,7 @@ export const FileManagerDirectoryContent = ({
   }
 
   return (
-    <div className="lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell">
+    <div className={`lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`}>
       <AppList className={FM_LIST_GRID_CLASS}>
         {directory.createDraft === undefined ? null : (
           <FileManagerDraftInput
