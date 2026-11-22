@@ -127,6 +127,13 @@ const SPECIAL_BRAND_MATCHERS: readonly {
   { brand: "mimo", match: ["mimo", "xiaomi", "xiaomimimo", "小米"] },
 ];
 
+const APB_ROOT_CLASS =
+  "lyra-agent-provider-brand-icon inline-flex size-[var(--lyra-icon-size-16)] shrink-0 items-center justify-center text-current [&_svg]:size-full";
+const APB_IMAGE_CLASS = "lyra-agent-provider-brand-icon-image size-full object-contain";
+const APB_IMAGE_AVATAR_CLASS = "lyra-agent-provider-brand-icon-avatar rounded-full object-cover";
+const APB_INITIALS_CLASS =
+  "lyra-agent-provider-brand-icon-initials inline-flex h-[var(--lyra-icon-size-16)] min-w-[var(--lyra-icon-size-16)] items-center justify-center rounded-none bg-transparent text-[var(--lyra-text-size-caption)] font-semibold leading-[var(--lyra-text-line-flat)] text-current";
+
 const normalize = (value: string): string =>
   value
     .trim()
@@ -285,7 +292,7 @@ export const AgentProviderBrandIcon = ({
     providerId,
     routeId,
   });
-  const classNames = ["lyra-agent-provider-brand-icon", className ?? ""].filter(Boolean).join(" ");
+  const classNames = [APB_ROOT_CLASS, className ?? ""].filter(Boolean).join(" ");
   const accountImage = imageUrl?.trim() ?? "";
   if (accountImage.length > 0) {
     return (
@@ -293,7 +300,7 @@ export const AgentProviderBrandIcon = ({
         <img
           alt=""
           aria-hidden="true"
-          className="lyra-agent-provider-brand-icon-image lyra-agent-provider-brand-icon-avatar"
+          className={`${APB_IMAGE_CLASS} ${APB_IMAGE_AVATAR_CLASS}`}
           src={accountImage}
         />
       </span>
@@ -306,7 +313,7 @@ export const AgentProviderBrandIcon = ({
         <img
           alt=""
           aria-hidden="true"
-          className="lyra-agent-provider-brand-icon-image"
+          className={APB_IMAGE_CLASS}
           onError={() => setSiteIconUrl(null)}
           src={siteIconUrl}
         />
@@ -320,7 +327,7 @@ export const AgentProviderBrandIcon = ({
         <img
           alt=""
           aria-hidden="true"
-          className="lyra-agent-provider-brand-icon-image"
+          className={APB_IMAGE_CLASS}
           src={openCodeIconUrl}
         />
       </span>
@@ -356,7 +363,7 @@ export const AgentProviderBrandIcon = ({
 
   return (
     <span className={classNames} title={label ?? provider ?? providerId ?? undefined}>
-      <span className="lyra-agent-provider-brand-icon-initials" aria-hidden="true">
+      <span className={APB_INITIALS_CLASS} aria-hidden="true">
         {getInitials(label ?? provider ?? providerId ?? modelId)}
       </span>
     </span>
