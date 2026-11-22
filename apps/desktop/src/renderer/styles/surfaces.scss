@@ -717,21 +717,6 @@
   line-height: var(--lyra-text-line-title);
 }
 
-.lyra-settings-section {
-  min-width: 0;
-  display: grid;
-  gap: var(--lyra-space-8);
-}
-
-.lyra-settings-section-title {
-  margin: 0;
-  padding: 0 var(--lyra-space-8);
-  color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-body);
-  font-weight: 500;
-  line-height: var(--lyra-text-line-body);
-}
-
 .lyra-settings-import,
 .lyra-settings-import-detail,
 .lyra-settings-downloads {
@@ -803,64 +788,8 @@
   color: currentColor;
 }
 
-.lyra-settings-group {
-  min-width: 0;
-  display: grid;
-  gap: 0;
-  padding: 0;
-  border: var(--lyra-stroke-thin) solid var(--lyra-settings-border);
-  border-radius: var(--lyra-settings-radius-card);
-  overflow: hidden;
-  background: color-mix(in srgb, var(--lyra-settings-card-bg) 96%, transparent);
-  box-shadow: var(--lyra-settings-shadow-card);
-  -webkit-backdrop-filter: var(--lyra-app-material-blur-sm) var(--lyra-app-material-saturate);
-  backdrop-filter: var(--lyra-app-material-blur-sm) var(--lyra-app-material-saturate);
-}
-
-:root[data-lyra-theme-tone="dark"] .lyra-settings-group {
-  box-shadow: var(--lyra-settings-shadow-card);
-}
-
-:root[data-lyra-window-material="opaque"] .lyra-settings-group {
-  background: var(--lyra-settings-card-bg);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
 .lyra-settings-group-cluster {
   gap: 0;
-}
-
-.lyra-settings-group-header {
-  min-width: 0;
-  min-height: var(--lyra-control-h-40);
-  position: relative;
-  padding: var(--lyra-space-12) var(--lyra-space-14);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--lyra-space-12);
-}
-
-/* Every rule inside a settings card is inset alike, header included: the same
-   inset as the row padding and AppGroup's header rule. A full-bleed
-   border-bottom here read as a different kind of divider next to the rows. */
-.lyra-settings-group-header::after {
-  content: "";
-  position: absolute;
-  left: var(--lyra-space-14);
-  right: var(--lyra-space-14);
-  bottom: 0;
-  height: var(--lyra-stroke-thin);
-  background: color-mix(in srgb, var(--lyra-settings-border) 72%, transparent);
-}
-
-.lyra-settings-group-header h3 {
-  margin: 0;
-  color: var(--lyra-text-primary);
-  font-size: var(--lyra-text-size-body);
-  font-weight: 600;
-  line-height: var(--lyra-text-line-body);
 }
 
 .lyra-settings-description,
