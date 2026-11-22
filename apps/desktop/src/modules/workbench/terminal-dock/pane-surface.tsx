@@ -14,6 +14,14 @@ import {
 import { replayTerminalScrollback } from "./replay-terminal-scrollback";
 import type { TerminalDockLabels, TerminalDockPane } from "./types";
 import { resolveTerminalTheme } from "./theme";
+import {
+  TD_PANE_CLASS,
+  TD_PANE_ACTIVE_CLASS,
+  TD_PANE_BODY_CLASS,
+  TD_PANE_CLOSE_CLASS,
+  TD_HOST_CLASS,
+  TD_STATUS_CLASS,
+} from "./classes";
 
 export type TerminalPaneSurfaceProps = {
   readonly pane: TerminalDockPane;
@@ -838,15 +846,15 @@ export const TerminalPaneSurface = ({
 
   return (
     <section
-      className={active ? "lyra-terminal-pane lyra-terminal-pane-active" : "lyra-terminal-pane"}
+      className={active ? `${TD_PANE_CLASS} ${TD_PANE_ACTIVE_CLASS}` : TD_PANE_CLASS}
       onMouseDown={onFocus}
     >
-      <div className="lyra-terminal-pane-body">
-        <div className="lyra-terminal-host" ref={hostRef} />
-        {statusMessage === null ? null : <div className="lyra-terminal-status">{statusMessage}</div>}
+      <div className={TD_PANE_BODY_CLASS}>
+        <div className={TD_HOST_CLASS} ref={hostRef} />
+        {statusMessage === null ? null : <div className={TD_STATUS_CLASS}>{statusMessage}</div>}
         {canClose && onClose !== undefined ? (
           <AppIconButton
-            className="lyra-terminal-pane-close"
+            className={TD_PANE_CLOSE_CLASS}
             aria-label={labels.closePane}
             title={labels.closePane}
             onMouseDown={(event) => {

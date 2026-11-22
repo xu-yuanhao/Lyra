@@ -1,6 +1,11 @@
 import type { MouseEventHandler, ReactNode } from "react";
 
 import { cx } from "./classnames";
+import {
+  TD_PANEL_BOTTOM_CLASS,
+  TD_PANEL_BOTTOM_HIDDEN_CLASS,
+  TD_PANEL_BOTTOM_CONTENT_CLASS,
+} from "../terminal-dock/classes";
 
 type PanelHostProps = {
   readonly placement: "left" | "bottom";
@@ -35,13 +40,13 @@ export const PanelHost = ({
   return (
     <footer
       className={cx(
-        "lyra-panel lyra-panel-bottom",
-        visible === false && "lyra-panel-bottom-hidden"
+        "lyra-panel", TD_PANEL_BOTTOM_CLASS,
+        visible === false && TD_PANEL_BOTTOM_HIDDEN_CLASS
       )}
       aria-label={ariaLabel}
       aria-hidden={visible ? undefined : true}
     >
-      <div className="lyra-panel-content lyra-panel-bottom-content">
+      <div className={`lyra-panel-content ${TD_PANEL_BOTTOM_CONTENT_CLASS}`}>
         {children}
       </div>
     </footer>

@@ -8,6 +8,12 @@ import type {
 } from "./types";
 import type { LyraDesktopApi } from "../../../shared/desktop-bridge";
 import { useWorkbenchTitlebarContribution } from "../shell/titlebar-context";
+import {
+  TD_WORKSPACE_SURFACE_CLASS,
+  TD_PANES_CLASS,
+  TD_PANES_HORIZONTAL_CLASS,
+  TD_PANES_VERTICAL_CLASS,
+} from "./classes";
 
 export type TerminalWorkspaceSurfaceProps = {
   readonly desktopApi: LyraDesktopApi | null;
@@ -46,12 +52,12 @@ export const TerminalWorkspaceSurface = ({
   useWorkbenchTitlebarContribution(contribution);
 
   return (
-    <section className="lyra-terminal-workspace-surface" aria-label="terminal-workspace-surface">
+    <section className={TD_WORKSPACE_SURFACE_CLASS} aria-label="terminal-workspace-surface">
       <section
         className={
           tab.orientation === "vertical"
-            ? "lyra-terminal-panes lyra-terminal-panes-vertical"
-            : "lyra-terminal-panes lyra-terminal-panes-horizontal"
+            ? `${TD_PANES_CLASS} ${TD_PANES_VERTICAL_CLASS}`
+            : `${TD_PANES_CLASS} ${TD_PANES_HORIZONTAL_CLASS}`
         }
       >
         {panes.map((pane) => (

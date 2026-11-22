@@ -32,6 +32,30 @@ import { cn } from "@renderer/ui/utils";
 import { isMiddleClick } from "../ui-primitives";
 import { ProblemsList } from "../bottom-aux/problems-list";
 import { filterDiagnosticsForRoot, useWorkspaceProblems } from "../bottom-aux/problems";
+import {
+  TD_BOTTOM_AUX_INACTIVE_CLASS,
+  TD_DOCK_CLASS,
+  TD_DOCK_DROP_TARGET_CLASS,
+  TD_SIDE_CLASS,
+  TD_TABS_CLASS,
+  TD_TABS_DROP_END_CLASS,
+  TD_TAB_CLASS,
+  TD_TAB_DROP_BEFORE_CLASS,
+  TD_TAB_ACTIVE_CLASS,
+  TD_TAB_MAIN_CLASS,
+  TD_TAB_ICON_CLASS,
+  TD_TAB_ICON_IMAGE_CLASS,
+  TD_TAB_TITLE_CLASS,
+  TD_TAB_BADGE_CLASS,
+  TD_TAB_CLOSE_CLASS,
+  TD_TAB_LYRA_LOGO_CLASS,
+  TD_TOOLBAR_ACTIONS_CLASS,
+  TD_STAGE_CLASS,
+  TD_EMPTY_CLASS,
+  TD_PANES_CLASS,
+  TD_PANES_HORIZONTAL_CLASS,
+  TD_PANES_VERTICAL_CLASS,
+} from "./classes";
 
 const terminalTabDisplayTitles = (
   tabs: readonly { readonly id: string; readonly title: string }[]
@@ -59,13 +83,13 @@ const TerminalTabIcon = ({
   readonly icon?: ResolvedIdentityIcon | undefined;
 }) => (
   <IdentityIconView
-    className="lyra-terminal-tab-icon"
-    imageClassName="lyra-terminal-tab-icon-image"
+    className={TD_TAB_ICON_CLASS}
+    imageClassName={TD_TAB_ICON_IMAGE_CLASS}
     iconUrl={icon?.url ?? null}
     label={icon?.label}
     fallback={
       icon?.renderHint === "lyra-logo"
-        ? <LyraLogo className="lyra-terminal-tab-lyra-logo" alt="" />
+        ? <LyraLogo className={TD_TAB_LYRA_LOGO_CLASS} alt="" />
         : <SquareTerminal size={13} />
     }
   />
@@ -240,8 +264,8 @@ export const TerminalDock = ({
   return (
     <section
       className={cn(
-        "lyra-terminal-dock",
-        isWorkspaceDropActive && "lyra-terminal-dock-workspace-drop-target"
+        TD_DOCK_CLASS,
+        isWorkspaceDropActive && TD_DOCK_DROP_TARGET_CLASS
       )}
       aria-label="terminal-dock"
       onDragOverCapture={onWorkspaceDragOver}
@@ -249,12 +273,12 @@ export const TerminalDock = ({
       onDragLeaveCapture={onWorkspaceDragLeave}
       onDropCapture={onWorkspaceDrop}
     >
-      <aside className="lyra-terminal-side" aria-label="terminal-tabs-side">
+      <aside className={TD_SIDE_CLASS} aria-label="terminal-tabs-side">
         <nav
           className={cn(
-            "lyra-terminal-tabs",
+            TD_TABS_CLASS,
             dockDropIndex !== null && dockDropIndex >= model.dockTabs.length
-              && "lyra-terminal-tabs-drop-end"
+              && TD_TABS_DROP_END_CLASS
           )}
           aria-label="terminal-tabs"
         >
@@ -263,12 +287,12 @@ export const TerminalDock = ({
               key={tab.id}
               className={cn(
                 "lyra-tab-item",
-                "lyra-terminal-tab",
+                TD_TAB_CLASS,
                 "lyra-allow-web-drag",
                 problemsActive === false && tab.id === activeDockTab?.id && "lyra-tab-item-active",
-                problemsActive === false && tab.id === activeDockTab?.id && "lyra-terminal-tab-active",
+                problemsActive === false && tab.id === activeDockTab?.id && TD_TAB_ACTIVE_CLASS,
                 dockDropIndex !== null && dockDropIndex === index
-                  && "lyra-terminal-tab-drop-target-before"
+                  && TD_TAB_DROP_BEFORE_CLASS
               )}
               data-lyra-tab-id={tab.id}
               data-lyra-terminal-tab-id={tab.id}
@@ -303,7 +327,7 @@ export const TerminalDock = ({
               }}
             >
               <AppButton
-                className="lyra-tab-main lyra-terminal-tab-main"
+                className={TD_TAB_MAIN_CLASS}
                 variant="ghost"
                 size="sm"
                 data-lyra-allow-web-drag="true"
@@ -328,20 +352,20 @@ export const TerminalDock = ({
                 }}
               >
                 <TerminalTabIcon icon={terminalIdentityByTabId[tab.id]} />
-                <span className="lyra-tab-title lyra-terminal-tab-title">{displayTitleByTabId[tab.id] ?? tab.title}</span>
+                <span className={TD_TAB_TITLE_CLASS}>{displayTitleByTabId[tab.id] ?? tab.title}</span>
                 {tab.pinned ? (
-                  <span className="lyra-terminal-tab-badge" title={labels.unpinTab} aria-hidden="true">
+                  <span className={TD_TAB_BADGE_CLASS} title={labels.unpinTab} aria-hidden="true">
                     <Pin size={10} />
                   </span>
                 ) : null}
                 {tab.favorite ? (
-                  <span className="lyra-terminal-tab-badge" title={labels.unfavoriteTab} aria-hidden="true">
+                  <span className={TD_TAB_BADGE_CLASS} title={labels.unfavoriteTab} aria-hidden="true">
                     <Star size={10} />
                   </span>
                 ) : null}
               </AppButton>
               <AppIconButton
-                className="lyra-tab-close lyra-terminal-tab-close"
+                className={TD_TAB_CLOSE_CLASS}
                 aria-label={labels.closeTab}
                 title={labels.closeTab}
                 onClick={() => {
@@ -357,9 +381,9 @@ export const TerminalDock = ({
               key={tab.id}
               className={cn(
                 "lyra-tab-item",
-                "lyra-terminal-tab",
+                TD_TAB_CLASS,
                 tab.id === problems?.activeId && "lyra-tab-item-active",
-                tab.id === problems?.activeId && "lyra-terminal-tab-active"
+                tab.id === problems?.activeId && TD_TAB_ACTIVE_CLASS
               )}
               data-lyra-problems-tab-id={tab.id}
               onMouseDown={(event) => {
@@ -376,7 +400,7 @@ export const TerminalDock = ({
               }}
             >
               <AppButton
-                className="lyra-tab-main lyra-terminal-tab-main"
+                className={TD_TAB_MAIN_CLASS}
                 variant="ghost"
                 size="sm"
                 aria-label={displayTitleByTabId[tab.id] ?? tab.title}
@@ -384,13 +408,13 @@ export const TerminalDock = ({
                   problems?.onSelectTab(tab.id);
                 }}
               >
-                <span className="lyra-terminal-tab-icon" aria-hidden="true">
+                <span className={TD_TAB_ICON_CLASS} aria-hidden="true">
                   <CircleAlert size={13} />
                 </span>
-                <span className="lyra-tab-title lyra-terminal-tab-title">{displayTitleByTabId[tab.id] ?? tab.title}</span>
+                <span className={TD_TAB_TITLE_CLASS}>{displayTitleByTabId[tab.id] ?? tab.title}</span>
               </AppButton>
               <AppIconButton
-                className="lyra-tab-close lyra-terminal-tab-close"
+                className={TD_TAB_CLOSE_CLASS}
                 aria-label={labels.closeTab}
                 title={labels.closeTab}
                 onClick={() => {
@@ -402,7 +426,7 @@ export const TerminalDock = ({
             </div>
           ))}
         </nav>
-        <div className="lyra-terminal-toolbar-actions">
+        <div className={TD_TOOLBAR_ACTIONS_CLASS}>
           <AppIconButton
             aria-label={labels.newTab}
             title={labels.newTab}
@@ -448,16 +472,16 @@ export const TerminalDock = ({
         </div>
       </aside>
 
-      <section className="lyra-terminal-stage">
+      <section className={TD_STAGE_CLASS}>
         {activeDockTab === null ? (
-          <section className="lyra-terminal-empty" />
+          <section className={TD_EMPTY_CLASS} />
         ) : (
           <section
             className={cn(
               activeDockTab.orientation === "vertical"
-                ? "lyra-terminal-panes lyra-terminal-panes-vertical"
-                : "lyra-terminal-panes lyra-terminal-panes-horizontal",
-              problemsActive && "lyra-bottom-aux-terminal-inactive"
+                ? `${TD_PANES_CLASS} ${TD_PANES_VERTICAL_CLASS}`
+                : `${TD_PANES_CLASS} ${TD_PANES_HORIZONTAL_CLASS}`,
+              problemsActive && TD_BOTTOM_AUX_INACTIVE_CLASS
             )}
             aria-hidden={problemsActive}
           >
