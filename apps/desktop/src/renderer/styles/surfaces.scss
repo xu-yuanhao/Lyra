@@ -91,9 +91,6 @@
     padding: var(--lyra-space-20);
   }
 
-  .lyra-settings-choice-grid,
-  .lyra-settings-choice-grid-themes,
-  .lyra-settings-choice-grid-flags,
   .lyra-settings-ai-form,
   .lyra-settings-ai-advanced-grid,
   .lyra-settings-ai-extra-fields-grid {
@@ -108,10 +105,6 @@
 
   .lyra-settings-ai-skill-actions {
     justify-content: flex-start;
-  }
-
-  .lyra-settings-ai-profile-grid {
-    grid-template-columns: 1fr;
   }
 
   .lyra-account-summary-grid {
