@@ -33,10 +33,9 @@ describe("Lyra App UI components", () => {
   test("renders buttons through the Lyra wrapper surface", () => {
     render(<AppButton variant="outline">Open</AppButton>);
 
-    expect(screen.getByRole("button", { name: "Open" })).toHaveClass(
-      "lyra-ui-button",
-      "lyra-ui-button-outline"
-    );
+    const button = screen.getByRole("button", { name: "Open" });
+    expect(button).toHaveAttribute("data-slot", "button");
+    expect(button).toHaveAttribute("data-variant", "outline");
   });
 
   test("wraps form controls and settings sections with stable classes", () => {
@@ -57,12 +56,12 @@ describe("Lyra App UI components", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Appearance" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Name")).toHaveClass("lyra-ui-input");
+    expect(screen.getByLabelText("Name")).toHaveClass("border-input");
     expect(screen.getByRole("button", { name: "Theme" })).toHaveClass(
       "lyra-ui-select-trigger",
       "lyra-ui-select-trigger-with-icon"
     );
-    expect(screen.getByRole("switch", { name: "Enabled" })).toHaveClass("lyra-ui-switch");
+    expect(screen.getByRole("switch", { name: "Enabled" })).toHaveAttribute("data-slot", "switch");
   });
 
   test("toggles AppSelect from its own trigger and switches with one click", async () => {
@@ -325,6 +324,6 @@ describe("Lyra App UI components", () => {
     expect(screen.getByText("Could not load").closest(".lyra-app-state"))
       .toHaveClass("lyra-app-state-error", "lyra-app-state-tone-error");
     expect(screen.getByRole("button", { name: "Retry" }))
-      .toHaveClass("lyra-ui-button");
+      .toHaveAttribute("data-slot", "button");
   });
 });

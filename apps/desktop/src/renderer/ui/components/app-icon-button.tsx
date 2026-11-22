@@ -1,9 +1,9 @@
 import { forwardRef } from "react";
 
-import { Button, type ButtonProps } from "../primitives";
+import { AppButton, type AppButtonProps } from "./app-button";
 import { cn } from "../utils";
 
-export type AppIconButtonProps = Omit<ButtonProps, "size"> & {
+export type AppIconButtonProps = Omit<AppButtonProps, "size"> & {
   readonly active?: boolean;
   readonly tone?: "default" | "danger" | "muted";
 };
@@ -15,7 +15,7 @@ export const AppIconButton = forwardRef<HTMLButtonElement, AppIconButtonProps>((
   variant = "ghost",
   ...props
 }, ref) => (
-  <Button
+  <AppButton
     ref={ref}
     size="icon"
     variant={variant}
