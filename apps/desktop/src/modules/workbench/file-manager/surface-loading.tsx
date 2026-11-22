@@ -3,6 +3,20 @@ import type {
   FileManagerSurfaceRenderModel
 } from "./surface-model";
 
+const SKELETON_HOST_ICON = "lyra-skeleton-block size-[var(--lyra-control-h-40)] rounded-[var(--lyra-radius-8)]";
+const SKELETON_HOST_NAME = "lyra-skeleton-block w-[min(42%,var(--lyra-unit-180))] h-[var(--lyra-text-line-22)]";
+const SKELETON_HOST_OS = "lyra-skeleton-block w-[min(58%,var(--lyra-unit-240))] h-[var(--lyra-text-line-16)]";
+const SKELETON_HOST_FACT = "lyra-skeleton-block w-full h-[var(--lyra-control-h-28)]";
+const SKELETON_ICON_16 = "lyra-skeleton-block size-[var(--lyra-icon-size-16)]";
+const SKELETON_LINE_16 = "lyra-skeleton-block w-[65%] h-[var(--lyra-text-line-16)]";
+const SKELETON_LINE_14 = "lyra-skeleton-block w-[82%] h-[var(--lyra-text-line-14)]";
+const SKELETON_DISK_ICON = "lyra-skeleton-block size-[var(--lyra-control-h-28)] rounded-[var(--lyra-radius-8)]";
+const SKELETON_DISK_METER = "lyra-skeleton-block w-full h-[var(--lyra-space-4)] rounded-[var(--lyra-radius-pill)]";
+const SKELETON_DISK_KIND = "lyra-skeleton-block w-[var(--lyra-space-56)] h-[var(--lyra-text-line-16)] rounded-[var(--lyra-radius-pill)]";
+const SKELETON_LARGE_PREVIEW = "lyra-skeleton-block w-full h-full rounded-[var(--lyra-radius-8)]";
+const SKELETON_LARGE_TITLE = "lyra-skeleton-block w-[70%] h-[var(--lyra-text-line-16)]";
+const SKELETON_LARGE_SUBTITLE = "lyra-skeleton-block w-[52%] h-[var(--lyra-text-line-16)]";
+
 export const FileManagerLoadingSkeleton = ({
   viewKind,
   presentationMode,
@@ -15,24 +29,24 @@ export const FileManagerLoadingSkeleton = ({
   if (viewKind === "home") {
     return (
       <div className="lyra-app-content-column lyra-file-manager-skeleton-home" aria-label="file-manager-loading-skeleton">
-        <article className="lyra-file-manager-host-card lyra-file-manager-host-card-skeleton">
+        <article className="lyra-file-manager-host-card lyra-file-manager-host-card-skeleton pointer-events-none">
           <div className="lyra-file-manager-host-identity">
-            <span className="lyra-skeleton-block lyra-file-manager-skeleton-host-icon" />
+            <span className={SKELETON_HOST_ICON} />
             <div className="lyra-file-manager-host-copy">
-              <span className="lyra-skeleton-block lyra-file-manager-skeleton-host-name" />
-              <span className="lyra-skeleton-block lyra-file-manager-skeleton-host-os" />
+              <span className={SKELETON_HOST_NAME} />
+              <span className={SKELETON_HOST_OS} />
             </div>
           </div>
           <div className="lyra-file-manager-host-facts">
-            <span className="lyra-skeleton-block lyra-file-manager-skeleton-host-fact" />
-            <span className="lyra-skeleton-block lyra-file-manager-skeleton-host-fact" />
+            <span className={SKELETON_HOST_FACT} />
+            <span className={SKELETON_HOST_FACT} />
           </div>
         </article>
 
         <section className="lyra-app-section lyra-file-manager-skeleton-home-section">
           <header className="lyra-app-section-title lyra-file-manager-skeleton-home-header">
-            <span className="lyra-skeleton-block lyra-file-manager-skeleton-home-header-icon" />
-            <span className="lyra-skeleton-block lyra-file-manager-skeleton-home-header-title" />
+            <span className={SKELETON_ICON_16} />
+            <span className={SKELETON_LINE_16} />
           </header>
           <div className="lyra-app-group lyra-app-row-list lyra-file-manager-home-grid">
             {slots.deviceSlots.map((cardId) => (
@@ -42,22 +56,22 @@ export const FileManagerLoadingSkeleton = ({
               >
                 <div className="lyra-file-manager-disk-summary">
                   <div className="lyra-file-manager-disk-summary-icon">
-                    <span className="lyra-skeleton-block lyra-file-manager-skeleton-disk-icon" />
+                    <span className={SKELETON_DISK_ICON} />
                   </div>
                   <div className="lyra-file-manager-disk-summary-body">
-                    <span className="lyra-skeleton-block lyra-file-manager-skeleton-disk-title" />
-                    <span className="lyra-skeleton-block lyra-file-manager-skeleton-disk-path" />
+                    <span className={SKELETON_LINE_16} />
+                    <span className={SKELETON_LINE_14} />
                   </div>
                 </div>
                 <div className="lyra-file-manager-disk-meter">
-                  <span className="lyra-skeleton-block lyra-file-manager-skeleton-disk-meter" />
+                  <span className={SKELETON_DISK_METER} />
                 </div>
                 <div className="lyra-file-manager-disk-meta">
-                  <span className="lyra-skeleton-block lyra-file-manager-skeleton-disk-meta-line" />
-                  <span className="lyra-skeleton-block lyra-file-manager-skeleton-disk-meta-line lyra-file-manager-skeleton-disk-meta-line-short" />
+                  <span className={SKELETON_LINE_14} />
+                  <span className={`${SKELETON_LINE_14} w-[58%]`} />
                 </div>
                 <div className="lyra-file-manager-disk-footer">
-                  <span className="lyra-skeleton-block lyra-file-manager-skeleton-disk-kind" />
+                  <span className={SKELETON_DISK_KIND} />
                 </div>
               </article>
             ))}
@@ -78,12 +92,12 @@ export const FileManagerLoadingSkeleton = ({
               className="lyra-file-manager-large-tile lyra-file-manager-large-tile-skeleton"
             >
               <div className="lyra-file-manager-large-tile-preview">
-                <span className="lyra-skeleton-block lyra-file-manager-skeleton-large-preview" />
+                <span className={SKELETON_LARGE_PREVIEW} />
               </div>
               <div className="lyra-file-manager-large-tile-body">
-                <span className="lyra-skeleton-block lyra-file-manager-skeleton-large-title" />
+                <span className={SKELETON_LARGE_TITLE} />
                 {viewKind === "trash" ? (
-                  <span className="lyra-skeleton-block lyra-file-manager-skeleton-large-subtitle" />
+                  <span className={SKELETON_LARGE_SUBTITLE} />
                 ) : null}
               </div>
             </article>
@@ -104,11 +118,11 @@ export const FileManagerLoadingSkeleton = ({
             className="lyra-file-manager-list-row lyra-file-manager-list-row-skeleton"
           >
             <div className="lyra-file-manager-list-cell-primary">
-              <span className="lyra-skeleton-block lyra-file-manager-skeleton-list-icon" />
-              <span className="lyra-skeleton-block lyra-file-manager-skeleton-list-name" />
+              <span className={SKELETON_ICON_16} />
+              <span className={SKELETON_LINE_16} />
             </div>
             {viewKind === "trash" ? (
-              <span className="lyra-skeleton-block lyra-file-manager-skeleton-list-subline" />
+              <span className={`${SKELETON_LINE_14} mt-[var(--lyra-space-4)] ml-[var(--lyra-space-24)]`} />
             ) : null}
           </article>
         ))}

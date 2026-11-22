@@ -3507,31 +3507,6 @@
   line-height: var(--lyra-text-line-18);
 }
 
-.lyra-file-manager-host-card-skeleton {
-  pointer-events: none;
-}
-
-.lyra-file-manager-skeleton-host-icon {
-  width: var(--lyra-control-h-40);
-  height: var(--lyra-control-h-40);
-  border-radius: var(--lyra-radius-8);
-}
-
-.lyra-file-manager-skeleton-host-name {
-  width: min(42%, var(--lyra-unit-180));
-  height: var(--lyra-text-line-22);
-}
-
-.lyra-file-manager-skeleton-host-os {
-  width: min(58%, var(--lyra-unit-240));
-  height: var(--lyra-text-line-16);
-}
-
-.lyra-file-manager-skeleton-host-fact {
-  width: 100%;
-  height: var(--lyra-control-h-28);
-}
-
 .lyra-file-manager-home-card,
 .lyra-file-manager-favorite-row {
   min-height: var(--lyra-control-h-40);
@@ -4259,72 +4234,6 @@
   display: block;
   border-radius: var(--lyra-radius-6);
   background: var(--lyra-app-muted-bg);
-}
-
-.lyra-file-manager-skeleton-home-header-icon,
-.lyra-file-manager-skeleton-card-icon,
-.lyra-file-manager-skeleton-list-icon {
-  width: var(--lyra-icon-size-16);
-  height: var(--lyra-icon-size-16);
-}
-
-.lyra-file-manager-skeleton-home-header-title,
-.lyra-file-manager-skeleton-card-title,
-.lyra-file-manager-skeleton-list-name,
-.lyra-file-manager-skeleton-disk-title {
-  width: 65%;
-  height: var(--lyra-text-line-16);
-}
-
-.lyra-file-manager-skeleton-card-subtitle,
-.lyra-file-manager-skeleton-list-subline,
-.lyra-file-manager-skeleton-disk-path,
-.lyra-file-manager-skeleton-disk-meta-line {
-  width: 82%;
-  height: var(--lyra-text-line-14);
-}
-
-.lyra-file-manager-skeleton-list-subline {
-  margin-top: var(--lyra-space-4);
-  margin-left: var(--lyra-space-24);
-}
-
-.lyra-file-manager-skeleton-disk-icon {
-  width: var(--lyra-control-h-28);
-  height: var(--lyra-control-h-28);
-  border-radius: var(--lyra-radius-8);
-}
-
-.lyra-file-manager-skeleton-disk-meter {
-  width: 100%;
-  height: var(--lyra-space-4);
-  border-radius: var(--lyra-radius-pill);
-}
-
-.lyra-file-manager-skeleton-disk-meta-line-short {
-  width: 58%;
-}
-
-.lyra-file-manager-skeleton-disk-kind {
-  width: var(--lyra-space-56);
-  height: var(--lyra-text-line-16);
-  border-radius: var(--lyra-radius-pill);
-}
-
-.lyra-file-manager-skeleton-large-preview {
-  width: 100%;
-  height: 100%;
-  border-radius: var(--lyra-radius-8);
-}
-
-.lyra-file-manager-skeleton-large-title,
-.lyra-file-manager-skeleton-large-subtitle {
-  width: 70%;
-  height: var(--lyra-text-line-16);
-}
-
-.lyra-file-manager-skeleton-large-subtitle {
-  width: 52%;
 }
 
 .lyra-file-manager-drag-preview {
