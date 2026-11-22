@@ -1,6 +1,6 @@
 import { FolderTree, Puzzle, Search } from "@lyra/icons";
 
-import { AppIconButton } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
 import { activityDockItems } from "./service";
 import type { ActivityDockItemId, ActivityDockProps } from "./types";
 
@@ -11,20 +11,25 @@ const iconByItemId: Record<ActivityDockItemId, JSX.Element> = {
 };
 
 export const ActivityDock = ({ activeItemId, onSelect }: ActivityDockProps) => (
-  <nav className="lyra-activity-dock" aria-label="activity-dock">
-    {activityDockItems.map((item) => (
-      <AppIconButton
-        key={item.id}
-        title={item.label}
-        aria-label={item.label}
-        active={item.id === activeItemId}
-        className="lyra-activity-button"
-        onClick={() => {
-          onSelect(item.id);
-        }}
-      >
-        {iconByItemId[item.id]}
-      </AppIconButton>
-    ))}
+  <nav className="flex flex-col" aria-label="activity-dock">
+    {activityDockItems.map((item) => {
+      const active = item.id === activeItemId;
+      return (
+        <Button
+          key={item.id}
+          variant="ghost"
+          size="icon"
+          title={item.label}
+          aria-label={item.label}
+          aria-pressed={active}
+          className={active ? "bg-[var(--lyra-app-row-active-bg)] text-[var(--lyra-text-primary)]" : ""}
+          onClick={() => {
+            onSelect(item.id);
+          }}
+        >
+          {iconByItemId[item.id]}
+        </Button>
+      );
+    })}
   </nav>
 );

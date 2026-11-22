@@ -1,4 +1,5 @@
-import { AppToolbarButton } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
+import { cn } from "@renderer/ui/utils";
 import { Crosshair } from "@lyra/icons";
 
 type TitlebarElementPickerButtonProps = {
@@ -16,17 +17,13 @@ export const TitlebarElementPickerButton = ({
   activeDescription,
   onToggle
 }: TitlebarElementPickerButtonProps) => (
-  <AppToolbarButton
-    className={
-      active
-        ? [
-            "lyra-titlebar-navigation-action",
-            "lyra-titlebar-picker-button",
-            "lyra-titlebar-picker-button-active",
-            mode === "layout" ? "lyra-titlebar-picker-button-layout" : ""
-          ].filter(Boolean).join(" ")
-        : "lyra-titlebar-navigation-action lyra-titlebar-picker-button"
-    }
+  <Button
+    variant="ghost"
+    size="icon"
+    className={cn(
+      "size-[var(--lyra-shell-titlebar-nav-h)] rounded-full p-0 text-[var(--lyra-text-secondary)] hover:bg-transparent hover:text-[var(--lyra-text-primary)]",
+      (active || mode === "layout") && "text-[var(--lyra-text-primary)]"
+    )}
     aria-label={ariaLabel}
     aria-pressed={active}
     aria-description={active ? activeDescription : undefined}
@@ -34,5 +31,5 @@ export const TitlebarElementPickerButton = ({
     onClick={onToggle}
   >
     <Crosshair size={14} aria-hidden="true" />
-  </AppToolbarButton>
+  </Button>
 );

@@ -592,22 +592,6 @@
   color: var(--lyra-window-close-hover-bg);
 }
 
-.lyra-titlebar-picker-button {
-  color: var(--lyra-text-secondary);
-}
-
-.lyra-titlebar-picker-button-active {
-  color: var(--lyra-text-primary);
-  background: transparent;
-  box-shadow: none;
-}
-
-.lyra-titlebar-picker-button-layout {
-  color: var(--lyra-text-primary);
-  background: transparent;
-  box-shadow: none;
-}
-
 .lyra-titlebar::after {
   content: "";
   position: absolute;
