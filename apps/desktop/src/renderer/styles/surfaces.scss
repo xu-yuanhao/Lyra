@@ -3294,24 +3294,6 @@
   grid-template-columns: var(--lyra-app-sidebar-rail-w) minmax(0, 1fr);
 }
 
-.lyra-file-manager-nav-item.lyra-app-object-row .lyra-file-manager-icon-shell {
-  width: var(--lyra-app-sidebar-icon-size);
-  height: var(--lyra-app-sidebar-icon-size);
-}
-
-.lyra-file-manager-nav {
-  --lyra-app-sidebar-row-hover-bg: var(--lyra-app-row-hover-bg);
-  --lyra-app-sidebar-row-active-bg: var(--lyra-app-row-active-bg);
-}
-
-.lyra-file-manager-nav .lyra-file-manager-nav-group {
-  gap: var(--lyra-app-sidebar-row-gap);
-}
-
-.lyra-file-manager-nav .lyra-app-sidebar-nav-label {
-  font-weight: 500;
-}
-
 .lyra-file-manager-content {
   /* Compact tier: a browser-style list keeps the toolbar close to the rows. */
   --lyra-app-content-padding-block-start: var(--lyra-space-28);
