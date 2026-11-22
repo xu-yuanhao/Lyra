@@ -4,6 +4,7 @@
 
 import { DiffStats } from "./DiffStats";
 import { useData } from "../../data/DataProvider";
+import { PILLS_RAIL_CLASS } from "./classes";
 
 export function PillsRail() {
   const { diffFiles } = useData();
@@ -11,7 +12,7 @@ export function PillsRail() {
   if (!hasDiff) return null;
 
   return (
-    <div className="lyra-agents-pills-rail">
+    <div className={PILLS_RAIL_CLASS}>
       <DiffStats files={diffFiles} />
     </div>
   );

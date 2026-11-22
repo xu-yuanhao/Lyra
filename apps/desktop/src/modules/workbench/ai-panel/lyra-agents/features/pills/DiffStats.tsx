@@ -2,6 +2,20 @@ import { useState, type CSSProperties } from "react";
 import { GitBranch } from "@lyra/icons";
 import { FileTypeIcon } from "../../components/FileTypeIcon";
 import { Button } from "@renderer/ui/components/button";
+import {
+  DS_PILL_CLASS,
+  DS_PILL_HEAD_CLASS,
+  DS_SUMMARY_CLASS,
+  DS_COUNT_CLASS,
+  DS_COLLAPSE_CLASS,
+  DS_COLLAPSE_INNER_CLASS,
+  DS_BODY_CLASS,
+  DS_LIST_CLASS,
+  DS_ITEM_CLASS,
+  DS_FILE_ICON_CLASS,
+  DS_FILENAME_CLASS,
+  DS_FILE_NUMS_CLASS,
+} from "./classes";
 
 export interface DiffFileEntry {
   file: string;
@@ -27,36 +41,36 @@ export function DiffStats({
   const totalDel = files.reduce((s, f) => s + f.deletions, 0);
 
   return (
-    <div className={`lyra-agents-diff-stats-pill ${open ? "open" : ""}`}>
+    <div className={open ? `${DS_PILL_CLASS} open` : DS_PILL_CLASS}>
       <Button variant="ghost" size="sm"
         type="button"
-        className="lyra-agents-diff-stats-pill-head"
+        className={DS_PILL_HEAD_CLASS}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
         <GitBranch size={14} strokeWidth={2} />
-        <span className="lyra-agents-diff-stats-summary">
+        <span className={DS_SUMMARY_CLASS}>
           <span className="lyra-agents-diff-add">+{totalAdd}</span>
           <span className="lyra-agents-diff-del">-{totalDel}</span>
         </span>
-        <span className="lyra-agents-diff-stats-count">{files.length} files</span>
+        <span className={DS_COUNT_CLASS}>{files.length} files</span>
       </Button>
 
-      <div className="lyra-agents-diff-stats-collapse" data-open={open}>
-        <div className="lyra-agents-diff-stats-collapse-inner">
-          <div className="lyra-agents-diff-stats-body">
-            <ul className="lyra-agents-diff-stats-list">
+      <div className={DS_COLLAPSE_CLASS} data-open={open}>
+        <div className={DS_COLLAPSE_INNER_CLASS}>
+          <div className={DS_BODY_CLASS}>
+            <ul className={DS_LIST_CLASS}>
               {files.map((f, i) => (
                 <li
                   key={f.file}
-                  className="lyra-agents-diff-stats-item"
+                  className={DS_ITEM_CLASS}
                   style={{ "--stagger-index": i } as CSSProperties}
                 >
-                  <span className="lyra-agents-diff-stats-file-icon">
+                  <span className={DS_FILE_ICON_CLASS}>
                     <FileTypeIcon filename={f.file} size={13} />
                   </span>
-                  <span className="lyra-agents-diff-stats-filename">{f.file}</span>
-                  <span className="lyra-agents-diff-stats-file-nums">
+                  <span className={DS_FILENAME_CLASS}>{f.file}</span>
+                  <span className={DS_FILE_NUMS_CLASS}>
                     <span className="lyra-agents-diff-add">+{f.additions}</span>
                     <span className="lyra-agents-diff-del">-{f.deletions}</span>
                   </span>
