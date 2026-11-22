@@ -26,6 +26,9 @@ import {
   FM_FAVORITES_LIST_CLASS,
   FM_HOME_CARD_CLASS,
   FM_HOME_GRID_CLASS,
+  FM_PAGE_CLASS,
+  FM_PAGE_GRID_CLASS,
+  FM_SECTION_GAP_CLASS,
   FM_HOST_CARD_CLASS,
   FM_HOST_COPY_CLASS,
   FM_HOST_FACTS_CLASS,
@@ -48,7 +51,7 @@ const HomeSection = ({
   readonly children: ReactNode;
   readonly section: "devices";
 }) => (
-  <section className="lyra-app-section lyra-file-manager-home-section">
+  <section className={`lyra-app-section lyra-file-manager-home-section ${FM_SECTION_GAP_CLASS}`}>
     <header className={`lyra-app-section-title lyra-file-manager-home-section-header ${FM_SECTION_HEADER_CLASS}`}>
       {renderFileManagerSectionIcon(section)}
       <h3 className={FM_SECTION_TITLE_CLASS}>{title}</h3>
@@ -75,7 +78,7 @@ export const FileManagerHomeContent = ({
   const hasDevices = home.disks.length > 0 || home.devices.length > 0;
 
   return (
-    <div className="lyra-app-content-column lyra-file-manager-home">
+    <div className={`lyra-app-content-column lyra-file-manager-home ${FM_PAGE_CLASS} ${FM_PAGE_GRID_CLASS}`}>
       {host === null ? null : (
         <article className={FM_HOST_CARD_CLASS}>
           <div className={FM_HOST_IDENTITY_CLASS}>
@@ -207,7 +210,7 @@ export const FileManagerFavoritesContent = ({
   const favorites = renderModel.body.favorites;
 
   return (
-    <div className="lyra-app-content-column lyra-file-manager-favorites-page">
+    <div className={`lyra-app-content-column lyra-file-manager-favorites-page ${FM_PAGE_CLASS} ${FM_PAGE_GRID_CLASS}`}>
       <header className={`lyra-app-section-title lyra-file-manager-favorites-header ${FM_SECTION_HEADER_CLASS}`}>
         {renderFileManagerSectionIcon("favorites")}
         <h3 className={FM_SECTION_TITLE_CLASS}>{labels.homeSectionFavorites}</h3>

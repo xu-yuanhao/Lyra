@@ -1,6 +1,25 @@
 // Shared Tailwind class strings for file-manager list/grid surfaces.
 // Kept as constants so every emission site renders identical metrics.
 
+export const FM_SURFACE_CLASS =
+  "lyra-file-manager-surface grid h-full w-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] bg-[var(--lyra-app-material-panel-bg)] [backdrop-filter:var(--lyra-app-material-blur-md)_var(--lyra-app-material-saturate)] [-webkit-backdrop-filter:var(--lyra-app-material-blur-md)_var(--lyra-app-material-saturate)]";
+
+export const FM_LAYOUT_CLASS =
+  "lyra-file-manager-layout grid min-h-0 min-w-0 grid-cols-[var(--lyra-app-sidebar-rail-w)_minmax(0,1fr)]";
+
+export const FM_CONTENT_CLASS =
+  "lyra-file-manager-content relative grid min-h-0 min-w-0 overflow-hidden bg-transparent [--lyra-app-content-padding-block-start:var(--lyra-space-28)] [--lyra-app-content-padding-block-end:var(--lyra-page-pad-block-end)] [--lyra-app-content-padding-inline:var(--lyra-page-pad-inline)] [--lyra-app-content-gap:var(--lyra-space-18)]";
+
+export const FM_CONTENT_SCROLL_CLASS =
+  "lyra-file-manager-content-scroll col-start-1 row-start-1 min-h-0 min-w-0 overflow-auto";
+
+export const FM_PAGE_CLASS =
+  "w-[min(100%,var(--lyra-unit-10000))] max-w-[max(calc(var(--lyra-unit-720)_+_var(--lyra-unit-280)),calc(100%_-_var(--lyra-space-64)_*_2))] mx-auto p-[var(--lyra-space-20)_var(--lyra-space-24)_var(--lyra-space-28)]";
+
+export const FM_PAGE_GRID_CLASS = "min-h-full min-w-0 grid content-start gap-[var(--lyra-space-18)]";
+export const FM_LIST_SHELL_CLASS = "min-h-full min-w-0 grid";
+export const FM_SECTION_GAP_CLASS = "grid min-w-0 gap-[var(--lyra-space-10)]";
+
 export const FM_LIST_GRID_CLASS =
   "lyra-file-manager-list-grid grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-0 p-[var(--lyra-space-6)] border border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)] [--lyra-app-row-list-row-min-height:var(--lyra-app-sidebar-row-h)]";
 

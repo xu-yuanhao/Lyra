@@ -2,6 +2,10 @@ import { Spinner } from "@renderer/ui/components/spinner";
 
 import { FileManagerDirectoryContent } from "./surface-directory";
 import { FileManagerDownloadsSlot } from "./downloads-slot";
+import {
+  FM_CONTENT_CLASS,
+  FM_CONTENT_SCROLL_CLASS
+} from "./surface-classes";
 import { FileManagerFavoritesContent, FileManagerHomeContent } from "./surface-home";
 import { FileManagerLoadingSkeleton } from "./surface-loading";
 import { FileManagerTrashContent } from "./surface-trash";
@@ -15,7 +19,7 @@ export const FileManagerContent = ({
   downloadsSlot
 }: FileManagerSurfaceViewProps) => (
   <section
-    className="lyra-file-manager-content"
+    className={FM_CONTENT_CLASS}
     onContextMenu={(event) => {
       if (renderModel.viewKind !== "directory" && renderModel.viewKind !== "trash") {
         return;
@@ -24,7 +28,7 @@ export const FileManagerContent = ({
       actions.onContentContextMenu(event.clientX, event.clientY);
     }}
   >
-    <div className="lyra-file-manager-content-scroll">
+    <div className={FM_CONTENT_SCROLL_CLASS}>
       {renderModel.body.kind === "loading" ? (
         <>
           <div className="lyra-file-manager-empty-state flex items-center justify-center gap-[var(--lyra-space-8)] text-sm text-muted-foreground">

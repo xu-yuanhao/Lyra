@@ -1,4 +1,8 @@
 import { FileManagerChooserBar } from "./surface-chooser-bar";
+import {
+  FM_LAYOUT_CLASS,
+  FM_SURFACE_CLASS
+} from "./surface-classes";
 import { FileManagerContent } from "./surface-content";
 import { FileManagerSidebar } from "./surface-sidebar";
 import type { FileManagerSurfaceViewProps } from "./surface-view-types";
@@ -12,8 +16,8 @@ export const FileManagerSurfaceView = ({
   instanceId,
   downloadsSlot
 }: FileManagerSurfaceViewProps) => (
-  <section className="lyra-file-manager-surface" aria-label="file-manager-surface">
-    <section className="lyra-app-sidebar-split lyra-file-manager-layout">
+  <section className={FM_SURFACE_CLASS} aria-label="file-manager-surface">
+    <section className={`lyra-app-sidebar-split ${FM_LAYOUT_CLASS}`}>
       <FileManagerSidebar
         renderModel={renderModel}
         labels={labels}
