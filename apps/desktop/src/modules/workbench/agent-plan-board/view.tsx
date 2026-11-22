@@ -44,6 +44,50 @@ import {
   replaceMarkdownLine,
   type EditableMarkdownBlock
 } from "./markdown-blocks";
+import {
+  APB_BOARD_CLASS,
+  APB_TITLEBAR_CLASS,
+  APB_TITLEBAR_META_CLASS,
+  APB_ERROR_CLASS,
+  APB_PLAN_SECTION_CLASS,
+  APB_TODO_SECTION_CLASS,
+  APB_TODO_COUNT_CLASS,
+  APB_TODO_LIST_CLASS,
+  APB_TODO_ICON_CLASS,
+  APB_TODO_CONTENT_CLASS,
+  APB_TODO_META_CLASS,
+  APB_TODO_STATUS_CLASS,
+  APB_INLINE_ACTIONS_CLASS,
+  APB_BADGE_SET_ASIDE_CLASS,
+  APB_RESUME_BTN_CLASS,
+  APB_MARKDOWN_CLASS,
+  APB_LINE_CLASS,
+  APB_LINE_CONTENT_CLASS,
+  APB_LINE_ACTIONS_CLASS,
+  APB_LINE_ICON_BTN_CLASS,
+  APB_LINE_EDITOR_CLASS,
+  APB_LINE_INPUT_CLASS,
+  APB_LINE_TEXTAREA_CLASS,
+  APB_RICH_CLASS,
+  APB_INLINE_MARKDOWN_CLASS,
+  APB_LINE_NOTES_CLASS,
+  APB_LINE_NOTE_CLASS,
+  APB_LIST_ROW_CLASS,
+  APB_LIST_MARKER_CLASS,
+  APB_WORKSPACE_CLASS,
+  APB_WORKSPACE_DOCUMENT_CLASS,
+  APB_EMPTY_CLASS,
+  APB_CHAT_RAIL_CLASS,
+  APB_CHAT_HEADER_CLASS,
+  APB_CHAT_TITLE_CLASS,
+  APB_CHAT_MENU_TRIGGER_CLASS,
+  APB_CHAT_MENU_CURRENT_CLASS,
+  APB_CHAT_MENU_CLASS,
+  APB_CHAT_MENU_PLAN_CLASS,
+  APB_CHAT_MENU_PLAN_OPEN_CLASS,
+  APB_CHAT_MENU_DELETE_CLASS,
+  APB_PLAN_CHECK_CLASS,
+} from "./classes";
 
 const statusClassName = (status: string): string => {
   const normalized = status.toLowerCase();
@@ -170,15 +214,15 @@ const MarkdownPreview = ({
     const isCommenting = commentingKey === block.key;
     const disabled = busyKey === block.key || onRevise === undefined;
     return (
-      <div key={block.key} className="lyra-agent-plan-board-line">
-        <div className="lyra-agent-plan-board-line-content">
+      <div key={block.key} className={APB_LINE_CLASS}>
+        <div className={APB_LINE_CONTENT_CLASS}>
           {isEditing || isCommenting ? (
-            <div className="lyra-agent-plan-board-line-editor">
+            <div className={APB_LINE_EDITOR_CLASS}>
               {isEditing && block.kind === "rich" ? (
                 <AppTextarea
                   autoFocus
                   rows={Math.min(Math.max(draft.split("\n").length, 2), 12)}
-                  className="lyra-agent-plan-board-line-input lyra-agent-plan-board-line-textarea"
+                  className={`${APB_LINE_INPUT_CLASS} ${APB_LINE_TEXTAREA_CLASS}`}
                   placeholder={labels.editPlaceholder}
                   value={draft}
                   onChange={(event) => setDraft(event.currentTarget.value)}
@@ -191,7 +235,7 @@ const MarkdownPreview = ({
               ) : (
                 <AppInput
                   autoFocus
-                  className="lyra-agent-plan-board-line-input"
+                  className={APB_LINE_INPUT_CLASS}
                   placeholder={isEditing ? labels.editPlaceholder : labels.commentPlaceholder}
                   value={draft}
                   onChange={(event) => setDraft(event.currentTarget.value)}
@@ -207,7 +251,7 @@ const MarkdownPreview = ({
                 />
               )}
               <AppIconButton
-                className="lyra-agent-plan-board-line-icon-btn"
+                className={APB_LINE_ICON_BTN_CLASS}
                 type="button"
                 disabled={disabled}
                 title={labels.save}
@@ -216,7 +260,7 @@ const MarkdownPreview = ({
                 <Check size={13} />
               </AppIconButton>
               <AppIconButton
-                className="lyra-agent-plan-board-line-icon-btn"
+                className={APB_LINE_ICON_BTN_CLASS}
                 type="button"
                 title={labels.cancel}
                 onClick={cancel}
@@ -226,9 +270,9 @@ const MarkdownPreview = ({
             </div>
           ) : content}
           {blockAnnotations.length > 0 ? (
-            <div className="lyra-agent-plan-board-line-notes">
+            <div className={APB_LINE_NOTES_CLASS}>
               {blockAnnotations.map((annotation) => (
-                <div key={annotation.id} className={`lyra-agent-plan-board-line-note is-${annotation.kind}`}>
+                <div key={annotation.id} className={APB_LINE_NOTE_CLASS(annotation.kind)}>
                   {annotation.text}
                 </div>
               ))}
@@ -236,9 +280,9 @@ const MarkdownPreview = ({
           ) : null}
         </div>
         {onRevise !== undefined && !isEditing && !isCommenting ? (
-          <div className="lyra-agent-plan-board-line-actions">
+          <div className={APB_LINE_ACTIONS_CLASS}>
             <AppIconButton
-              className="lyra-agent-plan-board-line-icon-btn"
+              className={APB_LINE_ICON_BTN_CLASS}
               type="button"
               title={labels.editLine}
               aria-label={labels.editLine}
@@ -247,7 +291,7 @@ const MarkdownPreview = ({
               <Pencil size={12} />
             </AppIconButton>
             <AppIconButton
-              className="lyra-agent-plan-board-line-icon-btn"
+              className={APB_LINE_ICON_BTN_CLASS}
               type="button"
               title={labels.commentLine}
               aria-label={labels.commentLine}
@@ -262,13 +306,13 @@ const MarkdownPreview = ({
   };
 
   return (
-    <div className="lyra-agent-plan-board-markdown">
+    <div className={APB_MARKDOWN_CLASS}>
       {blocks.map((block) => {
         if (block.kind === "heading") {
           return renderEditableShell(
             block,
             <LyraMarkdown
-              className="lyra-agent-plan-board-inline-markdown"
+              className={APB_INLINE_MARKDOWN_CLASS}
               content={`${"#".repeat(Math.min(block.level + 1, 5))} ${block.text}`}
             />
           );
@@ -276,12 +320,12 @@ const MarkdownPreview = ({
         if (block.kind === "list") {
           return renderEditableShell(
             block,
-            <div className="lyra-agent-plan-board-list-row">
-              <span className="lyra-agent-plan-board-list-marker">
+            <div className={APB_LIST_ROW_CLASS}>
+              <span className={APB_LIST_MARKER_CLASS}>
                 {block.taskState === "done" ? "✓" : block.taskState === "todo" ? "□" : "•"}
               </span>
               <LyraMarkdown
-                className="lyra-agent-plan-board-inline-markdown"
+                className={APB_INLINE_MARKDOWN_CLASS}
                 content={block.text}
               />
             </div>
@@ -291,7 +335,7 @@ const MarkdownPreview = ({
           return renderEditableShell(
             block,
             <LyraMarkdown
-              className="lyra-agent-plan-board-rich"
+              className={APB_RICH_CLASS}
               content={block.text}
             />
           );
@@ -300,7 +344,7 @@ const MarkdownPreview = ({
           return (
             <LyraMarkdown
               key={block.key}
-              className="lyra-agent-plan-board-rich"
+              className={APB_RICH_CLASS}
               content={`\`\`\`\n${block.text}\n\`\`\``}
             />
           );
@@ -308,7 +352,7 @@ const MarkdownPreview = ({
         return renderEditableShell(
           block,
           <LyraMarkdown
-            className="lyra-agent-plan-board-inline-markdown"
+            className={APB_INLINE_MARKDOWN_CLASS}
             content={block.text}
           />
         );
@@ -324,21 +368,17 @@ const TodoList = ({
   readonly todos: readonly AgentTodoItem[];
   readonly currentIndex: number;
 }) => (
-  <div className="lyra-agent-plan-board-todo-list">
+  <div className={APB_TODO_LIST_CLASS}>
     {todos.map((todo, index) => {
-      const className = [
-        "lyra-agent-plan-board-todo-item",
-        statusClassName(todo.status),
-        index === currentIndex ? "is-current" : ""
-      ].join(" ");
+      const className = APB_TODO_ITEM_CLASS(statusClassName(todo.status), index === currentIndex);
       return (
         <div key={todo.id} className={className}>
-          <span className="lyra-agent-plan-board-todo-icon">
+          <span className={APB_TODO_ICON_CLASS}>
             <TodoStatusIcon status={todo.status} />
           </span>
-          <span className="lyra-agent-plan-board-todo-content">{todo.content}</span>
-          <span className="lyra-agent-plan-board-todo-meta">
-            <span className="lyra-agent-plan-board-todo-status">{todo.status}</span>
+          <span className={APB_TODO_CONTENT_CLASS}>{todo.content}</span>
+          <span className={APB_TODO_META_CLASS}>
+            <span className={APB_TODO_STATUS_CLASS}>{todo.status}</span>
           </span>
         </div>
       );
@@ -373,11 +413,11 @@ const PlanTodoDetail = ({
   return (
     <>
       {isSetAside && onResumePlan !== undefined ? (
-        <div className="lyra-agent-plan-board-inline-actions">
-          <span className="lyra-agent-plan-board-badge is-set-aside">{labels.setAsideBadge}</span>
+        <div className={APB_INLINE_ACTIONS_CLASS}>
+          <span className={APB_BADGE_SET_ASIDE_CLASS}>{labels.setAsideBadge}</span>
           <AppButton
             type="button"
-            className="lyra-agent-plan-board-resume-btn"
+            className={APB_RESUME_BTN_CLASS}
             variant="secondary"
             size="sm"
             disabled={resuming}
@@ -389,8 +429,8 @@ const PlanTodoDetail = ({
         </div>
       ) : null}
 
-      <main className={todo !== null && todo.todos.length > 0 ? "lyra-agent-plan-board-main has-todo" : "lyra-agent-plan-board-main"}>
-        <section className="lyra-agent-plan-board-plan" aria-label={labels.plan}>
+      <main className={todo !== null && todo.todos.length > 0 ? APB_MAIN_HAS_TODO_CLASS : APB_MAIN_CLASS}>
+        <section className={APB_PLAN_SECTION_CLASS} aria-label={labels.plan}>
           <MarkdownPreview
             labels={labels}
             markdown={plan.markdown}
@@ -399,9 +439,9 @@ const PlanTodoDetail = ({
           />
         </section>
         {todo !== null && todo.todos.length > 0 ? (
-          <section className="lyra-agent-plan-board-todo" aria-label={labels.todo}>
+          <section className={APB_TODO_SECTION_CLASS} aria-label={labels.todo}>
             <h2>
-              <span className="lyra-agent-plan-board-todo-count">{todo.todos.length}</span>
+              <span className={APB_TODO_COUNT_CLASS}>{todo.todos.length}</span>
               {labels.todo}
             </h2>
             <TodoList
@@ -455,17 +495,17 @@ const PlanBoardNavigator = ({
           type="button"
           variant="ghost"
           size="sm"
-          className="lyra-agent-plan-board-chat-menu-trigger"
+          className={APB_CHAT_MENU_TRIGGER_CLASS}
           aria-label={labels.manager}
           title={labels.manager}
         >
           <List size={13} strokeWidth={2.1} aria-hidden="true" />
-          <span className="lyra-agent-plan-board-chat-menu-current">{triggerTitle}</span>
+          <span className={APB_CHAT_MENU_CURRENT_CLASS}>{triggerTitle}</span>
           <ChevronDown size={13} strokeWidth={2.1} aria-hidden="true" />
         </AppButton>
       </AppMenuTrigger>
       <AppMenuContent
-        className="lyra-agent-plan-board-chat-menu"
+        className={APB_CHAT_MENU_CLASS}
         align="end"
         side="bottom"
         sideOffset={6}
@@ -479,10 +519,10 @@ const PlanBoardNavigator = ({
           return (
             <div
               key={plan.planId}
-              className="lyra-agent-plan-board-chat-menu-plan"
+              className={APB_CHAT_MENU_PLAN_CLASS}
             >
               <AppMenuItem
-                className="lyra-app-menu-item-with-icon lyra-agent-plan-board-chat-menu-plan-open"
+                className={`lyra-app-menu-item-with-icon ${APB_CHAT_MENU_PLAN_OPEN_CLASS}`}
                 disabled={openDisabled}
                 data-active={selected ? "true" : undefined}
                 onSelect={() => {
@@ -493,14 +533,14 @@ const PlanBoardNavigator = ({
                   size={14}
                   strokeWidth={1.8}
                   aria-hidden="true"
-                  className={selected ? "lyra-agent-plan-board-plan-check is-selected" : "lyra-agent-plan-board-plan-check"}
+                  className={APB_PLAN_CHECK_CLASS(selected)}
                 />
                 <span className="lyra-app-menu-item-label">{title}</span>
               </AppMenuItem>
               {onDeletePlan === undefined ? null : (
                 <AppIconButton
                   type="button"
-                  className="lyra-agent-plan-board-chat-menu-delete"
+                  className={APB_CHAT_MENU_DELETE_CLASS}
                   tone="danger"
                   disabled={busy}
                   title={labels.deletePlan}
@@ -561,11 +601,11 @@ const PlanWorkspace = ({
   readonly onOpenPlan?: (planId: string) => Promise<void>;
   readonly onDeletePlan?: (planId: string) => Promise<void>;
 }) => (
-  <div className="lyra-agent-plan-board-workspace has-chat">
-    <section className="lyra-agent-plan-board-workspace-document">
+  <div className={APB_WORKSPACE_CLASS}>
+    <section className={APB_WORKSPACE_DOCUMENT_CLASS}>
       {plan === null ? (
         <AppEmptyState
-          className="lyra-agent-plan-board-empty"
+          className={APB_EMPTY_CLASS}
           title={plansLoading ? labels.loading : labels.noPlans}
         />
       ) : (
@@ -578,9 +618,9 @@ const PlanWorkspace = ({
         />
       )}
     </section>
-    <aside className="lyra-agent-plan-board-chat-rail lyra-agents-host">
-      <header className="lyra-agent-plan-board-chat-header">
-        <span className="lyra-agent-plan-board-chat-title">{labels.tempChatTitle}</span>
+    <aside className={`lyra-agents-host ${APB_CHAT_RAIL_CLASS}`}>
+      <header className={APB_CHAT_HEADER_CLASS}>
+        <span className={APB_CHAT_TITLE_CLASS}>{labels.tempChatTitle}</span>
         {plans === undefined ? null : (
           <PlanBoardNavigator
             labels={labels}
@@ -671,9 +711,9 @@ export const AgentPlanBoardSurface = ({
     };
   }, [desktopApi, state.agentSessionId, state.mode, onRefreshManager]);
   const titlebarContent = useMemo(() => (
-    <div className="lyra-agent-plan-board-titlebar">
+    <div className={APB_TITLEBAR_CLASS}>
       <span>{state.title}</span>
-      <span className="lyra-agent-plan-board-titlebar-meta">
+      <span className={APB_TITLEBAR_META_CLASS}>
         {state.mode === "detail" ? plan?.phase : labels.manager}
       </span>
     </div>
@@ -686,9 +726,9 @@ export const AgentPlanBoardSurface = ({
   if (state.mode === "manager") {
     const selectedPlan = state.selectedPlan;
     return (
-      <div className="lyra-agent-plan-board">
+      <div className={APB_BOARD_CLASS}>
         {state.error !== null ? (
-          <AppStatusMessage className="lyra-agent-plan-board-error lyra-app-status-message-boxed" role="alert" tone="error">
+          <AppStatusMessage className={`lyra-app-status-message-boxed ${APB_ERROR_CLASS}`} role="alert" tone="error">
             {state.error}
           </AppStatusMessage>
         ) : null}
@@ -711,7 +751,7 @@ export const AgentPlanBoardSurface = ({
   }
 
   return (
-    <div className="lyra-agent-plan-board">
+    <div className={APB_BOARD_CLASS}>
       <PlanWorkspace
         labels={labels}
         plan={state.plan}

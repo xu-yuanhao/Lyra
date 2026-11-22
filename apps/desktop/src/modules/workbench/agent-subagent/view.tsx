@@ -151,7 +151,7 @@ export const AgentSubagentSurface = ({
 
   if (loading && snapshot === null) {
     return (
-      <div className="lyra-agent-subagent lyra-agents-host">
+      <div className="lyra-agent-subagent lyra-agents-host flex-col">
         <div className="flex min-h-0 flex-1 items-center justify-center gap-[var(--lyra-space-8)] text-sm text-muted-foreground">
           <Spinner />
           <span>{labels.loading}</span>
@@ -162,7 +162,7 @@ export const AgentSubagentSurface = ({
 
   if (snapshot === null) {
     return (
-      <div className="lyra-agent-subagent lyra-agents-host">
+      <div className="lyra-agent-subagent lyra-agents-host flex-col">
         <div className="flex min-h-0 flex-1 items-center justify-center text-sm text-muted-foreground">
           {error ?? labels.unavailable}
         </div>
@@ -171,10 +171,10 @@ export const AgentSubagentSurface = ({
   }
 
   return (
-    <div className="lyra-agent-subagent lyra-agents-host">
+    <div className="lyra-agent-subagent lyra-agents-host flex-col">
       <DataContextProvider value={dataValue}>
         <div
-          className="lyra-agent-subagent-chat lyra-agents-chat-scroll"
+          className="lyra-agent-subagent-chat lyra-agents-chat-scroll min-h-0 flex-1"
           role="log"
           aria-label={state.title}
         >
