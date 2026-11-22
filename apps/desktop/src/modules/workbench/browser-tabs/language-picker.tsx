@@ -44,6 +44,40 @@ type LanguagePickerProps = {
   readonly onChange: (locale: WorkbenchLocale) => void;
 };
 
+const LP_TRIGGER_CLASS =
+  "lyra-language-picker-trigger w-[var(--lyra-unit-176)] justify-between gap-[var(--lyra-space-8)] rounded-[var(--lyra-control-radius-default)] border-[var(--lyra-app-input-border)] bg-[var(--lyra-app-input-bg)]! hover:border-[var(--lyra-app-input-focus-border)]! hover:bg-[var(--lyra-app-input-hover-bg)]! focus-visible:border-[var(--lyra-app-input-focus-border)]! focus-visible:bg-[var(--lyra-app-input-hover-bg)]! focus-visible:shadow-none!";
+
+const LP_COPY_CLASS = "min-w-0 block text-left [&>span]:overflow-hidden [&>span]:text-ellipsis [&>span]:whitespace-nowrap";
+
+const LP_POPOVER_CLASS =
+  "lyra-language-picker-popover w-[min(var(--lyra-unit-320),calc(100vw-var(--lyra-space-24)))] border-[var(--lyra-app-border)] bg-[var(--lyra-app-popover-bg)]! p-[var(--lyra-space-6)]";
+
+const LP_SEARCH_CLASS =
+  "lyra-language-picker-search flex items-center gap-[var(--lyra-space-6)] border-b border-[var(--lyra-app-border)] px-[var(--lyra-space-6)] py-[var(--lyra-space-4)] text-[var(--lyra-text-muted)] [&_.lyra-ui-input]:h-[var(--lyra-space-32)] [&_.lyra-ui-input]:min-w-0 [&_.lyra-ui-input]:border-0 [&_.lyra-ui-input]:shadow-none";
+
+const LP_RESULTS_CLASS = "lyra-language-picker-results max-h-[var(--lyra-unit-320)] overflow-y-auto pt-[var(--lyra-space-4)]";
+
+const LP_OPTION_CLASS =
+  "lyra-language-picker-option flex min-h-[var(--lyra-space-36)] w-full items-center gap-[var(--lyra-space-4)] rounded-[var(--lyra-radius-4)] bg-transparent px-[var(--lyra-space-4)] py-[var(--lyra-space-2)] text-inherit hover:bg-[var(--lyra-app-row-hover-bg)] data-[active]:bg-[var(--lyra-app-row-hover-bg)] data-[selected]:bg-[var(--lyra-app-row-active-bg)]";
+
+const LP_OPTION_SELECT_CLASS =
+  "lyra-language-picker-option-select min-h-[var(--lyra-space-32)] min-w-0 flex-1 justify-start border-0 bg-transparent px-[var(--lyra-space-4)] py-0 text-left text-inherit hover:bg-transparent hover:text-inherit disabled:cursor-default disabled:opacity-100";
+
+const LP_OPTION_COPY_CLASS = `${LP_COPY_CLASS} lyra-language-picker-option-copy`;
+
+const LP_OPTION_ACTIONS_CLASS =
+  "lyra-language-picker-option-actions inline-flex size-[var(--lyra-space-28)] shrink-0 items-center justify-center";
+
+const LP_ACTION_CLASS = "lyra-language-picker-action size-[var(--lyra-space-28)]";
+const LP_ACTION_DOWNLOAD_CLASS = "lyra-language-picker-action-download text-[var(--lyra-status-success)]";
+const LP_CURRENT_CLASS = "lyra-language-picker-current text-[var(--lyra-text-muted)]";
+const LP_OPERATION_CLASS =
+  "lyra-language-picker-operation animate-[lyra-language-picker-spin_var(--lyra-motion-spin-duration)_linear_infinite] text-[var(--lyra-text-muted)]";
+const LP_ERROR_CLASS = "lyra-language-picker-error text-[var(--lyra-status-error)]";
+
+const LP_EMPTY_CLASS =
+  "lyra-language-picker-empty px-[var(--lyra-space-8)] py-[var(--lyra-space-16)] text-center text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)]";
+
 type LanguagePickerEntry = LanguageSearchEntry & {
   readonly builtin: boolean;
 };
@@ -343,22 +377,22 @@ export const LanguagePicker = ({
     <AppPopover open={open} onOpenChange={handleOpenChange}>
       <AppPopoverTrigger asChild>
         <AppButton
-          className="lyra-language-picker-trigger"
+          className={LP_TRIGGER_CLASS}
           variant="outline"
           aria-label={labels.searchPlaceholder}
           aria-haspopup="listbox"
           aria-expanded={open}
         >
-          <span className="lyra-language-picker-trigger-copy">{current.nativeName}</span>
+          <span className={LP_COPY_CLASS}>{current.nativeName}</span>
           <ChevronDown aria-hidden="true" size={16} />
         </AppButton>
       </AppPopoverTrigger>
       <AppPopoverContent
-        className="lyra-language-picker-popover"
+        className={LP_POPOVER_CLASS}
         align="end"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <div className="lyra-language-picker-search">
+        <div className={LP_SEARCH_CLASS}>
           <Search aria-hidden="true" size={16} />
           <AppInput
             ref={inputRef}
@@ -377,10 +411,10 @@ export const LanguagePicker = ({
             onKeyDown={onInputKeyDown}
           />
         </div>
-        <div id={listboxId} className="lyra-language-picker-results" role="listbox">
+        <div id={listboxId} className={LP_RESULTS_CLASS} role="listbox">
           {results.length === 0 ? (
             <AppStatusMessage
-              className="lyra-language-picker-empty"
+              className={LP_EMPTY_CLASS}
               role={catalogError === undefined ? undefined : "alert"}
               tone={catalogError === undefined ? "neutral" : "error"}
             >
@@ -399,7 +433,7 @@ export const LanguagePicker = ({
             return (
               <div
                 key={entry.locale}
-                className="lyra-language-picker-option"
+                className={LP_OPTION_CLASS}
                 data-active={index === activeIndex || undefined}
                 data-selected={selected || undefined}
                 onMouseMove={() => setActiveIndex(index)}
@@ -411,32 +445,32 @@ export const LanguagePicker = ({
                   size="sm"
                   role="option"
                   aria-selected={selected}
-                  className="lyra-language-picker-option-select"
+                  className={LP_OPTION_SELECT_CLASS}
                   disabled={operation !== undefined}
                   onClick={() => {
                     void select(entry);
                   }}
                 >
-                  <span className="lyra-language-picker-option-copy">{entry.nativeName}</span>
+                  <span className={LP_OPTION_COPY_CLASS}>{entry.nativeName}</span>
                 </AppButton>
-                <span className="lyra-language-picker-option-actions">
+                <span className={LP_OPTION_ACTIONS_CLASS}>
                   {operation !== undefined ? (
                     <Loader2
-                      className="lyra-language-picker-operation"
+                      className={LP_OPERATION_CLASS}
                       aria-label={operationLabel}
                       size={16}
                     />
                   ) : error !== undefined ? (
                     <AppTooltip content={error}>
                       <CircleAlert
-                        className="lyra-language-picker-error"
+                        className={LP_ERROR_CLASS}
                         aria-label={error}
                         size={16}
                       />
                     </AppTooltip>
                   ) : selected ? (
                     <Check
-                      className="lyra-language-picker-current"
+                      className={LP_CURRENT_CLASS}
                       aria-label={entry.nativeName}
                       size={16}
                     />
@@ -446,7 +480,7 @@ export const LanguagePicker = ({
                         aria-label={removeLabel}
                         title={removeLabel}
                         tone="danger"
-                        className="lyra-language-picker-action"
+                        className={LP_ACTION_CLASS}
                         onClick={(event) => {
                           event.stopPropagation();
                           void remove(entry);
@@ -460,7 +494,7 @@ export const LanguagePicker = ({
                       <AppIconButton
                         aria-label={downloadLabel}
                         title={downloadLabel}
-                        className="lyra-language-picker-action lyra-language-picker-action-download"
+                        className={`${LP_ACTION_CLASS} ${LP_ACTION_DOWNLOAD_CLASS}`}
                         onClick={(event) => {
                           event.stopPropagation();
                           void select(entry);
