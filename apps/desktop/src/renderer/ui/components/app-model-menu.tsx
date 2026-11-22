@@ -11,7 +11,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger
-} from "../primitives";
+} from "./dropdown-menu";
 import { cn } from "../utils";
 
 type DropdownMenuContentProps = ComponentProps<typeof DropdownMenuContent>;

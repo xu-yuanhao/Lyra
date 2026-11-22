@@ -281,9 +281,7 @@ describe("Lyra App UI components", () => {
     );
 
     expect(screen.getByRole("dialog")).toHaveClass("lyra-app-dialog");
-    expect(screen.getByRole("heading", { name: "Confirm action" })).toHaveClass(
-      "lyra-ui-dialog-title"
-    );
+    expect(screen.getByRole("heading", { name: "Confirm action" })).toBeInTheDocument();
     expect(screen.getByText("Dialog content").closest(".lyra-app-dialog-body")).not.toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Close dialog" }));

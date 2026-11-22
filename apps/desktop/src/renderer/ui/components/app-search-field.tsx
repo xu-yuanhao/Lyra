@@ -2,7 +2,7 @@ import { Search } from "@lyra/icons";
 import { forwardRef, type KeyboardEvent, type ReactNode, type Ref } from "react";
 
 import { AppIconButton } from "./app-icon-button";
-import { Input } from "../primitives";
+import { Input } from "./input";
 import { cn } from "../utils";
 
 export type AppSearchFieldProps = {

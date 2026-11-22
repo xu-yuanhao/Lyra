@@ -1,7 +1,7 @@
 import { ChevronLeft } from "@lyra/icons";
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 
-import { Button } from "../primitives";
+import { AppButton } from "./app-button";
 import { cn } from "../utils";
 
 export type AppSubPageBackProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -11,7 +11,7 @@ export type AppSubPageBackProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 // ponytail: 单一返回组件——统一设置二级/三级界面返回样式，替换各处内联 AppButton + ChevronLeft 的不一致写法
 export const AppSubPageBack = forwardRef<HTMLButtonElement, AppSubPageBackProps>(
   ({ label, className, ...props }, ref) => (
-    <Button
+    <AppButton
       ref={ref}
       type="button"
       variant="ghost"
@@ -21,7 +21,7 @@ export const AppSubPageBack = forwardRef<HTMLButtonElement, AppSubPageBackProps>
     >
       <ChevronLeft size={14} aria-hidden="true" />
       <span>{label}</span>
-    </Button>
+    </AppButton>
   ),
 );
 

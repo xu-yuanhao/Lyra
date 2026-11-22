@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
   DialogTrigger
-} from "../primitives";
+} from "./dialog";
 import { cn } from "../utils";
 import { AppIconButton } from "./app-icon-button";
 

@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from "../primitives";
+} from "./tooltip";
 import { cn } from "../utils";
 
 export type AppTooltipProps = {

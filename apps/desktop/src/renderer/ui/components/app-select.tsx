@@ -7,7 +7,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger
-} from "../primitives";
+} from "./dropdown-menu";
 import { cn } from "../utils";
 
 export type AppSelectOption<TValue extends string = string> = {
