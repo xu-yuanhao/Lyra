@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from "react";
-import { AppButton } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
 
 export type ResourceChipProps = {
   readonly ariaLabel: string;
@@ -57,7 +57,7 @@ export const ResourceChip = ({
     event.currentTarget.blur();
   };
   return (
-    <AppButton
+    <Button
       type="button"
       variant="ghost"
       size="sm"
@@ -68,6 +68,6 @@ export const ResourceChip = ({
       onClick={activate}
     >
       <ChipContents icon={icon} label={label} />
-    </AppButton>
+    </Button>
   );
 };

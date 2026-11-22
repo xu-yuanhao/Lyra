@@ -3,7 +3,7 @@ import type {
   AgentPlanReviewRespondAction,
   AgentPlanSnapshot
 } from "../../../../../../shared/agent";
-import { AppButton } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
 import { t } from "@workbench/i18n";
 
 export function PlanReviewPanel({
@@ -35,7 +35,7 @@ export function PlanReviewPanel({
         </div>
       </div>
       <div className="lyra-agents-plan-review-actions">
-        <AppButton
+        <Button
           variant="ghost"
           size="sm"
           type="button"
@@ -44,8 +44,8 @@ export function PlanReviewPanel({
         >
           <Eye size={13} strokeWidth={2.1} />
           {t("planReview.review")}
-        </AppButton>
-        <AppButton
+        </Button>
+        <Button
           variant="ghost"
           size="sm"
           type="button"
@@ -54,8 +54,8 @@ export function PlanReviewPanel({
         >
           <Archive size={13} strokeWidth={2.1} />
           {t("planReview.setAside")}
-        </AppButton>
-        <AppButton
+        </Button>
+        <Button
           variant="ghost"
           size="sm"
           type="button"
@@ -64,7 +64,7 @@ export function PlanReviewPanel({
         >
           <Check size={13} strokeWidth={2.1} />
           {primaryLabel}
-        </AppButton>
+        </Button>
       </div>
     </div>
   );
