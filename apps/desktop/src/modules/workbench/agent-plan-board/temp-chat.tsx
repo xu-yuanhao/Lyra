@@ -15,6 +15,14 @@ import type {
 import type { LyraDesktopApi } from "../../../shared/desktop-bridge";
 import { LyraMarkdown } from "../ai-panel/lyra-agents/features/rich-text/LyraMarkdown";
 import type { AgentPlanBoardLabels, AgentPlanBoardRevisionRequest } from "./types";
+import {
+  APB_TEMP_CHAT_BODY_CLASS,
+  APB_TEMP_CHAT_BUSY_CLASS,
+  APB_TEMP_CHAT_CLASS,
+  APB_TEMP_CHAT_COMPOSER_WRAP_CLASS,
+  APB_TEMP_CHAT_ERROR_CLASS,
+  APB_TEMP_CHAT_MESSAGE_CLASS,
+} from "./classes";
 
 type TempChatMessage = {
   readonly id: string;
@@ -252,12 +260,12 @@ export const PlanTempChat = ({
   ]);
 
   return (
-    <div className="lyra-agent-plan-board-temp-chat">
-      <div className="lyra-agent-plan-board-temp-chat-body" ref={scrollRef}>
+    <div className={APB_TEMP_CHAT_CLASS}>
+      <div className={APB_TEMP_CHAT_BODY_CLASS} ref={scrollRef}>
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`lyra-agent-plan-board-temp-chat-message is-${message.role}`}
+            className={APB_TEMP_CHAT_MESSAGE_CLASS(message.role)}
           >
             {message.role === "note" ? message.text : (
               <LyraMarkdown
@@ -267,14 +275,14 @@ export const PlanTempChat = ({
             )}
           </div>
         ))}
-        {busy ? <div className="lyra-agent-plan-board-temp-chat-busy">{labels.tempChatBusy}</div> : null}
+        {busy ? <div className={APB_TEMP_CHAT_BUSY_CLASS}>{labels.tempChatBusy}</div> : null}
         {error !== null ? (
-          <AppStatusMessage className="lyra-agent-plan-board-temp-chat-error" role="alert" tone="error">
+          <AppStatusMessage className={APB_TEMP_CHAT_ERROR_CLASS} role="alert" tone="error">
             {error}
           </AppStatusMessage>
         ) : null}
       </div>
-      <div className="lyra-agents-composer-wrap lyra-agent-plan-board-temp-chat-composer-wrap">
+      <div className={`lyra-agents-composer-wrap ${APB_TEMP_CHAT_COMPOSER_WRAP_CLASS}`}>
         <form
           className="lyra-agents-composer"
           onSubmit={(event) => {
