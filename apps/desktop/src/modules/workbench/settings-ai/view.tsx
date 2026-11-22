@@ -61,6 +61,21 @@ import {
   AI_PAGE_HEADER_CLASS,
   AI_SELECT_CLASS,
   AI_STACK_CLASS,
+  AI_MCP_EDITOR_ACTIONS_CLASS,
+  AI_MCP_EDITOR_CLASS,
+  AI_MCP_EDITOR_GRID_CLASS,
+  AI_MCP_ICON_CLASS,
+  AI_MCP_ITEM_CLASS,
+  AI_MCP_TITLE_CLASS,
+  AI_SKILL_ACTIONS_CLASS,
+  AI_SKILL_CARD_CLASS,
+  AI_SKILL_DESCRIPTION_CLASS,
+  AI_SKILL_LIST_CLASS,
+  AI_SKILL_LOAD_MORE_CLASS,
+  AI_SKILL_MAIN_CLASS,
+  AI_SKILL_META_CLASS,
+  AI_SKILL_STATUS_CLASS,
+  AI_SKILL_TITLE_ROW_CLASS,
 } from "./classes";
 
 type SettingsAiViewProps = {
@@ -558,7 +573,7 @@ const renderSkillMeta = (
   permissions: readonly string[],
   toolPaths: readonly string[]
 ) => (
-  <div className="lyra-settings-ai-skill-meta">
+  <div className={AI_SKILL_META_CLASS}>
     {permissions.length === 0 ? null : (
       <span>
         <strong>{labels.skillsPermissionsLabel}</strong>
@@ -700,21 +715,21 @@ const SettingsAiSkillCard = ({
   pending,
   skill,
 }: SettingsAiSkillCardProps) => (
-  <div className="lyra-settings-ai-skill-card" data-pending={pending ? "true" : undefined}>
-    <div className="lyra-settings-ai-skill-main">
-      <div className="lyra-settings-ai-skill-title-row">
+  <div className={AI_SKILL_CARD_CLASS} data-pending={pending ? "true" : undefined}>
+    <div className={AI_SKILL_MAIN_CLASS}>
+      <div className={AI_SKILL_TITLE_ROW_CLASS}>
         <div>
           <h3>{skill.name}</h3>
           <p>{skill.id} · {skill.version}</p>
         </div>
       </div>
       {skill.description.length === 0 ? null : (
-        <p className="lyra-settings-ai-skill-description">{skill.description}</p>
+        <p className={AI_SKILL_DESCRIPTION_CLASS}>{skill.description}</p>
       )}
-      {skill.source.kind === "local" ? <p className="lyra-settings-ai-skill-description">{skill.source.path}</p> : null}
+      {skill.source.kind === "local" ? <p className={AI_SKILL_DESCRIPTION_CLASS}>{skill.source.path}</p> : null}
       {renderSkillMeta(labels, skill.permissions, skill.toolPaths)}
     </div>
-    <div className="lyra-settings-ai-skill-actions">
+    <div className={AI_SKILL_ACTIONS_CLASS}>
       <AppIconButton
         aria-label={`${labels.skillsUninstall}: ${skill.name}`}
         title={labels.skillsUninstall}
@@ -750,9 +765,9 @@ const SettingsAiStoreSkillCard = ({
   onInstall,
   pending,
 }: SettingsAiStoreSkillCardProps) => (
-  <div className="lyra-settings-ai-skill-card" data-pending={pending ? "true" : undefined}>
-    <div className="lyra-settings-ai-skill-main">
-      <div className="lyra-settings-ai-skill-title-row">
+  <div className={AI_SKILL_CARD_CLASS} data-pending={pending ? "true" : undefined}>
+    <div className={AI_SKILL_MAIN_CLASS}>
+      <div className={AI_SKILL_TITLE_ROW_CLASS}>
         <div>
           <h3>{entry.name}</h3>
           <p>
@@ -761,11 +776,11 @@ const SettingsAiStoreSkillCard = ({
         </div>
       </div>
       {entry.description === undefined || entry.description.length === 0 ? null : (
-        <p className="lyra-settings-ai-skill-description">{entry.description}</p>
+        <p className={AI_SKILL_DESCRIPTION_CLASS}>{entry.description}</p>
       )}
       {renderSkillMeta(labels, entry.permissions ?? [], entry.toolPaths ?? [])}
     </div>
-    <div className="lyra-settings-ai-skill-actions">
+    <div className={AI_SKILL_ACTIONS_CLASS}>
       <AppSwitch
         checked={false}
         aria-label={entry.name}
@@ -805,11 +820,11 @@ const SettingsAiMcpServerCard = ({
   const baseUrl = server.transport.kind === "stdio" ? null : server.transport.url;
   const toolCount = server.toolCount ?? server.tools?.length ?? 0;
   return (
-    <div className="lyra-settings-ai-skill-card" data-pending={pending ? "true" : undefined}>
-      <div className="lyra-settings-ai-skill-main">
-        <div className="lyra-settings-ai-skill-title-row">
-          <div className="lyra-settings-ai-mcp-title">
-            <span className="lyra-settings-ai-mcp-icon" aria-hidden="true">
+    <div className={AI_SKILL_CARD_CLASS} data-pending={pending ? "true" : undefined}>
+      <div className={AI_SKILL_MAIN_CLASS}>
+        <div className={AI_SKILL_TITLE_ROW_CLASS}>
+          <div className={AI_MCP_TITLE_CLASS}>
+            <span className={AI_MCP_ICON_CLASS} aria-hidden="true">
               <AgentProviderBrandIcon
                 baseUrl={baseUrl}
                 label={server.name}
@@ -826,15 +841,15 @@ const SettingsAiMcpServerCard = ({
             </span>
           </div>
         </div>
-        <p className="lyra-settings-ai-skill-description">{mcpTransportText(server)}</p>
-        <div className="lyra-settings-ai-skill-meta">
+        <p className={AI_SKILL_DESCRIPTION_CLASS}>{mcpTransportText(server)}</p>
+        <div className={AI_SKILL_META_CLASS}>
           <span><strong>{labels.mcpToolsLabel}</strong>{toolCount}</span>
           {server.lastError === undefined || server.lastError === null || server.lastError.length === 0 ? null : (
             <span>{server.lastError}</span>
           )}
         </div>
       </div>
-      <div className="lyra-settings-ai-skill-actions">
+      <div className={AI_SKILL_ACTIONS_CLASS}>
         <AppIconButton
           aria-label={`${labels.mcpEdit}: ${server.name}`}
           title={labels.mcpEdit}
@@ -894,7 +909,7 @@ const SettingsAiMcpEditor = ({
 
   return (
     <form
-      className="lyra-settings-ai-mcp-editor"
+      className={AI_MCP_EDITOR_CLASS}
       onSubmit={(event) => {
         event.preventDefault();
         if (mcpDraftReady(draft)) {
@@ -902,7 +917,7 @@ const SettingsAiMcpEditor = ({
         }
       }}
     >
-      <div className="lyra-settings-ai-mcp-editor-grid">
+      <div className={AI_MCP_EDITOR_GRID_CLASS}>
         <SettingsAiInputField
           label={labels.mcpNameLabel}
           value={draft.name}
@@ -953,7 +968,7 @@ const SettingsAiMcpEditor = ({
           </>
         )}
       </div>
-      <div className="lyra-settings-ai-mcp-editor-actions">
+      <div className={AI_MCP_EDITOR_ACTIONS_CLASS}>
         <AppButton type="button" variant="ghost" size="sm" onClick={onCancel}>
           {labels.cancel}
         </AppButton>
@@ -1031,9 +1046,9 @@ export const SettingsAiMcpView = ({ labels, model }: SettingsAiMcpViewProps) => 
             title={servers.length === 0 ? labels.mcpEmptyTitle : labels.mcpDisconnected}
           />
         ) : (
-          <div className="lyra-settings-ai-skill-list">
+          <div className={AI_SKILL_LIST_CLASS}>
             {filteredServers.map((server) => (
-              <div className="lyra-settings-ai-mcp-item" key={server.id}>
+              <div className={AI_MCP_ITEM_CLASS} key={server.id}>
                 <SettingsAiMcpServerCard
                   labels={labels}
                   onEdit={editServer}
@@ -1316,7 +1331,7 @@ export const SettingsAiSkillsView = ({ labels, model }: SettingsAiSkillsViewProp
             title={labels.skillsEmptyTitle}
           />
         ) : (
-          <div className="lyra-settings-ai-skill-list">
+          <div className={AI_SKILL_LIST_CLASS}>
 
             {filteredSkills.map((skill) => (
               <SettingsAiSkillCard
@@ -1337,9 +1352,9 @@ export const SettingsAiSkillsView = ({ labels, model }: SettingsAiSkillsViewProp
                 pending={pendingSkillIds.has(`store:${entry.id}`)}
               />
             ))}
-            <div ref={loadMoreRef} className="lyra-settings-ai-skill-load-more" aria-hidden="true" />
+            <div ref={loadMoreRef} className={AI_SKILL_LOAD_MORE_CLASS} aria-hidden="true" />
             {isLoadingMoreSkills ? (
-              <div className="lyra-settings-ai-skill-status" role="status">
+              <div className={AI_SKILL_STATUS_CLASS} role="status">
                 {labels.skillsLoadingMore}
               </div>
             ) : null}
