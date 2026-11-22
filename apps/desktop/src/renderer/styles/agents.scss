@@ -3854,16 +3854,6 @@
   tab-size: 2;
 }
 
-/* -------- Scroll to bottom (composer rail chip) -------- */
-
-.lyra-agents-scroll-to-bottom {
-  z-index: var(--lyra-z-scroll-affordance);
-}
-
-.lyra-agents-scroll-to-bottom.in {
-  pointer-events: auto;
-}
-
 /* -------- Decision Panel -------- */
 
 .lyra-agents-decision-panel {
