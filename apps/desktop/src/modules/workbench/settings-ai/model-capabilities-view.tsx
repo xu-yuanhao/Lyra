@@ -20,6 +20,23 @@ import {
   AI_ERROR_CLASS,
   AI_INPUT_CLASS,
   AI_SELECT_CLASS,
+  AI_ACCOUNT_AVATAR_CLASS,
+  AI_DISCOVERED_MODELS_CLASS,
+  AI_DISCOVERED_TOOLBAR_CLASS,
+  AI_MODEL_ACTIONS_CLASS,
+  AI_MODEL_FLOW_CLASS,
+  AI_MODEL_LIST_ROWS_CLASS,
+  AI_MODEL_LIST_SURFACE_CLASS,
+  AI_MODEL_OPTION_CLASS,
+  AI_MODEL_OPTION_CURRENT_CLASS,
+  AI_MODEL_OPTION_STATIC_CLASS,
+  AI_PROVIDER_SEARCH_RESULTS_CLASS,
+  AI_PROVIDER_SEARCH_STEP_CLASS,
+  AI_PROVIDER_TAB_ACTIVE_CLASS,
+  AI_PROVIDER_TAB_CLASS,
+  AI_ROW_ACTION_CLASS,
+  AI_ROW_DELETE_CLASS,
+  AI_VIEW_ALL_MODELS_CLASS,
 } from "./classes";
 
 export type SettingsAiRenderedModelEntry = Pick<
@@ -190,7 +207,7 @@ export const SettingsAiModelCapabilitiesView = ({
   };
 
   return (
-    <div className="lyra-settings-ai-model-flow lyra-settings-ai-models-surface lyra-settings-ai-provider-drill-in">
+    <div className={`${AI_MODEL_FLOW_CLASS} lyra-settings-ai-models-surface lyra-settings-ai-provider-drill-in`}>
       <AppSubPageBack
         label={entry.providerLabel ?? entry.providerKey ?? labels.modelsTitle}
         onClick={onBack}
@@ -302,7 +319,7 @@ export const SettingsAiModelCapabilitiesView = ({
                   evidence?.detail ?? null,
                 ].filter((value): value is string => value !== null).join(" · ")}
                 control={(
-                  <span className="lyra-settings-ai-model-actions">
+                  <span className={AI_MODEL_ACTIONS_CLASS}>
                     <AppSelect<AgentCapabilityOverride>
                       ariaLabel={labels[labelKey]}
                       className={AI_SELECT_CLASS}

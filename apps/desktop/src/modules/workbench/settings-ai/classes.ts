@@ -84,3 +84,54 @@ export const AI_SKILL_STATUS_CLASS =
   "lyra-settings-ai-skill-status min-w-0 px-[var(--lyra-space-14)] py-[var(--lyra-space-8)] text-[var(--lyra-text-secondary)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-caption)]";
 
 export const AI_SKILL_LOAD_MORE_CLASS = "lyra-settings-ai-skill-load-more min-h-[var(--lyra-space-1)]";
+
+export const AI_MODEL_FLOW_CLASS = "lyra-settings-ai-model-flow grid min-w-0 gap-[var(--lyra-space-10)]";
+export const AI_PROVIDER_SEARCH_STEP_CLASS =
+  "lyra-settings-ai-provider-search-step grid min-w-0 gap-[var(--lyra-space-8)]";
+
+const AI_LIST_ROW_CHILD =
+  "[&>.lyra-app-object-row]:grid [&>.lyra-app-object-row]:min-h-[var(--lyra-unit-70)] [&>.lyra-app-object-row]:items-center [&>.lyra-app-object-row]:gap-x-[var(--lyra-space-10)] [&>.lyra-app-object-row]:border-0 [&>.lyra-app-object-row]:bg-transparent [&>.lyra-app-object-row]:px-[var(--lyra-space-14)] [&>.lyra-app-object-row]:py-[var(--lyra-space-12)] [&>.lyra-app-object-row]:rounded-none [&>.lyra-app-object-row:hover]:text-[var(--lyra-text-primary)] [&>.lyra-app-object-row:hover]:bg-[var(--lyra-app-row-hover-bg)] [&>.lyra-app-object-row[data-active=true]]:text-[var(--lyra-text-primary)] [&>.lyra-app-object-row[data-active=true]]:bg-[var(--lyra-app-row-hover-bg)] [&>.lyra-app-object-row+.lyra-app-object-row]:relative [&>.lyra-app-object-row+.lyra-app-object-row::before]:absolute [&>.lyra-app-object-row+.lyra-app-object-row::before]:top-0 [&>.lyra-app-object-row+.lyra-app-object-row::before]:left-[var(--lyra-space-14)] [&>.lyra-app-object-row+.lyra-app-object-row::before]:right-[var(--lyra-space-14)] [&>.lyra-app-object-row+.lyra-app-object-row::before]:h-[var(--lyra-stroke-thin)] [&>.lyra-app-object-row+.lyra-app-object-row::before]:bg-[color-mix(in_srgb,var(--lyra-settings-border)_72%,transparent)] [&>.lyra-app-object-row+.lyra-app-object-row::before]:content-[''] [&_.lyra-app-object-row-icon]:size-[var(--lyra-icon-size-18)] [&_.lyra-app-object-row-icon]:rounded-none [&_.lyra-app-object-row-icon]:bg-transparent [&_.lyra-app-object-row-icon]:text-inherit [&_.lyra-app-object-row-icon]:shadow-none";
+
+export const AI_PROVIDER_SEARCH_RESULTS_CLASS =
+  "lyra-settings-ai-provider-search-results grid min-w-0 gap-0 border-0 bg-transparent p-0 rounded-[var(--lyra-radius-8)] " + AI_LIST_ROW_CHILD;
+
+export const AI_MODEL_LIST_SURFACE_CLASS = "lyra-settings-ai-model-list-surface grid min-w-0 gap-0";
+export const AI_MODEL_LIST_ROWS_CLASS =
+  "lyra-settings-ai-model-list-rows " + AI_LIST_ROW_CHILD;
+
+const AI_OPTION_BASE =
+  "min-w-0 w-full border border-[var(--lyra-stroke-thin)] border-transparent rounded-[var(--lyra-settings-radius-control)] bg-transparent text-[var(--lyra-text-secondary)] text-left transition-[background-color,border-color,color,opacity] duration-[var(--lyra-motion-fast)] hover:text-[var(--lyra-text-primary)] hover:bg-[var(--lyra-settings-row-hover-bg)] hover:border-[color-mix(in_srgb,var(--lyra-settings-border)_72%,transparent)] [&:hover_.lyra-settings-ai-row-action]:opacity-100 [&:hover_.lyra-settings-ai-row-delete]:opacity-100 [&:focus-within_.lyra-settings-ai-row-action]:opacity-100 [&:focus-within_.lyra-settings-ai-row-delete]:opacity-100";
+
+export const AI_PROVIDER_TAB_CLASS =
+  "lyra-settings-ai-provider-tab " + AI_OPTION_BASE + " inline-flex min-h-[var(--lyra-control-h-40)] items-center gap-[var(--lyra-space-8)] px-[var(--lyra-space-10)] py-[var(--lyra-space-8)] [&>span]:grid [&>span]:min-w-0 [&>span]:gap-[var(--lyra-space-2)] [&_strong]:min-w-0 [&_strong]:truncate [&_strong]:text-inherit [&_strong]:text-[length:var(--lyra-text-size-body)] [&_strong]:font-semibold [&_strong]:leading-[var(--lyra-text-line-body)] [&_small]:min-w-0 [&_small]:truncate [&_small]:text-[var(--lyra-text-muted)] [&_small]:text-[length:var(--lyra-text-size-caption)] [&_small]:leading-[var(--lyra-text-line-caption)]";
+
+export const AI_PROVIDER_TAB_ACTIVE_CLASS =
+  "lyra-settings-ai-provider-tab-active text-[var(--lyra-text-primary)] bg-[var(--lyra-settings-row-active-bg)] border-[var(--lyra-settings-row-active-border)]";
+
+export const AI_MODEL_OPTION_CLASS =
+  "lyra-settings-ai-model-option " + AI_OPTION_BASE + " grid min-h-[var(--lyra-unit-58)] content-center items-center gap-[var(--lyra-space-2)] px-[var(--lyra-space-12)] py-[var(--lyra-space-10)] [&_.lyra-app-object-row-icon]:size-[var(--lyra-icon-size-18)] [&_.lyra-app-object-row-icon]:rounded-none [&_.lyra-app-object-row-icon]:bg-transparent [&_.lyra-app-object-row-icon]:text-inherit [&_.lyra-app-object-row-icon]:shadow-none";
+
+export const AI_MODEL_OPTION_STATIC_CLASS =
+  "lyra-settings-ai-model-option-static cursor-default hover:text-[var(--lyra-text-primary)] hover:bg-transparent hover:border-transparent";
+
+export const AI_MODEL_OPTION_CURRENT_CLASS =
+  "lyra-settings-ai-model-option-current text-[var(--lyra-text-primary)] bg-[var(--lyra-settings-row-active-bg)]";
+
+const AI_ROW_ACTION_BASE =
+  "size-[var(--lyra-control-h-default)] self-center justify-self-end rounded-[var(--lyra-radius-8)] border border-[var(--lyra-stroke-thin)] border-transparent bg-transparent p-0 text-[var(--lyra-text-muted)] opacity-0 transition-[background-color,color,opacity] duration-[var(--lyra-motion-fast)] hover:bg-transparent";
+
+export const AI_ROW_ACTION_CLASS =
+  "lyra-settings-ai-row-action " + AI_ROW_ACTION_BASE + " hover:text-[var(--lyra-text-primary)]";
+export const AI_ROW_DELETE_CLASS =
+  "lyra-settings-ai-row-delete " + AI_ROW_ACTION_BASE + " hover:text-[var(--lyra-settings-danger)]";
+
+export const AI_MODEL_ACTIONS_CLASS =
+  "lyra-settings-ai-model-actions inline-flex items-center gap-[var(--lyra-space-6)] [&_.lyra-settings-ai-row-delete]:opacity-0";
+
+export const AI_DISCOVERED_MODELS_CLASS = "lyra-settings-ai-discovered-models grid min-w-0 gap-[var(--lyra-space-6)]";
+export const AI_DISCOVERED_TOOLBAR_CLASS =
+  "lyra-settings-ai-discovered-models-toolbar flex min-w-0 justify-end";
+export const AI_VIEW_ALL_MODELS_CLASS =
+  "lyra-settings-ai-view-all-models justify-self-start mt-[var(--lyra-space-2)]";
+export const AI_ACCOUNT_AVATAR_CLASS =
+  "lyra-settings-ai-account-avatar size-[var(--lyra-icon-size-16)] shrink-0 rounded-full object-cover";

@@ -76,6 +76,23 @@ import {
   AI_SKILL_META_CLASS,
   AI_SKILL_STATUS_CLASS,
   AI_SKILL_TITLE_ROW_CLASS,
+  AI_ACCOUNT_AVATAR_CLASS,
+  AI_DISCOVERED_MODELS_CLASS,
+  AI_DISCOVERED_TOOLBAR_CLASS,
+  AI_MODEL_ACTIONS_CLASS,
+  AI_MODEL_FLOW_CLASS,
+  AI_MODEL_LIST_ROWS_CLASS,
+  AI_MODEL_LIST_SURFACE_CLASS,
+  AI_MODEL_OPTION_CLASS,
+  AI_MODEL_OPTION_CURRENT_CLASS,
+  AI_MODEL_OPTION_STATIC_CLASS,
+  AI_PROVIDER_SEARCH_RESULTS_CLASS,
+  AI_PROVIDER_SEARCH_STEP_CLASS,
+  AI_PROVIDER_TAB_ACTIVE_CLASS,
+  AI_PROVIDER_TAB_CLASS,
+  AI_ROW_ACTION_CLASS,
+  AI_ROW_DELETE_CLASS,
+  AI_VIEW_ALL_MODELS_CLASS,
 } from "./classes";
 
 type SettingsAiViewProps = {
@@ -734,7 +751,7 @@ const SettingsAiSkillCard = ({
         aria-label={`${labels.skillsUninstall}: ${skill.name}`}
         title={labels.skillsUninstall}
         tone="danger"
-        className="lyra-settings-ai-row-delete"
+        className={AI_ROW_DELETE_CLASS}
         onClick={() => {
           onUninstall(skill);
         }}
@@ -853,7 +870,7 @@ const SettingsAiMcpServerCard = ({
         <AppIconButton
           aria-label={`${labels.mcpEdit}: ${server.name}`}
           title={labels.mcpEdit}
-          className="lyra-settings-ai-row-action"
+          className={AI_ROW_ACTION_CLASS}
           onClick={() => {
             onEdit(server);
           }}
@@ -864,7 +881,7 @@ const SettingsAiMcpServerCard = ({
           aria-label={`${labels.mcpRemove}: ${server.name}`}
           title={labels.mcpRemove}
           tone="danger"
-          className="lyra-settings-ai-row-delete"
+          className={AI_ROW_DELETE_CLASS}
           onClick={() => {
             onRemove(server);
           }}
@@ -1892,16 +1909,16 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
         )}
 
         {isProviderSearchMode && (providerRouteMatches.length > 0 || selectedProviderRoute !== null) ? (
-          <div className="lyra-settings-ai-model-flow lyra-settings-ai-add-model">
-            <div className="lyra-settings-ai-provider-search-step">
+          <div className={`${AI_MODEL_FLOW_CLASS} lyra-settings-ai-add-model`}>
+            <div className={AI_PROVIDER_SEARCH_STEP_CLASS}>
               {selectedProviderRoute !== null || providerRouteMatches.length === 0 ? null : (
-                <div className="lyra-software-store-item-list lyra-settings-ai-provider-search-results">
+                <div className={`lyra-software-store-item-list ${AI_PROVIDER_SEARCH_RESULTS_CLASS}`}>
                   {providerRouteMatches.map((route) => (
                     <AppObjectRow
                       key={route.id}
                       className={[
-                        "lyra-settings-ai-provider-tab",
-                        selectedProviderRouteId === route.id ? "lyra-settings-ai-provider-tab-active" : "",
+                        AI_PROVIDER_TAB_CLASS,
+                        selectedProviderRouteId === route.id ? AI_PROVIDER_TAB_ACTIVE_CLASS : "",
                       ].filter(Boolean).join(" ")}
                       active={selectedProviderRouteId === route.id}
                       disabled={model.isSaving}
@@ -2046,13 +2063,13 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                 ) : null}
 
                 {discoveredModelIds.length === 0 ? null : (
-                  <div className="lyra-settings-ai-discovered-models">
+                  <div className={AI_DISCOVERED_MODELS_CLASS}>
                     {shouldShowDisableAllDiscoveredModels ? (
-                      <div className="lyra-settings-ai-discovered-models-toolbar">
+                      <div className={AI_DISCOVERED_TOOLBAR_CLASS}>
                         <AppButton
                           variant="ghost"
                           size="sm"
-                          className="lyra-settings-ai-view-all-models"
+                          className={AI_VIEW_ALL_MODELS_CLASS}
                           disabled={model.isSaving}
                           onClick={toggleAllDiscoveredModels}
                         >
@@ -2060,7 +2077,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                         </AppButton>
                       </div>
                     ) : null}
-                    <div className="lyra-software-store-item-list lyra-settings-ai-model-list-surface lyra-settings-ai-model-list-rows">
+                    <div className={`lyra-software-store-item-list ${AI_MODEL_LIST_SURFACE_CLASS} ${AI_MODEL_LIST_ROWS_CLASS}`}>
                       {discoveredModelIds.map((id) => {
                         const signedIn = renderedModels.find((entry) => entry.routeId === selectedProviderRoute.id);
                         return (
@@ -2069,7 +2086,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                           as="div"
                           role="listitem"
                           active={false}
-                          className="lyra-settings-ai-model-option lyra-settings-ai-model-option-static"
+                          className={`${AI_MODEL_OPTION_CLASS} ${AI_MODEL_OPTION_STATIC_CLASS}`}
                           icon={(
                             <AgentProviderBrandIcon
                               baseUrl={providerBaseUrl || selectedProviderRoute.defaultBaseUrl}
@@ -2104,8 +2121,8 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
         ) : null}
 
         {!isAddingModel && drilledProviderGroup === null ? (
-          <div className="lyra-settings-ai-model-flow lyra-settings-ai-models-surface">
-            <div className="lyra-software-store-item-list lyra-settings-ai-model-list-surface lyra-settings-ai-model-list-rows">
+          <div className={`${AI_MODEL_FLOW_CLASS} lyra-settings-ai-models-surface`}>
+            <div className={`lyra-software-store-item-list ${AI_MODEL_LIST_SURFACE_CLASS} ${AI_MODEL_LIST_ROWS_CLASS}`}>
               {hasConfiguredModels ? filteredProviderGroups.map((group) => {
                 const allEnabled = group.entries.length > 0 && group.entries.every((entry) => entry.enabled);
                 const someEnabled = group.entries.some((entry) => entry.enabled);
@@ -2118,7 +2135,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                     as="div"
                     role="listitem"
                     active={false}
-                    className="lyra-settings-ai-model-option lyra-settings-ai-provider-group-row"
+                    className={`${AI_MODEL_OPTION_CLASS} lyra-settings-ai-provider-group-row`}
                     icon={(
                       <AgentProviderBrandIcon
                         baseUrl={providerConfig?.baseUrl ?? null}
@@ -2136,12 +2153,12 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                       setShowAllModels(false);
                     }}
                     actions={(
-                      <span className="lyra-settings-ai-model-actions">
+                      <span className={AI_MODEL_ACTIONS_CLASS}>
                         <AppIconButton
                           aria-label={`${labels.modelsDeleteLabel}: ${group.label}`}
                           title={labels.modelsDeleteLabel}
                           tone="danger"
-                          className="lyra-settings-ai-row-delete"
+                          className={AI_ROW_DELETE_CLASS}
                           disabled={model.isSaving}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -2168,7 +2185,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
         ) : null}
 
         {hasConfiguredModels && !isAddingModel && drilledProviderGroup !== null && drilledModel === null ? (
-          <div className="lyra-settings-ai-model-flow lyra-settings-ai-models-surface lyra-settings-ai-provider-drill-in">
+          <div className={`${AI_MODEL_FLOW_CLASS} lyra-settings-ai-models-surface lyra-settings-ai-provider-drill-in`}>
             <AppSubPageBack
               label={labels.modelsTitle}
               onClick={() => {
@@ -2178,7 +2195,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                 setShowAllModels(false);
               }}
             />
-            <div className="lyra-software-store-item-list lyra-settings-ai-model-list-surface lyra-settings-ai-model-list-rows">
+            <div className={`lyra-software-store-item-list ${AI_MODEL_LIST_SURFACE_CLASS} ${AI_MODEL_LIST_ROWS_CLASS}`}>
               {visibleDrilledModels.map((entry) => {
                 const active = isCurrentModelEntry(entry, model, config);
                 const disabled = model.isSaving || !entry.available;
@@ -2206,8 +2223,8 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                     active={false}
                     aria-disabled={disabled ? "true" : undefined}
                     className={[
-                      "lyra-settings-ai-model-option",
-                      active ? "lyra-settings-ai-model-option-current" : "",
+                      AI_MODEL_OPTION_CLASS,
+                      active ? AI_MODEL_OPTION_CURRENT_CLASS : "",
                     ].filter(Boolean).join(" ")}
                     icon={(
                       <AgentProviderBrandIcon
@@ -2232,13 +2249,13 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                       setQuery("");
                     }}
                     actions={(
-                      <span className="lyra-settings-ai-model-actions">
+                      <span className={AI_MODEL_ACTIONS_CLASS}>
                         {managedCatalog ? null : (
                         <AppIconButton
                           aria-label={`${labels.modelsDeleteLabel}: ${entry.label}`}
                           title={labels.modelsDeleteLabel}
                           tone="danger"
-                          className="lyra-settings-ai-row-delete"
+                          className={AI_ROW_DELETE_CLASS}
                           disabled={disabled}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -2265,7 +2282,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                 <AppButton
                   variant="ghost"
                   size="sm"
-                  className="lyra-settings-ai-view-all-models"
+                  className={AI_VIEW_ALL_MODELS_CLASS}
                   onClick={() => {
                     setShowAllModels(true);
                   }}

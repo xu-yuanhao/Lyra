@@ -10,6 +10,23 @@ import {
   AI_FIELD_CLASS,
   AI_FIELD_SPAN2_CLASS,
   AI_INPUT_CLASS,
+  AI_ACCOUNT_AVATAR_CLASS,
+  AI_DISCOVERED_MODELS_CLASS,
+  AI_DISCOVERED_TOOLBAR_CLASS,
+  AI_MODEL_ACTIONS_CLASS,
+  AI_MODEL_FLOW_CLASS,
+  AI_MODEL_LIST_ROWS_CLASS,
+  AI_MODEL_LIST_SURFACE_CLASS,
+  AI_MODEL_OPTION_CLASS,
+  AI_MODEL_OPTION_CURRENT_CLASS,
+  AI_MODEL_OPTION_STATIC_CLASS,
+  AI_PROVIDER_SEARCH_RESULTS_CLASS,
+  AI_PROVIDER_SEARCH_STEP_CLASS,
+  AI_PROVIDER_TAB_ACTIVE_CLASS,
+  AI_PROVIDER_TAB_CLASS,
+  AI_ROW_ACTION_CLASS,
+  AI_ROW_DELETE_CLASS,
+  AI_VIEW_ALL_MODELS_CLASS,
 } from "./classes";
 
 export function SubscriptionRouteLogin({
@@ -91,7 +108,7 @@ export function SubscriptionRouteLogin({
           {accountAvatar === null ? null : (
             <img
               alt=""
-              className="lyra-settings-ai-account-avatar"
+              className={AI_ACCOUNT_AVATAR_CLASS}
               src={accountAvatar}
             />
           )}
