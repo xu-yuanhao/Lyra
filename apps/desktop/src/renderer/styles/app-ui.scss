@@ -242,45 +242,6 @@
   line-height: var(--lyra-text-line-caption);
 }
 
-.lyra-sqlite-viewer {
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  min-height: 0;
-  height: 100%;
-  background: var(--lyra-app-panel-bg);
-  color: var(--lyra-text-primary);
-}
-
-.lyra-sqlite-viewer-tables {
-  display: flex;
-  gap: var(--lyra-space-8);
-  overflow-x: auto;
-  padding: var(--lyra-space-8) var(--lyra-space-12);
-  border-bottom: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-}
-
-.lyra-sqlite-viewer-grid {
-  min-height: 0;
-  overflow: auto;
-}
-
-.lyra-sqlite-viewer-grid table {
-  border-collapse: collapse;
-  width: max-content;
-  min-width: 100%;
-}
-
-.lyra-sqlite-viewer-grid th,
-.lyra-sqlite-viewer-grid td {
-  padding: var(--lyra-space-8);
-  border-bottom: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  text-align: start;
-  white-space: pre;
-  max-width: 24rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .lyra-app-module-toolbar .lyra-ui-input,
 .lyra-app-module-compound .lyra-ui-input,
 .lyra-app-module-dialog .lyra-ui-input {

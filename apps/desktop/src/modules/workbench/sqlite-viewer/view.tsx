@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { AppButton } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@renderer/ui/components/table";
 import type { LyraDesktopApi, SqliteInspectResult } from "../../../shared/desktop-bridge";
 import { sqliteTitleFromPath } from "../../../shared/sqlite-documents";
 
@@ -54,16 +62,16 @@ export const SqliteViewerSurface = ({
 
   return (
     <section
-      className="lyra-app-module lyra-sqlite-viewer"
+      className="lyra-app-module grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] bg-[var(--lyra-app-panel-bg)] text-[var(--lyra-text-primary)]"
       data-lyra-component="lyra.sqlite"
       aria-label="sqlite-viewer-surface"
     >
       <header className="lyra-app-module-toolbar">
         <strong>{heading}</strong>
       </header>
-      <div className="lyra-sqlite-viewer-tables">
+      <div className="flex gap-[var(--lyra-space-8)] overflow-x-auto border-b border-[var(--lyra-app-border)] px-[var(--lyra-space-12)] py-[var(--lyra-space-8)]">
         {result?.tables.map((entry) => (
-          <AppButton
+          <Button
             key={entry.name}
             type="button"
             size="sm"
@@ -74,25 +82,39 @@ export const SqliteViewerSurface = ({
             }}
           >
             {entry.name}
-          </AppButton>
+          </Button>
         ))}
       </div>
-      <div className="lyra-sqlite-viewer-grid">
+      <div className="min-h-0 overflow-auto">
         {result !== null && result.columns.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                {result.columns.map((column) => <th key={column}>{column}</th>)}
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="w-max min-w-full border-collapse">
+            <TableHeader>
+              <TableRow>
+                {result.columns.map((column) => (
+                  <TableHead
+                    key={column}
+                    className="max-w-[24rem] overflow-hidden text-ellipsis whitespace-pre border-b border-[var(--lyra-app-border)] px-[var(--lyra-space-8)] py-[var(--lyra-space-8)] text-start"
+                  >
+                    {column}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {result.rows.map((row, index) => (
-                <tr key={index}>
-                  {row.map((cell, cellIndex) => <td key={result.columns[cellIndex] ?? cellIndex}>{cell ?? ""}</td>)}
-                </tr>
+                <TableRow key={index} className="hover:bg-transparent">
+                  {row.map((cell, cellIndex) => (
+                    <TableCell
+                      key={result.columns[cellIndex] ?? cellIndex}
+                      className="max-w-[24rem] overflow-hidden text-ellipsis whitespace-pre border-b border-[var(--lyra-app-border)] px-[var(--lyra-space-8)] py-[var(--lyra-space-8)]"
+                    >
+                      {cell ?? ""}
+                    </TableCell>
+                  ))}
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         ) : null}
       </div>
       <footer className="lyra-app-module-footer">
@@ -108,9 +130,9 @@ export const SqliteViewerSurface = ({
                   : `${shown} rows`}
         </span>
         {status === "error" ? (
-          <AppButton type="button" size="sm" variant="secondary" onClick={() => setRequestKey((value) => value + 1)}>
+          <Button type="button" size="sm" variant="secondary" onClick={() => setRequestKey((value) => value + 1)}>
             Retry
-          </AppButton>
+          </Button>
         ) : null}
       </footer>
     </section>
