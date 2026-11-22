@@ -182,18 +182,6 @@ const ICON_PACKAGE_MODULE_PATTERN =
 
 const selectorRules: readonly SelectorRule[] = [
   {
-    selector: ".lyra-settings-choice",
-    required: [/border:\s*var\(--lyra-stroke-thin\)\s+solid\s+transparent\s*;/, /background:\s*var\(--lyra-settings-row-bg\)\s*;/, /border-radius:\s*var\(--lyra-settings-radius-control\)\s*;/]
-  },
-  {
-    selector: ".lyra-settings-choice:hover",
-    required: [/background:\s*var\(--lyra-settings-row-hover-bg\)\s*;/, /border-color:\s*transparent\s*;/]
-  },
-  {
-    selector: ".lyra-settings-choice-active",
-    required: [/background:\s*var\(--lyra-settings-row-active-bg\)\s*;/, /border-color:\s*transparent\s*;/, /box-shadow:\s*none\s*;/]
-  },
-  {
     selector: ".lyra-context-menu-item",
     required: [/border-radius:\s*var\(--lyra-radius-6\)\s*;/, /background:\s*transparent\s*;/]
   },
