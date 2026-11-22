@@ -5,7 +5,41 @@ import type { AgentUsageDailyBucket, AgentUsageStats, LyraDesktopApi } from "../
 import { AppButton, AppEmptyState, AppIconButton, AppInput, AppStatusMessage, AppTooltip } from "@renderer/ui/components";
 import { IdentityIconView } from "../identity";
 import type { SettingsAccount, SettingsAccountLabels } from "./settings-surface-types";
-import { ST_CATEGORY_ACCOUNT_CLASS } from "./settings-classes";
+import {
+  AC_CHART_TAB_ACTIVE_CLASS,
+  AC_CHART_TABS_CLASS,
+  AC_COVERAGE_NOTE_CLASS,
+  AC_DETAIL_GRID_CLASS,
+  AC_EDIT_ACTIONS_CLASS,
+  AC_EDIT_FORM_CLASS,
+  AC_EMPTY_CLASS,
+  AC_ERROR_CLASS,
+  AC_HEATMAP_CELL_CLASS,
+  AC_HEATMAP_CELL_EMPTY_CLASS,
+  AC_HEATMAP_CLASS,
+  AC_HEATMAP_CONTENT_CLASS,
+  AC_HEATMAP_MONTHS_CLASS,
+  AC_HEATMAP_REGION_CLASS,
+  AC_HEATMAP_SCROLL_CLASS,
+  AC_HEATMAP_TOOLTIP_CLASS,
+  AC_INLINE_ERROR_CLASS,
+  AC_LOADING_CLASS,
+  AC_MODEL_LIST_CLASS,
+  AC_MUTED_CLASS,
+  AC_PANEL_CLASS,
+  AC_PANEL_HEADER_CLASS,
+  AC_PROFILE_ACTIONS_CLASS,
+  AC_PROFILE_AVATAR_CLASS,
+  AC_PROFILE_CLASS,
+  AC_PROFILE_COPY_CLASS,
+  AC_STAT_LIST_CLASS,
+  AC_SUMMARY_GRID_CLASS,
+  AC_SUMMARY_ITEM_CLASS,
+  AC_WEEK_BAR_CLASS,
+  AC_WEEK_CHART_CLASS,
+  ST_CATEGORY_ACCOUNT_CLASS,
+  acHeatmapLevelClass
+} from "./settings-classes";
 
 type TokenActivityView = "daily" | "weekly" | "cumulative";
 
@@ -106,13 +140,13 @@ const TokenActivityChart = ({
   const chartMaximum = Math.max(0, ...chartValues);
 
   return (
-    <section className="lyra-account-panel lyra-account-token-activity">
-      <header className="lyra-account-panel-header">
+    <section className={AC_PANEL_CLASS}>
+      <header className={AC_PANEL_HEADER_CLASS}>
         <div>
           <h3>{labels.tokenActivity}</h3>
           <span>{labels.lastTwelveMonths}</span>
         </div>
-        <div className="lyra-account-chart-tabs" role="group" aria-label={labels.tokenActivity}>
+        <div className={AC_CHART_TABS_CLASS} role="group" aria-label={labels.tokenActivity}>
           {([
             ["daily", labels.daily],
             ["weekly", labels.weekly],
@@ -122,7 +156,7 @@ const TokenActivityChart = ({
               key={id}
               variant="ghost"
               size="sm"
-              className={view === id ? "lyra-account-chart-tab-active" : undefined}
+              className={view === id ? AC_CHART_TAB_ACTIVE_CLASS : undefined}
               onClick={() => setView(id)}
             >
               {label}
@@ -131,10 +165,10 @@ const TokenActivityChart = ({
         </div>
       </header>
       {view === "daily" ? (
-        <div ref={heatmapRegionRef} className="lyra-account-heatmap-region">
-          <div className="lyra-account-heatmap-scroll">
-            <div className="lyra-account-heatmap-content">
-              <div className="lyra-account-heatmap-months" aria-hidden="true">
+        <div ref={heatmapRegionRef} className={AC_HEATMAP_REGION_CLASS}>
+          <div className={AC_HEATMAP_SCROLL_CLASS}>
+            <div className={AC_HEATMAP_CONTENT_CLASS}>
+              <div className={AC_HEATMAP_MONTHS_CLASS} aria-hidden="true">
                 {monthMarkers.map((marker) => (
                   <span
                     key={`${marker.weekIndex}-${marker.label}`}
@@ -144,19 +178,19 @@ const TokenActivityChart = ({
                   </span>
                 ))}
               </div>
-              <div className="lyra-account-heatmap" aria-label={labels.daily}>
+              <div className={AC_HEATMAP_CLASS} aria-label={labels.daily}>
                 {weeks.flatMap((week, weekIndex) => {
                   const firstDay = week[0] === undefined
                     ? 0
                     : (new Date(`${week[0].date}T00:00:00Z`).getUTCDay() + 6) % 7;
                   return [
                     ...Array.from({ length: weekIndex === 0 ? firstDay : 0 }, (_, index) => (
-                      <span key={`blank-${index}`} className="lyra-account-heatmap-cell lyra-account-heatmap-cell-empty" />
+                      <span key={`blank-${index}`} className={`${AC_HEATMAP_CELL_CLASS} ${AC_HEATMAP_CELL_EMPTY_CLASS}`} />
                     )),
                     ...week.map((bucket) => (
                       <span
                         key={bucket.date}
-                        className={`lyra-account-heatmap-cell lyra-account-heatmap-level-${tokenLevel(bucket.reportedTokens, dailyMaximum)}`}
+                        className={`${AC_HEATMAP_CELL_CLASS} ${acHeatmapLevelClass(tokenLevel(bucket.reportedTokens, dailyMaximum))}`}
                         aria-label={`${bucket.date}: ${formatCompactNumber(bucket.reportedTokens)} ${labels.reportedTokens}`}
                         onMouseEnter={(event) => {
                           const region = heatmapRegionRef.current?.getBoundingClientRect();
@@ -180,7 +214,7 @@ const TokenActivityChart = ({
           </div>
           {tooltip === null ? null : (
             <div
-              className="lyra-account-heatmap-tooltip"
+              className={AC_HEATMAP_TOOLTIP_CLASS}
               role="tooltip"
               style={{ left: tooltip.left, top: tooltip.top }}
             >
@@ -195,11 +229,11 @@ const TokenActivityChart = ({
           )}
         </div>
       ) : (
-        <div className="lyra-account-week-chart" aria-label={view === "weekly" ? labels.weekly : labels.cumulative}>
+        <div className={AC_WEEK_CHART_CLASS} aria-label={view === "weekly" ? labels.weekly : labels.cumulative}>
           {chartValues.map((value, index) => (
             <span
               key={`${view}-${index}`}
-              className="lyra-account-week-bar"
+              className={AC_WEEK_BAR_CLASS}
               style={{ height: `${chartMaximum === 0 ? 2 : Math.max(2, (value / chartMaximum) * 100)}%` }}
               title={`${formatCompactNumber(value)}`}
             />
@@ -304,16 +338,16 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
       <header className="lyra-settings-category-header">
         <h2 id="lyra-settings-account-heading">{labels.title}</h2>
       </header>
-      <div className="lyra-account-profile">
+      <div className={AC_PROFILE_CLASS}>
         <IdentityIconView
-          className="lyra-account-profile-avatar"
+          className={AC_PROFILE_AVATAR_CLASS}
           iconUrl={account.avatarUrl}
           label={account.displayName}
           fallback={account.kind === "local"
             ? <span className="lyra-settings-account-local-logo lyra-settings-nav-logo" />
             : account.displayName.slice(0, 1).toUpperCase()}
         />
-        <div className="lyra-account-profile-copy">
+        <div className={AC_PROFILE_COPY_CLASS}>
           <h3>{account.displayName}</h3>
           {account.email === null || account.email === undefined ? null : <p>{account.email}</p>}
           <span>{account.kind === "signed-in" ? labels.cloudAccount : labels.localAccount} · {labels.deviceScope}</span>
@@ -328,7 +362,7 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
             {account.actionLabel}
           </AppButton>
         ) : (
-          <div className="lyra-account-profile-actions">
+          <div className={AC_PROFILE_ACTIONS_CLASS}>
             {account.onUpdateProfile === undefined ? null : (
               <AppTooltip content={labels.edit}>
                 <AppIconButton
@@ -358,7 +392,7 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
       </div>
 
       {!editing ? null : (
-        <section className="lyra-account-panel lyra-account-edit-form">
+        <section className={`${AC_PANEL_CLASS} ${AC_EDIT_FORM_CLASS}`}>
           <label htmlFor="lyra-account-display-name">
             <span>{labels.displayName}</span>
             <AppInput id="lyra-account-display-name" aria-label={labels.displayName} value={displayName} maxLength={80} onChange={(event) => setDisplayName(event.target.value)} />
@@ -369,11 +403,11 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
             <small>{labels.avatarUrlDescription}</small>
           </label>
           {editError === null ? null : (
-            <AppStatusMessage className="lyra-account-inline-error" role="alert" tone="error">
+            <AppStatusMessage className={AC_INLINE_ERROR_CLASS} role="alert" tone="error">
               {editError}
             </AppStatusMessage>
           )}
-          <div className="lyra-account-edit-actions">
+          <div className={AC_EDIT_ACTIONS_CLASS}>
             <AppButton variant="ghost" size="sm" disabled={profileSaving} onClick={() => {
               setEditing(false);
               setEditError(null);
@@ -385,9 +419,9 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
         </section>
       )}
 
-      {statsLoading ? <div className="lyra-account-loading">{labels.loading}</div> : null}
+      {statsLoading ? <div className={AC_LOADING_CLASS}>{labels.loading}</div> : null}
       {!statsLoading && statsError !== null ? (
-        <section className="lyra-account-panel lyra-account-error" role="alert">
+        <section className={`${AC_PANEL_CLASS} ${AC_ERROR_CLASS}`} role="alert">
           <p>{statsError}</p>
           <AppButton variant="secondary" size="sm" onClick={loadStats}>
             <RefreshCw size={14} aria-hidden="true" />
@@ -397,7 +431,7 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
       ) : null}
       {stats === null ? null : (
         <>
-          <div className="lyra-account-summary-grid">
+          <div className={AC_SUMMARY_GRID_CLASS}>
             {[
               [labels.reportedTokens, formatCompactNumber(stats.totals.reportedTokens)],
               [labels.peakDailyTokens, formatCompactNumber(stats.peakDailyTokens)],
@@ -405,7 +439,7 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
               [labels.currentStreak, `${stats.currentStreakDays} ${labels.dayUnit}`],
               [labels.longestStreak, `${stats.longestStreakDays} ${labels.dayUnit}`]
             ].map(([label, value]) => (
-              <div key={label} className="lyra-account-summary-item">
+              <div key={label} className={AC_SUMMARY_ITEM_CLASS}>
                 <strong>{value}</strong>
                 <span>{label}</span>
               </div>
@@ -413,7 +447,7 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
           </div>
           {stats.totals.sessions === 0 ? (
             <AppEmptyState
-              className="lyra-account-empty"
+              className={AC_EMPTY_CLASS}
               data-panel="true"
               density="compact"
               title={labels.noActivity}
@@ -421,10 +455,10 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
           ) : (
             <>
               <TokenActivityChart stats={stats} labels={labels} />
-              <div className="lyra-account-detail-grid">
-                <section className="lyra-account-panel">
+              <div className={AC_DETAIL_GRID_CLASS}>
+                <section className={AC_PANEL_CLASS}>
                   <h3>{labels.activityOverview}</h3>
-                  <dl className="lyra-account-stat-list">
+                  <dl className={AC_STAT_LIST_CLASS}>
                     {[
                       [labels.sessions, stats.totals.sessions],
                       [labels.messages, stats.totals.messages],
@@ -435,17 +469,17 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
                       <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
                     ))}
                   </dl>
-                  <p className="lyra-account-coverage-note">
+                  <p className={AC_COVERAGE_NOTE_CLASS}>
                     {labels.coverageDetail
                       .replace("{reported}", String(stats.coverage.reportedTurns))
                       .replace("{eligible}", String(stats.coverage.eligibleTurns))}
                     {stats.coverage.incompleteTurns === 0 ? "" : ` ${labels.incompleteCoverageDetail.replace("{count}", String(stats.coverage.incompleteTurns))}`}
                   </p>
                 </section>
-                <section className="lyra-account-panel">
+                <section className={AC_PANEL_CLASS}>
                   <h3>{labels.topModels}</h3>
-                  {stats.topModels.length === 0 ? <p className="lyra-account-muted">{labels.noModelActivity}</p> : (
-                    <ol className="lyra-account-model-list">
+                  {stats.topModels.length === 0 ? <p className={AC_MUTED_CLASS}>{labels.noModelActivity}</p> : (
+                    <ol className={AC_MODEL_LIST_CLASS}>
                       {stats.topModels.map((model) => (
                         <li key={`${model.providerId}:${model.modelId}`}>
                           <span><strong>{model.modelId}</strong><small>{model.providerId}</small></span>

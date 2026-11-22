@@ -63,3 +63,92 @@ export const ST_CATEGORY_ACCOUNT_CLASS = "lyra-settings-category-account w-[min(
 
 export const ST_CATEGORY_HEADER_CLASS =
   "lyra-settings-category-header flex min-h-[var(--lyra-control-h-36)] min-w-0 items-center [&_h2]:m-0 [&_h2]:text-[var(--lyra-text-primary)] [&_h2]:text-[length:var(--lyra-text-size-title-md)] [&_h2]:font-semibold [&_h2]:leading-[var(--lyra-text-line-title)]";
+
+const AC_PANEL_CHROME =
+  "min-w-0 rounded-[var(--lyra-settings-radius-card)] border border-[var(--lyra-stroke-thin)] border-[var(--lyra-settings-border)] bg-[color-mix(in_srgb,var(--lyra-settings-card-bg)_96%,transparent)]";
+
+export const AC_PANEL_CLASS =
+  `lyra-account-panel ${AC_PANEL_CHROME} p-[var(--lyra-space-18)] [&_h3]:m-0 [&_h3]:text-[var(--lyra-text-primary)] [&_h3]:text-[length:var(--lyra-text-size-body)] [&_h3]:font-semibold`;
+
+export const AC_PANEL_HEADER_CLASS =
+  "lyra-account-panel-header mb-[var(--lyra-space-18)] flex items-center justify-between gap-[var(--lyra-space-16)] [&>div:first-child]:grid [&>div:first-child]:gap-[var(--lyra-space-3)] [&_span]:text-[length:var(--lyra-text-size-caption)]";
+
+export const AC_SUMMARY_GRID_CLASS = `lyra-account-summary-grid grid min-w-0 grid-cols-5 overflow-hidden ${AC_PANEL_CHROME}`;
+
+export const AC_SUMMARY_ITEM_CLASS =
+  "lyra-account-summary-item grid min-w-0 gap-[var(--lyra-space-4)] px-[var(--lyra-space-10)] py-[var(--lyra-space-16)] text-center [&+&]:border-l [&+&]:border-[var(--lyra-stroke-thin)] [&+&]:border-[var(--lyra-settings-border)] [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_strong]:text-[var(--lyra-text-primary)] [&_strong]:text-[length:var(--lyra-text-size-title-md)] [&_strong]:font-semibold [&_span]:text-[var(--lyra-text-muted)] [&_span]:text-[length:var(--lyra-text-size-caption)]";
+
+export const AC_PROFILE_CLASS =
+  "lyra-account-profile grid min-w-0 grid-cols-[var(--lyra-unit-80)_minmax(0,1fr)_auto] items-center gap-[var(--lyra-space-18)] px-[var(--lyra-space-4)] pb-[var(--lyra-space-20)] pt-[var(--lyra-space-8)]";
+
+export const AC_PROFILE_AVATAR_CLASS =
+  "lyra-account-profile-avatar size-[var(--lyra-unit-80)] rounded-[var(--lyra-radius-pill)] bg-[var(--lyra-settings-row-active-bg)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-24)] font-semibold [&_.lyra-identity-icon-image]:rounded-[inherit]";
+
+export const AC_PROFILE_COPY_CLASS =
+  "lyra-account-profile-copy min-w-0 [&_h3]:m-0 [&_h3]:text-[var(--lyra-text-primary)] [&_h3]:text-[length:var(--lyra-text-size-title-md)] [&_h3]:font-semibold [&_p]:my-[var(--lyra-space-4)] [&_p]:text-[var(--lyra-text-muted)] [&_span]:text-[var(--lyra-text-muted)] [&_span]:text-[length:var(--lyra-text-size-caption)]";
+
+export const AC_PROFILE_ACTIONS_CLASS = "lyra-account-profile-actions inline-flex items-center gap-[var(--lyra-space-4)]";
+
+export const AC_EDIT_FORM_CLASS =
+  "lyra-account-edit-form grid gap-[var(--lyra-space-14)] [&_label]:grid [&_label]:gap-[var(--lyra-space-6)] [&_label]:text-[var(--lyra-text-secondary)] [&_label]:text-[length:var(--lyra-text-size-body)] [&_small]:text-[var(--lyra-text-muted)] [&_small]:text-[length:var(--lyra-text-size-caption)] [&_small]:leading-[var(--lyra-text-line-body)]";
+
+export const AC_COVERAGE_NOTE_CLASS =
+  "lyra-account-coverage-note mt-[var(--lyra-space-14)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-body)]";
+
+export const AC_EDIT_ACTIONS_CLASS = "lyra-account-edit-actions flex justify-end gap-[var(--lyra-space-8)]";
+
+export const AC_INLINE_ERROR_CLASS = "lyra-account-inline-error text-[length:var(--lyra-text-size-caption)]";
+
+export const AC_LOADING_CLASS = `lyra-account-loading ${AC_PANEL_CHROME} p-[var(--lyra-space-18)]`;
+export const AC_EMPTY_CLASS = `lyra-account-empty ${AC_PANEL_CHROME} p-[var(--lyra-space-18)]`;
+
+export const AC_ERROR_CLASS =
+  "lyra-account-error flex items-center justify-between gap-[var(--lyra-space-12)] [&_p]:m-0 [&_p]:text-[var(--lyra-text-secondary)]";
+
+export const AC_CHART_TABS_CLASS = "lyra-account-chart-tabs flex gap-[var(--lyra-space-3)]";
+export const AC_CHART_TAB_ACTIVE_CLASS =
+  "lyra-account-chart-tab-active text-[var(--lyra-text-primary)] bg-[var(--lyra-settings-row-active-bg)]";
+
+export const AC_HEATMAP_REGION_CLASS = "lyra-account-heatmap-region relative min-w-0";
+export const AC_HEATMAP_SCROLL_CLASS = "lyra-account-heatmap-scroll min-w-0 overflow-x-auto pb-[var(--lyra-space-4)]";
+export const AC_HEATMAP_CONTENT_CLASS = "lyra-account-heatmap-content w-max min-w-full";
+
+export const AC_HEATMAP_MONTHS_CLASS =
+  "lyra-account-heatmap-months relative mx-[calc(var(--lyra-icon-size-12)/2)] mb-[var(--lyra-space-4)] h-[var(--lyra-space-18)] whitespace-nowrap text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-space-18)] [&>span]:absolute [&>span]:top-0 [&>span]:-translate-x-1/2 [&>span:first-child]:translate-x-0";
+
+export const AC_HEATMAP_CLASS =
+  "lyra-account-heatmap grid w-max min-w-full grid-flow-col grid-rows-[repeat(7,var(--lyra-icon-size-12))] auto-cols-[var(--lyra-icon-size-12)] justify-between gap-[var(--lyra-space-3)]";
+
+export const AC_HEATMAP_CELL_CLASS =
+  "lyra-account-heatmap-cell size-[var(--lyra-icon-size-12)] cursor-default rounded-[var(--lyra-radius-6)] bg-[var(--lyra-settings-muted-bg)]";
+export const AC_HEATMAP_CELL_EMPTY_CLASS = "lyra-account-heatmap-cell-empty invisible";
+
+const AC_HEATMAP_LEVEL_BG = [
+  "",
+  "bg-[color-mix(in_srgb,var(--lyra-settings-primary-button)_24%,var(--lyra-settings-muted-bg))]",
+  "bg-[color-mix(in_srgb,var(--lyra-settings-primary-button)_42%,var(--lyra-settings-muted-bg))]",
+  "bg-[color-mix(in_srgb,var(--lyra-settings-primary-button)_60%,var(--lyra-settings-muted-bg))]",
+  "bg-[color-mix(in_srgb,var(--lyra-settings-primary-button)_78%,var(--lyra-settings-muted-bg))]",
+  "bg-[var(--lyra-settings-primary-button)]"
+] as const;
+
+export const acHeatmapLevelClass = (level: number): string =>
+  `lyra-account-heatmap-level-${level} ${AC_HEATMAP_LEVEL_BG[level] ?? ""}`;
+
+export const AC_HEATMAP_TOOLTIP_CLASS =
+  "lyra-account-heatmap-tooltip pointer-events-none absolute z-[4] max-w-[var(--lyra-unit-260)] -translate-x-1/2 -translate-y-[calc(100%+var(--lyra-space-8))] whitespace-nowrap rounded-[var(--lyra-settings-radius-control)] border border-[var(--lyra-stroke-thin)] border-[var(--lyra-settings-border-strong)] bg-[var(--lyra-settings-panel-bg)] px-[var(--lyra-space-10)] py-[var(--lyra-space-6)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-caption)] [box-shadow:var(--lyra-shadow-elevated-sm)]";
+
+export const AC_WEEK_CHART_CLASS =
+  "lyra-account-week-chart flex h-[var(--lyra-unit-112)] items-end gap-[var(--lyra-space-3)] overflow-hidden";
+export const AC_WEEK_BAR_CLASS =
+  "lyra-account-week-bar min-w-[var(--lyra-space-6)] flex-1 rounded-t-[var(--lyra-radius-6)] bg-[var(--lyra-settings-primary-button)] opacity-[var(--lyra-opacity-lifted)]";
+
+export const AC_DETAIL_GRID_CLASS = "lyra-account-detail-grid grid min-w-0 grid-cols-2 gap-[var(--lyra-space-18)]";
+
+export const AC_STAT_LIST_CLASS =
+  "lyra-account-stat-list mt-[var(--lyra-space-14)] grid gap-[var(--lyra-space-10)] [&_div]:flex [&_div]:min-w-0 [&_div]:items-center [&_div]:justify-between [&_div]:gap-[var(--lyra-space-12)] [&_dt]:text-[var(--lyra-text-secondary)] [&_dd]:m-0 [&_dd]:text-[var(--lyra-text-primary)] [&_dd]:tabular-nums";
+
+export const AC_MUTED_CLASS = "lyra-account-muted text-[var(--lyra-text-muted)]";
+
+export const AC_MODEL_LIST_CLASS =
+  "lyra-account-model-list mt-[var(--lyra-space-14)] grid list-none gap-[var(--lyra-space-12)] p-0 [&_li]:flex [&_li]:min-w-0 [&_li]:items-center [&_li]:justify-between [&_li]:gap-[var(--lyra-space-12)] [&_li>span:first-child]:grid [&_li>span:first-child]:min-w-0 [&_li>span:first-child]:gap-[var(--lyra-space-2)] [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_small]:overflow-hidden [&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_small]:text-[var(--lyra-text-muted)] [&_small]:text-[length:var(--lyra-text-size-caption)] [&_li>span:last-child]:text-[var(--lyra-text-muted)] [&_li>span:last-child]:text-[length:var(--lyra-text-size-caption)]";
