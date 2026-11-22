@@ -38,6 +38,16 @@ const normalizeSpinDuration = (
   return DEFAULT_SPIN_DURATION_MS[motion][intensity];
 };
 
+const BL_BASE_CLASS =
+  "lyra-brand-logo relative block size-[var(--lyra-space-16)] bg-current [-webkit-mask-image:var(--lyra-brand-logo-url)] [mask-image:var(--lyra-brand-logo-url)] [-webkit-mask-repeat:no-repeat] [mask-repeat:no-repeat] [-webkit-mask-position:center] [mask-position:center] [-webkit-mask-size:contain] [mask-size:contain]";
+const BL_SPIN_CLASS =
+  "lyra-brand-logo-spin origin-center animate-[lyra-brand-logo-smart-spin_var(--lyra-brand-logo-spin-duration,14000ms)_linear_infinite] [will-change:transform] motion-reduce:animate-none motion-reduce:[will-change:auto]";
+const BL_SPIN_ACTIVE_CLASS =
+  "lyra-brand-logo-spin-active [animation-timing-function:var(--lyra-ease-standard)]";
+const BL_SPIN_SUBTLE_CLASS = "lyra-brand-logo-spin-subtle opacity-[0.92]";
+const BL_SPIN_EXPRESSIVE_CLASS =
+  "lyra-brand-logo-spin-expressive [animation-timing-function:var(--lyra-ease-emphasized)]";
+
 export const LyraBrandLogo = ({
   logoUrl,
   className,
@@ -62,9 +72,11 @@ export const LyraBrandLogo = ({
     <span
       aria-hidden="true"
       className={[
-        "lyra-brand-logo",
-        isRotating ? "lyra-brand-logo-spin" : "",
-        isRotating ? `lyra-brand-logo-spin-${motion}` : "",
+        BL_BASE_CLASS,
+        isRotating ? BL_SPIN_CLASS : "",
+        isRotating ? BL_SPIN_ACTIVE_CLASS : "",
+        isRotating && spinIntensity === "subtle" ? BL_SPIN_SUBTLE_CLASS : "",
+        isRotating && spinIntensity === "expressive" ? BL_SPIN_EXPRESSIVE_CLASS : "",
         isRotating ? `lyra-brand-logo-spin-${spinIntensity}` : "",
         className
       ]
