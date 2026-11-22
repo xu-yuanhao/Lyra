@@ -82,7 +82,7 @@ describe("ProblemsList", () => {
     );
     expect(screen.getByText("f-000.ts")).toBeInTheDocument();
     expect(screen.getByText("err-000")).toBeInTheDocument();
-    const mounted = document.querySelectorAll(".lyra-problems-row").length;
+    const mounted = document.querySelectorAll('[role="treeitem"]').length;
     expect(mounted).toBeGreaterThan(20);
     expect(mounted).toBeLessThan(200);
     expect(screen.queryByText("f-199.ts")).toBeNull();

@@ -7,7 +7,7 @@ import {
   XCircle
 } from "@lyra/icons";
 import { FileTypeIcon } from "@lyra/icons/file-type";
-import { AppButton, AppEmptyState } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
 
 import type { LspDiagnostic } from "../../../shared/desktop-bridge";
 import {
@@ -20,14 +20,22 @@ import { flattenProblemsRows, groupDiagnosticsByFile } from "./problems";
 const PROBLEMS_ROW_HEIGHT_PX = 22;
 const PROBLEMS_LIST_VIEWPORT_FALLBACK_PX = 600;
 
-const severityClass = (severity: number): string => {
+const LIST_CLASS =
+  "h-full min-h-0 min-w-0 overflow-auto py-[var(--lyra-space-4)] text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-18)]";
+const ROW_CLASS =
+  "grid h-[var(--lyra-control-h-24)] w-full min-w-0 cursor-pointer justify-start gap-[var(--lyra-space-6)] rounded-none border-0 bg-transparent px-[var(--lyra-space-8)] py-0 text-left font-normal whitespace-normal text-inherit hover:bg-[var(--lyra-app-row-hover-bg)]";
+const FILE_ROW_CLASS = `${ROW_CLASS} grid-cols-[var(--lyra-icon-size-16)_var(--lyra-icon-size-16)_max-content_minmax(0,1fr)_auto]`;
+const ITEM_ROW_CLASS = `${ROW_CLASS} grid-cols-[var(--lyra-icon-size-16)_minmax(0,1fr)_auto_auto] pl-[calc(var(--lyra-space-8)+var(--lyra-icon-size-16)+var(--lyra-space-6))]`;
+const MUTED_TEXT_CLASS = "text-[length:var(--lyra-text-size-12)] whitespace-nowrap text-[var(--lyra-text-muted)]";
+
+const severityTextClass = (severity: number): string => {
   if (severity <= 1) {
-    return "lyra-problems-error";
+    return "text-[var(--lyra-status-error)]";
   }
   if (severity === 2) {
-    return "lyra-problems-warning";
+    return "text-[var(--lyra-status-warning)]";
   }
-  return "lyra-problems-info";
+  return "text-[var(--lyra-text-secondary)]";
 };
 
 const SeverityIcon = ({ severity }: { readonly severity: number }) => {
@@ -115,8 +123,8 @@ export const ProblemsList = ({
 
   if (items.length === 0) {
     return (
-      <div className="lyra-bottom-aux-list lyra-problems-tree" role="tree" aria-label={listLabel}>
-        <AppEmptyState title={emptyLabel} />
+      <div className={`${LIST_CLASS} grid place-items-center`} role="tree" aria-label={listLabel}>
+        <span className="text-sm text-muted-foreground">{emptyLabel}</span>
       </div>
     );
   }
@@ -125,11 +133,11 @@ export const ProblemsList = ({
     if (row.kind === "file") {
       const expanded = collapsed.has(row.group.filePath) === false;
       return (
-        <AppButton
+        <Button
           variant="ghost"
           key={row.key}
           type="button"
-          className="lyra-problems-row lyra-problems-file"
+          className={FILE_ROW_CLASS}
           role="treeitem"
           aria-expanded={expanded}
           onClick={() => {
@@ -142,18 +150,20 @@ export const ProblemsList = ({
             <ChevronRight size={13} aria-hidden="true" />
           )}
           <FileTypeIcon name={row.group.fileName} size={16} />
-          <span className="lyra-problems-file-name">{row.group.fileName}</span>
-          <span className="lyra-problems-file-dir">{row.group.directoryLabel}</span>
-          <span className="lyra-problems-count">{row.group.items.length}</span>
-        </AppButton>
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap">{row.group.fileName}</span>
+          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[var(--lyra-text-muted)]">{row.group.directoryLabel}</span>
+          <span className="min-w-[var(--lyra-icon-size-16)] rounded-[var(--lyra-radius-pill)] bg-[var(--lyra-app-row-active-bg)] px-[var(--lyra-space-4)] text-center text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-16)] text-[var(--lyra-text-secondary)] tabular-nums">
+            {row.group.items.length}
+          </span>
+        </Button>
       );
     }
     return (
-      <AppButton
+      <Button
         variant="ghost"
         key={row.key}
         type="button"
-        className={`lyra-problems-row lyra-problems-item ${severityClass(row.item.severity)}`}
+        className={ITEM_ROW_CLASS}
         role="treeitem"
         onClick={() => {
           onOpenFile(row.item.filePath, {
@@ -162,24 +172,24 @@ export const ProblemsList = ({
           });
         }}
       >
-        <span className="lyra-problems-severity">
+        <span className={`inline-flex items-center justify-center ${severityTextClass(row.item.severity)}`}>
           <SeverityIcon severity={row.item.severity} />
         </span>
-        <span className="lyra-problems-message">{row.item.message}</span>
-        <span className="lyra-problems-source">{row.item.source ?? ""}</span>
-        <span className="lyra-problems-location">
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{row.item.message}</span>
+        <span className={MUTED_TEXT_CLASS}>{row.item.source ?? ""}</span>
+        <span className={MUTED_TEXT_CLASS}>
           {`[Ln ${row.item.startLine + 1}, Col ${row.item.startCharacter + 1}]`}
         </span>
-      </AppButton>
+      </Button>
     );
   });
   const body = windowed.virtualized ? (
     <div
-      className="lyra-problems-virtual"
+      className="relative w-full"
       style={{ height: windowed.totalHeight } as CSSProperties}
     >
       <div
-        className="lyra-problems-virtual-window"
+        className="absolute inset-x-0"
         style={{ transform: `translateY(${windowed.offsetY}px)` } as CSSProperties}
       >
         {rendered}
@@ -188,12 +198,7 @@ export const ProblemsList = ({
   ) : rendered;
 
   return (
-    <div
-      ref={listRef}
-      className="lyra-bottom-aux-list lyra-problems-tree"
-      role="tree"
-      aria-label={listLabel}
-    >
+    <div ref={listRef} className={LIST_CLASS} role="tree" aria-label={listLabel}>
       {body}
     </div>
   );
