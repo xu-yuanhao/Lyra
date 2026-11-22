@@ -21,6 +21,11 @@ import { useLyraStreamdownPlugins } from "./streamdown-plugins";
 import { ChatMediaLayout } from "../media";
 import { scanMarkdownMediaTokens } from "../media/layout";
 import { useWebLinkClipboard } from "../chat/web-link-clipboard";
+import {
+  RT_RICH_TEXT_CLASS,
+  RT_STREAMDOWN_CLASS,
+  RT_STREAMDOWN_CHUNKS_CLASS,
+} from "./classes";
 
 const emptyMediaTokens: ReturnType<typeof scanMarkdownMediaTokens> = [];
 const ArrangeMediaContext = createContext(false);
@@ -132,7 +137,7 @@ export function LyraMarkdown({
 }: LyraMarkdownProps) {
   useWebLinkClipboard();
   const plugins = useLyraStreamdownPlugins();
-  const classes = ["lyra-agents-rich-text", "lyra-agents-streamdown", className]
+  const classes = [RT_RICH_TEXT_CLASS, RT_STREAMDOWN_CLASS, className]
     .filter(Boolean)
     .join(" ");
   const latexContent = useMemo(() => normalizeAiLatex(content), [content]);
@@ -184,7 +189,7 @@ export function LyraMarkdown({
   ) : chunks.settled.length === 0 ? (
     streamdown(latexContent, documentKey, streaming, classes)
   ) : (
-    <div className={`${classes} lyra-agents-streamdown-chunks`}>
+    <div className={`${classes} ${RT_STREAMDOWN_CHUNKS_CLASS}`}>
       {chunks.settled.map((block, index) =>
         streamdown(block, `${documentKey ?? "md"}:${index}`, false)
       )}

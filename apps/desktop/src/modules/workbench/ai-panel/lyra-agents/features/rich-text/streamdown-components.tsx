@@ -28,6 +28,10 @@ import { AdaptiveImage } from "../media";
 import { imageAttachmentFromSrc } from "../media/layout";
 import { WebsiteLinkIcon } from "../chat/page-citation-tab-icon";
 import { websiteLinkLabel } from "../chat/web-link-display";
+import {
+  RT_MD_LINK_CLASS,
+  RT_MD_URL_LINK_CLASS,
+} from "./classes";
 
 // ---- Image safety + local path rewrite (ported from @lyra/markdown-render) ----
 
@@ -215,8 +219,8 @@ export function LyraLink({
     return <>{children}</>;
   }
   const classes = [
-    "lyra-agents-md-link",
-    isWebsite ? "lyra-agents-md-url-link" : "",
+    RT_MD_LINK_CLASS,
+    isWebsite ? RT_MD_URL_LINK_CLASS : "",
     isWebsite ? "lyra-agents-inline-resource" : "",
     className
   ].filter(Boolean).join(" ");

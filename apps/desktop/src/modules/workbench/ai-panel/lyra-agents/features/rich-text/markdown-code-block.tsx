@@ -5,6 +5,13 @@ import { AppButton } from "@renderer/ui/components";
 import { t } from "@workbench/i18n";
 import { writeClipboardText } from "../../../../../../shared/clipboard";
 import { MarkdownCitationButton } from "./markdown-citation";
+import {
+  RT_MARKDOWN_CODE_BLOCK_CLASS,
+  RT_MARKDOWN_CODE_HEADER_CLASS,
+  RT_MARKDOWN_CODE_LANGUAGE_CLASS,
+  RT_MARKDOWN_CODE_ACTIONS_CLASS,
+  RT_MARKDOWN_CODE_FEEDBACK_CLASS,
+} from "./classes";
 
 type CodeElementProps = ComponentProps<"code"> & { "data-block"?: string };
 export const MarkdownStreamingContext = createContext(false);
@@ -63,13 +70,13 @@ function MarkdownCodeBlock({ code, language, children }: {
   };
 
   return (
-    <div ref={rootRef} className="lyra-markdown-code-block" data-wrap={wrapped} dir="ltr">
-      <div className="lyra-markdown-code-header">
-        <span className="lyra-markdown-code-language">
+    <div ref={rootRef} className={RT_MARKDOWN_CODE_BLOCK_CLASS} data-wrap={wrapped} dir="ltr">
+      <div className={RT_MARKDOWN_CODE_HEADER_CLASS}>
+        <span className={RT_MARKDOWN_CODE_LANGUAGE_CLASS}>
           <CodeXml size={14} aria-hidden="true" />
           <span>{language || t("richText.codeBlock.text")}</span>
         </span>
-        <div className="lyra-markdown-code-actions">
+        <div className={RT_MARKDOWN_CODE_ACTIONS_CLASS}>
           <AppButton
             variant="ghost" size="icon"
             aria-label={t("richText.codeBlock.wrap")}
@@ -81,7 +88,7 @@ function MarkdownCodeBlock({ code, language, children }: {
             {result?.copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
           </AppButton>
           <MarkdownCitationButton getTarget={() => rootRef.current?.querySelector("pre code") ?? null} getQuote={() => code} />
-          <span className="lyra-markdown-code-feedback" role="status">
+          <span className={RT_MARKDOWN_CODE_FEEDBACK_CLASS} role="status">
             {result === null ? "" : copyLabel}
           </span>
         </div>

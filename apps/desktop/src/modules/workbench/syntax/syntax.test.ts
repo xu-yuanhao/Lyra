@@ -38,11 +38,17 @@ describe("syntax palette", () => {
   });
 
   test("chat and source CSS actually paint Shiki token variables", () => {
-    const css = readFileSync(
-      resolve(here, "../../../renderer/styles/agents.scss"),
+    const chatClasses = readFileSync(
+      resolve(here, "../ai-panel/lyra-agents/features/rich-text/classes.ts"),
       "utf8"
     );
-    expect(css).toContain("color: var(--sdm-c, inherit);");
-    expect(css).toContain("color: var(--shiki-dark, var(--sdm-c, inherit));");
+    const source = readFileSync(
+      resolve(here, "highlighted-source.tsx"),
+      "utf8"
+    );
+    expect(chatClasses).toContain("var(--sdm-c,inherit)");
+    expect(chatClasses).toContain("var(--shiki-dark,var(--sdm-c,inherit))");
+    expect(source).toContain("var(--sdm-c,inherit)");
+    expect(source).toContain("var(--shiki-dark,var(--sdm-c,inherit))");
   });
 });

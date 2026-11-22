@@ -5,6 +5,10 @@ import { parseWorkbenchPathTarget } from "../../../lyra-agent-data-provider-runt
 import { useData } from "../../data/DataProvider";
 import { AppButton } from "@renderer/ui/components";
 import { t } from "@workbench/i18n";
+import {
+  RT_ACTION_TEXT_LINK_CLASS,
+  RT_ACTION_TEXT_LINK_SECRET_CLASS,
+} from "./classes";
 
 export type ActionTarget = ToolActionTarget;
 
@@ -327,7 +331,7 @@ export function ActionText({ text }: { readonly text: string }) {
           <AppButton variant="ghost" size="sm"
             key={index}
             type="button"
-            className={`lyra-agents-action-text-link action-text-link-${target.kind}`}
+            className={`${RT_ACTION_TEXT_LINK_CLASS} action-text-link-${target.kind}`}
             title={target.value}
             onClick={open}
           >
@@ -376,7 +380,7 @@ export function ActionTargetButton({
   return (
     <AppButton variant="ghost" size="sm"
       type="button"
-      className={className ?? `lyra-agents-action-text-link action-text-link-${target.kind}`}
+      className={className ?? `${RT_ACTION_TEXT_LINK_CLASS} action-text-link-${target.kind}`}
       title={target.value}
       onClick={open}
     >
@@ -423,7 +427,7 @@ export function ActionTargetList({
     return null;
   }
   return (
-    <div className={className ?? "lyra-agents-tool-action-targets"}>
+    <div className={className ?? RT_TOOL_ACTION_TARGETS_CLASS}>
       {openableTargets.map((target) => {
         const open = () => {
           if (target.kind === "secret") {
@@ -460,7 +464,7 @@ export function ActionTargetList({
           <AppButton variant="ghost" size="sm"
             key={`${target.kind}:${target.value}`}
             type="button"
-            className={`lyra-agents-action-text-link action-text-link-${target.kind}`}
+            className={`${RT_ACTION_TEXT_LINK_CLASS} action-text-link-${target.kind}`}
             title={target.value}
             onClick={open}
           >
@@ -506,7 +510,7 @@ function SecretActionTargetButton({
     <span className="action-text-secret">
       <AppButton variant="ghost" size="sm"
         type="button"
-        className="lyra-agents-action-text-link lyra-agents-action-text-link-secret"
+        className={`${RT_ACTION_TEXT_LINK_CLASS} ${RT_ACTION_TEXT_LINK_SECRET_CLASS}`}
         title={target.value}
         onClick={revealedValue === null ? reveal : copy}
         disabled={busy || ref === undefined}

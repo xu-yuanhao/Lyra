@@ -60,7 +60,7 @@ export function HighlightedSource({
   }, [code, language]);
 
   return (
-    <pre className={["lyra-syntax-source", className].filter(Boolean).join(" ")} data-language={language}>
+    <pre className={["lyra-syntax-source [&_span]:text-[color:var(--sdm-c,inherit)] dark:[&_span]:text-[color:var(--shiki-dark,var(--sdm-c,inherit))]", className].filter(Boolean).join(" ")} data-language={language}>
       <code>
         {tokens.map((line, lineIndex) => (
           <span className="lyra-syntax-source-line" key={lineIndex}>
