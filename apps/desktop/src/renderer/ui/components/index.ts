@@ -81,21 +81,13 @@ export {
   AppStatusProvider,
   isIgnoredWorkbenchWindowError,
   reportWorkbenchError,
-  reportWorkbenchStatus
+  reportWorkbenchStatus,
+  type AppToastTone
 } from "./app-status-host";
 export { AppSurfaceHeader, type AppSurfaceHeaderProps } from "./app-surface-header";
 export { AppSwitch, type AppSwitchProps } from "./app-switch";
 export { AppTabs, type AppTabOption, type AppTabsProps } from "./app-tabs";
 export { AppTooltip, type AppTooltipProps } from "./app-tooltip";
-export {
-  AppToast,
-  AppToastProvider,
-  AppToastViewport,
-  type AppToastProps,
-  type AppToastProviderProps,
-  type AppToastTone,
-  type AppToastViewportProps
-} from "./app-toast";
 export { AppToolbarButton, type AppToolbarButtonProps } from "./app-toolbar-button";
 export {
   AppWindowButton,

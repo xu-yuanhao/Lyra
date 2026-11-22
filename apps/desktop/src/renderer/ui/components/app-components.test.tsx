@@ -22,9 +22,6 @@ import {
   AppSwitch,
   AppTabs,
   AppTooltip,
-  AppToast,
-  AppToastProvider,
-  AppToastViewport,
   AppToolbarButton,
   AppWindowButton,
 } from ".";
@@ -286,20 +283,6 @@ describe("Lyra App UI components", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Close dialog" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
-  });
-
-  test("renders toast rows through the Lyra wrapper surface", () => {
-    render(
-      <AppToastProvider>
-        <AppToast open tone="success" title="Saved" description="Preferences updated." />
-        <AppToastViewport />
-      </AppToastProvider>
-    );
-
-    const toast = screen.getByText("Saved").closest(".lyra-app-toast");
-    expect(toast).not.toBeNull();
-    expect(toast).toHaveAttribute("data-tone", "success");
-    expect(screen.getByText("Preferences updated.")).toHaveClass("lyra-ui-toast-description");
   });
 
   test("renders empty, loading, and error states with stable classes", () => {

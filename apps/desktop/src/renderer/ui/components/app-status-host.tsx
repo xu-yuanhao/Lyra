@@ -1,13 +1,11 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-  type ReactNode
-} from "react";
+import { useEffect, type ReactNode } from "react";
+import { toast } from "sonner";
 
 import { t } from "@workbench/i18n";
 
-import { AppToast, AppToastProvider, AppToastViewport, type AppToastTone } from "./app-toast";
+import { Toaster } from "./sonner";
+
+export type AppToastTone = "neutral" | "info" | "success" | "warning" | "error";
 
 type AppStatusNotice = {
   readonly description?: string;
@@ -57,6 +55,29 @@ export const isIgnoredWorkbenchWindowError = (
   return RESIZE_OBSERVER_LOOP_RE.test(message);
 };
 
+const showNotice = (notice: AppStatusNotice): void => {
+  const options = {
+    description: notice.description,
+    duration: 5_000
+  };
+  switch (notice.tone) {
+    case "success":
+      toast.success(notice.title, options);
+      break;
+    case "warning":
+      toast.warning(notice.title, options);
+      break;
+    case "error":
+      toast.error(notice.title, options);
+      break;
+    case "info":
+      toast.info(notice.title, options);
+      break;
+    default:
+      toast(notice.title, options);
+  }
+};
+
 export const reportWorkbenchStatus = (
   notice: Omit<AppStatusNotice, "id">
 ): void => {
@@ -97,14 +118,7 @@ const subscribe = (listener: AppStatusListener): (() => void) => {
 };
 
 export function AppStatusProvider({ children }: { readonly children: ReactNode }) {
-  const [notices, setNotices] = useState<readonly AppStatusNotice[]>([]);
-  const dismiss = useCallback((id: string) => {
-    setNotices((current) => current.filter((notice) => notice.id !== id));
-  }, []);
-
-  useEffect(() => subscribe((notice) => {
-    setNotices((current) => [...current.slice(-3), notice]);
-  }), []);
+  useEffect(() => subscribe(showNotice), []);
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {
@@ -125,23 +139,9 @@ export function AppStatusProvider({ children }: { readonly children: ReactNode }
   }, []);
 
   return (
-    <AppToastProvider duration={5_000}>
+    <>
       {children}
-      {notices.map((notice) => (
-        <AppToast
-          key={notice.id}
-          open
-          tone={notice.tone}
-          title={notice.title}
-          description={notice.description}
-          onOpenChange={(open) => {
-            if (!open) {
-              dismiss(notice.id);
-            }
-          }}
-        />
-      ))}
-      <AppToastViewport />
-    </AppToastProvider>
+      <Toaster position="bottom-right" visibleToasts={4} />
+    </>
   );
 }
