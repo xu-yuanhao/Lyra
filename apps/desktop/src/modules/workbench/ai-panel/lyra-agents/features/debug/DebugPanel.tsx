@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Bug } from "@lyra/icons";
 import { t } from "@workbench/i18n";
-import { AppButton, AppCheckbox } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
+import { Checkbox } from "@renderer/ui/components/checkbox";
+import { Label } from "@renderer/ui/components/label";
 
 /**
  * Floating debug panel (top-right corner) for local panel diagnostics.
@@ -22,32 +24,32 @@ export function DebugPanel({
 
   return (
     <div className="lyra-agents-debug-panel">
-      <AppButton variant="ghost" size="sm"
+      <Button variant="ghost" size="sm"
         type="button"
         className="lyra-agents-debug-toggle"
         onClick={() => setOpen((v) => !v)}
         aria-label={t("debug.title")}
       >
         <Bug size={14} strokeWidth={2} />
-      </AppButton>
+      </Button>
 
       {open && (
         <div className="lyra-agents-debug-body">
           <div className="lyra-agents-debug-title">{t("debug.title")}</div>
-          <label className="lyra-agents-debug-row">
-            <AppCheckbox
+          <Label className="lyra-agents-debug-row">
+            <Checkbox
               checked={decisionsVisible}
               onCheckedChange={onToggleDecisions}
             />
             <span>{t("debug.decisions")}</span>
-          </label>
-          <label className="lyra-agents-debug-row">
-            <AppCheckbox
+          </Label>
+          <Label className="lyra-agents-debug-row">
+            <Checkbox
               checked={permissionVisible}
               onCheckedChange={onTogglePermission}
             />
             <span>{t("debug.permission")}</span>
-          </label>
+          </Label>
         </div>
       )}
     </div>

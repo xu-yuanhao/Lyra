@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { GitBranch } from "@lyra/icons";
 import { FileTypeIcon } from "../../components/FileTypeIcon";
-import { AppButton } from "@renderer/ui/components";
+import { Button } from "@renderer/ui/components/button";
 
 export interface DiffFileEntry {
   file: string;
@@ -28,7 +28,7 @@ export function DiffStats({
 
   return (
     <div className={`lyra-agents-diff-stats-pill ${open ? "open" : ""}`}>
-      <AppButton variant="ghost" size="sm"
+      <Button variant="ghost" size="sm"
         type="button"
         className="lyra-agents-diff-stats-pill-head"
         onClick={() => setOpen((v) => !v)}
@@ -40,7 +40,7 @@ export function DiffStats({
           <span className="lyra-agents-diff-del">-{totalDel}</span>
         </span>
         <span className="lyra-agents-diff-stats-count">{files.length} files</span>
-      </AppButton>
+      </Button>
 
       <div className="lyra-agents-diff-stats-collapse" data-open={open}>
         <div className="lyra-agents-diff-stats-collapse-inner">
