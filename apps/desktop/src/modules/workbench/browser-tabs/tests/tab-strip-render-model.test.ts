@@ -17,6 +17,9 @@ const createTab = (
   query: undefined
 });
 
+const hasClassToken = (className: string | undefined, token: string): boolean =>
+  className?.split(/\s+/).includes(token) === true;
+
 const baseInput = {
   splitGroupTabIds: [] as readonly string[],
   closeTabLabel: "Close",
@@ -42,8 +45,8 @@ describe("browser tab strip render model", () => {
     expect(model.stripClassName).toContain("lyra-tab-strip");
     expect(model.stripClassName).not.toContain("lyra-browser-tab-strip-stacked");
     expect(model.stripClassName).not.toContain("lyra-browser-tab-strip-density");
-    expect(model.tabs[0]?.tabClassName).toContain("lyra-tab-item-active");
-    expect(model.tabs[0]?.tabClassName).toContain("lyra-browser-tab-item-active");
+    expect(hasClassToken(model.tabs[0]?.tabClassName, "lyra-tab-item-active")).toBe(true);
+    expect(hasClassToken(model.tabs[0]?.tabClassName, "lyra-browser-tab-item-active")).toBe(true);
     expect(model.tabs[0]?.showClose).toBe(true);
     expect(model.tabs[1]?.showClose).toBe(true);
     expect(model.tabs[1]?.closeLabel).toBe("Close-Docs");
@@ -71,13 +74,13 @@ describe("browser tab strip render model", () => {
       splitGroupTabIds: ["b", "c"]
     });
 
-    expect(model.tabs[1]?.tabClassName).toContain("lyra-browser-tab-item-split-group-active");
-    expect(model.tabs[1]?.tabClassName).toContain("lyra-browser-tab-item-split-joined-next");
-    expect(model.tabs[1]?.tabClassName).toContain("lyra-tab-item-active");
-    expect(model.tabs[1]?.tabMainClassName).toContain("lyra-browser-tab-main-split-focused");
-    expect(model.tabs[2]?.tabClassName).toContain("lyra-browser-tab-item-split-group-active");
-    expect(model.tabs[2]?.tabClassName).not.toContain("lyra-tab-item-active");
-    expect(model.tabs[2]?.tabMainClassName).not.toContain("lyra-browser-tab-main-split-focused");
+    expect(hasClassToken(model.tabs[1]?.tabClassName, "lyra-browser-tab-item-split-group-active")).toBe(true);
+    expect(hasClassToken(model.tabs[1]?.tabClassName, "lyra-browser-tab-item-split-joined-next")).toBe(true);
+    expect(hasClassToken(model.tabs[1]?.tabClassName, "lyra-tab-item-active")).toBe(true);
+    expect(hasClassToken(model.tabs[1]?.tabMainClassName, "lyra-browser-tab-main-split-focused")).toBe(true);
+    expect(hasClassToken(model.tabs[2]?.tabClassName, "lyra-browser-tab-item-split-group-active")).toBe(true);
+    expect(hasClassToken(model.tabs[2]?.tabClassName, "lyra-tab-item-active")).toBe(false);
+    expect(hasClassToken(model.tabs[2]?.tabMainClassName, "lyra-browser-tab-main-split-focused")).toBe(false);
   });
 
   test("marks close lock width on the strip", () => {
@@ -126,9 +129,9 @@ describe("browser tab strip render model", () => {
     expect(model.navClassName).toContain("lyra-browser-tabs-reorder-active");
     expect(model.navClassName).toContain("lyra-browser-tabs-split-drop-active");
     expect(model.navStyle).toEqual({ "--lyra-browser-drop-indicator-x": "42px" });
-    expect(model.tabs[0]?.tabClassName).toContain("lyra-browser-tab-item-dragging");
-    expect(model.tabs[0]?.tabClassName).toContain("lyra-browser-tab-item-split-group-dragging");
-    expect(model.tabs[1]?.tabClassName).toContain("lyra-browser-tab-item-split-target");
+    expect(hasClassToken(model.tabs[0]?.tabClassName, "lyra-browser-tab-item-dragging")).toBe(true);
+    expect(hasClassToken(model.tabs[0]?.tabClassName, "lyra-browser-tab-item-split-group-dragging")).toBe(true);
+    expect(hasClassToken(model.tabs[1]?.tabClassName, "lyra-browser-tab-item-split-target")).toBe(true);
     expect(model.preview).toMatchObject({
       tab: expect.objectContaining({ id: "a" }),
       shellStyle: { transform: "translate(114px, 210px)" },

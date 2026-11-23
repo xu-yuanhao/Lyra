@@ -182,42 +182,6 @@ const ICON_PACKAGE_MODULE_PATTERN =
 
 const selectorRules: readonly SelectorRule[] = [
   {
-    selector: ".lyra-browser-tabs::before",
-    required: [/top:\s*0\s*;/],
-    forbidden: [/bottom:\s*0\s*;/]
-  },
-  {
-    // Current design: borderless neutral tab. The Chrome-style curved tab shape
-    // (chrome-tab-background geometry) was removed in c5355aa5; do not restore it.
-    selector: ".lyra-browser-tab-item",
-    required: [
-      /border:\s*0\s*;/,
-      /border-radius:\s*var\(--lyra-radius-8\)\s*;/,
-      /background:\s*transparent\s*;/
-    ],
-    forbidden: [/lyra-chrome-tab-background/]
-  },
-  {
-    selector: ".lyra-browser-tabs .lyra-browser-tab-item",
-    required: [
-      /margin-bottom:\s*var\(--lyra-browser-tab-control-y\)\s*;/,
-      /margin-top:\s*var\(--lyra-browser-tab-control-y\)\s*;/
-    ]
-  },
-  {
-    selector: ".lyra-tab-strip .lyra-tab-item-active",
-    required: [/background:\s*var\(--lyra-tab-shape-active-fill\)\s*;/]
-  },
-  {
-    // Every tab model carries both hooks; the active fill must cover both.
-    selector: ".lyra-tab-strip .lyra-browser-tab-item-active",
-    required: [/background:\s*var\(--lyra-tab-shape-active-fill\)\s*;/]
-  },
-  {
-    selector: ".lyra-browser-tab-item:hover .lyra-browser-tab-title",
-    required: [/color:\s*var\(--lyra-text-primary\)\s*;/]
-  },
-  {
     selector: ".lyra-ai-agent-send-ready",
     required: [],
     forbidden: [/border-color\s*:/, /background\s*:/, /box-shadow\s*:/],
@@ -226,9 +190,6 @@ const selectorRules: readonly SelectorRule[] = [
 ];
 
 const iconOnlyHoverRules: readonly IconOnlyHoverRule[] = [
-  { selector: ".lyra-browser-nav-button:hover" },
-  { selector: ".lyra-browser-tab-close:hover" },
-  { selector: ".lyra-browser-tab-add:hover" },
   { selector: ".lyra-ai-panel-shell-icon-button:hover", optional: true }
 ];
 

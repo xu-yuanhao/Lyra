@@ -3,6 +3,15 @@ import type { CSSProperties } from "react";
 import { APP_TAB_ITEM_CLASS, APP_TAB_MAIN_CLASS } from "@renderer/ui/components";
 
 import { cx } from "../ui-primitives";
+import {
+  BROWSER_TAB_ITEM_CLASS,
+  BROWSER_TAB_MAIN_CLASS,
+  BROWSER_TAB_STRIP_CLASS,
+  BROWSER_TABS_CLASS,
+  BROWSER_TABS_REORDER_CLASS,
+  BROWSER_TABS_SPLIT_DROP_CLASS,
+  BROWSER_TABS_TERMINAL_DROP_CLASS
+} from "./classes";
 import type { WorkspaceTab } from "../workspace-tabs/types";
 import type { RightDragPreview } from "./tab-strip-types";
 
@@ -90,7 +99,7 @@ export const createBrowserTabStripRenderModel = ({
       showClose,
       tabClassName: cx(
         APP_TAB_ITEM_CLASS,
-        "lyra-browser-tab-item",
+        BROWSER_TAB_ITEM_CLASS,
         "lyra-browser-tab-item-drag-enabled",
         "lyra-allow-web-drag",
         isActive && "lyra-tab-item-active",
@@ -106,7 +115,7 @@ export const createBrowserTabStripRenderModel = ({
       ),
       tabMainClassName: cx(
         APP_TAB_MAIN_CLASS,
-        "lyra-browser-tab-main",
+        BROWSER_TAB_MAIN_CLASS,
         isFocusedTabInActiveSplitGroup && "lyra-browser-tab-main-split-focused"
       )
     };
@@ -142,15 +151,14 @@ export const createBrowserTabStripRenderModel = ({
 
   return {
     navClassName: cx(
-      "lyra-browser-tabs",
-      isTerminalDropActive && "lyra-browser-tabs-terminal-drop-target",
-      dropIndicatorX !== null && "lyra-browser-tabs-reorder-active",
-      isSplitDropActive && "lyra-browser-tabs-split-drop-active"
+      BROWSER_TABS_CLASS,
+      isTerminalDropActive && BROWSER_TABS_TERMINAL_DROP_CLASS,
+      dropIndicatorX !== null && BROWSER_TABS_REORDER_CLASS,
+      isSplitDropActive && BROWSER_TABS_SPLIT_DROP_CLASS
     ),
     navStyle: Object.keys(navStyle).length === 0 ? undefined : navStyle,
     stripClassName: cx(
-      "lyra-tab-strip",
-      "lyra-browser-tab-strip",
+      BROWSER_TAB_STRIP_CLASS,
       workspaceDragTabId !== null && "lyra-browser-tab-strip-sorting",
       closeLockedTabWidth !== null && "lyra-tab-strip-close-lock"
     ),

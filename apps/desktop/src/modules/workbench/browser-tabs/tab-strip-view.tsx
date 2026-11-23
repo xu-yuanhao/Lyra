@@ -33,6 +33,30 @@ import { isAgentProjectTreeAppId, renderWorkspaceAppIcon } from "../workspace-ap
 import type { WorkspaceTab } from "../workspace-tabs/types";
 import { BrowserChromeSurface } from "./browser-chrome-surface";
 import type { BrowserTabStripRenderModel } from "./tab-strip-render-model";
+import {
+  BROWSER_NAV_BUTTON_CLASS,
+  BROWSER_TAB_ADD_CLASS,
+  BROWSER_TAB_APP_IDENTITY_ICON_CLASS,
+  BROWSER_TAB_CLOSE_CLASS,
+  BROWSER_TAB_FAVICON_CLASS,
+  BROWSER_TAB_FAVICON_FALLBACK_CLASS,
+  BROWSER_TAB_ICON_CLASS,
+  BROWSER_TAB_ICON_SVG_CLASS,
+  BROWSER_TAB_LIST_CLASS,
+  BROWSER_TAB_LYRA_LOGO_CLASS,
+  BROWSER_TAB_RIGHT_DRAG_PREVIEW_CLOSE_CLASS,
+  BROWSER_TAB_RIGHT_DRAG_PREVIEW_MAIN_CLASS,
+  BROWSER_TAB_RIGHT_DRAG_PREVIEW_SHELL_CLASS,
+  BROWSER_TAB_RIGHT_DRAG_PREVIEW_TAB_CLASS,
+  BROWSER_TAB_TERMINAL_ICON_CLASS,
+  BROWSER_TAB_TITLE_CLASS,
+  BROWSER_TABS_GRID_CLASS,
+  BROWSER_TABS_NAVIGATION_CLASS,
+  BROWSER_TABS_TOOLBAR_CLASS,
+  BROWSER_TABS_TOOLBAR_CONTEXT_CLASS,
+  BROWSER_TABS_TOOLBAR_CONTROLS_CLASS,
+  BROWSER_TABS_WITH_NAVIGATION_CLASS
+} from "./classes";
 import type { BrowserTabStripProps } from "./tab-strip-types";
 import type { BrowserTabStripRuntime } from "./use-browser-tab-strip-runtime";
 
@@ -72,7 +96,7 @@ type BrowserTabStripControlsProps = Pick<
 >;
 
 const BrowserTabDefaultIcon = () => (
-  <Globe size={14} className="lyra-browser-tab-icon-svg" />
+  <Globe size={14} className={BROWSER_TAB_ICON_SVG_CLASS} />
 );
 
 const handleFaviconLoad = (event: SyntheticEvent<HTMLImageElement>) => {
@@ -95,15 +119,15 @@ const BrowserTabIcon = ({
   const faviconUrl = tab.faviconUrl?.trim();
 
   if (tab.pageKind === "settings") {
-    return <Settings2 size={14} className="lyra-browser-tab-icon-svg" />;
+    return <Settings2 size={14} className={BROWSER_TAB_ICON_SVG_CLASS} />;
   }
 
   if (tab.pageKind === "results") {
-    return <Search size={14} className="lyra-browser-tab-icon-svg" />;
+    return <Search size={14} className={BROWSER_TAB_ICON_SVG_CLASS} />;
   }
 
   if (tab.pageKind === "search") {
-    return <House size={14} className="lyra-browser-tab-icon-svg" />;
+    return <House size={14} className={BROWSER_TAB_ICON_SVG_CLASS} />;
   }
 
   if (tab.pageKind === "terminal") {
@@ -112,14 +136,14 @@ const BrowserTabIcon = ({
       : terminalIdentityByTabId?.[tab.terminalTabId];
     return (
       <IdentityIconView
-        className="lyra-browser-tab-terminal-icon"
-        imageClassName="lyra-browser-tab-favicon"
+        className={BROWSER_TAB_TERMINAL_ICON_CLASS}
+        imageClassName={BROWSER_TAB_FAVICON_CLASS}
         iconUrl={icon?.url ?? null}
         label={icon?.label}
         fallback={
           icon?.renderHint === "lyra-logo"
-            ? <LyraLogo className="lyra-browser-tab-lyra-logo" alt="" />
-            : <SquareTerminal size={14} className="lyra-browser-tab-icon-svg" />
+            ? <LyraLogo className={BROWSER_TAB_LYRA_LOGO_CLASS} alt="" />
+            : <SquareTerminal size={14} className={BROWSER_TAB_ICON_SVG_CLASS} />
         }
       />
     );
@@ -130,13 +154,13 @@ const BrowserTabIcon = ({
     if (isAgentProjectTreeAppId(tab.appId)) {
       return (
         <IdentityIconView
-          className="lyra-browser-tab-app-identity-icon"
-          imageClassName="lyra-browser-tab-favicon"
+          className={BROWSER_TAB_APP_IDENTITY_ICON_CLASS}
+          imageClassName={BROWSER_TAB_FAVICON_CLASS}
           iconUrl={appIcon?.url ?? null}
           label={appIcon?.label}
           fallback={
             appIcon?.renderHint === "lyra-logo"
-              ? <LyraLogo className="lyra-browser-tab-lyra-logo" alt="" />
+              ? <LyraLogo className={BROWSER_TAB_LYRA_LOGO_CLASS} alt="" />
               : renderWorkspaceAppIcon(tab.appId, tab.appIconKey)
           }
         />
@@ -151,13 +175,13 @@ const BrowserTabIcon = ({
         <img
           src={faviconUrl}
           alt=""
-          className="lyra-browser-tab-favicon"
+          className={BROWSER_TAB_FAVICON_CLASS}
           loading="eager"
           decoding="async"
           onLoad={handleFaviconLoad}
           onError={handleFaviconError}
         />
-        <span className="lyra-browser-tab-favicon-fallback">
+        <span className={BROWSER_TAB_FAVICON_FALLBACK_CLASS}>
           <BrowserTabDefaultIcon />
         </span>
       </>
@@ -177,7 +201,7 @@ const BrowserTabStripControls = ({
 }: BrowserTabStripControlsProps) => (
   <>
     <AppIconButton
-      className="lyra-browser-nav-button"
+      className={BROWSER_NAV_BUTTON_CLASS}
       aria-label={goBackLabel}
       disabled={!canGoBack}
       onClick={onGoBack}
@@ -185,7 +209,7 @@ const BrowserTabStripControls = ({
       <ChevronLeft size={14} />
     </AppIconButton>
     <AppIconButton
-      className="lyra-browser-nav-button"
+      className={BROWSER_NAV_BUTTON_CLASS}
       aria-label={goForwardLabel}
       disabled={!canGoForward}
       onClick={onGoForward}
@@ -228,14 +252,14 @@ export const BrowserTabStripView = ({
   );
 
   const toolbar = hasNavigationControl ? (
-    <div className="lyra-browser-tabs-toolbar">
-      <div className="lyra-browser-tabs-toolbar-controls">
+    <div className={BROWSER_TABS_TOOLBAR_CLASS}>
+      <div className={BROWSER_TABS_TOOLBAR_CONTROLS_CLASS}>
         {navigationButtons}
       </div>
-      <div className="lyra-browser-tabs-navigation">
+      <div className={BROWSER_TABS_NAVIGATION_CLASS}>
         {navigationControl}
       </div>
-      <div className="lyra-browser-tabs-toolbar-context">
+      <div className={BROWSER_TABS_TOOLBAR_CONTEXT_CLASS}>
         {toolbarContextControl}
       </div>
     </div>
@@ -254,7 +278,7 @@ export const BrowserTabStripView = ({
         className={renderModel.stripClassName}
         onPointerLeave={onClearTabCloseLock}
       >
-        <div className="lyra-browser-tab-list">
+        <div className={BROWSER_TAB_LIST_CLASS}>
           {renderModel.tabs.map((tabModel) => (
             <div
               key={tabModel.tab.id}
@@ -320,18 +344,18 @@ export const BrowserTabStripView = ({
                   onActivateTab(tabModel.tab.id);
                 }}
               >
-                <span className="lyra-browser-tab-icon" aria-hidden="true">
+                <span className={BROWSER_TAB_ICON_CLASS} aria-hidden="true">
                   <BrowserTabIcon
                     tab={tabModel.tab}
                     terminalIdentityByTabId={terminalIdentityByTabId}
                     workspaceAppIdentityByTabId={workspaceAppIdentityByTabId}
                   />
                 </span>
-                <span className={`${APP_TAB_TITLE_CLASS} lyra-browser-tab-title`}>{tabModel.tab.title}</span>
+                <span className={`${APP_TAB_TITLE_CLASS} ${BROWSER_TAB_TITLE_CLASS}`}>{tabModel.tab.title}</span>
               </AppButton>
               {tabModel.showClose ? (
                 <AppIconButton
-                  className={`${APP_TAB_CLOSE_CLASS} lyra-browser-tab-close`}
+                  className={`${APP_TAB_CLOSE_CLASS} ${BROWSER_TAB_CLOSE_CLASS}`}
                   aria-label={tabModel.closeLabel}
                   draggable={false}
                   onPointerDown={(event) => {
@@ -355,7 +379,7 @@ export const BrowserTabStripView = ({
           ))}
         </div>
         <AppIconButton
-          className="lyra-tab-add lyra-browser-tab-add"
+          className={BROWSER_TAB_ADD_CLASS}
           aria-label={openNewTabLabel}
           onClick={onOpenNewTab}
         >
@@ -364,26 +388,26 @@ export const BrowserTabStripView = ({
       </div>
       {renderModel.preview !== null ? (
         <div
-          className="lyra-browser-tab-right-drag-preview-shell"
+          className={BROWSER_TAB_RIGHT_DRAG_PREVIEW_SHELL_CLASS}
           style={renderModel.preview.shellStyle}
           aria-hidden="true"
         >
           <div
-            className={renderModel.preview.tabClassName}
+            className={`${renderModel.preview.tabClassName} ${BROWSER_TAB_RIGHT_DRAG_PREVIEW_TAB_CLASS}`}
             style={renderModel.preview.tabStyle}
           >
-            <span className={renderModel.preview.mainClassName}>
-              <span className="lyra-browser-tab-icon" aria-hidden="true">
+            <span className={`${renderModel.preview.mainClassName} ${BROWSER_TAB_RIGHT_DRAG_PREVIEW_MAIN_CLASS}`}>
+              <span className={BROWSER_TAB_ICON_CLASS} aria-hidden="true">
                 <BrowserTabIcon
                   tab={renderModel.preview.tab}
                   terminalIdentityByTabId={terminalIdentityByTabId}
                   workspaceAppIdentityByTabId={workspaceAppIdentityByTabId}
                 />
               </span>
-              <span className={`${APP_TAB_TITLE_CLASS} lyra-browser-tab-title`}>{renderModel.preview.tab.title}</span>
+              <span className={`${APP_TAB_TITLE_CLASS} ${BROWSER_TAB_TITLE_CLASS}`}>{renderModel.preview.tab.title}</span>
             </span>
             <AppIconButton
-              className={`${APP_TAB_CLOSE_CLASS} lyra-browser-tab-close lyra-browser-tab-right-drag-preview-close`}
+              className={`${APP_TAB_CLOSE_CLASS} ${BROWSER_TAB_CLOSE_CLASS} ${BROWSER_TAB_RIGHT_DRAG_PREVIEW_CLOSE_CLASS}`}
               tabIndex={-1}
               aria-hidden="true"
             >
@@ -400,7 +424,7 @@ export const BrowserTabStripView = ({
       ref={runtime.navRef}
       className={cx(
         renderModel.navClassName,
-        hasNavigationControl && "lyra-browser-tabs-with-navigation"
+        hasNavigationControl ? BROWSER_TABS_WITH_NAVIGATION_CLASS : BROWSER_TABS_GRID_CLASS
       )}
       style={renderModel.navStyle}
       aria-label="browser-tabs"
