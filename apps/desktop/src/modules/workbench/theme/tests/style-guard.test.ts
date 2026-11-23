@@ -20,6 +20,12 @@ const materialStyles = readFileSync(
   "utf8"
 );
 
+const agentsPanelClasses = [
+  "src/modules/workbench/ai-panel/classes.ts",
+  "src/modules/workbench/ai-panel/lyra-agents/features/chat/classes.ts",
+  "src/modules/workbench/ai-panel/lyra-agents/features/panels/classes.ts"
+].map((path) => readFileSync(resolve(process.cwd(), path), "utf8")).join("\n");
+
 describe("workbench UI guard", () => {
   test("allows approved breakpoint literals in CSS", () => {
     const css = `
@@ -147,14 +153,17 @@ describe("workbench UI guard", () => {
   });
 
   test("keeps AI panels above the composer opaque under native material", () => {
-    expect(materialStyles).toMatch(
-      /\.lyra-agents-composer-wrap \.lyra-agents-user-gate-host > \.lyra-agents-decision-panel,[\s\S]*?\.lyra-agents-composer-toprow \.lyra-agents-composer-rail-chip\s*\{[\s\S]*?--lyra-material-solid-surface-strong-bg/
+    expect(agentsPanelClasses).toContain(
+      "native-material:[.lyra-agents-composer-wrap_.lyra-agents-user-gate-host>&]:bg-[color-mix(in_srgb,var(--lyra-material-solid-surface-strong-bg"
     );
-    expect(materialStyles).toMatch(
-      /\.lyra-agents-app\s*\{[\s\S]*?--lyra-agents-composer-shell-bg:[\s\S]*?--lyra-material-solid-surface-strong-bg/
+    expect(agentsPanelClasses).toContain(
+      "native-material:[.lyra-agents-composer-toprow_&]:bg-[color-mix(in_srgb,var(--lyra-material-solid-surface-strong-bg"
     );
-    expect(materialStyles).toMatch(
-      /\.lyra-agents-composer\s*\{[\s\S]*?--lyra-agents-composer-shell-bg/
+    expect(agentsPanelClasses).toContain(
+      "native-material:[--lyra-agents-composer-shell-bg:var(--lyra-material-solid-surface-strong-bg"
+    );
+    expect(agentsPanelClasses).toMatch(
+      /lyra-agents-composer [^"]*bg-\[var\(--lyra-agents-composer-shell-bg\)\]/
     );
   });
 
