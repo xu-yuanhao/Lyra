@@ -16,6 +16,7 @@ import {
   DS_FILENAME_CLASS,
   DS_FILE_NUMS_CLASS,
 } from "./classes";
+import { DIFF_ADD_CLASS, DIFF_DEL_CLASS } from "../chat/classes";
 
 export interface DiffFileEntry {
   file: string;
@@ -50,8 +51,8 @@ export function DiffStats({
       >
         <GitBranch size={14} strokeWidth={2} />
         <span className={DS_SUMMARY_CLASS}>
-          <span className="lyra-agents-diff-add">+{totalAdd}</span>
-          <span className="lyra-agents-diff-del">-{totalDel}</span>
+          <span className={DIFF_ADD_CLASS}>+{totalAdd}</span>
+          <span className={DIFF_DEL_CLASS}>-{totalDel}</span>
         </span>
         <span className={DS_COUNT_CLASS}>{files.length} files</span>
       </Button>
@@ -71,8 +72,8 @@ export function DiffStats({
                   </span>
                   <span className={DS_FILENAME_CLASS}>{f.file}</span>
                   <span className={DS_FILE_NUMS_CLASS}>
-                    <span className="lyra-agents-diff-add">+{f.additions}</span>
-                    <span className="lyra-agents-diff-del">-{f.deletions}</span>
+                    <span className={DIFF_ADD_CLASS}>+{f.additions}</span>
+                    <span className={DIFF_DEL_CLASS}>-{f.deletions}</span>
                   </span>
                 </li>
               ))}

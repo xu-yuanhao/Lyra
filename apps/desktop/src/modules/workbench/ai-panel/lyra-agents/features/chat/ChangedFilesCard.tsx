@@ -10,6 +10,7 @@ import {
   type ChangedFile,
   splitDisplayPath
 } from "./changed-files";
+import { DIFF_ADD_CLASS, DIFF_DEL_CLASS } from "./classes";
 
 function ChangedFileRow({
   file,
@@ -45,8 +46,8 @@ function ChangedFileRow({
         </span>
         <span className="lyra-agents-changed-files-meta">
           <span className="lyra-agents-changed-files-counts">
-            <span className="lyra-agents-diff-add">+{file.additions}</span>
-            <span className="lyra-agents-diff-del">-{file.deletions}</span>
+            <span className={DIFF_ADD_CLASS}>+{file.additions}</span>
+            <span className={DIFF_DEL_CLASS}>-{file.deletions}</span>
           </span>
           <span className="lyra-agents-changed-files-chevron">
             <ChevronIcon open={open} />
@@ -85,8 +86,8 @@ export function ChangedFilesCard({ files }: { readonly files: readonly ChangedFi
       <div className="lyra-agents-changed-files-header">
         <span className="lyra-agents-changed-files-label">{label}</span>
         <span className="lyra-agents-changed-files-totals">
-          <span className="lyra-agents-diff-add">+{totalAdd}</span>
-          <span className="lyra-agents-diff-del">-{totalDel}</span>
+          <span className={DIFF_ADD_CLASS}>+{totalAdd}</span>
+          <span className={DIFF_DEL_CLASS}>-{totalDel}</span>
         </span>
       </div>
       <div

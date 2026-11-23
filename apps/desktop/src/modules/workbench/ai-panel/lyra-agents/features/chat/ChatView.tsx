@@ -73,6 +73,7 @@ import {
   shouldAdjustMessageScrollOnItemSizeChange
 } from "./virtual-message-window";
 import { COMPOSER_CONTEXT_RING_SLOT_CLASS } from "./classes";
+import { DIFF_ADD_CLASS, DIFF_DEL_CLASS } from "./classes";
 
 // ponytail: sticky anchor offset from the top of the scroll viewport.
 const STICKY_ANCHOR_TOP_OFFSET_PX = 18;
@@ -840,8 +841,8 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
               <span>{t("lyra-agents-composer.openChanges")}</span>
               {gitCounts.additions > 0 || gitCounts.deletions > 0 ? (
                 <span className={COMPOSER_CHANGES_COUNTS_CLASS}>
-                  <span className="lyra-agents-diff-add">+{gitCounts.additions}</span>
-                  <span className="lyra-agents-diff-del">-{gitCounts.deletions}</span>
+                  <span className={DIFF_ADD_CLASS}>+{gitCounts.additions}</span>
+                  <span className={DIFF_DEL_CLASS}>-{gitCounts.deletions}</span>
                 </span>
               ) : null}
             </AppButton>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { TICK_CLASS, TICK_CURRENT_CLASS, TICK_DOWN_CLASS, TICK_GHOST_CLASS, TICK_UP_CLASS } from "../features/chat/classes";
 
 /**
  * Displays an integer that animates whenever the `value` prop changes.
@@ -34,12 +35,12 @@ export function TickingNumber({
   }, [value]);
 
   return (
-    <span className={`lyra-agents-tick tick-${direction}`}>
-      <span key={display} className="lyra-agents-tick-current">
+    <span className={`${TICK_CLASS} ${direction === "up" ? TICK_UP_CLASS : TICK_DOWN_CLASS}`}>
+      <span key={display} className={TICK_CURRENT_CLASS}>
         {display}
       </span>
       {ghost !== null && (
-        <span key={`ghost-${ghost.id}`} className="lyra-agents-tick-ghost">
+        <span key={`ghost-${ghost.id}`} className={TICK_GHOST_CLASS}>
           {ghost.value}
         </span>
       )}

@@ -1,5 +1,6 @@
 import { TickingNumber } from "../../components/TickingNumber";
 import type { ToolDetails } from "../../core/types";
+import { DIFF_ADD_CLASS, DIFF_DEL_CLASS } from "../chat/classes";
 
 export type EditDiffCounts = {
   readonly additions: number;
@@ -37,10 +38,10 @@ export function InlineDiffStats({
   }
   return (
     <span className={className} aria-label={`+${additions} -${deletions}`}>
-      <span className="lyra-agents-diff-add">
+      <span className={DIFF_ADD_CLASS}>
         +<TickingNumber value={additions} direction="up" />
       </span>
-      <span className="lyra-agents-diff-del">
+      <span className={DIFF_DEL_CLASS}>
         -<TickingNumber value={deletions} direction="down" />
       </span>
     </span>

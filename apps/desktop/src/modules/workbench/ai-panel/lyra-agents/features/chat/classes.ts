@@ -218,3 +218,22 @@ export const BG_TERMINAL_ITEM_TITLE_CLASS =
 export const BG_TERMINAL_ITEM_PATH_CLASS =
   "lyra-agents-bg-terminal-item-path m-0 overflow-hidden text-ellipsis whitespace-nowrap font-[family-name:var(--lyra-font-ui)] text-[length:var(--lyra-text-size-caption)] text-[var(--lyra-text-muted)]";
 export const BG_TERMINAL_KILL_CLASS = "lyra-agents-bg-terminal-kill flex-[0_0_auto]";
+export const TASK_CARD_CLASS = "lyra-agents-task-card flex flex-col gap-[var(--lyra-space-4)]";
+export const TASK_CARD_HEAD_CLASS = "lyra-agents-task-card-head m-0 text-[var(--lyra-text-muted)]";
+export const TASK_ITEM_CLASS =
+  "lyra-agents-task-item w-full min-w-0 font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-comfortable)] text-[var(--lyra-text-secondary)] [overflow-wrap:break-word]";
+export const EDIT_CARD_WAITING_CLASS =
+  "lyra-agents-edit-card-waiting py-[var(--lyra-space-8)] px-[var(--lyra-space-12)] text-[length:var(--lyra-text-size-12)] text-[var(--lyra-text-secondary)]";
+export const EDIT_DETAILS_CLASS = "lyra-agents-edit-details min-w-0";
+export const DIFF_ADD_CLASS = "lyra-agents-diff-add text-[var(--lyra-status-success)]";
+export const DIFF_DEL_CLASS = "lyra-agents-diff-del text-[var(--lyra-status-error)]";
+export const TICK_CLASS =
+  "lyra-agents-tick relative inline-block min-w-[1ch] align-baseline overflow-visible";
+export const TICK_UP_CLASS =
+  "tick-up [&_.lyra-agents-tick-current]:animate-[tick-in-up_var(--lyra-motion-slow-duration)_var(--lyra-ease-tick)_both] [&_.lyra-agents-tick-ghost]:animate-[tick-out-up_var(--lyra-motion-slow-duration)_var(--lyra-ease-tick)_both]";
+export const TICK_DOWN_CLASS =
+  "tick-down [&_.lyra-agents-tick-current]:animate-[tick-in-down_var(--lyra-motion-slow-duration)_var(--lyra-ease-tick)_both] [&_.lyra-agents-tick-ghost]:animate-[tick-out-down_var(--lyra-motion-slow-duration)_var(--lyra-ease-tick)_both]";
+export const TICK_CURRENT_CLASS =
+  "lyra-agents-tick-current relative inline-block [will-change:transform,opacity,filter]";
+export const TICK_GHOST_CLASS =
+  "lyra-agents-tick-ghost absolute left-0 top-0 pointer-events-none inline-block [will-change:transform,opacity,filter]";

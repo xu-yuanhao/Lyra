@@ -16,6 +16,7 @@ import {
 import { TerminalToolCard } from "./TerminalToolCard";
 import { AppButton, AppShimmer } from "@renderer/ui/components";
 import { VirtualizedDiffView } from "./VirtualizedDiffView";
+import { EDIT_CARD_WAITING_CLASS, EDIT_DETAILS_CLASS, TASK_CARD_CLASS, TASK_CARD_HEAD_CLASS, TASK_ITEM_CLASS } from "../chat/classes";
 
 function ToolDump({
   code,
@@ -131,12 +132,12 @@ function EditCard({
   const hasDiff = details.hunks.length > 0;
 
   return (
-    <div className="lyra-agents-info-block lyra-agents-edit-details">
+    <div className={`lyra-agents-info-block ${EDIT_DETAILS_CLASS}`}>
       {running && !hasDiff ? (
         <AppShimmer
           as="div"
           text={t("tool.streamingDiff")}
-          className="lyra-agents-edit-card-waiting"
+          className={EDIT_CARD_WAITING_CLASS}
         />
       ) : null}
       <VirtualizedDiffView hunks={details.hunks} running={running} />
@@ -405,11 +406,11 @@ function TaskCard({
   details: Extract<ToolDetailsType, { type: "task" }>;
 }) {
   return (
-    <div className="lyra-agents-info-block lyra-agents-task-card">
-      <div className="lyra-agents-tool-result-line lyra-agents-task-card-head">{t("tool.executionPlan")}</div>
+    <div className={`lyra-agents-info-block ${TASK_CARD_CLASS}`}>
+      <div className={`lyra-agents-tool-result-line ${TASK_CARD_HEAD_CLASS}`}>{t("tool.executionPlan")}</div>
       <ul className="lyra-agents-tool-result-list lyra-agents-task-list">
         {details.tasks.map((task, i) => (
-          <li key={i} className={`lyra-agents-tool-result-line lyra-agents-task-item status-${task.status}`}>
+          <li key={i} className={`lyra-agents-tool-result-line ${TASK_ITEM_CLASS} status-${task.status}`}>
             <AppShimmer text={task.title} active={task.status === "running"} />
           </li>
         ))}
