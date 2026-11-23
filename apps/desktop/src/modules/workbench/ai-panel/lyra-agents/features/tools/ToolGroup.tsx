@@ -444,23 +444,17 @@ function ToolCallHeadLabel({
         className={TOOL_CALL_TITLE_CLASS}
       />
       {targetFile !== undefined ? (
-        <span
-          role="button"
-          tabIndex={0}
+        <AppButton
+          variant="plain"
           className={TOOL_CALL_TARGET_CLASS}
           title={targetFile}
           onClick={openTargetFile}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter" && event.key !== " ") return;
-            event.preventDefault();
-            openTargetFile(event);
-          }}
         >
           <span className={TOOL_CALL_FILE_ICON_CLASS} aria-hidden="true">
             <FileTypeIcon filename={targetFile} size={14} />
           </span>
           <span className={TOOL_CALL_TARGET_NAME_CLASS}>{editFileLabel(targetFile)}</span>
-        </span>
+        </AppButton>
       ) : null}
     </span>
   );

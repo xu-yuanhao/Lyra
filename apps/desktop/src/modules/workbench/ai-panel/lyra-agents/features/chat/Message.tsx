@@ -1,5 +1,5 @@
 import { Check, ChevronDown, ChevronUp, Copy, Link2, Undo2 } from "@lyra/icons";
-import { memo, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { memo, useEffect, useRef, useState, type MouseEvent } from "react";
 import {
   AGENT_FOLLOW_ACTIVITY_CONNECTING,
   type AgentRollbackPreviewResponse,
@@ -117,17 +117,6 @@ export const isRecognizedFollowActivity = (
 const usesServiceStatusDots = (activity: string | null | undefined): boolean =>
   activity === AGENT_FOLLOW_ACTIVITY_CONNECTING ||
   normalizeFollowActivity(activity) === "retrying_provider";
-
-const activateButtonKey = (
-  event: KeyboardEvent<HTMLElement>,
-  action: () => void
-): void => {
-  if (event.key !== "Enter" && event.key !== " ") {
-    return;
-  }
-  event.preventDefault();
-  action();
-};
 
 type AgentMessageProps = {
   message: ChatMessage;
@@ -709,12 +698,10 @@ const MessageCopyAction = ({ message }: { message: ChatMessage }) => {
   );
 
   return (
-    <span
+    <AppButton
+      variant="plain"
       className="lyra-agents-time-copy"
       onClick={handleCopy}
-      onKeyDown={(event) => activateButtonKey(event, handleCopy)}
-      role="button"
-      tabIndex={0}
       aria-label={label}
       title={label}
     >
@@ -723,7 +710,7 @@ const MessageCopyAction = ({ message }: { message: ChatMessage }) => {
       ) : (
         <Copy size={12} strokeWidth={2} aria-hidden="true" />
       )}
-    </span>
+    </AppButton>
   );
 };
 
@@ -951,45 +938,40 @@ export function Message({
               <span className="lyra-agents-time-actions">
                 <MessageCopyAction message={message} />
                 {onCiteMessage === undefined ? null : (
-                  <span
+                  <AppButton
+                    variant="plain"
                     className="lyra-agents-time-copy"
                     onClick={onCiteMessage}
-                    onKeyDown={(event) => activateButtonKey(event, onCiteMessage)}
-                    role="button"
-                    tabIndex={0}
                     aria-label={t("lyra-agents-message.citeMessage")}
                     title={t("lyra-agents-message.citeMessage")}
                   >
                     <Link2 size={12} strokeWidth={2} />
-                  </span>
+                  </AppButton>
                 )}
                 {message.rollback?.available === true ? (
-                  <span
+                  <AppButton
+                    variant="plain"
                     className="lyra-agents-time-copy"
                     onClick={openRollbackConfirm}
-                    onKeyDown={(event) => activateButtonKey(event, openRollbackConfirm)}
-                    role="button"
                     tabIndex={canRollback ? 0 : -1}
                     aria-disabled={!canRollback}
                     aria-label={t("lyra-agents-message.undoMessage")}
                     title={canRollback ? t("lyra-agents-message.rollbackTitle") : unavailableRollbackReason}
                   >
                     <Undo2 size={12} strokeWidth={2} />
-                  </span>
+                  </AppButton>
                 ) : null}
                 {userBubbleOverflowing ? (
-                  <span
+                  <AppButton
+                    variant="plain"
                     className="lyra-agents-time-copy"
                     onClick={() => setUserBubbleExpanded((open) => !open)}
-                    onKeyDown={(event) => activateButtonKey(event, () => setUserBubbleExpanded((open) => !open))}
-                    role="button"
-                    tabIndex={0}
                     aria-expanded={userBubbleExpanded}
                     aria-label={userBubbleExpanded ? t("lyra-agents-message.collapse") : t("lyra-agents-message.expand")}
                     title={userBubbleExpanded ? t("lyra-agents-message.collapse") : t("lyra-agents-message.expand")}
                   >
                     {userBubbleExpanded ? <ChevronUp size={12} strokeWidth={2} /> : <ChevronDown size={12} strokeWidth={2} />}
-                  </span>
+                  </AppButton>
                 ) : null}
               </span>
             </span>
@@ -1325,17 +1307,15 @@ const AgentMessage = memo(function AgentMessage({
             <span className="lyra-agents-time-actions">
               <MessageCopyAction message={message} />
               {onCiteMessage === undefined ? null : (
-                <span
+                <AppButton
+                  variant="plain"
                   className="lyra-agents-time-copy"
                   onClick={onCiteMessage}
-                  onKeyDown={(event) => activateButtonKey(event, onCiteMessage)}
-                  role="button"
-                  tabIndex={0}
                   aria-label={t("lyra-agents-message.citeMessage")}
                   title={t("lyra-agents-message.citeMessage")}
                 >
                   <Link2 size={12} strokeWidth={2} />
-                </span>
+                </AppButton>
               )}
             </span>
           </span>
