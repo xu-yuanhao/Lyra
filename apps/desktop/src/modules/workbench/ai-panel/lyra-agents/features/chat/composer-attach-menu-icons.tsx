@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 
 import type { WorkspaceTab } from "../../../../workspace-tabs/types";
 import { PageCitationTabIcon } from "./page-citation-tab-icon";
+import { ATTACH_MENU_ICON_CLASS } from "./classes";
 
-const MENU_ICON_CLASS = "lyra-agents-composer-attach-menu-icon";
+const MENU_ICON_CLASS = ATTACH_MENU_ICON_CLASS;
 const MENU_ICON_SIZE = 14;
 
 export const WorkspaceTabAttachMenuIcon = ({ tab }: { readonly tab: WorkspaceTab }) => (

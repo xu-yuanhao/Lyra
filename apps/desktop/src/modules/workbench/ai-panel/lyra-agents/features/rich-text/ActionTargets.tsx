@@ -8,6 +8,7 @@ import { t } from "@workbench/i18n";
 import {
   RT_ACTION_TEXT_LINK_CLASS,
   RT_ACTION_TEXT_LINK_SECRET_CLASS,
+  RT_TOOL_ACTION_TARGETS_CLASS,
 } from "./classes";
 
 export type ActionTarget = ToolActionTarget;

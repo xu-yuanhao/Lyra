@@ -7,6 +7,14 @@ import {
   type ReactNode
 } from "react";
 import { useComposerToolbarLabelMode } from "./composer-toolbar-labels";
+import {
+  ATTACH_MENU_CLASS,
+  ATTACH_MENU_ENTRY_CLASS,
+  ATTACH_MENU_ITEM_CLASS,
+  ATTACH_MENU_WRAP_CLASS,
+  ATTACH_SUBMENU_CLASS,
+  ATTACH_SUBMENU_TRIGGER_CLASS
+} from "./classes";
 import type {
   AgentPageCitation,
   AgentTranscriptCitation
@@ -576,7 +584,7 @@ export function Composer({
             }
           }}
         >
-          <div className="lyra-agents-composer-attach-menu-wrap">
+          <div className={ATTACH_MENU_WRAP_CLASS}>
             <AppMenuTrigger asChild>
               <AppIconButton
                 className="lyra-agents-composer-action"
@@ -595,13 +603,13 @@ export function Composer({
               </AppIconButton>
             </AppMenuTrigger>
             <AppMenuContent
-              className="lyra-agents-composer-attach-menu"
+              className={ATTACH_MENU_CLASS}
               side="top"
               align="start"
               sideOffset={8}
             >
               <AppMenuItem
-                className="lyra-agents-composer-attach-menu-item lyra-agents-composer-attach-menu-entry"
+                className={`${ATTACH_MENU_ITEM_CLASS} ${ATTACH_MENU_ENTRY_CLASS}`}
                 onSelect={() => {
                   void pickFileAttachment();
                 }}
@@ -619,7 +627,7 @@ export function Composer({
                   }}
                 >
                   <AppMenuSubTrigger
-                    className="lyra-agents-composer-attach-menu-item lyra-agents-composer-attach-submenu-trigger"
+                    className={`${ATTACH_MENU_ITEM_CLASS} ${ATTACH_SUBMENU_TRIGGER_CLASS}`}
                     onFocus={() => setAttachmentSubmenuId("workspace-tabs")}
                     onMouseEnter={() => setAttachmentSubmenuId("workspace-tabs")}
                     onPointerMove={() => setAttachmentSubmenuId("workspace-tabs")}
@@ -630,14 +638,14 @@ export function Composer({
                     <span className="lyra-app-menu-item-label">{t("lyra-agents-composer.attachWorkspaceTab")}</span>
                   </AppMenuSubTrigger>
                   <AppMenuSubContent
-                    className="lyra-agents-composer-attach-submenu"
+                    className={ATTACH_SUBMENU_CLASS}
                     sideOffset={4}
                     alignOffset={-4}
                   >
                     {workspaceTabs.map((tab) => (
                       <AppMenuItem
                         key={tab.id}
-                        className="lyra-agents-composer-attach-menu-item lyra-agents-composer-attach-menu-entry"
+                        className={`${ATTACH_MENU_ITEM_CLASS} ${ATTACH_MENU_ENTRY_CLASS}`}
                         onSelect={() => {
                           insertWorkspaceTabCitation(tab);
                         }}
@@ -657,7 +665,7 @@ export function Composer({
                   }}
                 >
                   <AppMenuSubTrigger
-                    className="lyra-agents-composer-attach-menu-item lyra-agents-composer-attach-submenu-trigger"
+                    className={`${ATTACH_MENU_ITEM_CLASS} ${ATTACH_SUBMENU_TRIGGER_CLASS}`}
                     onFocus={() => setAttachmentSubmenuId("terminal-tabs")}
                     onMouseEnter={() => setAttachmentSubmenuId("terminal-tabs")}
                     onPointerMove={() => setAttachmentSubmenuId("terminal-tabs")}
@@ -668,14 +676,14 @@ export function Composer({
                     <span className="lyra-app-menu-item-label">{t("lyra-agents-composer.attachTerminalTab")}</span>
                   </AppMenuSubTrigger>
                   <AppMenuSubContent
-                    className="lyra-agents-composer-attach-submenu"
+                    className={ATTACH_SUBMENU_CLASS}
                     sideOffset={4}
                     alignOffset={-4}
                   >
                     {terminalTabs.map((tab) => (
                       <AppMenuItem
                         key={tab.id}
-                        className="lyra-agents-composer-attach-menu-item lyra-agents-composer-attach-menu-entry"
+                        className={`${ATTACH_MENU_ITEM_CLASS} ${ATTACH_MENU_ENTRY_CLASS}`}
                         onSelect={() => {
                           insertTerminalTabCitation(tab);
                         }}
@@ -688,7 +696,7 @@ export function Composer({
                 </AppMenuSub>
               ) : null}
               <AppMenuItem
-                className="lyra-agents-composer-attach-menu-item lyra-agents-composer-attach-menu-entry"
+                className={`${ATTACH_MENU_ITEM_CLASS} ${ATTACH_MENU_ENTRY_CLASS}`}
                 onSelect={() => {
                   void captureAttachment(onCaptureWorkspaceScreenshot);
                 }}
@@ -699,7 +707,7 @@ export function Composer({
                 <span className="lyra-app-menu-item-label">{t("lyra-agents-composer.attachWorkspaceScreenshot")}</span>
               </AppMenuItem>
               <AppMenuItem
-                className="lyra-agents-composer-attach-menu-item lyra-agents-composer-attach-menu-entry"
+                className={`${ATTACH_MENU_ITEM_CLASS} ${ATTACH_MENU_ENTRY_CLASS}`}
                 onSelect={() => {
                   void captureAttachment(onCaptureWindowScreenshot);
                 }}

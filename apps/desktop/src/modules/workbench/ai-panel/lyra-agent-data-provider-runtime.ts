@@ -371,13 +371,14 @@ export const lyraAgentDataProviderReducer = (
     if (messages === current.messages) {
       return state;
     }
+    const messageWindow = action.snapshot.messageWindow ?? current.messageWindow;
     return {
       ...state,
       session: {
         ...current,
         messages,
         tools: mergeEarlierById(action.snapshot.tools, current.tools),
-        messageWindow: action.snapshot.messageWindow ?? current.messageWindow
+        ...(messageWindow === undefined ? {} : { messageWindow })
       }
     };
   }

@@ -29,8 +29,6 @@ export const APB_ERROR_CLASS = "lyra-agent-plan-board-error m-[var(--lyra-space-
 export const APB_MAIN_CLASS =
   "lyra-agent-plan-board-main flex flex-col pt-[var(--lyra-space-12)]";
 export const APB_MAIN_HAS_TODO_CLASS = APB_MAIN_CLASS + " has-todo";
-const APB_SECTION_BASE =
-  "border-0 bg-transparent rounded-none";
 const APB_SECTION_BASE = "border-0 bg-transparent rounded-none";
 export const APB_PLAN_SECTION_CLASS =
   `lyra-agent-plan-board-plan p-0 ${APB_SECTION_BASE} [&>h2]:hidden`;
