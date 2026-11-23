@@ -8,6 +8,7 @@ import {
 } from "@lyra/icons";
 
 import {
+  APP_SIDEBAR_ROW_ACTION_CLASS,
   APP_SIDEBAR_SPLIT_CLASS,
   AppEmptyState,
   AppErrorState,
@@ -250,7 +251,7 @@ const GitFileRow = memo(({
         <>
           {file.unstaged || file.untracked ? (
             <AppIconButton
-              className={`lyra-app-sidebar-row-action ${GIT_ICON_BUTTON_CLASS}`}
+              className={`${APP_SIDEBAR_ROW_ACTION_CLASS} ${GIT_ICON_BUTTON_CLASS}`}
               aria-label={`${labels.stage}: ${file.path}`}
               title={labels.stage}
               disabled={busy}
@@ -261,7 +262,7 @@ const GitFileRow = memo(({
           ) : null}
           {file.staged ? (
             <AppIconButton
-              className={`lyra-app-sidebar-row-action ${GIT_ICON_BUTTON_CLASS}`}
+              className={`${APP_SIDEBAR_ROW_ACTION_CLASS} ${GIT_ICON_BUTTON_CLASS}`}
               aria-label={`${labels.unstage}: ${file.path}`}
               title={labels.unstage}
               disabled={busy}
@@ -271,7 +272,7 @@ const GitFileRow = memo(({
             </AppIconButton>
           ) : null}
           <AppIconButton
-            className={`lyra-app-sidebar-row-action ${GIT_ICON_BUTTON_CLASS}`}
+            className={`${APP_SIDEBAR_ROW_ACTION_CLASS} ${GIT_ICON_BUTTON_CLASS}`}
             tone="danger"
             aria-label={`${labels.discard}: ${file.path}`}
             title={labels.discard}

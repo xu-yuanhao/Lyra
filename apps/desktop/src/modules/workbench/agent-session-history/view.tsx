@@ -8,6 +8,11 @@ import {
   type MouseEvent
 } from "react";
 import {
+  APP_SIDEBAR_GROUP_CLASS,
+  APP_SIDEBAR_GROUP_NAME_CLASS,
+  APP_SIDEBAR_GROUP_TOGGLE_CLASS,
+  APP_SIDEBAR_ROW_ACTION_CLASS,
+  APP_SIDEBAR_ROW_AGE_CLASS,
   APP_SIDEBAR_SPLIT_CLASS,
   AppButton,
   AppEmptyState,
@@ -453,10 +458,10 @@ const SessionRow = ({
         actions={(
           <>
             {age.length === 0 ? null : (
-              <span className="lyra-app-sidebar-row-age lyra-agent-history-row-age">{age}</span>
+              <span className={`${APP_SIDEBAR_ROW_AGE_CLASS} lyra-agent-history-row-age`}>{age}</span>
             )}
             <AppIconButton
-              className={`lyra-app-sidebar-row-action ${HISTORY_ROW_ACTION_CLASS}`}
+              className={`${APP_SIDEBAR_ROW_ACTION_CLASS} ${HISTORY_ROW_ACTION_CLASS}`}
               aria-label={`${session.saved ? labels.unsaved : labels.saved}: ${title}`}
               title={session.saved ? labels.unsaved : labels.saved}
               active={session.saved}
@@ -466,7 +471,7 @@ const SessionRow = ({
               <Pin size={14} aria-hidden="true" />
             </AppIconButton>
             <AppIconButton
-              className={`lyra-app-sidebar-row-action ${HISTORY_ROW_ACTION_CLASS}`}
+              className={`${APP_SIDEBAR_ROW_ACTION_CLASS} ${HISTORY_ROW_ACTION_CLASS}`}
               tone="danger"
               aria-label={`${labels.delete}: ${title}`}
               title={labels.delete}
@@ -495,11 +500,11 @@ const ProjectGroupHeader = ({
   readonly onToggle: () => void;
   readonly onCreateSession: () => void;
 }) => (
-  <div className={`lyra-app-sidebar-group ${HISTORY_PROJECT_GROUP_HEADER_CLASS}`}>
+  <div className={`${APP_SIDEBAR_GROUP_CLASS} ${HISTORY_PROJECT_GROUP_HEADER_CLASS}`}>
     <AppButton
       variant="ghost"
       size="sm"
-      className="lyra-app-sidebar-group-toggle lyra-agent-history-project-group-toggle"
+      className={`${APP_SIDEBAR_GROUP_TOGGLE_CLASS} lyra-agent-history-project-group-toggle`}
       aria-expanded={!collapsed}
       title={group.path}
       onClick={onToggle}
@@ -518,7 +523,7 @@ const ProjectGroupHeader = ({
           {collapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
         </span>
       </span>
-      <span className="lyra-app-sidebar-group-name lyra-agent-history-project-group-name">{group.name}</span>
+      <span className={`${APP_SIDEBAR_GROUP_NAME_CLASS} lyra-agent-history-project-group-name`}>{group.name}</span>
     </AppButton>
     {canCreateSession ? (
       <AppIconButton
@@ -581,7 +586,7 @@ const BrowserHistoryRow = ({
       title={<span title={entry.title}>{entry.title}</span>}
       actions={(
         <AppIconButton
-          className={`lyra-app-sidebar-row-action ${HISTORY_ROW_ACTION_CLASS}`}
+          className={`${APP_SIDEBAR_ROW_ACTION_CLASS} ${HISTORY_ROW_ACTION_CLASS}`}
           aria-label={`${labels.openBrowserHistoryEntry}: ${entry.url}`}
           title={labels.openBrowserHistoryEntry}
           onClick={() => onOpen(entry)}

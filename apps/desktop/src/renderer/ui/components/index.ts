@@ -67,6 +67,11 @@ export {
 export { AppSearchField, type AppSearchFieldProps } from "./app-search-field";
 export { AppShimmer, type AppShimmerProps } from "./app-shimmer";
 export {
+  APP_SIDEBAR_GROUP_CLASS,
+  APP_SIDEBAR_GROUP_NAME_CLASS,
+  APP_SIDEBAR_GROUP_TOGGLE_CLASS,
+  APP_SIDEBAR_ROW_ACTION_CLASS,
+  APP_SIDEBAR_ROW_AGE_CLASS,
   APP_SIDEBAR_SPLIT_CLASS,
   AppSidebar,
   AppSidebarSection,

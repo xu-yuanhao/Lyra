@@ -28,6 +28,7 @@ import {
 } from "@lyra/icons";
 
 import {
+  APP_SIDEBAR_GROUP_NAME_CLASS,
   APP_SIDEBAR_SPLIT_CLASS,
   AppButton,
   AppInput,
@@ -638,7 +639,7 @@ export const SettingsSurfaceView = ({
                     ) : Icon === undefined ? null : (
                       <Icon className={ST_NAV_ICON_CLASS} size={14} aria-hidden="true" />
                     )}
-                    <span className="lyra-app-sidebar-group-name">{category.navLabel}</span>
+                    <span className={APP_SIDEBAR_GROUP_NAME_CLASS}>{category.navLabel}</span>
                   </AppButton>
                 );
               })()
@@ -651,7 +652,7 @@ export const SettingsSurfaceView = ({
                 onClick={onOpenDocs}
               >
                 <BookText className={ST_NAV_ICON_CLASS} size={14} aria-hidden="true" />
-                <span className={`${ST_NAV_JUMP_LABEL_CLASS} lyra-app-sidebar-group-name`}>
+                <span className={`${ST_NAV_JUMP_LABEL_CLASS} ${APP_SIDEBAR_GROUP_NAME_CLASS}`}>
                   <span>{docsNavLabel}</span>
                   <ArrowUpRight
                     className={ST_NAV_JUMP_ICON_CLASS}
