@@ -11,10 +11,8 @@ import { FileTypeIcon } from "@lyra/icons/file-type";
 import { Button } from "@renderer/ui/components/button";
 
 import type { LspDiagnostic } from "../../../shared/desktop-bridge";
-import {
-  fixedRowVirtualizerOptions,
-  PROJECT_TREE_VIRTUALIZE_AFTER
-} from "../agent-project-tree/visible-rows";
+import { PROJECT_TREE_VIRTUALIZE_AFTER } from "../agent-project-tree/visible-rows";
+import { fixedRowVirtualizerOptions } from "../ui-primitives";
 import type { FileEditorRevealLocation } from "../file-editor";
 import { flattenProblemsRows, groupDiagnosticsByFile } from "./problems";
 

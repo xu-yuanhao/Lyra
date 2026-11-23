@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
+import { fixedRowVirtualizerOptions } from "../../../../ui-primitives";
 import type { DiffHunk } from "../../core/types";
 import { useFollowBottomUntilHover } from "./use-follow-bottom-until-hover";
 import {
@@ -42,23 +44,6 @@ export const flattenDiffHunks = (hunks: readonly DiffHunk[]): FlatDiffLine[] => 
   return lines;
 };
 
-export const diffVisibleLineRange = (
-  scrollTop: number,
-  viewportHeight: number,
-  lineCount: number,
-  overscan = OVERSCAN_LINES
-): { readonly start: number; readonly end: number } => {
-  if (lineCount <= 0) {
-    return { start: 0, end: -1 };
-  }
-  const start = Math.max(0, Math.floor(scrollTop / DIFF_LINE_HEIGHT_PX) - overscan);
-  const end = Math.min(
-    lineCount - 1,
-    Math.ceil((scrollTop + viewportHeight) / DIFF_LINE_HEIGHT_PX) + overscan
-  );
-  return { start, end };
-};
-
 export function VirtualizedDiffView({
   hunks,
   running = false,
@@ -71,57 +56,39 @@ export function VirtualizedDiffView({
   readonly fill?: boolean;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
-  const [scrollTop, setScrollTop] = useState(0);
-  const [measuredHeight, setMeasuredHeight] = useState(0);
   const lines = useMemo(() => flattenDiffHunks(hunks), [hunks]);
   const longestLineText = useMemo(
     () => lines.reduce((longest, line) => (line.text.length > longest.length ? line.text : longest), ""),
     [lines]
   );
   const contentHeight = lines.length * DIFF_LINE_HEIGHT_PX;
-  const viewportHeight = fill
-    ? Math.max(measuredHeight, 1)
-    : Math.min(contentHeight, DIFF_VIEWPORT_MAX_HEIGHT_PX);
-  const { start, end } = diffVisibleLineRange(scrollTop, viewportHeight, lines.length);
-  const shouldVirtualize = lines.length > OVERSCAN_LINES * 2 + 4;
-
-  useEffect(() => {
-    if (fill === false) {
-      return undefined;
-    }
-    const viewport = viewportRef.current;
-    if (viewport === null) {
-      return undefined;
-    }
-    const update = (): void => {
-      setMeasuredHeight(viewport.clientHeight);
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(viewport);
-    return () => {
-      observer.disconnect();
-    };
-  }, [fill, lines.length]);
-
-  const pinVirtualWindow = useCallback((scroller: HTMLElement) => {
-    setScrollTop(scroller.scrollTop);
-  }, []);
+  const virtualizer = useVirtualizer(fixedRowVirtualizerOptions({
+    count: lines.length,
+    getScrollElement: () => viewportRef.current,
+    rowHeight: DIFF_LINE_HEIGHT_PX,
+    overscan: OVERSCAN_LINES
+  }));
   const followBottom = useFollowBottomUntilHover(
     viewportRef,
     running,
     lines.length,
-    pinVirtualWindow,
   );
 
   if (lines.length === 0) {
     return null;
   }
 
-  const visibleLines = shouldVirtualize ? lines.slice(start, end + 1) : lines;
-  const topSpacer = shouldVirtualize ? start * DIFF_LINE_HEIGHT_PX : 0;
-  const bottomSpacer = shouldVirtualize
-    ? Math.max(0, contentHeight - topSpacer - visibleLines.length * DIFF_LINE_HEIGHT_PX)
+  const virtualized = lines.length > OVERSCAN_LINES * 2 + 4;
+  const virtualItems = virtualizer.getVirtualItems();
+  const visibleLines = virtualized
+    ? virtualItems
+      .map((item) => lines[item.index])
+      .filter((line): line is FlatDiffLine => line !== undefined)
+    : lines;
+  const lastItem = virtualItems[virtualItems.length - 1];
+  const topSpacer = virtualized ? (virtualItems[0]?.start ?? 0) : 0;
+  const bottomSpacer = virtualized && lastItem !== undefined
+    ? Math.max(0, virtualizer.getTotalSize() - lastItem.end)
     : 0;
 
   return (
@@ -134,7 +101,6 @@ export function VirtualizedDiffView({
       style={fill ? { height: "100%", maxHeight: "none" } : { maxHeight: DIFF_VIEWPORT_MAX_HEIGHT_PX }}
       onMouseEnter={followBottom.onMouseEnter}
       onMouseLeave={followBottom.onMouseLeave}
-      onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
     >
       <div className={DIFF_VIEWPORT_TRACK_CLASS} style={{ minHeight: contentHeight }}>
         <div className={DIFF_WIDTH_PROBE_CLASS} aria-hidden>

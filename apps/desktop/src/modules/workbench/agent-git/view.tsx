@@ -28,10 +28,8 @@ import type {
 import { VirtualizedDiffView } from "../ai-panel/lyra-agents/features/tools/VirtualizedDiffView";
 import type { DiffHunk } from "../ai-panel/lyra-agents/core/types";
 import { parseUnifiedDiff } from "../agent-session-view-model/tool-parsing/diff";
-import {
-  fixedRowVirtualizerOptions,
-  PROJECT_TREE_VIRTUALIZE_AFTER
-} from "../agent-project-tree/visible-rows";
+import { PROJECT_TREE_VIRTUALIZE_AFTER } from "../agent-project-tree/visible-rows";
+import { fixedRowVirtualizerOptions } from "../ui-primitives";
 import { ContextMenuHost, useContextMenuModel, type ContextMenuItem } from "../context-menu";
 import {
   GIT_DIFF_CLASS,

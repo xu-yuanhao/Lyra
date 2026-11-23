@@ -18,6 +18,7 @@ export {
   useChromeTabStripCloseLock
 } from "./use-chrome-tab-strip-close-lock";
 export type { ChromeTabCloseGestureEvent } from "./use-chrome-tab-strip-close-lock";
+export { fixedRowVirtualizerOptions } from "./fixed-row-virtualizer";
 export { PanelHost, PanelResizer } from "./panel-chrome";
 
 // Chrome control primitives now resolve to the shared Lyra App components.

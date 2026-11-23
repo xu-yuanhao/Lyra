@@ -71,13 +71,13 @@ import { useAgentProjectTreeContextMenu } from "./context-menu";
 import { AgentProjectTreeEditorTabStrip } from "./editor-tab-strip";
 import type { AgentProjectTreeSurfaceProps } from "./types";
 import {
-  fixedRowVirtualizerOptions,
   flattenVisibleRows,
   prepareEntries,
   PROJECT_TREE_VIRTUALIZE_AFTER,
   type DirectoryStateMap,
   type VisibleTreeRow
 } from "./visible-rows";
+import { fixedRowVirtualizerOptions } from "../ui-primitives";
 import {
   flattenFileSearchRows,
   toggleProjectTreeFileSearchGroup,

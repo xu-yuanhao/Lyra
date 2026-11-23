@@ -4,7 +4,6 @@ import { describe, expect, test } from "vitest";
 import type { DiffHunk } from "../../core/types";
 import {
   VirtualizedDiffView,
-  diffVisibleLineRange,
   flattenDiffHunks
 } from "./VirtualizedDiffView";
 
@@ -28,11 +27,7 @@ describe("VirtualizedDiffView helpers", () => {
     expect(lines[2]).toMatchObject({ lineNumber: 12, kind: "del", text: "removed line" });
   });
 
-  test("computes visible line window from scroll position", () => {
-    const range = diffVisibleLineRange(100, 200, 50, 5);
-    expect(range.start).toBe(0);
-    expect(range.end).toBeGreaterThan(10);
-  });
+
 });
 
 describe("VirtualizedDiffView", () => {
