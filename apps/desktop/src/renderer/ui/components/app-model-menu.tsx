@@ -304,7 +304,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
               return (
                 <DropdownMenuGroup key={groupIndex}>
                   <DropdownMenuItem
-                    className="lyra-app-model-menu-group-header"
+                    className="lyra-app-model-menu-group-header flex items-center justify-center gap-[var(--lyra-space-8)] px-[var(--lyra-space-8)] py-[var(--lyra-space-4)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] select-none hover:bg-transparent hover:text-[var(--lyra-text-secondary)] [&:hover_.lyra-app-model-menu-group-label]:text-[var(--lyra-text-secondary)] [&:hover_.lyra-app-model-menu-group-line]:bg-[color-mix(in_srgb,var(--lyra-text-muted)_52%,transparent)] focus-visible:outline-[length:var(--lyra-stroke-strong)] focus-visible:outline-solid focus-visible:outline-[var(--lyra-app-focus)] focus-visible:outline-offset-[var(--lyra-space-2)]"
                     data-collapsed={isCollapsed ? "true" : undefined}
                     onSelect={(e) => {
                       e.preventDefault();
@@ -316,11 +316,11 @@ export const AppModelMenu = <TModelValue extends string = string>({
                       });
                     }}
                   >
-                    <span className="lyra-app-model-menu-group-line" aria-hidden="true" />
-                    <span className="lyra-app-model-menu-group-label">
+                    <span className="lyra-app-model-menu-group-line h-[var(--lyra-space-1)] flex-[1_1_var(--lyra-space-40)] min-w-[var(--lyra-space-16)] rounded-[var(--lyra-radius-pill)] bg-[color-mix(in_srgb,var(--lyra-app-border)_68%,transparent)] transition-[background_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast)]" aria-hidden="true" />
+                    <span className="lyra-app-model-menu-group-label flex-none inline-flex items-center gap-[var(--lyra-space-4)] text-[var(--lyra-text-muted)] whitespace-nowrap transition-[color_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast)]">
                       {group.label}
                     </span>
-                    <span className="lyra-app-model-menu-group-line" aria-hidden="true" />
+                    <span className="lyra-app-model-menu-group-line h-[var(--lyra-space-1)] flex-[1_1_var(--lyra-space-40)] min-w-[var(--lyra-space-16)] rounded-[var(--lyra-radius-pill)] bg-[color-mix(in_srgb,var(--lyra-app-border)_68%,transparent)] transition-[background_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast)]" aria-hidden="true" />
                   </DropdownMenuItem>
                   {isCollapsed ? null : group.options.map(renderModelRow)}
                 </DropdownMenuGroup>

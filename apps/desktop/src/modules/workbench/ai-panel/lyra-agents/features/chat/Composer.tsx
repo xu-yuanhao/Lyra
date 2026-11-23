@@ -13,7 +13,17 @@ import {
   ATTACH_MENU_ITEM_CLASS,
   ATTACH_MENU_WRAP_CLASS,
   ATTACH_SUBMENU_CLASS,
-  ATTACH_SUBMENU_TRIGGER_CLASS
+  ATTACH_SUBMENU_TRIGGER_CLASS,
+  COMPOSER_ACTION_CLASS,
+  COMPOSER_BOTTOM_CLASS,
+  COMPOSER_MODEL_CONTROLS_CLASS,
+  COMPOSER_MODEL_PICKER_CLASS,
+  COMPOSER_MODEL_SETTINGS_BUTTON_CLASS,
+  COMPOSER_PERMISSION_PICKER_CLASS,
+  COMPOSER_PRIMARY_ACTIONS_CLASS,
+  COMPOSER_SELECT_CONTENT_CLASS,
+  COMPOSER_SEND_CLASS,
+  COMPOSER_SEND_LOGO_CLASS
 } from "./classes";
 import type {
   AgentPageCitation,
@@ -441,13 +451,13 @@ export function Composer({
           value: "full_auto" as const,
           label: t("lyra-agents-composer.permissionModeFullAuto"),
           icon: permissionModeIcon("full_auto"),
-          className: "lyra-permission-mode-option-full-auto"
+          className: "lyra-permission-mode-option-full-auto text-[var(--lyra-status-warning)]"
         },
         {
           value: "autonomous" as const,
           label: t("lyra-agents-composer.permissionModeAutonomous"),
           icon: permissionModeIcon("autonomous"),
-          className: "lyra-permission-mode-option-autonomous"
+          className: "lyra-permission-mode-option-autonomous text-[var(--lyra-status-error)]"
         },
         ...(permissionModeControls.currentMode === "custom"
           ? [{
@@ -574,7 +584,7 @@ export function Composer({
         {...(onLinkClick === undefined ? {} : { onLinkClick })}
         onImageAttachmentsAccepted={handleImageAttachmentsAccepted}
       />
-      <div className="lyra-agents-composer-bottom">
+      <div className={COMPOSER_BOTTOM_CLASS}>
         <AppMenu
           open={attachmentMenuOpen}
           onOpenChange={(nextOpen) => {
@@ -587,7 +597,7 @@ export function Composer({
           <div className={ATTACH_MENU_WRAP_CLASS}>
             <AppMenuTrigger asChild>
               <AppIconButton
-                className="lyra-agents-composer-action"
+                className={COMPOSER_ACTION_CLASS}
                 type="button"
                 aria-label={t("lyra-agents-composer.attach")}
                 title={t("lyra-agents-composer.attach")}
@@ -721,7 +731,7 @@ export function Composer({
           </div>
         </AppMenu>
         {showComposerControlGroup ? (
-          <div className="lyra-agents-composer-model-controls">
+          <div className={COMPOSER_MODEL_CONTROLS_CLASS}>
             {modelControls !== null && modelControls !== undefined && modelPickerOptions.length > 0 ? (
               <AppModelMenu
                 ariaLabel={t("lyra-agents-composer.modelControls")}
@@ -731,9 +741,9 @@ export function Composer({
                     selectedModel === null ? undefined : composerModelTriggerLabel(selectedModel)
                   ) })}
                 className={hideModelLabel
-                  ? "lyra-agents-composer-model-picker lyra-agents-composer-toolbar-icon-only"
-                  : "lyra-agents-composer-model-picker"}
-                contentClassName="lyra-agents-composer-select-content"
+                  ? `${COMPOSER_MODEL_PICKER_CLASS} lyra-agents-composer-toolbar-icon-only`
+                  : COMPOSER_MODEL_PICKER_CLASS}
+                contentClassName={COMPOSER_SELECT_CONTENT_CLASS}
                 options={modelPickerOptions}
                 groups={modelPickerGroups}
                 side="top"
@@ -770,8 +780,8 @@ export function Composer({
               <AppButton variant="ghost" size="sm"
                 type="button"
                 className={hideModelLabel
-                  ? "lyra-agents-composer-model-settings-button lyra-agents-composer-toolbar-icon-only"
-                  : "lyra-agents-composer-model-settings-button"}
+                  ? `${COMPOSER_MODEL_SETTINGS_BUTTON_CLASS} lyra-agents-composer-toolbar-icon-only`
+                  : COMPOSER_MODEL_SETTINGS_BUTTON_CLASS}
                 aria-label={t("lyra-agents-composer.configureModel")}
                 title={t("lyra-agents-composer.configureModel")}
                 onClick={() => {
@@ -785,9 +795,9 @@ export function Composer({
             {permissionModeControls !== null && permissionModeControls !== undefined ? (
               <AppSelect<PermissionPickerValue>
                 className={hidePermissionLabel
-                  ? "lyra-agents-composer-permission-mode-picker lyra-agents-composer-toolbar-icon-only"
-                  : "lyra-agents-composer-permission-mode-picker"}
-                contentClassName="lyra-agents-composer-select-content"
+                  ? `${COMPOSER_PERMISSION_PICKER_CLASS} lyra-agents-composer-toolbar-icon-only`
+                  : COMPOSER_PERMISSION_PICKER_CLASS}
+                contentClassName={COMPOSER_SELECT_CONTENT_CLASS}
                 ariaLabel={t("lyra-agents-composer.permissionMode")}
                 value={permissionModeControls.currentMode}
                 placeholder={selectedPermissionModeOption?.label ?? t("lyra-agents-composer.permissionModeApproval")}
@@ -806,10 +816,10 @@ export function Composer({
             {modeSlot}
           </div>
         ) : null}
-        <div className="lyra-agents-composer-primary-actions">
+        <div className={COMPOSER_PRIMARY_ACTIONS_CLASS}>
           <AppButton variant="ghost" size="sm"
             type={primaryActionMode === "send" ? "submit" : "button"}
-            className="lyra-agents-composer-send"
+            className={COMPOSER_SEND_CLASS}
             data-mode={primaryActionMode}
             disabled={primaryActionMode === "pause" ? cancelBusy : primaryActionMode === "send" ? !canSend : false}
             aria-busy={primaryActionMode === "sending" ? "true" : undefined}
@@ -824,7 +834,7 @@ export function Composer({
               : undefined}
           >
             {primaryActionMode === "sending" || primaryActionMode === "pause" ? (
-              <span className="lyra-agents-composer-send-logo" style={SEND_LOGO_STYLE} aria-hidden="true" />
+              <span className={COMPOSER_SEND_LOGO_CLASS} style={SEND_LOGO_STYLE} aria-hidden="true" />
             ) : (
               <ArrowUp size={TOOLBAR_ICON_SIZE} strokeWidth={TOOLBAR_ICON_STROKE_WIDTH} />
             )}

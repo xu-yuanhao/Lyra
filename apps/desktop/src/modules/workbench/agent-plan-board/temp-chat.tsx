@@ -14,6 +14,11 @@ import type {
 } from "../../../shared/agent";
 import type { LyraDesktopApi } from "../../../shared/desktop-bridge";
 import { LyraMarkdown } from "../ai-panel/lyra-agents/features/rich-text/LyraMarkdown";
+import {
+  COMPOSER_BOTTOM_CLASS,
+  COMPOSER_PRIMARY_ACTIONS_CLASS,
+  COMPOSER_SEND_CLASS
+} from "../ai-panel/lyra-agents/features/chat/classes";
 import type { AgentPlanBoardLabels, AgentPlanBoardRevisionRequest } from "./types";
 import {
   APB_TEMP_CHAT_BODY_CLASS,
@@ -303,13 +308,13 @@ export const PlanTempChat = ({
               }
             }}
           />
-          <div className="lyra-agents-composer-bottom">
-            <div className="lyra-agents-composer-primary-actions">
+          <div className={COMPOSER_BOTTOM_CLASS}>
+            <div className={COMPOSER_PRIMARY_ACTIONS_CLASS}>
               <AppButton
                 variant="ghost"
                 size="sm"
                 type="submit"
-                className="lyra-agents-composer-send"
+                className={COMPOSER_SEND_CLASS}
                 disabled={draft.trim().length === 0 || busy || plan === null}
                 title={labels.tempChatSend}
                 aria-label={labels.tempChatSend}

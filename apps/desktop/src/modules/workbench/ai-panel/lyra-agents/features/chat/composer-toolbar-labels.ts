@@ -1,6 +1,7 @@
 import { useLayoutEffect, useState, type RefObject } from "react";
 
 import { createRafCoalescer } from "../../../../shell/raf-coalesce";
+import { COMPOSER_TOOLBAR_MEASURE_CLASS } from "./classes";
 
 export type ComposerToolbarLabelMode = "both" | "icons";
 
@@ -58,7 +59,7 @@ const readGapPx = (element: HTMLElement): number => {
 
 const measureCloneWidth = (source: HTMLElement, iconOnly: boolean): number => {
   const host = document.createElement("div");
-  host.className = "lyra-agents-composer-toolbar-measure";
+  host.className = COMPOSER_TOOLBAR_MEASURE_CLASS;
   host.setAttribute("aria-hidden", "true");
   const clone = source.cloneNode(true) as HTMLElement;
   clone.removeAttribute("id");
