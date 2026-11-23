@@ -91,6 +91,7 @@ import {
   APB_CHAT_MENU_DELETE_CLASS,
   APB_PLAN_CHECK_CLASS,
 } from "./classes";
+import { AGENTS_HOST_CLASS } from "../ai-panel/classes";
 
 const statusClassName = (status: string): string => {
   const normalized = status.toLowerCase();
@@ -621,7 +622,7 @@ const PlanWorkspace = ({
         />
       )}
     </section>
-    <aside className={`lyra-agents-host ${APB_CHAT_RAIL_CLASS}`}>
+    <aside className={`${AGENTS_HOST_CLASS} ${APB_CHAT_RAIL_CLASS}`}>
       <header className={APB_CHAT_HEADER_CLASS}>
         <span className={APB_CHAT_TITLE_CLASS}>{labels.tempChatTitle}</span>
         {plans === undefined ? null : (

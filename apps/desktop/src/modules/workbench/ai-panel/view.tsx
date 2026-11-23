@@ -34,6 +34,7 @@ import {
   isMiddleClick,
   useChromeTabStripCloseLock
 } from "../ui-primitives";
+import { AGENTS_HOST_CLASS, AI_PANEL_ERROR_CLASS, AI_PANEL_SHELL_CLASS } from "./classes";
 
 const AI_SESSION_TAB_DRAG_THRESHOLD_PX = 4;
 const AI_SESSION_TAB_FLEX_MIN_PX = 60;
@@ -485,13 +486,13 @@ export const AiPanelSurface = ({
   );
 
   return (
-    <AppPanel placement="right" className="lyra-ai-panel-shell" aria-label={title}>
+    <AppPanel placement="right" className={AI_PANEL_SHELL_CLASS} aria-label={title}>
       {provider.error === null ? null : (
-        <AppStatusMessage className="lyra-ai-panel-error" role="status" tone="error">
+        <AppStatusMessage className={AI_PANEL_ERROR_CLASS} role="status" tone="error">
           {provider.error}
         </AppStatusMessage>
       )}
-      <div className="lyra-agents-host">
+      <div className={AGENTS_HOST_CLASS}>
         <LyraAgentsApp
           data={provider.data}
           desktopApi={desktopApi}

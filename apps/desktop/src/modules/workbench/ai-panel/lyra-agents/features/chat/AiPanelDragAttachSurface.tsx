@@ -22,6 +22,7 @@ import {
 import { getDesktopApi } from "../../../../shell/service";
 import { useData } from "../../data/DataProvider";
 import { isAiPanelAttachDrag, resolveAiPanelDropEffect } from "./ai-panel-drag-attach";
+import { AGENTS_APP_CLASS, AGENTS_DRAG_ATTACH_ACTIVE_CLASS, AGENTS_DRAG_HOST_CLASS, AGENTS_DRAG_HOST_CONTENT_CLASS } from "../../../classes";
 
 type AiPanelDragAttachSurfaceProps = {
   readonly children: ReactNode;
@@ -201,7 +202,7 @@ export const AiPanelDragAttachSurface = ({ children }: AiPanelDragAttachSurfaceP
   return (
     <div
       ref={hostRef}
-      className="lyra-agents-app-drag-host"
+      className={`${AGENTS_DRAG_HOST_CLASS} ${AGENTS_DRAG_ATTACH_ACTIVE_CLASS}`}
       data-drag-attach-active={dragActive ? "true" : "false"}
       data-page-drag-session-active={pageDragSessionActive ? "true" : "false"}
       onDragEnter={handleDragEnter}
@@ -210,7 +211,7 @@ export const AiPanelDragAttachSurface = ({ children }: AiPanelDragAttachSurfaceP
       onDrop={handleDrop}
     >
       <div
-        className="lyra-agents-app-drag-host-content lyra-agents-app"
+        className={`${AGENTS_DRAG_HOST_CONTENT_CLASS} ${AGENTS_APP_CLASS}`}
       >
         {children}
       </div>
