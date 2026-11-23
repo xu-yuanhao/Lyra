@@ -31,6 +31,8 @@ export const TD_TAB_ACTIVE_CLASS =
   "lyra-terminal-tab-active z-[2] bg-[var(--lyra-terminal-tabstrip-active-bg)] text-[var(--lyra-text-primary)] shadow-none";
 export const TD_TAB_MAIN_CLASS =
   "lyra-tab-main lyra-terminal-tab-main flex h-full min-w-0 w-full cursor-grab items-center justify-start gap-[var(--lyra-space-6)] rounded-[inherit] border-0 bg-transparent px-[var(--lyra-space-8)] py-0 text-left text-[var(--lyra-text-secondary)] text-[length:var(--lyra-text-size-body)] font-medium leading-[var(--lyra-text-line-18)] active:cursor-grabbing hover:bg-transparent focus-visible:bg-transparent";
+export const TD_TAB_TRIGGER_CLASS =
+  "data-[state=active]:bg-transparent dark:data-[state=active]:bg-transparent dark:data-[state=active]:border-transparent data-[state=active]:text-[var(--lyra-text-secondary)] dark:data-[state=active]:text-[var(--lyra-text-secondary)] group-data-[variant=default]/tabs-list:data-[state=active]:shadow-none " + TD_TAB_MAIN_CLASS;
 export const TD_TAB_ICON_CLASS =
   "lyra-terminal-tab-icon inline-flex size-[var(--lyra-icon-size-14)] shrink-0 items-center justify-center text-[var(--lyra-text-muted)] [.lyra-terminal-tab-active_&]:text-[var(--lyra-text-primary)]";
 export const TD_TAB_ICON_IMAGE_CLASS = "lyra-terminal-tab-icon-image rounded-[var(--lyra-radius-4)]";

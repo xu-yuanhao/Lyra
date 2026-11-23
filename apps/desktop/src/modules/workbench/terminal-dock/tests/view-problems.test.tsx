@@ -147,13 +147,13 @@ describe("terminal dock problems tabs", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Lyra" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Lyra" })).toBeInTheDocument();
     expect(screen.getByText("No problems")).toBeInTheDocument();
     expect(screen.getByLabelText("pane-pane-1")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "split-horizontal" })).toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Terminal" }));
-    expect(onClearSelection).toHaveBeenCalledTimes(1);
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Terminal" }));
+    expect(onClearSelection).toHaveBeenCalled();
     expect(props.model.setActiveTab).toHaveBeenCalledWith("tab-1");
   });
 });

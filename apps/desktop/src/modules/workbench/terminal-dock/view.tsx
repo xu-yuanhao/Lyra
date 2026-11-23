@@ -27,7 +27,7 @@ import { TerminalPaneSurface } from "./pane-surface";
 import type { TerminalDockProps } from "./types";
 import { IdentityIconView, type ResolvedIdentityIcon } from "../identity";
 import { LyraLogo } from "@renderer/ui/app";
-import { APP_TAB_ITEM_CLASS, AppButton, AppIconButton } from "@renderer/ui/components";
+import { APP_TAB_ITEM_CLASS, AppIconButton, Tabs, TabsList, TabsTrigger } from "@renderer/ui/components";
 import { cn } from "@renderer/ui/utils";
 import { isMiddleClick } from "../ui-primitives";
 import { ProblemsList } from "../bottom-aux/problems-list";
@@ -42,7 +42,7 @@ import {
   TD_TAB_CLASS,
   TD_TAB_DROP_BEFORE_CLASS,
   TD_TAB_ACTIVE_CLASS,
-  TD_TAB_MAIN_CLASS,
+  TD_TAB_TRIGGER_CLASS,
   TD_TAB_ICON_CLASS,
   TD_TAB_ICON_IMAGE_CLASS,
   TD_TAB_TITLE_CLASS,
@@ -282,149 +282,163 @@ export const TerminalDock = ({
           )}
           aria-label="terminal-tabs"
         >
-          {model.dockTabs.map((tab, index) => (
-            <div
-              key={tab.id}
-              className={cn(
-                APP_TAB_ITEM_CLASS,
-                TD_TAB_CLASS,
-                "lyra-allow-web-drag",
-                problemsActive === false && tab.id === activeDockTab?.id && "lyra-tab-item-active",
-                problemsActive === false && tab.id === activeDockTab?.id && TD_TAB_ACTIVE_CLASS,
-                dockDropIndex !== null && dockDropIndex === index
-                  && TD_TAB_DROP_BEFORE_CLASS
-              )}
-              data-lyra-tab-id={tab.id}
-              data-lyra-terminal-tab-id={tab.id}
-              data-lyra-allow-web-drag="true"
-              draggable
-              onMouseDown={(event) => {
-                if (isMiddleClick(event)) {
-                  event.preventDefault();
-                  onRequestCloseTab(tab.id);
-                }
-              }}
-              onAuxClick={(event) => {
-                if (isMiddleClick(event)) {
-                  event.preventDefault();
-                  onRequestCloseTab(tab.id);
-                }
-              }}
-              onDragStart={(event: ReactDragEvent<HTMLDivElement>) => {
-                onDockTabDragStart(event, tab.id);
-              }}
-              onDragEnd={() => {
-                clearTerminalTabDragPayload();
-                clearDragUiState();
-              }}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                onRequestTabContextMenu({
-                  tabId: tab.id,
-                  anchorX: event.clientX,
-                  anchorY: event.clientY
-                });
-              }}
-            >
-              <AppButton
-                className={TD_TAB_MAIN_CLASS}
-                variant="ghost"
-                size="sm"
-                data-lyra-allow-web-drag="true"
-                draggable
-                aria-label={displayTitleByTabId[tab.id] ?? tab.title}
-                onDragStart={(event: ReactDragEvent<HTMLButtonElement>) => {
-                  onDockTabDragStart(event, tab.id);
-                }}
-                onDragEnd={() => {
-                  clearTerminalTabDragPayload();
-                  clearDragUiState();
-                }}
-                onClick={() => {
-                  problems?.onClearSelection();
-                  model.setActiveTab(tab.id);
-                }}
-                onDoubleClick={() => {
-                  const nextTitle = window.prompt(labels.renameTab, tab.title);
-                  if (nextTitle !== null) {
-                    model.renameTab(tab.id, nextTitle);
-                  }
-                }}
-              >
-                <TerminalTabIcon icon={terminalIdentityByTabId[tab.id]} />
-                <span className={TD_TAB_TITLE_CLASS}>{displayTitleByTabId[tab.id] ?? tab.title}</span>
-                {tab.pinned ? (
-                  <span className={TD_TAB_BADGE_CLASS} title={labels.unpinTab} aria-hidden="true">
-                    <Pin size={10} />
-                  </span>
-                ) : null}
-                {tab.favorite ? (
-                  <span className={TD_TAB_BADGE_CLASS} title={labels.unfavoriteTab} aria-hidden="true">
-                    <Star size={10} />
-                  </span>
-                ) : null}
-              </AppButton>
-              <AppIconButton
-                className={TD_TAB_CLOSE_CLASS}
-                aria-label={labels.closeTab}
-                title={labels.closeTab}
-                onClick={() => {
-                  onRequestCloseTab(tab.id);
-                }}
-              >
-                <X size={12} aria-hidden="true" />
-              </AppIconButton>
-            </div>
-          ))}
-          {problemsTabs.map((tab) => (
-            <div
-              key={tab.id}
-              className={cn(
-                APP_TAB_ITEM_CLASS,
-                TD_TAB_CLASS,
-                tab.id === problems?.activeId && "lyra-tab-item-active",
-                tab.id === problems?.activeId && TD_TAB_ACTIVE_CLASS
-              )}
-              data-lyra-problems-tab-id={tab.id}
-              onMouseDown={(event) => {
-                if (isMiddleClick(event)) {
-                  event.preventDefault();
-                  problems?.onCloseTab(tab.id);
-                }
-              }}
-              onAuxClick={(event) => {
-                if (isMiddleClick(event)) {
-                  event.preventDefault();
-                  problems?.onCloseTab(tab.id);
-                }
-              }}
-            >
-              <AppButton
-                className={TD_TAB_MAIN_CLASS}
-                variant="ghost"
-                size="sm"
-                aria-label={displayTitleByTabId[tab.id] ?? tab.title}
-                onClick={() => {
-                  problems?.onSelectTab(tab.id);
-                }}
-              >
-                <span className={TD_TAB_ICON_CLASS} aria-hidden="true">
-                  <CircleAlert size={13} />
-                </span>
-                <span className={TD_TAB_TITLE_CLASS}>{displayTitleByTabId[tab.id] ?? tab.title}</span>
-              </AppButton>
-              <AppIconButton
-                className={TD_TAB_CLOSE_CLASS}
-                aria-label={labels.closeTab}
-                title={labels.closeTab}
-                onClick={() => {
-                  problems?.onCloseTab(tab.id);
-                }}
-              >
-                <X size={12} aria-hidden="true" />
-              </AppIconButton>
-            </div>
-          ))}
+          <Tabs
+            className="contents"
+            orientation="vertical"
+            value={problemsActive ? "" : activeDockTab?.id ?? ""}
+            onValueChange={(tabId) => {
+              problems?.onClearSelection();
+              model.setActiveTab(tabId);
+            }}
+          >
+            <TabsList className="contents" aria-label="terminal-tabs">
+              {model.dockTabs.map((tab, index) => (
+                <div
+                  key={tab.id}
+                  className={cn(
+                    APP_TAB_ITEM_CLASS,
+                    TD_TAB_CLASS,
+                    "lyra-allow-web-drag",
+                    problemsActive === false && tab.id === activeDockTab?.id && "lyra-tab-item-active",
+                    problemsActive === false && tab.id === activeDockTab?.id && TD_TAB_ACTIVE_CLASS,
+                    dockDropIndex !== null && dockDropIndex === index
+                      && TD_TAB_DROP_BEFORE_CLASS
+                  )}
+                  data-lyra-tab-id={tab.id}
+                  data-lyra-terminal-tab-id={tab.id}
+                  data-lyra-allow-web-drag="true"
+                  draggable
+                  onMouseDown={(event) => {
+                    if (isMiddleClick(event)) {
+                      event.preventDefault();
+                      onRequestCloseTab(tab.id);
+                    }
+                  }}
+                  onAuxClick={(event) => {
+                    if (isMiddleClick(event)) {
+                      event.preventDefault();
+                      onRequestCloseTab(tab.id);
+                    }
+                  }}
+                  onDragStart={(event: ReactDragEvent<HTMLDivElement>) => {
+                    onDockTabDragStart(event, tab.id);
+                  }}
+                  onDragEnd={() => {
+                    clearTerminalTabDragPayload();
+                    clearDragUiState();
+                  }}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    onRequestTabContextMenu({
+                      tabId: tab.id,
+                      anchorX: event.clientX,
+                      anchorY: event.clientY
+                    });
+                  }}
+                >
+                  <TabsTrigger
+                    className={TD_TAB_TRIGGER_CLASS}
+                    value={tab.id}
+                    aria-label={displayTitleByTabId[tab.id] ?? tab.title}
+                    data-lyra-allow-web-drag="true"
+                    draggable
+                    onDragStart={(event: ReactDragEvent<HTMLButtonElement>) => {
+                      onDockTabDragStart(event, tab.id);
+                    }}
+                    onDragEnd={() => {
+                      clearTerminalTabDragPayload();
+                      clearDragUiState();
+                    }}
+                    onDoubleClick={() => {
+                      const nextTitle = window.prompt(labels.renameTab, tab.title);
+                      if (nextTitle !== null) {
+                        model.renameTab(tab.id, nextTitle);
+                      }
+                    }}
+                  >
+                    <TerminalTabIcon icon={terminalIdentityByTabId[tab.id]} />
+                    <span className={TD_TAB_TITLE_CLASS}>{displayTitleByTabId[tab.id] ?? tab.title}</span>
+                    {tab.pinned ? (
+                      <span className={TD_TAB_BADGE_CLASS} title={labels.unpinTab} aria-hidden="true">
+                        <Pin size={10} />
+                      </span>
+                    ) : null}
+                    {tab.favorite ? (
+                      <span className={TD_TAB_BADGE_CLASS} title={labels.unfavoriteTab} aria-hidden="true">
+                        <Star size={10} />
+                      </span>
+                    ) : null}
+                  </TabsTrigger>
+                  <AppIconButton
+                    className={TD_TAB_CLOSE_CLASS}
+                    aria-label={labels.closeTab}
+                    title={labels.closeTab}
+                    onClick={() => {
+                      onRequestCloseTab(tab.id);
+                    }}
+                  >
+                    <X size={12} aria-hidden="true" />
+                  </AppIconButton>
+                </div>
+              ))}
+            </TabsList>
+          </Tabs>
+          <Tabs
+            className="contents"
+            orientation="vertical"
+            value={problems?.activeId ?? ""}
+            onValueChange={(tabId) => {
+              problems?.onSelectTab(tabId);
+            }}
+          >
+            <TabsList className="contents" aria-label={problems?.labels.list ?? "problems-tabs"}>
+              {problemsTabs.map((tab) => (
+                <div
+                  key={tab.id}
+                  className={cn(
+                    APP_TAB_ITEM_CLASS,
+                    TD_TAB_CLASS,
+                    tab.id === problems?.activeId && "lyra-tab-item-active",
+                    tab.id === problems?.activeId && TD_TAB_ACTIVE_CLASS
+                  )}
+                  data-lyra-problems-tab-id={tab.id}
+                  onMouseDown={(event) => {
+                    if (isMiddleClick(event)) {
+                      event.preventDefault();
+                      problems?.onCloseTab(tab.id);
+                    }
+                  }}
+                  onAuxClick={(event) => {
+                    if (isMiddleClick(event)) {
+                      event.preventDefault();
+                      problems?.onCloseTab(tab.id);
+                    }
+                  }}
+                >
+                  <TabsTrigger
+                    className={TD_TAB_TRIGGER_CLASS}
+                    value={tab.id}
+                    aria-label={displayTitleByTabId[tab.id] ?? tab.title}
+                  >
+                    <span className={TD_TAB_ICON_CLASS} aria-hidden="true">
+                      <CircleAlert size={13} />
+                    </span>
+                    <span className={TD_TAB_TITLE_CLASS}>{displayTitleByTabId[tab.id] ?? tab.title}</span>
+                  </TabsTrigger>
+                  <AppIconButton
+                    className={TD_TAB_CLOSE_CLASS}
+                    aria-label={labels.closeTab}
+                    title={labels.closeTab}
+                    onClick={() => {
+                      problems?.onCloseTab(tab.id);
+                    }}
+                  >
+                    <X size={12} aria-hidden="true" />
+                  </AppIconButton>
+                </div>
+              ))}
+            </TabsList>
+          </Tabs>
         </nav>
         <div className={TD_TOOLBAR_ACTIONS_CLASS}>
           <AppIconButton
