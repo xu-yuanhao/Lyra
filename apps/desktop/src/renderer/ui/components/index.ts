@@ -2,6 +2,17 @@ export { AppBadge, type AppBadgeProps, type AppBadgeTone } from "./app-badge";
 export { AppButton, appButtonVariants, type AppButtonProps } from "./app-button";
 export { AppCheckbox, type AppCheckboxProps } from "./app-checkbox";
 export {
+  AppContextMenu,
+  AppContextMenuAnchor,
+  AppContextMenuContent,
+  AppContextMenuItem,
+  AppContextMenuPortal,
+  type AppContextMenuAnchorProps,
+  type AppContextMenuContentProps,
+  type AppContextMenuItemProps,
+  type AppContextMenuProps
+} from "./app-context-menu";
+export {
   AppDialog,
   AppDialogTrigger,
   type AppDialogProps,

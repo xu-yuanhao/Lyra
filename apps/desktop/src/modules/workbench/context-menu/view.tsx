@@ -1,28 +1,30 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-import { AppButton } from "@renderer/ui/components";
+import { cn } from "@renderer/ui/utils";
+import {
+  AppContextMenu,
+  AppContextMenuAnchor,
+  AppContextMenuContent,
+  AppContextMenuItem
+} from "@renderer/ui/components";
 import {
   clampContextMenuPosition,
   readBrowserPageHostRects,
-  readContextMenuPaneBoundary,
-  type AnchorPosition
+  readContextMenuPaneBoundary
 } from "./context-menu-position";
 import type { ContextMenuState } from "./types";
 
-const MENU_LAYER_CLASS = "lyra-context-menu-layer fixed inset-0 z-[var(--lyra-z-menu-layer)]";
-
 const MENU_CLASS =
-  "lyra-context-menu pointer-events-auto isolate fixed grid min-w-[var(--lyra-unit-188)] gap-[var(--lyra-space-2)] overflow-hidden rounded-[var(--lyra-radius-8)] border border-[var(--lyra-app-border)] bg-[var(--lyra-app-popover-bg)] p-[var(--lyra-space-4)] text-[var(--lyra-text-primary)] shadow-[var(--lyra-shadow-elevated-md)]";
+  "lyra-context-menu pointer-events-auto isolate grid min-w-[var(--lyra-unit-188)] gap-[var(--lyra-space-2)] overflow-hidden rounded-[var(--lyra-radius-8)] border border-[var(--lyra-app-border)] bg-[var(--lyra-app-popover-bg)] p-[var(--lyra-space-4)] text-[var(--lyra-text-primary)] shadow-[var(--lyra-shadow-elevated-md)] z-[var(--lyra-z-menu-layer)]";
 
 const MENU_ITEM_CLASS =
-  "lyra-context-menu-item relative outline-none transition-[background-color,color,opacity] duration-[var(--lyra-transition-fast)] hover:enabled:bg-[var(--lyra-app-row-hover-bg)] hover:enabled:text-[var(--lyra-text-primary)] hover:enabled:opacity-100 focus:bg-[var(--lyra-app-row-active-bg)] focus-visible:bg-[var(--lyra-app-row-active-bg)] focus:shadow-none focus-visible:shadow-none active:bg-[var(--lyra-app-row-active-bg)] active:shadow-none disabled:cursor-default disabled:opacity-[var(--lyra-opacity-disabled)] [&.lyra-ui-button]:grid [&.lyra-ui-button]:min-h-[var(--lyra-control-h-28)] [&.lyra-ui-button]:w-full [&.lyra-ui-button]:grid-cols-[var(--lyra-space-16)_minmax(0,1fr)] [&.lyra-ui-button]:items-center [&.lyra-ui-button]:justify-start [&.lyra-ui-button]:gap-[var(--lyra-space-8)] [&.lyra-ui-button]:appearance-none [&.lyra-ui-button]:rounded-[var(--lyra-radius-6)] [&.lyra-ui-button]:border-0 [&.lyra-ui-button]:bg-transparent [&.lyra-ui-button]:px-[var(--lyra-space-8)] [&.lyra-ui-button]:py-0 [&.lyra-ui-button]:text-left [&.lyra-ui-button]:font-medium [&.lyra-ui-button]:text-[var(--lyra-text-secondary)] [&.lyra-ui-button]:shadow-none";
+  "lyra-context-menu-item relative outline-none transition-[background-color,color,opacity] duration-[var(--lyra-transition-fast)] data-[highlighted]:bg-[var(--lyra-app-row-hover-bg)] data-[highlighted]:text-[var(--lyra-text-primary)] data-[highlighted]:opacity-100 rounded-[var(--lyra-radius-6)] px-[var(--lyra-space-8)] py-0 min-h-[var(--lyra-control-h-28)] w-full grid grid-cols-[var(--lyra-space-16)_minmax(0,1fr)] items-center justify-start gap-[var(--lyra-space-8)] text-left font-medium text-[var(--lyra-text-secondary)] data-[disabled]:opacity-[var(--lyra-opacity-disabled)]";
 
 const MENU_ITEM_SEPARATOR_CLASS =
   "lyra-context-menu-item-separator relative mt-[var(--lyra-space-4)] before:pointer-events-none before:absolute before:top-[calc(var(--lyra-space-2)*-1)] before:right-[var(--lyra-space-8)] before:left-[var(--lyra-space-8)] before:h-[var(--lyra-stroke-thin)] before:bg-[color-mix(in_srgb,var(--lyra-app-border)_72%,transparent)] before:content-['']";
 
 const MENU_ITEM_DANGER_CLASS =
-  "lyra-context-menu-item-danger text-[var(--lyra-text-secondary)] [&.lyra-context-menu-item-danger]:hover:enabled:text-[color-mix(in_srgb,var(--lyra-window-close-hover-bg)_82%,var(--lyra-text-primary)_18%)] [&.lyra-context-menu-item-danger]:hover:enabled:bg-[color-mix(in_srgb,var(--lyra-window-close-hover-bg)_10%,var(--lyra-app-row-hover-bg))] [&_.lyra-context-menu-item-icon]:text-inherit";
+  "lyra-context-menu-item-danger text-[var(--lyra-text-secondary)] [&.lyra-context-menu-item-danger]:data-[highlighted]:text-[color-mix(in_srgb,var(--lyra-window-close-hover-bg)_82%,var(--lyra-text-primary)_18%)] [&.lyra-context-menu-item-danger]:data-[highlighted]:bg-[color-mix(in_srgb,var(--lyra-window-close-hover-bg)_10%,var(--lyra-app-row-hover-bg))] [&_.lyra-context-menu-item-icon]:text-inherit";
 
 const MENU_ITEM_ICON_CLASS =
   "lyra-context-menu-item-icon inline-flex items-center justify-center text-current";
@@ -33,52 +35,61 @@ type ContextMenuHostProps = {
   readonly onSelectItem: (itemId: string) => void;
 };
 
+type MenuPosition = {
+  readonly left: number;
+  readonly top: number;
+};
+
+const pointRect = (x: number, y: number): DOMRect => ({
+  x,
+  y,
+  top: y,
+  left: x,
+  right: x,
+  bottom: y,
+  width: 0,
+  height: 0,
+  toJSON: () => ({})
+}) as DOMRect;
+
 export const ContextMenuHost = ({
   state,
   onClose,
   onSelectItem
 }: ContextMenuHostProps) => {
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const [position, setPosition] = useState<AnchorPosition>({
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [position, setPosition] = useState<MenuPosition>({
     left: state.anchorX,
     top: state.anchorY
   });
+  const positionRef = useRef(position);
+  positionRef.current = position;
+  const virtualAnchorRef = useRef({
+    getBoundingClientRect: () =>
+      pointRect(positionRef.current.left, positionRef.current.top)
+  });
 
-  const updatePosition = (): void => {
-    const menu = menuRef.current;
+  const updatePosition = useCallback((): void => {
+    const menu = contentRef.current;
     if (menu === null) {
       return;
     }
-    const rect = menu.getBoundingClientRect();
-    const paneBoundary = readContextMenuPaneBoundary(state.anchorX, state.anchorY);
-    setPosition(
-      clampContextMenuPosition({
-        anchorX: state.anchorX,
-        anchorY: state.anchorY,
-        menuWidth: rect.width,
-        menuHeight: rect.height,
-        paneBoundary,
-        browserHostRects: readBrowserPageHostRects()
-      })
+    const paneBoundary = readContextMenuPaneBoundary(
+      state.anchorX,
+      state.anchorY
     );
-  };
-
-  useEffect(() => {
-    if (state.isOpen === false) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [onClose, state.isOpen]);
+    const next = clampContextMenuPosition({
+      anchorX: state.anchorX,
+      anchorY: state.anchorY,
+      menuWidth: menu.offsetWidth,
+      menuHeight: menu.offsetHeight,
+      paneBoundary,
+      browserHostRects: readBrowserPageHostRects()
+    });
+    setPosition((prev) =>
+      prev.left === next.left && prev.top === next.top ? prev : next
+    );
+  }, [state.anchorX, state.anchorY]);
 
   useLayoutEffect(() => {
     if (state.isOpen === false) {
@@ -89,63 +100,53 @@ export const ContextMenuHost = ({
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [state.anchorX, state.anchorY, state.isOpen, state.items]);
+  }, [state.isOpen, state.items, updatePosition]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (state.isOpen === false) {
       return;
     }
-
-    const onResize = (): void => {
-      updatePosition();
-    };
-
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", updatePosition);
     return () => {
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", updatePosition);
     };
-  }, [state.anchorX, state.anchorY, state.isOpen]);
+  }, [state.isOpen, updatePosition]);
 
   if (state.isOpen === false || typeof document === "undefined") {
     return null;
   }
 
-  return createPortal(
-    <div
-      className={MENU_LAYER_CLASS}
-      onMouseDown={onClose}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        onClose();
+  return (
+    <AppContextMenu
+      open={state.isOpen}
+      modal={false}
+      onOpenChange={(open) => {
+        if (open === false) {
+          onClose();
+        }
       }}
     >
-      <div
-        ref={menuRef}
+      <AppContextMenuAnchor virtualRef={virtualAnchorRef} />
+      <AppContextMenuContent
+        ref={contentRef}
         className={MENU_CLASS}
-        style={{ left: position.left, top: position.top }}
-        role="menu"
-        onMouseDown={(event) => {
-          event.stopPropagation();
-        }}
+        side="bottom"
+        align="start"
+        updatePositionStrategy="always"
         onContextMenu={(event) => {
           event.preventDefault();
         }}
       >
         {state.items.map((item) => (
-          <AppButton
+          <AppContextMenuItem
             key={item.id}
-            variant="ghost"
-            size="sm"
-            className={[
+            className={cn(
               MENU_ITEM_CLASS,
-              item.separatorBefore ? MENU_ITEM_SEPARATOR_CLASS : "",
-              item.danger ? MENU_ITEM_DANGER_CLASS : ""
-            ]
-              .filter((value) => value.length > 0)
-              .join(" ")}
-            role="menuitem"
+              item.separatorBefore && MENU_ITEM_SEPARATOR_CLASS,
+              item.danger && MENU_ITEM_DANGER_CLASS
+            )}
             disabled={item.disabled}
-            onClick={() => {
+            onSelect={() => {
               onSelectItem(item.id);
             }}
           >
@@ -153,10 +154,9 @@ export const ContextMenuHost = ({
               {item.icon}
             </span>
             <span className="lyra-context-menu-item-label">{item.label}</span>
-          </AppButton>
+          </AppContextMenuItem>
         ))}
-      </div>
-    </div>,
-    document.body
+      </AppContextMenuContent>
+    </AppContextMenu>
   );
 };
