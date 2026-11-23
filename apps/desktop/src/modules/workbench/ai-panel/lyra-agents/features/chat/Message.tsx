@@ -21,7 +21,24 @@ import { useStreamingMessageReasoning, useStreamingReasoningOpen } from "../rich
 import { formatMessage, t } from "@workbench/i18n";
 import { toolGroupLabel } from "@workbench/agent-session-view-model/tool-view-model";
 import { AppButton } from "@renderer/ui/components";
-import { MESSAGE_CITATION_TARGET_CLASS, COLLAPSE_CLASS,
+import {
+  MESSAGE_AGENT_CLASS,
+  MESSAGE_AGENT_ERROR_CLASS,
+  MESSAGE_BODY_CLASS,
+  MESSAGE_BODY_ERROR_CLASS,
+  MESSAGE_BUBBLE_CLASS,
+  MESSAGE_BUBBLE_COLLAPSED_CLASS,
+  MESSAGE_CITATION_TARGET_CLASS,
+  MESSAGE_CLASS,
+  MESSAGE_PROCESS_FOLD_BODY_CLASS,
+  MESSAGE_PROCESS_FOLD_CLASS,
+  MESSAGE_PROCESS_FOLD_HEAD_CLASS,
+  MESSAGE_PROCESS_FOLD_LABEL_CLASS,
+  MESSAGE_PROCESS_FOLD_LINE_CLASS,
+  MESSAGE_TEXT_BLOCK_CLASS,
+  MESSAGE_TEXT_CLASS,
+  MESSAGE_USER_CLASS,
+  COLLAPSE_CLASS,
   COLLAPSE_INNER_CLASS,
   MESSAGE_CONTENT_USER_CLASS
 } from "./classes";
@@ -842,12 +859,12 @@ export function Message({
   if (message.author === "user") {
     return (
       <div
-        className="lyra-agents-message lyra-agents-message-user"
+        className={`${MESSAGE_CLASS} ${MESSAGE_USER_CLASS}`}
         data-message-id={message.id}
       >
         <div className={MESSAGE_CONTENT_USER_CLASS}>
           <div
-            className={`lyra-agents-message-bubble select-text${highlightCitationTarget ? ` ${MESSAGE_CITATION_TARGET_CLASS} rounded-[var(--lyra-radius-12)]` : ""}${userBubbleOverflowing && !userBubbleExpanded ? " lyra-agents-message-bubble-collapsed" : ""}`}
+            className={`${MESSAGE_BUBBLE_CLASS} select-text${highlightCitationTarget ? ` ${MESSAGE_CITATION_TARGET_CLASS} rounded-[var(--lyra-radius-12)]` : ""}${userBubbleOverflowing && !userBubbleExpanded ? ` ${MESSAGE_BUBBLE_COLLAPSED_CLASS}` : ""}`}
             onContextMenu={(event) => onContextMenu?.(event, message)}
           >
             {(() => {
@@ -859,7 +876,7 @@ export function Message({
                 return (
                   <p
                     key={b.id}
-                    className="lyra-agents-message-text select-text"
+                    className={`${MESSAGE_TEXT_CLASS} select-text`}
                     data-message-block-id={b.id}
                   >
                     <MessageCitationText
@@ -907,7 +924,7 @@ export function Message({
                         return renderUserTextBlock(block);
                       }
                       return (
-                        <p className="lyra-agents-message-text select-text">{segment.text}</p>
+                        <p className={`${MESSAGE_TEXT_CLASS} select-text`}>{segment.text}</p>
                       );
                     }}
                   />
@@ -1199,7 +1216,7 @@ const AgentMessage = memo(function AgentMessage({
               return renderAgentBlock(block);
             }
             return (
-              <div className="lyra-agents-message-text-block select-text">
+              <div className={MESSAGE_TEXT_BLOCK_CLASS}>
                 <StreamingText
                   content={segment.text}
                   streaming={false}
@@ -1245,23 +1262,23 @@ const AgentMessage = memo(function AgentMessage({
     ? groupBlocksForRender(displayBlocks)
     : (
         <>
-          <div className={`lyra-agents-message-process-fold ${preSummaryOpen ? "open" : ""}`}>
+          <div className={`${MESSAGE_PROCESS_FOLD_CLASS} ${preSummaryOpen ? "open" : ""}`}>
             <AppButton
               variant="ghost"
               size="sm"
               type="button"
-              className="lyra-agents-message-process-fold-head"
+              className={MESSAGE_PROCESS_FOLD_HEAD_CLASS}
               onClick={() => setPreSummaryOpen((open) => !open)}
               aria-expanded={preSummaryOpen}
             >
-              <span className="lyra-agents-message-process-fold-line" aria-hidden="true" />
-              <span className="lyra-agents-message-process-fold-label">{processFoldLabel}</span>
-              <span className="lyra-agents-message-process-fold-line" aria-hidden="true" />
+              <span className={MESSAGE_PROCESS_FOLD_LINE_CLASS} aria-hidden="true" />
+              <span className={MESSAGE_PROCESS_FOLD_LABEL_CLASS}>{processFoldLabel}</span>
+              <span className={MESSAGE_PROCESS_FOLD_LINE_CLASS} aria-hidden="true" />
             </AppButton>
             <div className={COLLAPSE_CLASS} data-open={preSummaryOpen}>
               <div className={COLLAPSE_INNER_CLASS}>
                 {preSummaryOpen ? (
-                  <div className="lyra-agents-message-process-fold-body">
+                  <div className={MESSAGE_PROCESS_FOLD_BODY_CLASS}>
                     {groupBlocksForRender(preSummaryBlocks)}
                   </div>
                 ) : null}
@@ -1277,11 +1294,11 @@ const AgentMessage = memo(function AgentMessage({
 
   return (
     <div
-      className={`lyra-agents-message lyra-agents-message-agent${message.isApiError === true ? " lyra-agents-message-agent-error" : ""}`}
+      className={`${MESSAGE_CLASS} ${MESSAGE_AGENT_CLASS}${message.isApiError === true ? " " + MESSAGE_AGENT_ERROR_CLASS : ""}`}
       data-message-id={message.id}
     >
       <div
-        className={`lyra-agents-message-body${highlightCitationTarget ? " " + MESSAGE_CITATION_TARGET_CLASS + " rounded-[var(--lyra-radius-8)]" : ""}`}
+        className={`${message.isApiError === true ? MESSAGE_BODY_ERROR_CLASS : MESSAGE_BODY_CLASS}${highlightCitationTarget ? " " + MESSAGE_CITATION_TARGET_CLASS + " rounded-[var(--lyra-radius-8)]" : ""}`}
         onContextMenu={(event) => onContextMenu?.(event, message)}
       >
         {renderedBlocks}

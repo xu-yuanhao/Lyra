@@ -5,6 +5,7 @@ import { useData } from "../../data/DataProvider";
 import { MarkdownCitationContext } from "../rich-text/markdown-citation";
 import { StreamingText } from "../rich-text/StreamingText";
 import { resolveSelectionCitation } from "./message-citation";
+import { MESSAGE_TEXT_BLOCK_CLASS } from "./classes";
 
 export function MessageTextBlock({ message, block, streaming }: {
   readonly message: ChatMessage;
@@ -22,7 +23,7 @@ export function MessageTextBlock({ message, block, streaming }: {
   }, [addCitationToComposer, message]);
 
   return (
-    <div className="lyra-agents-message-text-block select-text" data-message-block-id={block.id}>
+    <div className={MESSAGE_TEXT_BLOCK_CLASS} data-message-block-id={block.id}>
       <MarkdownCitationContext.Provider value={cite}>
         <StreamingText
           content={block.body}
