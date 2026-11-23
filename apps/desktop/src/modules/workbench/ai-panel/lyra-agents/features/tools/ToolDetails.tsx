@@ -18,10 +18,22 @@ import { AppButton, AppShimmer } from "@renderer/ui/components";
 import { VirtualizedDiffView } from "./VirtualizedDiffView";
 import { EDIT_CARD_WAITING_CLASS, EDIT_DETAILS_CLASS, TASK_CARD_CLASS, TASK_CARD_HEAD_CLASS, TASK_ITEM_CLASS } from "../chat/classes";
 import {
+  INFO_BLOCK_CLASS,
+  INFO_DIM_CLASS,
+  INFO_LINE_CLASS,
+  INFO_STRONG_CLASS,
+  SEARCH_PATH_BUTTON_CLASS,
+  SEARCH_ROW_CLASS,
+  SEARCH_TEXT_CLASS,
+  SHELL_COMMAND_CLASS,
+  SHELL_EXIT_CLASS,
+  SHELL_PROMPT_CLASS,
   TOOL_MONO_TEXT_CLASS,
   TOOL_RESULT_ITEM_CLASS,
   TOOL_RESULT_LINE_CLASS,
-  TOOL_RESULT_META_CLASS
+  TOOL_RESULT_META_CLASS,
+  TOOL_SCREENSHOT_CONTAINER_CLASS,
+  TOOL_SCREENSHOT_IMG_CLASS
 } from "./classes";
 
 function ToolDump({
@@ -88,14 +100,14 @@ function LumenCard({
   details: Extract<ToolDetailsType, { type: "lumen" }>;
 }) {
   return (
-    <div className="lyra-agents-info-block lyra-agents-lumen-card">
+    <div className={`${INFO_BLOCK_CLASS} lyra-agents-lumen-card`}>
       {details.screenshot && (
-        <div className="lyra-agents-tool-screenshot-container">
+        <div className={TOOL_SCREENSHOT_CONTAINER_CLASS}>
           <ClickableImage
             src={details.screenshot}
             alt={t("tool.lumenSnapshotAlt")}
             image={details.screenshotImage}
-            className="lyra-agents-tool-screenshot-img"
+            className={TOOL_SCREENSHOT_IMG_CLASS}
             allowTargetFallback={false}
           />
         </div>
@@ -116,7 +128,7 @@ function SoftwareCard({
   details: Extract<ToolDetailsType, { type: "software" }>;
 }) {
   return (
-    <div className="lyra-agents-info-block">
+    <div className={INFO_BLOCK_CLASS}>
       <ActionTargetList targets={details.targets} />
       {details.text ? (
         <ToolDump
@@ -138,7 +150,7 @@ function EditCard({
   const hasDiff = details.hunks.length > 0;
 
   return (
-    <div className={`lyra-agents-info-block ${EDIT_DETAILS_CLASS}`}>
+    <div className={`${INFO_BLOCK_CLASS} ${EDIT_DETAILS_CLASS}`}>
       {running && !hasDiff ? (
         <AppShimmer
           as="div"
@@ -160,10 +172,10 @@ function ReadCard({
     return null;
   }
   return (
-    <div className="lyra-agents-info-block">
+    <div className={INFO_BLOCK_CLASS}>
       {details.range === undefined ? null : (
-        <div className="lyra-agents-info-line">
-          <span className="lyra-agents-info-dim">:{details.range}</span>
+        <div className={INFO_LINE_CLASS}>
+          <span className={INFO_DIM_CLASS}>:{details.range}</span>
         </div>
       )}
       {details.preview === undefined ? null : (
@@ -182,18 +194,18 @@ function SearchCard({
   details: Extract<ToolDetailsType, { type: "search" }>;
 }) {
   return (
-    <div className="lyra-agents-info-block">
-      <div className="lyra-agents-info-line">
-        <span className="lyra-agents-info-dim">{t("tool.searchQueryLabel")}</span>
-        <span className="lyra-agents-info-strong">{details.query}</span>
+    <div className={INFO_BLOCK_CLASS}>
+      <div className={INFO_LINE_CLASS}>
+        <span className={INFO_DIM_CLASS}>{t("tool.searchQueryLabel")}</span>
+        <span className={INFO_STRONG_CLASS}>{details.query}</span>
       </div>
       <div className="lyra-agents-tool-result-list lyra-agents-search-results">
         {details.results.map((r, i) => (
-          <div key={i} className="lyra-agents-search-row">
-            <FileOpenButton filePath={`${r.file}:${r.line}`} className={`lyra-agents-tool-result-line ${TOOL_RESULT_LINE_CLASS} lyra-agents-info-dim lyra-agents-search-path-button`}>
+          <div key={i} className={SEARCH_ROW_CLASS}>
+            <FileOpenButton filePath={`${r.file}:${r.line}`} className={`lyra-agents-tool-result-line ${TOOL_RESULT_LINE_CLASS} ${INFO_DIM_CLASS} ${SEARCH_PATH_BUTTON_CLASS}`}>
               {r.file}:{r.line}
             </FileOpenButton>
-            <span className="lyra-agents-search-text">
+            <span className={SEARCH_TEXT_CLASS}>
               <ToolDump
                 code={r.text}
                 language={languageFromPathAndContent(r.file, r.text)}
@@ -213,15 +225,15 @@ function ShellCard({
 }) {
   const parts = splitCommandDump(details.command, details.output);
   return (
-    <div className="lyra-agents-info-block">
+    <div className={INFO_BLOCK_CLASS}>
       {parts.command !== null ? (
-        <div className="lyra-agents-shell-command">
-          <span className="lyra-agents-shell-prompt">$</span>
+        <div className={SHELL_COMMAND_CLASS}>
+          <span className={SHELL_PROMPT_CLASS}>$</span>
           <ToolDump code={parts.command} language="shell" />
         </div>
       ) : null}
       {parts.output !== null ? <ToolDump code={parts.output} language="shell" /> : null}
-      <div className="lyra-agents-info-dim lyra-agents-shell-exit">exit {details.exitCode}</div>
+      <div className={`${INFO_DIM_CLASS} ${SHELL_EXIT_CLASS}`}>exit {details.exitCode}</div>
     </div>
   );
 }
@@ -239,12 +251,12 @@ function WebCard({
   };
 
   return (
-    <div className="lyra-agents-info-block">
+    <div className={INFO_BLOCK_CLASS}>
       {results.length > 0 ? (
         <>
-          <div className="lyra-agents-info-line">
-            <span className="lyra-agents-info-dim">{t("tool.searchQueryLabel")}</span>
-            <span className="lyra-agents-info-strong">{details.query ?? details.url}</span>
+          <div className={INFO_LINE_CLASS}>
+            <span className={INFO_DIM_CLASS}>{t("tool.searchQueryLabel")}</span>
+            <span className={INFO_STRONG_CLASS}>{details.query ?? details.url}</span>
           </div>
           <div className="lyra-agents-tool-result-list lyra-agents-web-results">
             {results.map((result, index) => (
@@ -271,8 +283,8 @@ function WebCard({
         </>
       ) : (
         <>
-          <div className="lyra-agents-info-line">
-            <span className="lyra-agents-info-dim">{t("tool.webUrlLabel")}</span>
+          <div className={INFO_LINE_CLASS}>
+            <span className={INFO_DIM_CLASS}>{t("tool.webUrlLabel")}</span>
             <AppButton variant="ghost" size="sm"
               type="button"
               className={`${TOOL_RESULT_LINE_CLASS} lyra-agents-web-url-button`}
@@ -293,11 +305,11 @@ function WebCard({
         </pre>
       ) : null}
       {details.screenshot && (
-        <div className="lyra-agents-tool-screenshot-container">
+        <div className={TOOL_SCREENSHOT_CONTAINER_CLASS}>
           <ClickableImage
             src={details.screenshot}
             alt={t("tool.browserScreenshotAlt")}
-            className="lyra-agents-tool-screenshot-img"
+            className={TOOL_SCREENSHOT_IMG_CLASS}
           />
         </div>
       )}
@@ -319,7 +331,7 @@ function WorkbenchCard({
   };
 
   return (
-    <div className="lyra-agents-info-block">
+    <div className={INFO_BLOCK_CLASS}>
       {tabs.length > 0 && (
         <div className="lyra-agents-tool-result-list lyra-agents-workbench-tab-list">
           {tabs.map((tab) => (
@@ -412,7 +424,7 @@ function TaskCard({
   details: Extract<ToolDetailsType, { type: "task" }>;
 }) {
   return (
-    <div className={`lyra-agents-info-block ${TASK_CARD_CLASS}`}>
+    <div className={`${INFO_BLOCK_CLASS} ${TASK_CARD_CLASS}`}>
       <div className={`${TOOL_RESULT_LINE_CLASS} ${TASK_CARD_HEAD_CLASS}`}>{t("tool.executionPlan")}</div>
       <ul className="lyra-agents-tool-result-list lyra-agents-task-list">
         {details.tasks.map((task, i) => (
@@ -432,7 +444,7 @@ function AskCard({
 }) {
   const answer = details.answer.trim();
   return (
-    <div className="lyra-agents-info-block lyra-agents-ask-card">
+    <div className={`${INFO_BLOCK_CLASS} lyra-agents-ask-card`}>
       <pre className={`lyra-agents-info-pre lyra-agents-ask-question ${TOOL_MONO_TEXT_CLASS}`}>{details.question}</pre>
       {answer.length > 0 ? (
         <pre className={`lyra-agents-info-pre lyra-agents-ask-answer ${TOOL_MONO_TEXT_CLASS}`}>{answer}</pre>

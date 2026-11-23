@@ -1,6 +1,7 @@
 import type { ToolDetails as ToolDetailsType } from "../../core/types";
 import { HighlightedSource } from "@workbench/syntax/highlighted-source";
 import { splitCommandDump } from "@workbench/agent-session-view-model/tool-parsing/terminal";
+import { INFO_BLOCK_CLASS, INFO_DIM_CLASS, SHELL_COMMAND_CLASS, SHELL_EXIT_CLASS, SHELL_PROMPT_CLASS } from "./classes";
 
 type TerminalToolDetails = Extract<ToolDetailsType, { type: "terminal" }>;
 
@@ -17,10 +18,10 @@ export function TerminalToolCard({
   const parts = splitCommandDump(command, dump);
 
   return (
-    <div className="lyra-agents-info-block">
+    <div className={INFO_BLOCK_CLASS}>
       {parts.command !== null ? (
-        <div className="lyra-agents-shell-command">
-          <span className="lyra-agents-shell-prompt">$</span>
+        <div className={SHELL_COMMAND_CLASS}>
+          <span className={SHELL_PROMPT_CLASS}>$</span>
           <HighlightedSource
             code={parts.command}
             language="shell"
@@ -36,7 +37,7 @@ export function TerminalToolCard({
         />
       ) : null}
       {!details.running && details.exitCode !== null && details.exitCode !== undefined ? (
-        <div className="lyra-agents-info-dim lyra-agents-shell-exit">exit {details.exitCode}</div>
+        <div className={`${INFO_DIM_CLASS} ${SHELL_EXIT_CLASS}`}>exit {details.exitCode}</div>
       ) : null}
     </div>
   );

@@ -82,3 +82,25 @@ export const TOOL_ARTIFACT_AUDIO_CLASS =
   "lyra-agents-tool-artifact-audio block w-full";
 export const FOLD_LINE_CLASS =
   "lyra-agents-fold-line absolute z-[2] block w-[var(--lyra-space-16)] h-auto min-w-0 min-h-0 top-[var(--lyra-space-24)] bottom-[var(--lyra-space-6)] p-0 border-0 rounded-none bg-transparent shadow-none transform-none cursor-pointer before:content-[''] before:absolute before:top-[var(--lyra-space-1)] before:bottom-[var(--lyra-space-1)] before:left-1/2 before:w-[var(--lyra-unit-0-5)] before:-translate-x-1/2 before:scale-x-50 before:origin-center before:rounded-[var(--lyra-radius-pill)] before:bg-[color-mix(in_srgb,var(--lyra-app-border)_64%,transparent)] hover:bg-transparent hover:border-transparent hover:shadow-none hover:transform-none focus-visible:bg-transparent focus-visible:border-transparent focus-visible:shadow-none focus-visible:transform-none active:bg-transparent active:border-transparent active:shadow-none active:transform-none hover:before:bg-[var(--lyra-effect-glass-hover)] focus-visible:before:bg-[var(--lyra-effect-glass-hover)]";
+export const INFO_BLOCK_CLASS =
+  "lyra-agents-info-block flex flex-col gap-[var(--lyra-space-4)] w-full min-w-0 text-[length:var(--lyra-text-size-12)]";
+export const INFO_LINE_CLASS =
+  "lyra-agents-info-line flex items-center gap-[var(--lyra-space-8)] flex-wrap text-[var(--lyra-text-secondary)]";
+export const INFO_STRONG_CLASS =
+  "lyra-agents-info-strong font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)] text-[var(--lyra-text-secondary)]";
+export const INFO_DIM_CLASS =
+  "lyra-agents-info-dim font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)] text-[var(--lyra-text-muted)]";
+export const SEARCH_PATH_BUTTON_CLASS =
+  "lyra-agents-search-path-button flex-[0_1_auto] min-w-0 border-0 p-0 bg-transparent text-left cursor-pointer hover:text-[var(--lyra-text-accent)] focus-visible:text-[var(--lyra-text-accent)] focus-visible:outline-[length:var(--lyra-stroke-strong)] focus-visible:outline-[var(--lyra-app-focus)] focus-visible:outline-offset-[var(--lyra-space-2)] focus-visible:rounded-[var(--lyra-radius-6)]";
+export const SEARCH_ROW_CLASS =
+  "lyra-agents-search-row flex flex-wrap gap-[var(--lyra-space-8)] w-full min-w-0";
+export const SEARCH_TEXT_CLASS =
+  "lyra-agents-search-text min-w-0 flex-[1_1_12rem] text-[var(--lyra-text-secondary)] whitespace-pre-wrap break-words";
+export const TOOL_SCREENSHOT_CONTAINER_CLASS = "lyra-agents-tool-screenshot-container mt-[var(--lyra-space-4)]";
+export const TOOL_SCREENSHOT_IMG_CLASS =
+  "lyra-agents-tool-screenshot-img rounded-[var(--lyra-radius-8)] [&_img]:border [&_img]:border-[color-mix(in_srgb,var(--lyra-app-border)_46%,transparent)] [&_img]:border-[var(--lyra-stroke-thin)]";
+export const SHELL_COMMAND_CLASS =
+  "lyra-agents-shell-command flex flex-nowrap items-start gap-[var(--lyra-space-8)] w-full min-w-0 font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-comfortable)] text-[var(--lyra-text-secondary)] [&_.lyra-syntax-source]:flex-[1_1_auto] [&_.lyra-syntax-source]:w-auto";
+export const SHELL_PROMPT_CLASS =
+  "lyra-agents-shell-prompt flex-[0_0_auto] text-[var(--lyra-syntax-tag)] select-none";
+export const SHELL_EXIT_CLASS = "lyra-agents-shell-exit m-0 text-[var(--lyra-text-muted)]";
