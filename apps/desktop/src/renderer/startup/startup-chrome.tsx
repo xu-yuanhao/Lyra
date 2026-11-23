@@ -25,6 +25,18 @@ import {
 import { LYRA_ASCII_LOGO } from "@workbench/ai-panel/lyra-agents/features/chat/ascii-logo";
 import startupAudioUrl from "../assets/audio/mountain-moon-mission.mp3";
 import { readStoredUiFontSizePx } from "./startup-preferences";
+import {
+  STARTUP_ASCII_LOGO_CLASS,
+  STARTUP_AUDIO_CLASS,
+  STARTUP_AUDIO_TOGGLE_CLASS,
+  STARTUP_ROOT_CLASS,
+  STARTUP_SURFACE_CLASS,
+  STARTUP_SURFACE_INSTALLER_CLASS,
+  STARTUP_TAGLINE_CHARACTER_CLASS,
+  STARTUP_TAGLINE_CLASS,
+  STARTUP_TAGLINE_COPY_CLASS,
+  STARTUP_TAGLINE_TRACK_CLASS
+} from "./classes";
 
 export type StartupAudioState = {
   readonly isEnabled: boolean;
@@ -33,7 +45,7 @@ export type StartupAudioState = {
 };
 
 export const AnimatedAsciiLogo = () => (
-  <pre className="lyra-startup-ascii-logo" aria-label="Lyra" role="img">
+  <pre className={STARTUP_ASCII_LOGO_CLASS} aria-label="Lyra" role="img">
     {LYRA_ASCII_LOGO}
   </pre>
 );
@@ -49,13 +61,13 @@ export const AnimatedStartupCopy = ({
 }) => (
   <span
     ref={measureRef}
-    className="lyra-startup-tagline-copy"
+    className={STARTUP_TAGLINE_COPY_CLASS}
     aria-hidden={ariaHidden}
   >
     {Array.from(text).map((character, index) => (
       <span
         key={`${character}-${index}`}
-        className="lyra-startup-tagline-character"
+        className={STARTUP_TAGLINE_CHARACTER_CLASS}
         style={{
           "--lyra-startup-copy-delay": `${index * 22}ms`
         } as CSSProperties}
@@ -100,11 +112,11 @@ export const StartupTagline = ({
   return (
     <p
       ref={viewportRef}
-      className={`lyra-startup-tagline${isOverflowing ? " is-overflowing" : ""}`}
+      className={`lyra-startup-tagline${isOverflowing ? " is-overflowing" : ""} ${STARTUP_TAGLINE_CLASS}`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
-      <span key={text} className="lyra-startup-tagline-track">
+      <span key={text} className={STARTUP_TAGLINE_TRACK_CLASS}>
         <AnimatedStartupCopy text={text} measureRef={measureRef} />
         {isOverflowing ? (
           <AnimatedStartupCopy text={text} ariaHidden />
@@ -172,14 +184,14 @@ const StartupAudioControl = ({
     <>
       <audio
         ref={audioRef}
-        className="lyra-startup-audio"
+        className={STARTUP_AUDIO_CLASS}
         src={startupAudioUrl}
         autoPlay
         loop
         preload="auto"
       />
       <button
-        className={`lyra-startup-audio-toggle${isEnabled ? "" : " is-muted"}`}
+        className={`${STARTUP_AUDIO_TOGGLE_CLASS}${isEnabled ? "" : " is-muted"}`}
         type="button"
         aria-label={isEnabled ? "Mute startup music" : "Play startup music"}
         aria-pressed={isEnabled}
@@ -225,7 +237,7 @@ export const StartupFrame = ({
   readonly onLeave?: () => void;
   readonly onStateChange?: (state: StartupAudioState) => void;
 }) => (
-  <main className={mode === "startup" ? "lyra-startup-root" : `lyra-startup-root lyra-${mode}-shell`}>
+  <main className={mode === "startup" ? STARTUP_ROOT_CLASS : `${STARTUP_ROOT_CLASS} lyra-${mode}-shell`}>
     {mode === "startup" && onHover !== undefined && onLeave !== undefined && onStateChange !== undefined ? (
       <StartupAudioControl
         onHover={onHover}
@@ -233,7 +245,7 @@ export const StartupFrame = ({
         onStateChange={onStateChange}
       />
     ) : null}
-    <section className={mode === "installer" ? "lyra-startup-surface lyra-installer-surface" : "lyra-startup-surface"}>
+    <section className={mode === "installer" ? `${STARTUP_SURFACE_CLASS} ${STARTUP_SURFACE_INSTALLER_CLASS}` : STARTUP_SURFACE_CLASS}>
       {children}
     </section>
   </main>

@@ -46,6 +46,46 @@ import {
   useStartupTheme,
   type StartupAudioState
 } from "./startup-chrome";
+import {
+  STARTUP_ACTIONS_CLASS,
+  STARTUP_AUTH_COPY_CLASS,
+  STARTUP_AVATAR_CLASS,
+  STARTUP_AVATAR_FALLBACK_CLASS,
+  STARTUP_BACK_CLASS,
+  STARTUP_BRAND_CLASS,
+  STARTUP_CANCEL_CLASS,
+  STARTUP_CHOICE_CLASS,
+  STARTUP_CHOICE_LIST_CLASS,
+  STARTUP_ERROR_CLASS,
+  STARTUP_HERO_CLASS,
+  STARTUP_LEGAL_BUTTON_CLASS,
+  STARTUP_LEGAL_CHECK_CLASS,
+  STARTUP_LEGAL_CLASS,
+  STARTUP_LEGAL_CONSENT_CLASS,
+  STARTUP_LEGAL_DESCRIPTION_CLASS,
+  STARTUP_LEGAL_LINKS_CLASS,
+  STARTUP_LOCAL_CLASS,
+  STARTUP_LOGIN_AVATAR_CLASS,
+  STARTUP_LOGIN_AVATAR_FALLBACK_CLASS,
+  STARTUP_LOGIN_AVATAR_IMAGE_CLASS,
+  STARTUP_LOGIN_BUTTON_CLASS,
+  STARTUP_LOGO_WRAP_CLASS,
+  STARTUP_PANEL_CLASS,
+  STARTUP_PREFERENCE_TITLE_CLASS,
+  STARTUP_PREFERENCE_TITLE_TRACK_CLASS,
+  STARTUP_PREVIEW_BAR_CLASS,
+  STARTUP_PREVIEW_BODY_CLASS,
+  STARTUP_PREVIEW_CONTENT_CLASS,
+  STARTUP_PREVIEW_SIDEBAR_CLASS,
+  STARTUP_STATUS_CLASS,
+  STARTUP_THEME_CARD_CLASS,
+  STARTUP_THEME_CARD_LABEL_CLASS,
+  STARTUP_THEME_GRID_CLASS,
+  STARTUP_THEME_PREVIEW_BASE_CLASS,
+  STARTUP_THEME_PREVIEW_DARK_CLASS,
+  STARTUP_THEME_PREVIEW_SYSTEM_CLASS,
+  STARTUP_WELCOME_CLASS
+} from "./classes";
 
 type StartupGateProps = {
   readonly onReady: () => void;
@@ -118,9 +158,9 @@ const StartupPreferenceTitle = ({ text }: { readonly text: string }) => {
   return (
     <h1
       ref={viewportRef}
-      className={`lyra-startup-preference-title${isOverflowing ? " is-overflowing" : ""}`}
+      className={`lyra-startup-preference-title${isOverflowing ? " is-overflowing" : ""} ${STARTUP_PREFERENCE_TITLE_CLASS}`}
     >
-      <span key={text} className="lyra-startup-preference-title-track">
+      <span key={text} className={STARTUP_PREFERENCE_TITLE_TRACK_CLASS}>
         <AnimatedStartupCopy text={text} measureRef={measureRef} />
         {isOverflowing ? <AnimatedStartupCopy text={text} ariaHidden /> : null}
       </span>
@@ -133,14 +173,14 @@ const Avatar = ({ user }: { readonly user: AuthUser }) => {
   const avatarUrl = user.avatarUrl;
   if (avatarUrl === undefined || failedUrl === avatarUrl) {
     return (
-      <span className="lyra-startup-avatar-fallback">
+      <span className={STARTUP_AVATAR_FALLBACK_CLASS}>
         {userName(user).slice(0, 1).toUpperCase()}
       </span>
     );
   }
   return (
     <img
-      className="lyra-startup-avatar"
+      className={STARTUP_AVATAR_CLASS}
       src={avatarUrl}
       alt=""
       onError={() => setFailedUrl(avatarUrl)}
@@ -153,14 +193,14 @@ const LocalIdentityAvatar = ({ identity }: { readonly identity: AuthLocalIdentit
   const avatarUrl = identity.registeredAvatarUrl;
   if (avatarUrl === undefined || failedUrl === avatarUrl) {
     return (
-      <span className="lyra-startup-login-avatar-fallback" aria-hidden="true">
+      <span className={STARTUP_LOGIN_AVATAR_FALLBACK_CLASS} aria-hidden="true">
         {(identity.registeredDisplayName ?? identity.displayName).slice(0, 1).toUpperCase()}
       </span>
     );
   }
   return (
     <img
-      className="lyra-startup-login-avatar-image"
+      className={STARTUP_LOGIN_AVATAR_IMAGE_CLASS}
       src={avatarUrl}
       alt=""
       onError={() => setFailedUrl(avatarUrl)}
@@ -181,22 +221,22 @@ const ThemePreview = ({
 }) => (
   <button
     type="button"
-    className={`lyra-startup-theme-card${selected ? " is-selected" : ""}`}
+    className={`${STARTUP_THEME_CARD_CLASS}${selected ? " is-selected" : ""}`}
     aria-pressed={selected}
     onClick={onSelect}
   >
-    <span className={`lyra-startup-theme-preview lyra-startup-theme-preview-${theme.slice(5)}`}>
-      <span className="lyra-startup-preview-bar" />
-      <span className="lyra-startup-preview-body">
-        <span className="lyra-startup-preview-sidebar" />
-        <span className="lyra-startup-preview-content">
+    <span className={`${STARTUP_THEME_PREVIEW_BASE_CLASS} lyra-startup-theme-preview-${theme.slice(5)}${theme === "lyra-dark" ? ` ${STARTUP_THEME_PREVIEW_DARK_CLASS}` : theme === "lyra-system" ? ` ${STARTUP_THEME_PREVIEW_SYSTEM_CLASS}` : ""}`}>
+      <span className={STARTUP_PREVIEW_BAR_CLASS} />
+      <span className={STARTUP_PREVIEW_BODY_CLASS}>
+        <span className={STARTUP_PREVIEW_SIDEBAR_CLASS} />
+        <span className={STARTUP_PREVIEW_CONTENT_CLASS}>
           <span />
           <span />
           <span />
         </span>
       </span>
     </span>
-    <span className="lyra-startup-theme-card-label">
+    <span className={STARTUP_THEME_CARD_LABEL_CLASS}>
       {label}
       {selected ? <span aria-hidden="true">✓</span> : null}
     </span>
@@ -687,18 +727,18 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
   if (view === "legal") {
     return (
       <StartupFrame {...audioControlProps}>
-        <div className="lyra-startup-panel lyra-startup-legal-consent">
+        <div className={`${STARTUP_PANEL_CLASS} ${STARTUP_LEGAL_CONSENT_CLASS}`}>
           <StartupPreferenceTitle text={language.legalTitle} />
-          <p className="lyra-startup-legal-description">{language.legalDescription}</p>
-          <div className="lyra-startup-legal lyra-startup-legal-links">
-            <button type="button" onClick={() => openLegal(TERMS_URL)}>
+          <p className={STARTUP_LEGAL_DESCRIPTION_CLASS}>{language.legalDescription}</p>
+          <div className={`${STARTUP_LEGAL_CLASS} ${STARTUP_LEGAL_LINKS_CLASS}`}>
+            <button type="button" className={STARTUP_LEGAL_BUTTON_CLASS} onClick={() => openLegal(TERMS_URL)}>
               {language.terms} ↗
             </button>
-            <button type="button" onClick={() => openLegal(PRIVACY_URL)}>
+            <button type="button" className={STARTUP_LEGAL_BUTTON_CLASS} onClick={() => openLegal(PRIVACY_URL)}>
               {language.privacy} ↗
             </button>
           </div>
-          <label className="lyra-startup-legal-check">
+          <label className={STARTUP_LEGAL_CHECK_CLASS}>
             <input
               type="checkbox"
               checked={legalChecked}
@@ -722,10 +762,10 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
   if (view === "authenticating") {
     return (
       <StartupFrame {...audioControlProps}>
-        <div className="lyra-startup-status">
+        <div className={STARTUP_STATUS_CLASS}>
           <button
             type="button"
-            className="lyra-startup-auth-copy"
+            className={STARTUP_AUTH_COPY_CLASS}
             onClick={() => void copyAuthorizationUrl()}
             onMouseEnter={() => setIsAuthUrlHovered(true)}
             onMouseLeave={() => setIsAuthUrlHovered(false)}
@@ -742,10 +782,10 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
                     : language.browser}
             />
           </button>
-          {authError ? <p className="lyra-startup-error">{authError}</p> : null}
+          {authError ? <p className={STARTUP_ERROR_CLASS}>{authError}</p> : null}
           <button
             type="button"
-            className="lyra-startup-local lyra-startup-cancel"
+            className={`${STARTUP_LOCAL_CLASS} ${STARTUP_CANCEL_CLASS}`}
             onClick={cancelAuth}
             onMouseEnter={() => setIsCancelHovered(true)}
             onMouseLeave={() => setIsCancelHovered(false)}
@@ -760,11 +800,11 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
   if (view === "welcome-signup" || view === "welcome-login") {
     const user = auth?.user;
     if (user === null || user === undefined) {
-      return <StartupFrame {...audioControlProps}><div className="lyra-startup-status"><p>{language.authError}</p></div></StartupFrame>;
+      return <StartupFrame {...audioControlProps}><div className={STARTUP_STATUS_CLASS}><p>{language.authError}</p></div></StartupFrame>;
     }
     return (
       <StartupFrame {...audioControlProps}>
-        <div className="lyra-startup-welcome">
+        <div className={STARTUP_WELCOME_CLASS}>
           <Avatar user={user} />
           <h1>{view === "welcome-signup" ? language.welcome : language.welcomeBack(userName(user))}</h1>
           <p>{user.email ?? "Google account"}</p>
@@ -781,17 +821,17 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
   if (view === "language") {
     return (
       <StartupFrame {...audioControlProps}>
-        <div className="lyra-startup-panel">
-          <button className="lyra-startup-back" type="button" onClick={() => setView(authIntent === "local" ? "landing" : "welcome-signup")}>
+        <div className={STARTUP_PANEL_CLASS}>
+          <button className={STARTUP_BACK_CLASS} type="button" onClick={() => setView(authIntent === "local" ? "landing" : "welcome-signup")}>
             <span aria-hidden="true">←</span> {language.back}
           </button>
           <StartupPreferenceTitle text={language.chooseLanguage} />
-          <div className="lyra-startup-choice-list">
+          <div className={STARTUP_CHOICE_LIST_CLASS}>
             {localeChoices.map((choice) => (
               <button
                 key={choice.id}
                 type="button"
-                className={`lyra-startup-choice${JSON.stringify(localeChoice) === JSON.stringify(choice.preference) ? " is-selected" : ""}`}
+                className={`${STARTUP_CHOICE_CLASS}${JSON.stringify(localeChoice) === JSON.stringify(choice.preference) ? " is-selected" : ""}`}
                 disabled={installingLocale !== null}
                 onClick={() => void selectLocaleChoice(choice)}
               >
@@ -801,7 +841,7 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
             ))}
           </div>
           <AppButton variant="default" size="lg" disabled={installingLocale !== null} onClick={() => setView("theme")}>{language.continue}</AppButton>
-          {languagePackError ? <p className="lyra-startup-error">{languagePackError}</p> : null}
+          {languagePackError ? <p className={STARTUP_ERROR_CLASS}>{languagePackError}</p> : null}
         </div>
       </StartupFrame>
     );
@@ -810,12 +850,12 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
   if (view === "theme") {
     return (
       <StartupFrame {...audioControlProps}>
-        <div className="lyra-startup-panel">
-          <button className="lyra-startup-back" type="button" onClick={() => setView(authIntent === "login" ? "welcome-login" : "language")}>
+        <div className={STARTUP_PANEL_CLASS}>
+          <button className={STARTUP_BACK_CLASS} type="button" onClick={() => setView(authIntent === "login" ? "welcome-login" : "language")}>
             <span aria-hidden="true">←</span> {language.back}
           </button>
           <StartupPreferenceTitle text={language.chooseTheme} />
-          <div className="lyra-startup-theme-grid">
+          <div className={STARTUP_THEME_GRID_CLASS}>
             {(["lyra-system", "lyra-dark", "lyra-light"] as const).map((id) => (
               <ThemePreview
                 key={id}
@@ -827,7 +867,7 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
             ))}
           </div>
           <AppButton variant="default" size="lg" onClick={() => void finish(authIntent === "local")}>{language.continue}</AppButton>
-          {authError ? <p className="lyra-startup-error">{authError}</p> : null}
+          {authError ? <p className={STARTUP_ERROR_CLASS}>{authError}</p> : null}
         </div>
       </StartupFrame>
     );
@@ -835,9 +875,9 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
 
   return (
     <StartupFrame {...audioControlProps}>
-      <div className="lyra-startup-hero">
+      <div className={STARTUP_HERO_CLASS}>
         <div
-          className="lyra-startup-logo-wrap"
+          className={STARTUP_LOGO_WRAP_CLASS}
           onMouseEnter={setHover("logo")}
           onMouseLeave={setHover("default")}
           onClick={handleLogoClick}
@@ -845,7 +885,7 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
           <AnimatedAsciiLogo />
         </div>
         <h1
-          className="lyra-startup-brand"
+          className={STARTUP_BRAND_CLASS}
           onMouseEnter={setHover("brand")}
           onMouseLeave={setHover("default")}
         >
@@ -856,17 +896,17 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
           onHover={setHover("tagline")}
           onLeave={setHover("default")}
         />
-        <div className="lyra-startup-actions">
+        <div className={STARTUP_ACTIONS_CLASS}>
           <AppButton
             variant="default"
             size="lg"
-            className="lyra-startup-login-button"
+            className={STARTUP_LOGIN_BUTTON_CLASS}
             onClick={() => void startLogin("login")}
             onMouseEnter={setHover("login")}
             onMouseLeave={setHover("default")}
           >
             {localIdentity?.registered ? (
-              <span className="lyra-startup-login-avatar" aria-hidden="true">
+              <span className={STARTUP_LOGIN_AVATAR_CLASS} aria-hidden="true">
                 <LocalIdentityAvatar identity={localIdentity} />
               </span>
             ) : null}
@@ -883,7 +923,7 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
           </AppButton>
         </div>
         <button
-          className="lyra-startup-local"
+          className={STARTUP_LOCAL_CLASS}
           type="button"
           onClick={() => {
             setAuthIntent("local");
@@ -894,7 +934,7 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
         >
           {language.local}
         </button>
-        <div className="lyra-startup-legal">
+        <div className={STARTUP_LEGAL_CLASS}>
           <button
             type="button"
             onClick={() => openLegal(TERMS_URL)}
@@ -912,7 +952,7 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
             {language.privacy} ↗
           </button>
         </div>
-        {authError ? <p className="lyra-startup-error">{authError || (auth?.configured === false ? language.configured : language.authError)}</p> : null}
+        {authError ? <p className={STARTUP_ERROR_CLASS}>{authError || (auth?.configured === false ? language.configured : language.authError)}</p> : null}
       </div>
     </StartupFrame>
   );

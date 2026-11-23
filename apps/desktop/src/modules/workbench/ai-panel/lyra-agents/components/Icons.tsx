@@ -51,7 +51,7 @@ const ICON_SIZE = 15;
 const ICON_STROKE = 1.7;
 
 const TOOL_EXECUTION_INDICATOR_CLASS =
-  "lyra-agents-tool-execution-indicator inline-flex items-center justify-center w-[var(--lyra-space-16)] h-[var(--lyra-space-16)] gap-[var(--lyra-space-1)] text-[var(--lyra-text-muted)] [&_span]:w-[var(--lyra-space-2)] [&_span]:h-[var(--lyra-space-10)] [&_span]:rounded-[var(--lyra-radius-pill)] [&_span]:bg-current [&_span]:opacity-[0.32] [&_span]:animate-[lyra-agents-tool-execution-step_0.95s_steps(2,end)_infinite] [&_span:nth-child(2)]:[animation-delay:120ms] [&_span:nth-child(3)]:[animation-delay:240ms] [&_span:nth-child(4)]:[animation-delay:360ms] motion-reduce:[&_span]:animate-none";
+  "lyra-agents-tool-execution-indicator inline-flex items-center justify-center w-[var(--lyra-space-16)] h-[var(--lyra-space-16)] gap-[var(--lyra-space-1)] text-[var(--lyra-text-muted)] [&_span]:w-[var(--lyra-space-2)] [&_span]:h-[var(--lyra-space-10)] [&_span]:rounded-[var(--lyra-radius-pill)] [&_span]:bg-current [&_span]:opacity-[0.32] [&_span]:animate-[lyra-agents-tool-execution-step_0.95s_steps(2,end)_infinite] [&_span:nth-child(2)]:[animation-delay:120ms] [&_span:nth-child(3)]:[animation-delay:240ms] [&_span:nth-child(4)]:[animation-delay:360ms] motion-reduce:[&_span]:animate-none motion-reduce:[&_span]:opacity-50";
 
 export const ChevronIcon = ({ open }: { open: boolean }) => (
   <ChevronRight

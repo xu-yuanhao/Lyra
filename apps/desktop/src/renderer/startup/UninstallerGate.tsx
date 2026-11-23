@@ -10,6 +10,21 @@ import {
   StartupTagline,
   useStartupTheme
 } from "./startup-chrome";
+import {
+  INSTALLER_ACTIONS_CLASS,
+  INSTALLER_INSTALL_SLOT_CLASS,
+  INSTALLER_METRICS_CLASS,
+  INSTALLER_PATH_CLASS,
+  INSTALLER_PROGRESS_CLASS,
+  INSTALLER_PROGRESS_FILL_CLASS,
+  INSTALLER_PROGRESS_TRACK_CLASS,
+  STARTUP_BRAND_CLASS,
+  STARTUP_ERROR_CLASS,
+  STARTUP_HERO_CLASS,
+  STARTUP_LOGO_WRAP_CLASS,
+  UNINSTALLER_CHECK_CLASS,
+  UNINSTALLER_HERO_CLASS,
+} from "./classes";
 import { elideInstallPath, formatPercent, INSTALLER_COMPLETE_KEY } from "./installer-copy";
 import {
   statusPoolForUninstall,
@@ -115,29 +130,29 @@ export const UninstallerGate = () => {
 
   return (
     <StartupFrame mode="uninstaller">
-      <div className="lyra-startup-hero lyra-uninstaller-hero">
-        <div className="lyra-startup-logo-wrap">
+      <div className={`${STARTUP_HERO_CLASS} ${UNINSTALLER_HERO_CLASS}`}>
+        <div className={STARTUP_LOGO_WRAP_CLASS}>
           <AnimatedAsciiLogo />
         </div>
-        <h1 className="lyra-startup-brand">LYRA</h1>
+        <h1 className={STARTUP_BRAND_CLASS}>LYRA</h1>
         <StartupTagline text={statusText} onHover={noop} onLeave={noop} />
         <div
-          className="lyra-installer-progress"
+          className={INSTALLER_PROGRESS_CLASS}
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round((finished ? 1 : fraction) * 100)}
           aria-label="Uninstall progress"
         >
-          <div className="lyra-installer-progress-track">
+          <div className={INSTALLER_PROGRESS_TRACK_CLASS}>
             <div
-              className={`lyra-installer-progress-fill${running && progress === null ? " is-indeterminate" : ""}`}
+              className={`${INSTALLER_PROGRESS_FILL_CLASS}${running && progress === null ? " is-indeterminate" : ""}`}
               style={running && progress === null
                 ? undefined
                 : { width: `${Math.round((finished ? 1 : fraction) * 100)}%` }}
             />
           </div>
-          <div className="lyra-installer-metrics">
+          <div className={INSTALLER_METRICS_CLASS}>
             <span />
             <span>{percentText}</span>
           </div>
@@ -145,7 +160,7 @@ export const UninstallerGate = () => {
         {installPath.length > 0 ? (
           <button
             type="button"
-            className="lyra-installer-path"
+            className={INSTALLER_PATH_CLASS}
             onClick={revealInstallPath}
             disabled={busy}
             title={installPath}
@@ -154,7 +169,7 @@ export const UninstallerGate = () => {
             <span>{elideInstallPath(installPath, 42)}</span>
           </button>
         ) : null}
-        <label className="lyra-uninstaller-check">
+        <label className={UNINSTALLER_CHECK_CLASS}>
           <input
             type="checkbox"
             checked={removeUserData}
@@ -163,9 +178,9 @@ export const UninstallerGate = () => {
           />
           <span>Also delete my files and settings</span>
         </label>
-        {error !== null ? <p className="lyra-startup-error">{error}</p> : null}
+        {error !== null ? <p className={STARTUP_ERROR_CLASS}>{error}</p> : null}
         {finished ? (
-          <div className="lyra-installer-actions">
+          <div className={INSTALLER_ACTIONS_CLASS}>
             <AppButton
               variant="default"
               size="lg"
@@ -175,7 +190,7 @@ export const UninstallerGate = () => {
             </AppButton>
           </div>
         ) : (
-          <div className={`lyra-installer-actions${busy && !failed ? " is-busy" : ""}`}>
+          <div className={`${INSTALLER_ACTIONS_CLASS}${busy && !failed ? " is-busy" : ""}`}>
             {failed ? (
               <>
                 <AppButton
@@ -185,7 +200,7 @@ export const UninstallerGate = () => {
                 >
                   Close
                 </AppButton>
-                <div className="lyra-installer-install-slot">
+                <div className={INSTALLER_INSTALL_SLOT_CLASS}>
                   <AppButton variant="default" size="lg" onClick={() => void startUninstall()}>
                     Retry
                   </AppButton>
@@ -201,7 +216,7 @@ export const UninstallerGate = () => {
                 >
                   Cancel
                 </AppButton>
-                <div className="lyra-installer-install-slot" aria-hidden={busy}>
+                <div className={INSTALLER_INSTALL_SLOT_CLASS} aria-hidden={busy}>
                   <AppButton
                     variant="default"
                     size="lg"

@@ -11,6 +11,25 @@ import {
   useStartupTheme
 } from "./startup-chrome";
 import {
+  INSTALLER_ACTIONS_CLASS,
+  INSTALLER_HERO_CLASS,
+  INSTALLER_INSTALL_SLOT_CLASS,
+  INSTALLER_LOGO_LAYER_CLASS,
+  INSTALLER_METRICS_CLASS,
+  INSTALLER_PATH_CLASS,
+  INSTALLER_PROGRESS_CLASS,
+  INSTALLER_PROGRESS_FILL_CLASS,
+  INSTALLER_PROGRESS_TRACK_CLASS,
+  INSTALLER_STAGE_CLASS,
+  INSTALLER_VIDEO_CLASS,
+  INSTALLER_VIDEO_FRAME_CLASS,
+  STARTUP_AUDIO_TOGGLE_CLASS,
+  STARTUP_BRAND_CLASS,
+  STARTUP_ERROR_CLASS,
+  STARTUP_HERO_CLASS,
+  STARTUP_LOGO_WRAP_CLASS,
+} from "./classes";
+import {
   COMPLETE_STATUS,
   elideInstallPath,
   formatPercent,
@@ -284,19 +303,19 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
 
   return (
     <StartupFrame mode="installer">
-      <div className="lyra-startup-hero lyra-installer-hero">
-        <div className="lyra-installer-stage">
-          <div className={`lyra-installer-logo-layer${videoReady ? " is-exit" : ""}`}>
-            <div className="lyra-startup-logo-wrap">
+      <div className={`${STARTUP_HERO_CLASS} ${INSTALLER_HERO_CLASS}`}>
+        <div className={INSTALLER_STAGE_CLASS}>
+          <div className={`${INSTALLER_LOGO_LAYER_CLASS}${videoReady ? " is-exit" : ""}`}>
+            <div className={STARTUP_LOGO_WRAP_CLASS}>
               <AnimatedAsciiLogo />
             </div>
-            <h1 className="lyra-startup-brand">LYRA</h1>
+            <h1 className={STARTUP_BRAND_CLASS}>LYRA</h1>
           </div>
           {videoUrl === null ? null : (
-            <div className="lyra-installer-video-frame">
+            <div className={INSTALLER_VIDEO_FRAME_CLASS}>
               <video
                 ref={videoRef}
-                className="lyra-installer-video"
+                className={INSTALLER_VIDEO_CLASS}
                 src={videoUrl}
                 loop
                 playsInline
@@ -315,7 +334,7 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
         </div>
         {videoReady ? (
           <button
-            className={`lyra-startup-audio-toggle${videoMuted ? " is-muted" : ""}`}
+            className={`${STARTUP_AUDIO_TOGGLE_CLASS}${videoMuted ? " is-muted" : ""}`}
             type="button"
             aria-label={videoMuted ? "Unmute video" : "Mute video"}
             aria-pressed={!videoMuted}
@@ -329,20 +348,20 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
         ) : null}
         <StartupTagline text={statusText} onHover={noop} onLeave={noop} />
         <div
-          className="lyra-installer-progress"
+          className={INSTALLER_PROGRESS_CLASS}
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={indeterminate ? undefined : Math.round((finished ? 1 : fraction) * 100)}
           aria-label={cancelling ? "Cleanup progress" : "Install progress"}
         >
-          <div className="lyra-installer-progress-track">
+          <div className={INSTALLER_PROGRESS_TRACK_CLASS}>
             <div
-              className={`lyra-installer-progress-fill${indeterminate ? " is-indeterminate" : ""}`}
+              className={`${INSTALLER_PROGRESS_FILL_CLASS}${indeterminate ? " is-indeterminate" : ""}`}
               style={indeterminate ? undefined : { width: `${Math.round((finished ? 1 : fraction) * 100)}%` }}
             />
           </div>
-          <div className="lyra-installer-metrics">
+          <div className={INSTALLER_METRICS_CLASS}>
             <span>{rateText}</span>
             <span>{percentText}</span>
           </div>
@@ -350,7 +369,7 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
         {installPath.length > 0 ? (
           <button
             type="button"
-            className="lyra-installer-path"
+            className={INSTALLER_PATH_CLASS}
             onClick={revealInstallPath}
             disabled={busy}
             title={installPath}
@@ -359,9 +378,9 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
             <span>{elideInstallPath(installPath, 42)}</span>
           </button>
         ) : null}
-        {error !== null ? <p className="lyra-startup-error">{error}</p> : null}
+        {error !== null ? <p className={STARTUP_ERROR_CLASS}>{error}</p> : null}
         {finished ? null : (
-          <div className={`lyra-installer-actions${busy && !failed ? " is-busy" : ""}`}>
+          <div className={`${INSTALLER_ACTIONS_CLASS}${busy && !failed ? " is-busy" : ""}`}>
             {failed ? (
               <>
                 <AppButton
@@ -371,7 +390,7 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
                 >
                   Close
                 </AppButton>
-                <div className="lyra-installer-install-slot">
+                <div className={INSTALLER_INSTALL_SLOT_CLASS}>
                   <AppButton variant="default" size="lg" onClick={() => void startInstall()}>
                     Retry
                   </AppButton>
@@ -387,7 +406,7 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
                 >
                   Cancel
                 </AppButton>
-                <div className="lyra-installer-install-slot" aria-hidden={busy}>
+                <div className={INSTALLER_INSTALL_SLOT_CLASS} aria-hidden={busy}>
                   <AppButton
                     variant="default"
                     size="lg"
