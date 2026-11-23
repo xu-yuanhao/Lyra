@@ -30,6 +30,17 @@ import { useFollowBottomUntilHover } from "./use-follow-bottom-until-hover";
 import { VirtualizedDiffView } from "./VirtualizedDiffView";
 import { parseUnifiedDiff } from "@workbench/agent-session-view-model/tool-parsing/diff";
 import { splitDisplayPath } from "../chat/changed-files";
+import {
+  CHEVRON_SLOT_CLASS,
+  THINKING_BODY_CLASS,
+  TOOL_GROUP_BODY_CLASS,
+  TOOL_GROUP_CLASS,
+  TOOL_GROUP_HEAD_CLASS,
+  TOOL_GROUP_ICON_SLOT_CLASS,
+  TOOL_GROUP_LABEL_CLASS,
+  TOOL_GROUP_LEAD_CLASS,
+  toolCallStatusIconClass
+} from "./classes";
 
 export type ThinkingEntry = { id: string; body: string; status: "running" | "done" };
 export type ToolGroupActivityEntry =
@@ -83,15 +94,15 @@ export function ToolGroupBlock({
   const showGroupEditStats = shouldShowEditDiffStats(currentEditStats);
 
   return (
-    <div className={`lyra-agents-tool-group ${open ? "open" : ""} lyra-agents-mode-${mode}`}>
+    <div className={`${TOOL_GROUP_CLASS} ${open ? "open" : ""} lyra-agents-mode-${mode}`}>
       <AppButton variant="ghost" size="sm"
         type="button"
-        className="lyra-agents-tool-group-head"
+        className={TOOL_GROUP_HEAD_CLASS}
         onClick={() => toggleGroup(group.id, open)}
         aria-expanded={open}
       >
-        <span ref={anchorRef} className="lyra-agents-tool-group-icon-slot">
-          <span className="lyra-agents-tool-group-lead">
+        <span ref={anchorRef} className={TOOL_GROUP_ICON_SLOT_CLASS}>
+          <span className={TOOL_GROUP_LEAD_CLASS}>
             {(isRunning || isSuspended) && currentCall ? (
               <ToolCallIcon call={currentCall} />
             ) : hasError ? (
@@ -104,12 +115,12 @@ export function ToolGroupBlock({
               <CheckCircleIcon />
             )}
           </span>
-          <span className="lyra-agents-chevron-slot">
+          <span className={CHEVRON_SLOT_CLASS}>
             <ChevronIcon open={open} />
           </span>
         </span>
 
-        <span className="lyra-agents-tool-group-label">
+        <span className={TOOL_GROUP_LABEL_CLASS}>
           {isRunning && !open ? (
             <AppShimmer text={group.label} />
           ) : (
@@ -135,7 +146,7 @@ export function ToolGroupBlock({
       )}
 
       {open ? (
-        <div className="lyra-agents-tool-group-body">
+        <div className={TOOL_GROUP_BODY_CLASS}>
           {activityRows.map((row, i) => (
             <div
               key={row.id}
@@ -205,7 +216,7 @@ function ToolCallRow({
   };
 
   return (
-    <div className={`lyra-agents-tool-call ${open ? "open" : ""} lyra-agents-status-${call.status}`}>
+    <div className={`lyra-agents-tool-call ${open ? "open" : ""} lyra-agents-status-${call.status} ${toolCallStatusIconClass(call.status)}`}>
       <div className={`lyra-agents-tool-call-head-row ${hasDetails || isSubagent ? "has-details" : ""}`}>
         <AppButton
           variant="ghost"
@@ -453,7 +464,7 @@ function ThinkingRow({
     accordion.toggleEntry(groupId, entry.id, open);
   };
   return (
-    <div className={`lyra-agents-tool-call ${open ? "open" : ""} lyra-agents-status-${entry.status}`}>
+    <div className={`lyra-agents-tool-call ${open ? "open" : ""} lyra-agents-status-${entry.status} ${toolCallStatusIconClass(entry.status)}`}>
       <div className="lyra-agents-tool-call-head-row has-details">
         <AppButton
           variant="ghost"
@@ -509,7 +520,7 @@ function ThinkingRow({
           onMouseEnter={followBottom.onMouseEnter}
           onMouseLeave={followBottom.onMouseLeave}
         >
-          <div className="lyra-agents-thinking-body">{entry.body}</div>
+          <div className={THINKING_BODY_CLASS}>{entry.body}</div>
         </div>
       ) : null}
     </div>
