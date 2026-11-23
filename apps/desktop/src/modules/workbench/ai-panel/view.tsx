@@ -11,10 +11,12 @@ import {
   APP_TAB_ITEM_CLASS,
   APP_TAB_MAIN_CLASS,
   APP_TAB_TITLE_CLASS,
-  AppButton,
   AppIconButton,
   AppPanel,
-  AppStatusMessage
+  AppStatusMessage,
+  Tabs,
+  TabsList,
+  TabsTrigger
 } from "@renderer/ui/components";
 import { LyraLogo } from "@renderer/ui/app";
 import { cn } from "@renderer/ui/utils";
@@ -82,6 +84,19 @@ type AiSessionTabDragVisualState = {
   readonly dx: number;
 };
 
+const SESSION_TAB_TRIGGER_CLASS = cn(
+  "h-full w-full min-w-0 flex-none justify-start py-0",
+  "data-[state=active]:bg-transparent data-[state=active]:text-inherit",
+  "group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-0",
+  APP_TAB_MAIN_CLASS,
+  SESSION_TAB_MAIN_CLASS
+);
+
+const SESSION_TAB_LIST_OVERRIDE_CLASS = cn(
+  SESSION_TAB_LIST_CLASS,
+  "w-full min-w-0 flex-1 items-stretch justify-start gap-0 p-0 text-inherit h-full!"
+);
+
 const SessionTabIdentityIcon = ({
   desktopApi,
   workingDir
@@ -129,7 +144,6 @@ const AiPanelTabsHeader = ({
   const { session, messages, isTurnRunning, createSession } = useData();
   const rememberedReferences = useRef(new Map<string, AiPanelSessionTabReferences>());
   const dragRef = useRef<AiSessionTabDragState | null>(null);
-  const suppressNextClickRef = useRef<string | null>(null);
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
   const [dragVisual, setDragVisual] = useState<AiSessionTabDragVisualState | null>(null);
   const currentSessionId = session.id?.trim() || null;
@@ -243,12 +257,6 @@ const AiPanelTabsHeader = ({
       if (destination !== undefined && destination.tabId !== drag.tabId) {
         onReorderSessionTabs?.(drag.tabId, destination.tabId);
       }
-      suppressNextClickRef.current = drag.tabId;
-      window.setTimeout(() => {
-        if (suppressNextClickRef.current === drag.tabId) {
-          suppressNextClickRef.current = null;
-        }
-      }, 0);
     }
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -267,10 +275,19 @@ const AiPanelTabsHeader = ({
           dragVisual !== null && `${SESSION_TAB_STRIP_CLASS} lyra-agents-session-tab-strip-sorting`,
           closeLock.closeLockedTabWidth !== null && "lyra-tab-strip-close-lock"
         )}
-        role="tablist"
-        aria-label={t("aiPanel.sessionTabsAriaLabel")}
       >
-        <div className={SESSION_TAB_LIST_CLASS}>
+        <Tabs
+          className="contents"
+          value={effectiveActiveTabId ?? ""}
+          onValueChange={(value) => {
+            onActivateSessionTab?.(value);
+          }}
+        >
+        <TabsList
+          variant="line"
+          className={SESSION_TAB_LIST_OVERRIDE_CLASS}
+          aria-label={t("aiPanel.sessionTabsAriaLabel")}
+        >
           {visibleTabs.map((tab, index) => {
             const active = tab.tabId === effectiveActiveTabId;
             const hasCurrentSnapshot =
@@ -329,28 +346,17 @@ const AiPanelTabsHeader = ({
                   }
                 }}
               >
-                <AppButton
-                  className={`${APP_TAB_MAIN_CLASS} ${SESSION_TAB_MAIN_CLASS}`}
-                  variant="ghost"
-                  size="sm"
-                  role="tab"
-                  aria-selected={active}
+                <TabsTrigger
+                  className={SESSION_TAB_TRIGGER_CLASS}
+                  value={tab.tabId}
                   aria-label={title}
                   title={title}
-                  draggable={false}
                   onPointerDown={(event) => {
                     if (event.button === 1) {
                       event.preventDefault();
                       return;
                     }
                     onTabPointerDown(tab, index, event);
-                  }}
-                  onClick={() => {
-                    if (suppressNextClickRef.current === tab.tabId) {
-                      suppressNextClickRef.current = null;
-                      return;
-                    }
-                    onActivateSessionTab?.(tab.tabId);
                   }}
                 >
                   <SessionTabIdentityIcon desktopApi={desktopApi} workingDir={workingDir} />
@@ -363,7 +369,7 @@ const AiPanelTabsHeader = ({
                       fileAttachments={records.fileAttachments}
                     />
                   </span>
-                </AppButton>
+                </TabsTrigger>
                 <AppIconButton
                   className={`${APP_TAB_CLOSE_CLASS} ${SESSION_TAB_CLOSE_CLASS}`}
                   aria-label={formatMessage("aiPanel.closeSessionTabAriaLabel", { title })}
@@ -387,7 +393,8 @@ const AiPanelTabsHeader = ({
               </div>
             );
           })}
-        </div>
+        </TabsList>
+        </Tabs>
         <AppIconButton
           className={`lyra-tab-add ${SESSION_TAB_ADD_CLASS}`}
           aria-label={t("header.newSession")}

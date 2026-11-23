@@ -1950,7 +1950,7 @@ describe("AiPanelSurface", () => {
     expect(backgroundTab.closest(".lyra-agents-session-tab-item"))
       .toHaveClass("lyra-agents-session-tab-item-running");
 
-    fireEvent.click(backgroundTab);
+    fireEvent.mouseDown(backgroundTab);
 
     await waitFor(() => {
       expect(onActivateSessionTab).toHaveBeenCalledWith("session-2");
