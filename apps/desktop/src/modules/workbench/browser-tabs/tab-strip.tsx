@@ -90,6 +90,7 @@ export const BrowserTabStrip = ({
     <BrowserTabStripView
       renderModel={renderModel}
       runtime={runtime}
+      activeTabId={activeTabId}
       goBackLabel={goBackLabel}
       goForwardLabel={goForwardLabel}
       canGoBack={canGoBack}

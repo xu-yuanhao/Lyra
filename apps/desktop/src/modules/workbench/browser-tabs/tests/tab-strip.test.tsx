@@ -154,7 +154,7 @@ describe("BrowserTabStrip", () => {
     expect(strip?.lastElementChild).toBe(newTabButton);
 
     fireEvent.click(within(nav).getByRole("button", { name: "Back" }));
-    fireEvent.click(within(nav).getByRole("button", { name: "Docs" }));
+    fireEvent.mouseDown(within(nav).getByRole("tab", { name: "Docs" }));
     fireEvent.click(within(nav).getByRole("button", { name: "Close-Docs" }));
     await flushQueuedCloses();
     fireEvent.click(newTabButton);
@@ -328,7 +328,7 @@ describe("BrowserTabStrip", () => {
       />
     );
 
-    const docsButton = screen.getByRole("button", { name: "Docs" });
+    const docsButton = screen.getByRole("tab", { name: "Docs" });
     const iconSlot = docsButton.querySelector(".lyra-browser-tab-icon");
     const favicon = iconSlot?.querySelector(".lyra-browser-tab-favicon");
     expect(favicon).not.toBeNull();
@@ -416,7 +416,7 @@ describe("BrowserTabStrip", () => {
     const strip = nav.querySelector(".lyra-browser-tab-strip") as HTMLElement;
     const homeTab = nav.querySelector('[data-lyra-tab-id="home"]') as HTMLElement;
     const docsTab = nav.querySelector('[data-lyra-tab-id="docs"]') as HTMLElement;
-    const homeButton = within(nav).getByRole("button", { name: "Home" });
+    const homeButton = within(nav).getByRole("tab", { name: "Home" });
     mockRect(strip, {
       left: 100,
       right: 320,

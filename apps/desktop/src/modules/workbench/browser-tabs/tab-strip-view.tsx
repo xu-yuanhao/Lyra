@@ -16,9 +16,12 @@ import {
 import {
   APP_TAB_CLOSE_CLASS,
   APP_TAB_TITLE_CLASS,
-  AppButton,
-  AppIconButton
+  AppIconButton,
+  Tabs,
+  TabsList,
+  TabsTrigger
 } from "@renderer/ui/components";
+import { cn } from "@renderer/ui/utils";
 import { LyraLogo } from "@renderer/ui/app";
 import { IdentityIconView } from "../identity";
 import {
@@ -62,6 +65,7 @@ import type { BrowserTabStripRuntime } from "./use-browser-tab-strip-runtime";
 
 type BrowserTabStripViewProps = Pick<
   BrowserTabStripProps,
+  | "activeTabId"
   | "goBackLabel"
   | "goForwardLabel"
   | "canGoBack"
@@ -191,6 +195,17 @@ const BrowserTabIcon = ({
   return <BrowserTabDefaultIcon />;
 };
 
+const BROWSER_TAB_TRIGGER_CLASS = cn(
+  "flex-none justify-start py-0",
+  "data-[state=active]:bg-transparent data-[state=active]:text-inherit",
+  "group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-0"
+);
+
+const BROWSER_TAB_LIST_OVERRIDE_CLASS = cn(
+  BROWSER_TAB_LIST_CLASS,
+  "min-w-0 flex-1 items-stretch justify-start gap-0 p-0 text-inherit h-full!"
+);
+
 const BrowserTabStripControls = ({
   goBackLabel,
   goForwardLabel,
@@ -222,6 +237,7 @@ const BrowserTabStripControls = ({
 export const BrowserTabStripView = ({
   renderModel,
   runtime,
+  activeTabId,
   goBackLabel,
   goForwardLabel,
   canGoBack,
@@ -278,7 +294,17 @@ export const BrowserTabStripView = ({
         className={renderModel.stripClassName}
         onPointerLeave={onClearTabCloseLock}
       >
-        <div className={BROWSER_TAB_LIST_CLASS}>
+        <Tabs
+          className="contents"
+          value={activeTabId}
+          onValueChange={(value) => {
+            onActivateTab(value);
+          }}
+        >
+        <TabsList
+          variant="line"
+          className={BROWSER_TAB_LIST_OVERRIDE_CLASS}
+        >
           {renderModel.tabs.map((tabModel) => (
             <div
               key={tabModel.tab.id}
@@ -317,10 +343,9 @@ export const BrowserTabStripView = ({
               onDragEnd={runtime.onTabDragEnd}
               onContextMenu={runtime.onTabItemContextMenu}
             >
-              <AppButton
-                variant="ghost"
-                size="sm"
-                className={tabModel.tabMainClassName}
+              <TabsTrigger
+                className={cn(tabModel.tabMainClassName, BROWSER_TAB_TRIGGER_CLASS)}
+                value={tabModel.tab.id}
                 aria-label={tabModel.tab.title}
                 title={tabModel.tab.title}
                 data-lyra-allow-web-drag="true"
@@ -340,9 +365,6 @@ export const BrowserTabStripView = ({
                   runtime.onWorkspaceTabDragStart(event, tabModel.tab);
                 }}
                 onDragEnd={runtime.onTabDragEnd}
-                onClick={() => {
-                  onActivateTab(tabModel.tab.id);
-                }}
               >
                 <span className={BROWSER_TAB_ICON_CLASS} aria-hidden="true">
                   <BrowserTabIcon
@@ -352,7 +374,7 @@ export const BrowserTabStripView = ({
                   />
                 </span>
                 <span className={`${APP_TAB_TITLE_CLASS} ${BROWSER_TAB_TITLE_CLASS}`}>{tabModel.tab.title}</span>
-              </AppButton>
+              </TabsTrigger>
               {tabModel.showClose ? (
                 <AppIconButton
                   className={`${APP_TAB_CLOSE_CLASS} ${BROWSER_TAB_CLOSE_CLASS}`}
@@ -377,7 +399,8 @@ export const BrowserTabStripView = ({
               ) : null}
             </div>
           ))}
-        </div>
+        </TabsList>
+        </Tabs>
         <AppIconButton
           className={BROWSER_TAB_ADD_CLASS}
           aria-label={openNewTabLabel}
