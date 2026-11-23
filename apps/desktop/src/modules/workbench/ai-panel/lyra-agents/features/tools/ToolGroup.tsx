@@ -211,7 +211,7 @@ function ToolCallRow({
   groupOpen: boolean;
 }) {
   const accordion = useToolAccordion();
-  const { openSubagent } = useData();
+  const { openFileInWorkbench, openSubagent } = useData();
   const subagentId = call.subagentId?.trim() ?? "";
   const isSubagent = subagentId.length > 0;
   const open = groupOpen && accordion.isEntryOpen(call.id, false);
@@ -230,6 +230,14 @@ function ToolCallRow({
   const editStats = editDiffCounts(call.details);
   const showRowEditStats = shouldShowEditDiffStats(editStats);
   const canToggle = hasDetails;
+  const targetFile = call.details?.type === "edit" || call.details?.type === "read"
+    ? call.details.file
+    : undefined;
+  const openTargetFile = (event: { stopPropagation: () => void }) => {
+    if (targetFile === undefined) return;
+    event.stopPropagation();
+    void openFileInWorkbench(targetFile).catch(() => undefined);
+  };
   const toggle = (): void => {
     if (!canToggle) {
       return;
@@ -279,13 +287,26 @@ function ToolCallRow({
             call={call}
             shimmer={groupOpen && call.status === "running"}
           />
-          {showRowEditStats ? (
-            <InlineDiffStats
-              additions={editStats.additions}
-              deletions={editStats.deletions}
-            />
-          ) : null}
         </AppButton>
+        {targetFile !== undefined ? (
+          <AppButton
+            variant="plain"
+            className={TOOL_CALL_TARGET_CLASS}
+            title={targetFile}
+            onClick={openTargetFile}
+          >
+            <span className={TOOL_CALL_FILE_ICON_CLASS} aria-hidden="true">
+              <FileTypeIcon filename={targetFile} size={14} />
+            </span>
+            <span className={TOOL_CALL_TARGET_NAME_CLASS}>{editFileLabel(targetFile)}</span>
+          </AppButton>
+        ) : null}
+        {showRowEditStats ? (
+          <InlineDiffStats
+            additions={editStats.additions}
+            deletions={editStats.deletions}
+          />
+        ) : null}
       </div>
 
       {open && hasDetails ? (
@@ -426,16 +447,6 @@ function ToolCallHeadLabel({
   readonly call: ToolCall;
   readonly shimmer?: boolean;
 }) {
-  const targetFile = call.details?.type === "edit" || call.details?.type === "read"
-    ? call.details.file
-    : undefined;
-  const { openFileInWorkbench } = useData();
-  const openTargetFile = (event: { stopPropagation: () => void }) => {
-    if (targetFile === undefined) return;
-    event.stopPropagation();
-    void openFileInWorkbench(targetFile).catch(() => undefined);
-  };
-
   return (
     <span className={TOOL_CALL_HEAD_LABEL_CLASS}>
       <AppShimmer
@@ -443,19 +454,6 @@ function ToolCallHeadLabel({
         active={shimmer}
         className={TOOL_CALL_TITLE_CLASS}
       />
-      {targetFile !== undefined ? (
-        <AppButton
-          variant="plain"
-          className={TOOL_CALL_TARGET_CLASS}
-          title={targetFile}
-          onClick={openTargetFile}
-        >
-          <span className={TOOL_CALL_FILE_ICON_CLASS} aria-hidden="true">
-            <FileTypeIcon filename={targetFile} size={14} />
-          </span>
-          <span className={TOOL_CALL_TARGET_NAME_CLASS}>{editFileLabel(targetFile)}</span>
-        </AppButton>
-      ) : null}
     </span>
   );
 }
