@@ -2,6 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { DiffHunk } from "../../core/types";
 import { useFollowBottomUntilHover } from "./use-follow-bottom-until-hover";
+import {
+  DIFF_GUTTER_CLASS,
+  DIFF_SIGN_CLASS,
+  DIFF_TEXT_CLASS,
+  DIFF_VIEWPORT_CLASS,
+  DIFF_VIEWPORT_TRACK_CLASS,
+  DIFF_WIDTH_PROBE_CLASS,
+  diffLineClass
+} from "../chat/classes";
 
 /** Matches `.lyra-agents-diff-line` single-line row height in agents.scss. */
 export const DIFF_LINE_HEIGHT_PX = 20;
@@ -118,7 +127,7 @@ export function VirtualizedDiffView({
   return (
     <div
       ref={viewportRef}
-      className={["lyra-agents-diff-viewport", fill && "lyra-agents-diff-viewport-fill", className]
+      className={[DIFF_VIEWPORT_CLASS, fill && "lyra-agents-diff-viewport-fill", className]
         .filter(Boolean)
         .join(" ")}
       data-scrollable="true"
@@ -127,19 +136,19 @@ export function VirtualizedDiffView({
       onMouseLeave={followBottom.onMouseLeave}
       onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
     >
-      <div className="lyra-agents-diff-viewport-track" style={{ minHeight: contentHeight }}>
-        <div className="lyra-agents-diff-width-probe" aria-hidden>
-          <div className="lyra-agents-diff-line lyra-agents-diff-line-ctx">
-            <span className="lyra-agents-diff-gutter">00000</span>
-            <span className="lyra-agents-diff-sign">+</span>
-            <span className="lyra-agents-diff-text">{longestLineText || "\u00A0"}</span>
+      <div className={DIFF_VIEWPORT_TRACK_CLASS} style={{ minHeight: contentHeight }}>
+        <div className={DIFF_WIDTH_PROBE_CLASS} aria-hidden>
+          <div className={diffLineClass("ctx")}>
+            <span className={DIFF_GUTTER_CLASS}>00000</span>
+            <span className={DIFF_SIGN_CLASS}>+</span>
+            <span className={DIFF_TEXT_CLASS}>{longestLineText || "\u00A0"}</span>
           </div>
         </div>
         {topSpacer > 0 ? <div style={{ height: topSpacer }} aria-hidden /> : null}
         {visibleLines.map((line) => (
           <div
             key={line.key}
-            className={`lyra-agents-diff-line lyra-agents-diff-line-${line.kind}`}
+            className={diffLineClass(line.kind)}
           >
             <span className="lyra-agents-diff-gutter">{line.lineNumber}</span>
             <span className="lyra-agents-diff-sign">

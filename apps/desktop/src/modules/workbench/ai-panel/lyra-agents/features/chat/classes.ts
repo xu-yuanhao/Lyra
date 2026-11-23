@@ -237,3 +237,27 @@ export const TICK_CURRENT_CLASS =
   "lyra-agents-tick-current relative inline-block [will-change:transform,opacity,filter]";
 export const TICK_GHOST_CLASS =
   "lyra-agents-tick-ghost absolute left-0 top-0 pointer-events-none inline-block [will-change:transform,opacity,filter]";
+export const DIFF_VIEWPORT_CLASS =
+  "lyra-agents-diff-viewport overflow-auto overscroll-contain [scrollbar-color:transparent_transparent] [scrollbar-width:thin] [&:hover]:[scrollbar-color:var(--lyra-effect-scrollbar-soft)_transparent] [&::-webkit-scrollbar]:w-[var(--lyra-space-5)] [&::-webkit-scrollbar]:h-[var(--lyra-space-5)] [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-[var(--lyra-radius-4)] [&:hover::-webkit-scrollbar-thumb]:bg-[var(--lyra-effect-scrollbar-soft)] [&_.lyra-agents-diff-line]:h-[var(--lyra-space-20)] [&_.lyra-agents-diff-line]:leading-[var(--lyra-text-line-20)] [&_.lyra-agents-diff-line]:shrink-0 [&_.lyra-agents-diff-line]:w-max [&_.lyra-agents-diff-line]:min-w-full";
+export const DIFF_VIEWPORT_TRACK_CLASS =
+  "lyra-agents-diff-viewport-track flex flex-col w-max min-w-full font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)]";
+export const DIFF_WIDTH_PROBE_CLASS =
+  "lyra-agents-diff-width-probe h-0 overflow-hidden [visibility:hidden] pointer-events-none shrink-0";
+export const DIFF_LINE_BASE_CLASS =
+  "lyra-agents-diff-line grid grid-cols-[var(--lyra-unit-42)_var(--lyra-space-16)_max-content] px-[var(--lyra-space-8)]";
+export const DIFF_LINE_ADD_CLASS =
+  "lyra-agents-diff-line-add bg-[color-mix(in_srgb,var(--lyra-status-success)_12%,transparent)] text-[var(--lyra-status-success)] [.lyra-agents-tool-call-body_&]:bg-[color-mix(in_srgb,var(--lyra-status-success)_16%,transparent)]";
+export const DIFF_LINE_DEL_CLASS =
+  "lyra-agents-diff-line-del bg-[color-mix(in_srgb,var(--lyra-status-error)_12%,transparent)] text-[var(--lyra-status-error)] [.lyra-agents-tool-call-body_&]:bg-[color-mix(in_srgb,var(--lyra-status-error)_16%,transparent)]";
+export const DIFF_LINE_CTX_CLASS =
+  "lyra-agents-diff-line-ctx text-[var(--lyra-text-secondary)]";
+export const DIFF_GUTTER_CLASS =
+  "lyra-agents-diff-gutter text-[var(--lyra-text-muted)] text-right pr-[var(--lyra-space-10)] select-none";
+export const DIFF_SIGN_CLASS =
+  "lyra-agents-diff-sign text-center select-none text-inherit opacity-70";
+export const DIFF_TEXT_CLASS = "lyra-agents-diff-text whitespace-pre";
+export const diffLineClass = (kind: string): string => {
+  if (kind === "add") return `${DIFF_LINE_BASE_CLASS} ${DIFF_LINE_ADD_CLASS} lyra-agents-diff-line-add`;
+  if (kind === "del") return `${DIFF_LINE_BASE_CLASS} ${DIFF_LINE_DEL_CLASS} lyra-agents-diff-line-del`;
+  return `${DIFF_LINE_BASE_CLASS} ${DIFF_LINE_CTX_CLASS} lyra-agents-diff-line-ctx`;
+};
