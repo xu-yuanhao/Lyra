@@ -703,7 +703,7 @@ describe("useAgentProjectTreeModel", () => {
     );
 
     const button = screen.getByRole("button", { name: "Problems" });
-    expect(button.className).not.toContain("lyra-titlebar-problems-active");
+    expect(button.classList.contains("lyra-titlebar-problems-active")).toBe(false);
 
     await waitFor(() => {
       expect(listenerRef.current).not.toBeNull();

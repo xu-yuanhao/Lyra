@@ -113,6 +113,7 @@ export {
   type AppTabsProps
 } from "./app-tabs";
 export { AppTooltip, type AppTooltipProps } from "./app-tooltip";
+export { Tabs, TabsList, TabsTrigger } from "./tabs";
 export { AppToolbarButton, type AppToolbarButtonProps } from "./app-toolbar-button";
 export {
   AppWindowButton,
