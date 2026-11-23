@@ -1,43 +1,6 @@
 /* Lyra agents layer. Keep this file limited to layout and surface composition; real colors live in tokens.css or material.scss. */
 
 /* Source: ai-panel.css */
-/* -------- Selection policy --------
-   Shell and controls should not be copied by drag selection. Only real
-   transcript/output content opts back into text selection. */
-.lyra-agents-header,
-.lyra-agents-pills-rail,
-.lyra-agents-tool-group-head,
-.lyra-agents-tool-call-head,
-.lyra-agents-edit-card-head,
-.lyra-agents-decision-panel,
-.lyra-agents-debug-panel,
-.lyra-agents-composer-bottom,
-.lyra-agents-scroll-to-bottom {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.lyra-agents-message-bubble,
-.lyra-agents-message-text,
-.lyra-agents-message-text-block,
-.lyra-agents-message-image,
-.lyra-agents-streaming-text,
-.lyra-agents-rich-text,
-.lyra-agents-tool-details-text,
-.lyra-agents-info-pre,
-.lyra-agents-search-results,
-.lyra-agents-shell-command,
-.lyra-agents-task-card,
-.lyra-agents-diff-viewport,
-.lyra-agents-diff-text,
-.lyra-agents-ask-card,
-.lyra-agents-permission-cmd,
-.lyra-agents-composer-input,
-.lyra-agents-decision-custom-input {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
 .lyra-agents-header {
   position: relative;
   top: 0;

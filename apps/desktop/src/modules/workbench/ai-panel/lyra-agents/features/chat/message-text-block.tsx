@@ -22,7 +22,7 @@ export function MessageTextBlock({ message, block, streaming }: {
   }, [addCitationToComposer, message]);
 
   return (
-    <div className="lyra-agents-message-text-block" data-message-block-id={block.id}>
+    <div className="lyra-agents-message-text-block select-text" data-message-block-id={block.id}>
       <MarkdownCitationContext.Provider value={cite}>
         <StreamingText
           content={block.body}

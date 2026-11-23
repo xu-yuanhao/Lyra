@@ -41,7 +41,7 @@ export function Header() {
     records.fileAttachments
   ).trim() || t("aiPanel.defaultSessionTitle");
   return (
-    <header className="lyra-agents-header">
+    <header className="lyra-agents-header select-none">
       <div className="lyra-agents-header-title" title={title}>
         <MessageCitationText
           text={rawTitle.length > 0 ? rawTitle : title}

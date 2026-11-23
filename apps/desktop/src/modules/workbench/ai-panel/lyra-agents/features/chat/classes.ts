@@ -20,7 +20,7 @@ export const ATTACH_SUBMENU_CLASS =
 
 // ---- Composer toolbar ----
 export const COMPOSER_BOTTOM_CLASS =
-  "lyra-agents-composer-bottom w-full flex items-center gap-[var(--lyra-agents-composer-toolbar-gap)] mt-[var(--lyra-space-6)] p-[var(--lyra-space-4)] h-[var(--lyra-shell-titlebar-nav-h)] min-h-[var(--lyra-shell-titlebar-nav-h)] min-w-0 [&_svg]:block [&_svg]:flex-none [&_svg]:size-[var(--lyra-agents-composer-toolbar-icon-size)]";
+  "lyra-agents-composer-bottom w-full flex items-center gap-[var(--lyra-agents-composer-toolbar-gap)] mt-[var(--lyra-space-6)] p-[var(--lyra-space-4)] h-[var(--lyra-shell-titlebar-nav-h)] min-h-[var(--lyra-shell-titlebar-nav-h)] min-w-0 [&_svg]:block [&_svg]:flex-none [&_svg]:size-[var(--lyra-agents-composer-toolbar-icon-size)] select-none";
 export const COMPOSER_MODEL_CONTROLS_CLASS =
   "lyra-agents-composer-model-controls w-auto min-w-0 flex flex-1 items-center flex-nowrap gap-[var(--lyra-agents-composer-toolbar-gap)] overflow-hidden";
 
@@ -112,9 +112,9 @@ export const COMPOSER_SEND_ERROR_CLASS =
 const COMPOSER_INPUT_BASE =
   "w-full flex-none bg-[var(--lyra-agents-content-bg)] text-[var(--lyra-text-primary)] border-0 rounded-[var(--lyra-radius-8)] outline-none [font:inherit] text-[length:var(--lyra-text-size-14)] p-[var(--lyra-space-10)] shadow-none";
 export const COMPOSER_INPUT_CLASS =
-  `lyra-agents-composer-input ${COMPOSER_INPUT_BASE} resize-none leading-[var(--lyra-text-line-relaxed)] h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] overflow-y-hidden [scrollbar-width:none] [mask-image:none] [-webkit-mask-image:none] focus-visible:bg-[var(--lyra-agents-content-bg)] focus-visible:border-0 focus-visible:shadow-none hover:not-disabled:bg-[var(--lyra-agents-content-bg)] hover:not-disabled:border-0 [&::-webkit-scrollbar]:hidden placeholder:text-[var(--lyra-text-muted)] disabled:text-[var(--lyra-text-secondary)] disabled:cursor-default disabled:opacity-100`;
+  `lyra-agents-composer-input ${COMPOSER_INPUT_BASE} resize-none leading-[var(--lyra-text-line-relaxed)] h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] overflow-y-hidden [scrollbar-width:none] [mask-image:none] [-webkit-mask-image:none] focus-visible:bg-[var(--lyra-agents-content-bg)] focus-visible:border-0 focus-visible:shadow-none hover:not-disabled:bg-[var(--lyra-agents-content-bg)] hover:not-disabled:border-0 [&::-webkit-scrollbar]:hidden placeholder:text-[var(--lyra-text-muted)] disabled:text-[var(--lyra-text-secondary)] disabled:cursor-default disabled:opacity-100 select-text`;
 export const CITATION_COMPOSER_INPUT_CLASS =
-  `lyra-agents-citation-composer-input lyra-agents-composer-input ${COMPOSER_INPUT_BASE} leading-[var(--lyra-text-line-24)] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] max-h-[calc((var(--lyra-space-64)+var(--lyra-space-8))*4)] overflow-y-auto whitespace-pre-wrap break-word focus-visible:outline-none focus-visible:bg-[var(--lyra-agents-content-bg)] data-[drop-active=true]:[outline:var(--lyra-stroke-thin)_solid_color-mix(in_srgb,var(--lyra-text-primary)_72%,transparent)] data-[drop-active=true]:[outline-offset:calc(-1*var(--lyra-stroke-thin))] data-[drop-active=true]:bg-[color-mix(in_srgb,var(--lyra-text-primary)_5%,var(--lyra-app-surface-strong-bg))] [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[var(--lyra-text-muted)] [&:empty]:before:pointer-events-none [&_.lyra-agents-citation-chip]:[-webkit-user-modify:read-only]`;
+  `lyra-agents-citation-composer-input lyra-agents-composer-input ${COMPOSER_INPUT_BASE} leading-[var(--lyra-text-line-24)] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] max-h-[calc((var(--lyra-space-64)+var(--lyra-space-8))*4)] overflow-y-auto whitespace-pre-wrap break-word focus-visible:outline-none focus-visible:bg-[var(--lyra-agents-content-bg)] data-[drop-active=true]:[outline:var(--lyra-stroke-thin)_solid_color-mix(in_srgb,var(--lyra-text-primary)_72%,transparent)] data-[drop-active=true]:[outline-offset:calc(-1*var(--lyra-stroke-thin))] data-[drop-active=true]:bg-[color-mix(in_srgb,var(--lyra-text-primary)_5%,var(--lyra-app-surface-strong-bg))] [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[var(--lyra-text-muted)] [&:empty]:before:pointer-events-none [&_.lyra-agents-citation-chip]:[-webkit-user-modify:read-only] select-text`;
 
 // ---- Browser capsule ----
 export const BROWSER_CAPSULE_WRAP_CLASS =
@@ -218,7 +218,7 @@ export const BG_TERMINAL_ITEM_TITLE_CLASS =
 export const BG_TERMINAL_ITEM_PATH_CLASS =
   "lyra-agents-bg-terminal-item-path m-0 overflow-hidden text-ellipsis whitespace-nowrap font-[family-name:var(--lyra-font-ui)] text-[length:var(--lyra-text-size-caption)] text-[var(--lyra-text-muted)]";
 export const BG_TERMINAL_KILL_CLASS = "lyra-agents-bg-terminal-kill flex-[0_0_auto]";
-export const TASK_CARD_CLASS = "lyra-agents-task-card flex flex-col gap-[var(--lyra-space-4)]";
+export const TASK_CARD_CLASS = "lyra-agents-task-card flex flex-col gap-[var(--lyra-space-4)] select-text";
 export const TASK_CARD_HEAD_CLASS = "lyra-agents-task-card-head m-0 text-[var(--lyra-text-muted)]";
 export const TASK_ITEM_CLASS =
   "lyra-agents-task-item w-full min-w-0 font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-comfortable)] text-[var(--lyra-text-secondary)] [overflow-wrap:break-word]";
@@ -238,7 +238,7 @@ export const TICK_CURRENT_CLASS =
 export const TICK_GHOST_CLASS =
   "lyra-agents-tick-ghost absolute left-0 top-0 pointer-events-none inline-block [will-change:transform,opacity,filter]";
 export const DIFF_VIEWPORT_CLASS =
-  "lyra-agents-diff-viewport overflow-auto overscroll-contain [scrollbar-color:transparent_transparent] [scrollbar-width:thin] [&:hover]:[scrollbar-color:var(--lyra-effect-scrollbar-soft)_transparent] [&::-webkit-scrollbar]:w-[var(--lyra-space-5)] [&::-webkit-scrollbar]:h-[var(--lyra-space-5)] [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-[var(--lyra-radius-4)] [&:hover::-webkit-scrollbar-thumb]:bg-[var(--lyra-effect-scrollbar-soft)] [&_.lyra-agents-diff-line]:h-[var(--lyra-space-20)] [&_.lyra-agents-diff-line]:leading-[var(--lyra-text-line-20)] [&_.lyra-agents-diff-line]:shrink-0 [&_.lyra-agents-diff-line]:w-max [&_.lyra-agents-diff-line]:min-w-full";
+  "lyra-agents-diff-viewport overflow-auto overscroll-contain [scrollbar-color:transparent_transparent] [scrollbar-width:thin] [&:hover]:[scrollbar-color:var(--lyra-effect-scrollbar-soft)_transparent] [&::-webkit-scrollbar]:w-[var(--lyra-space-5)] [&::-webkit-scrollbar]:h-[var(--lyra-space-5)] [&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-[var(--lyra-radius-4)] [&:hover::-webkit-scrollbar-thumb]:bg-[var(--lyra-effect-scrollbar-soft)] [&_.lyra-agents-diff-line]:h-[var(--lyra-space-20)] [&_.lyra-agents-diff-line]:leading-[var(--lyra-text-line-20)] [&_.lyra-agents-diff-line]:shrink-0 [&_.lyra-agents-diff-line]:w-max [&_.lyra-agents-diff-line]:min-w-full select-text";
 export const DIFF_VIEWPORT_TRACK_CLASS =
   "lyra-agents-diff-viewport-track flex flex-col w-max min-w-full font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)]";
 export const DIFF_WIDTH_PROBE_CLASS =
@@ -255,7 +255,7 @@ export const DIFF_GUTTER_CLASS =
   "lyra-agents-diff-gutter text-[var(--lyra-text-muted)] text-right pr-[var(--lyra-space-10)] select-none";
 export const DIFF_SIGN_CLASS =
   "lyra-agents-diff-sign text-center select-none text-inherit opacity-70";
-export const DIFF_TEXT_CLASS = "lyra-agents-diff-text whitespace-pre";
+export const DIFF_TEXT_CLASS = "lyra-agents-diff-text whitespace-pre select-text";
 export const diffLineClass = (kind: string): string => {
   if (kind === "add") return `${DIFF_LINE_BASE_CLASS} ${DIFF_LINE_ADD_CLASS} lyra-agents-diff-line-add`;
   if (kind === "del") return `${DIFF_LINE_BASE_CLASS} ${DIFF_LINE_DEL_CLASS} lyra-agents-diff-line-del`;

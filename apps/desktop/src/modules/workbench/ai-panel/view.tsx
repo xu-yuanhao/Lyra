@@ -236,7 +236,7 @@ const AiPanelTabsHeader = ({
 
   return (
     <header
-      className="lyra-agents-header lyra-agents-session-tabs-header"
+      className="lyra-agents-header lyra-agents-session-tabs-header select-none"
       onPointerLeave={closeLock.onClearCloseLock}
     >
       <div

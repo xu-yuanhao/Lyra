@@ -199,7 +199,7 @@ function SearchCard({
         <span className={INFO_DIM_CLASS}>{t("tool.searchQueryLabel")}</span>
         <span className={INFO_STRONG_CLASS}>{details.query}</span>
       </div>
-      <div className="lyra-agents-tool-result-list lyra-agents-search-results">
+      <div className="lyra-agents-tool-result-list lyra-agents-search-results select-text">
         {details.results.map((r, i) => (
           <div key={i} className={SEARCH_ROW_CLASS}>
             <FileOpenButton filePath={`${r.file}:${r.line}`} className={`lyra-agents-tool-result-line ${TOOL_RESULT_LINE_CLASS} ${INFO_DIM_CLASS} ${SEARCH_PATH_BUTTON_CLASS}`}>
@@ -444,7 +444,7 @@ function AskCard({
 }) {
   const answer = details.answer.trim();
   return (
-    <div className={`${INFO_BLOCK_CLASS} lyra-agents-ask-card`}>
+    <div className={`${INFO_BLOCK_CLASS} lyra-agents-ask-card select-text`}>
       <pre className={`lyra-agents-info-pre lyra-agents-ask-question ${TOOL_MONO_TEXT_CLASS}`}>{details.question}</pre>
       {answer.length > 0 ? (
         <pre className={`lyra-agents-info-pre lyra-agents-ask-answer ${TOOL_MONO_TEXT_CLASS}`}>{answer}</pre>

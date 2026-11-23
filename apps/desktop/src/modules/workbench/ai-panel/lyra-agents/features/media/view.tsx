@@ -355,7 +355,7 @@ const renderSegment = (
       );
     case "single":
       return (
-        <figure key={segment.id} className="lyra-agents-message-image lyra-agents-message-image-agent">
+        <figure key={segment.id} className="lyra-agents-message-image lyra-agents-message-image-agent select-text">
           <AdaptiveImage
             image={segment.image}
             group={segment.group}

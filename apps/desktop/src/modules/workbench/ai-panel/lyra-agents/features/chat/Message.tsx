@@ -847,7 +847,7 @@ export function Message({
       >
         <div className={MESSAGE_CONTENT_USER_CLASS}>
           <div
-            className={`lyra-agents-message-bubble${highlightCitationTarget ? ` ${MESSAGE_CITATION_TARGET_CLASS} rounded-[var(--lyra-radius-12)]` : ""}${userBubbleOverflowing && !userBubbleExpanded ? " lyra-agents-message-bubble-collapsed" : ""}`}
+            className={`lyra-agents-message-bubble select-text${highlightCitationTarget ? ` ${MESSAGE_CITATION_TARGET_CLASS} rounded-[var(--lyra-radius-12)]` : ""}${userBubbleOverflowing && !userBubbleExpanded ? " lyra-agents-message-bubble-collapsed" : ""}`}
             onContextMenu={(event) => onContextMenu?.(event, message)}
           >
             {(() => {
@@ -859,7 +859,7 @@ export function Message({
                 return (
                   <p
                     key={b.id}
-                    className="lyra-agents-message-text"
+                    className="lyra-agents-message-text select-text"
                     data-message-block-id={b.id}
                   >
                     <MessageCitationText
@@ -907,7 +907,7 @@ export function Message({
                         return renderUserTextBlock(block);
                       }
                       return (
-                        <p className="lyra-agents-message-text">{segment.text}</p>
+                        <p className="lyra-agents-message-text select-text">{segment.text}</p>
                       );
                     }}
                   />
@@ -1116,7 +1116,7 @@ const AgentMessage = memo(function AgentMessage({
     if (b.type === "image") {
       const src = imagePreviewSource(b.image, session.workingDir);
       return (
-        <figure key={b.id} className="lyra-agents-message-image lyra-agents-message-image-agent">
+        <figure key={b.id} className="lyra-agents-message-image lyra-agents-message-image-agent select-text">
           <ClickableImage
             src={src}
             image={b.image}
@@ -1199,7 +1199,7 @@ const AgentMessage = memo(function AgentMessage({
               return renderAgentBlock(block);
             }
             return (
-              <div className="lyra-agents-message-text-block">
+              <div className="lyra-agents-message-text-block select-text">
                 <StreamingText
                   content={segment.text}
                   streaming={false}
