@@ -1,3 +1,5 @@
+import { APP_TAB_TITLE_CLASS } from "@renderer/ui/components";
+
 export const TD_VARS_CLASS =
   "[--lyra-terminal-stage-bg:var(--lyra-app-panel-bg)] [--lyra-terminal-tabstrip-bg:var(--lyra-app-material-sidebar-bg)] [--lyra-terminal-tabstrip-line:color-mix(in_srgb,var(--lyra-app-border)_62%,transparent)] [--lyra-terminal-tabstrip-hover-bg:var(--lyra-app-row-hover-bg)] [--lyra-terminal-tabstrip-active-bg:var(--lyra-app-row-active-bg)]";
 export const TD_PANEL_BOTTOM_CLASS =
@@ -27,7 +29,7 @@ export const TD_TAB_MAIN_CLASS =
 export const TD_TAB_ICON_CLASS =
   "lyra-terminal-tab-icon inline-flex size-[var(--lyra-icon-size-14)] shrink-0 items-center justify-center text-[var(--lyra-text-muted)] [.lyra-terminal-tab-active_&]:text-[var(--lyra-text-primary)]";
 export const TD_TAB_ICON_IMAGE_CLASS = "lyra-terminal-tab-icon-image rounded-[var(--lyra-radius-4)]";
-export const TD_TAB_TITLE_CLASS = "lyra-tab-title lyra-terminal-tab-title min-w-0";
+export const TD_TAB_TITLE_CLASS = "lyra-terminal-tab-title min-w-0 " + APP_TAB_TITLE_CLASS;
 export const TD_TAB_BADGE_CLASS =
   "lyra-terminal-tab-badge inline-flex size-[var(--lyra-space-14)] shrink-0 items-center justify-center text-[var(--lyra-text-muted)]";
 export const TD_TAB_CLOSE_CLASS =

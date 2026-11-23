@@ -1,7 +1,7 @@
 export const GIT_SURFACE_CLASS =
   "lyra-agent-git-surface min-w-0 min-h-0 w-full h-full grid grid-cols-[var(--lyra-app-sidebar-rail-w)_minmax(0,1fr)] bg-[var(--lyra-app-panel-bg)] text-[var(--lyra-text-primary)] max-[720px]:grid-cols-1 max-[720px]:grid-rows-[minmax(var(--lyra-unit-180),38vh)_minmax(0,1fr)]";
 export const GIT_SIDEBAR_CLASS =
-  "lyra-agent-git-sidebar min-w-0 min-h-0 flex flex-col border-r border-[color-mix(in_srgb,var(--lyra-app-border)_48%,transparent)] border-[var(--lyra-stroke-hairline)] bg-[var(--lyra-app-material-sidebar-bg)] backdrop-blur-[var(--lyra-app-material-blur-sm)] backdrop-saturate-[var(--lyra-app-material-saturate)] max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-[var(--lyra-divider-faint)]";
+  "lyra-agent-git-sidebar relative min-w-[var(--lyra-app-sidebar-rail-min-w)] min-h-0 flex flex-col border-r border-[color-mix(in_srgb,var(--lyra-app-border)_48%,transparent)] border-[var(--lyra-stroke-hairline)] bg-[var(--lyra-app-material-sidebar-bg)] backdrop-blur-[var(--lyra-app-material-blur-sm)] backdrop-saturate-[var(--lyra-app-material-saturate)] max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-[var(--lyra-divider-faint)]";
 export const GIT_EMPTY_SIDEBAR_CLASS = "lyra-agent-git-empty-sidebar flex-[1_1_auto] min-h-0";
 export const GIT_LIST_CLASS =
   "lyra-agent-git-list flex-1 min-h-0 overflow-x-hidden overflow-y-scroll p-[var(--lyra-space-2)_0_var(--lyra-space-8)]";

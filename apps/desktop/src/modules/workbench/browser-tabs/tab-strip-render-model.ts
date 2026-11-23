@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+import { APP_TAB_ITEM_CLASS, APP_TAB_MAIN_CLASS } from "@renderer/ui/components";
+
 import { cx } from "../ui-primitives";
 import type { WorkspaceTab } from "../workspace-tabs/types";
 import type { RightDragPreview } from "./tab-strip-types";
@@ -87,7 +89,7 @@ export const createBrowserTabStripRenderModel = ({
       closeLabel: `${closeTabLabel}-${tab.title}`,
       showClose,
       tabClassName: cx(
-        "lyra-tab-item",
+        APP_TAB_ITEM_CLASS,
         "lyra-browser-tab-item",
         "lyra-browser-tab-item-drag-enabled",
         "lyra-allow-web-drag",
@@ -103,7 +105,7 @@ export const createBrowserTabStripRenderModel = ({
         isTabInDraggingSplitGroup && "lyra-browser-tab-item-split-group-dragging"
       ),
       tabMainClassName: cx(
-        "lyra-tab-main",
+        APP_TAB_MAIN_CLASS,
         "lyra-browser-tab-main",
         isFocusedTabInActiveSplitGroup && "lyra-browser-tab-main-split-focused"
       )

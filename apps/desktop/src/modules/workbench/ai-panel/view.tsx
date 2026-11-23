@@ -7,6 +7,10 @@ import {
 } from "react";
 
 import {
+  APP_TAB_CLOSE_CLASS,
+  APP_TAB_ITEM_CLASS,
+  APP_TAB_MAIN_CLASS,
+  APP_TAB_TITLE_CLASS,
   AppButton,
   AppIconButton,
   AppPanel,
@@ -299,7 +303,7 @@ const AiPanelTabsHeader = ({
               <div
                 key={tab.tabId}
                 className={cn(
-                  "lyra-tab-item",
+                  APP_TAB_ITEM_CLASS,
                   SESSION_TAB_ITEM_CLASS,
                   active && "lyra-tab-item-active",
                   active && SESSION_TAB_ITEM_ACTIVE_CLASS,
@@ -326,7 +330,7 @@ const AiPanelTabsHeader = ({
                 }}
               >
                 <AppButton
-                  className={`lyra-tab-main ${SESSION_TAB_MAIN_CLASS}`}
+                  className={`${APP_TAB_MAIN_CLASS} ${SESSION_TAB_MAIN_CLASS}`}
                   variant="ghost"
                   size="sm"
                   role="tab"
@@ -350,7 +354,7 @@ const AiPanelTabsHeader = ({
                   }}
                 >
                   <SessionTabIdentityIcon desktopApi={desktopApi} workingDir={workingDir} />
-                  <span className={`lyra-tab-title ${SESSION_TAB_TITLE_CLASS}`}>
+                  <span className={`${APP_TAB_TITLE_CLASS} ${SESSION_TAB_TITLE_CLASS}`}>
                     <MessageCitationText
                       text={rawTitle.trim().length > 0 ? rawTitle : title}
                       transcriptCitations={records.transcriptCitations}
@@ -361,7 +365,7 @@ const AiPanelTabsHeader = ({
                   </span>
                 </AppButton>
                 <AppIconButton
-                  className={`lyra-tab-close ${SESSION_TAB_CLOSE_CLASS}`}
+                  className={`${APP_TAB_CLOSE_CLASS} ${SESSION_TAB_CLOSE_CLASS}`}
                   aria-label={formatMessage("aiPanel.closeSessionTabAriaLabel", { title })}
                   title={formatMessage("aiPanel.closeSessionTabAriaLabel", { title })}
                   onPointerDown={(event) => {

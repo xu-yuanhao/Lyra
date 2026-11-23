@@ -1,5 +1,12 @@
 import { X } from "@lyra/icons";
-import { AppButton, AppIconButton } from "@renderer/ui/components";
+import {
+  APP_TAB_CLOSE_CLASS,
+  APP_TAB_ITEM_CLASS,
+  APP_TAB_MAIN_CLASS,
+  APP_TAB_TITLE_CLASS,
+  AppButton,
+  AppIconButton
+} from "@renderer/ui/components";
 import { t } from "@workbench/i18n";
 
 import {
@@ -48,7 +55,7 @@ export const AgentProjectTreeEditorTabStrip = ({
           <div
             key={tab.editorInstanceId}
             className={[
-              "lyra-tab-item",
+              APP_TAB_ITEM_CLASS,
               TREE_EDITOR_TAB_CLASS,
               active ? "lyra-tab-item-active" : "",
               tab.preview ? TREE_EDITOR_TAB_PREVIEW_CLASS : ""
@@ -71,7 +78,7 @@ export const AgentProjectTreeEditorTabStrip = ({
             }}
           >
             <AppButton
-              className={`lyra-tab-main lyra-tab-title ${TREE_EDITOR_TAB_MAIN_CLASS}`}
+              className={`${APP_TAB_MAIN_CLASS} ${APP_TAB_TITLE_CLASS} ${TREE_EDITOR_TAB_MAIN_CLASS}`}
               variant="ghost"
               size="sm"
               role="tab"
@@ -84,7 +91,7 @@ export const AgentProjectTreeEditorTabStrip = ({
               {title}
             </AppButton>
             <AppIconButton
-              className="lyra-tab-close lyra-agent-project-tree-editor-tab-close"
+              className={`${APP_TAB_CLOSE_CLASS} lyra-agent-project-tree-editor-tab-close`}
               aria-label={t("agentProjectTree.closeEditorTab")}
               onPointerDown={(event) => {
                 handleChromeTabClosePointerDown(event, (closeEvent) => {

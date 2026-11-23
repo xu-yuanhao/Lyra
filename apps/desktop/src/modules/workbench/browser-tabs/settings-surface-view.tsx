@@ -1,4 +1,5 @@
-import { SettingsProjectsView } from "../settings-projects";
+import {
+ SettingsProjectsView } from "../settings-projects";
 import { type ReactNode } from "react";
 import {
   ArrowUpRight,
@@ -27,6 +28,7 @@ import {
 } from "@lyra/icons";
 
 import {
+  APP_SIDEBAR_SPLIT_CLASS,
   AppButton,
   AppInput,
   AppSelect,
@@ -613,7 +615,7 @@ export const SettingsSurfaceView = ({
 
   return (
     <section className={ST_SURFACE_CLASS} aria-label="settings-surface">
-      <div className={`lyra-app-sidebar-split ${ST_SHELL_CLASS}`}>
+      <div className={`${APP_SIDEBAR_SPLIT_CLASS} ${ST_SHELL_CLASS}`}>
         <aside className={ST_NAV_CLASS} aria-label="settings-nav">
           <div className={ST_NAV_LIST_CLASS}>
             {model.categories.map((category) => (

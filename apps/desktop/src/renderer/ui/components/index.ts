@@ -55,7 +55,7 @@ export {
   type AppModelMenuSubmenu
 } from "./app-model-menu";
 export { AppObjectRow, type AppObjectRowProps } from "./app-object-row";
-export { AppPanel, type AppPanelProps } from "./app-panel";
+export { APP_MODULE_CLASS, APP_MODULE_FOOTER_CLASS, APP_MODULE_TOOLBAR_CLASS, AppPanel, type AppPanelProps } from "./app-panel";
 export {
   AppPopover,
   AppPopoverAnchor,
@@ -67,6 +67,7 @@ export {
 export { AppSearchField, type AppSearchFieldProps } from "./app-search-field";
 export { AppShimmer, type AppShimmerProps } from "./app-shimmer";
 export {
+  APP_SIDEBAR_SPLIT_CLASS,
   AppSidebar,
   AppSidebarSection,
   type AppSidebarProps,
@@ -76,7 +77,7 @@ export { AppSubPageBack, type AppSubPageBackProps } from "./app-sub-page-back";
 export { AppSelect, type AppSelectOption, type AppSelectProps } from "./app-select";
 export { AppSettingsRow, type AppSettingsRowProps } from "./app-settings-row";
 export { AppSettingsSection, type AppSettingsSectionProps } from "./app-settings-section";
-export { AppStatusMessage, type AppStatusMessageProps, type AppStatusMessageTone } from "./app-status-message";
+export { APP_STATUS_MESSAGE_BOXED_CLASS, AppStatusMessage, type AppStatusMessageProps, type AppStatusMessageTone } from "./app-status-message";
 export {
   AppStatusProvider,
   isIgnoredWorkbenchWindowError,
@@ -86,7 +87,15 @@ export {
 } from "./app-status-host";
 export { AppSurfaceHeader, type AppSurfaceHeaderProps } from "./app-surface-header";
 export { AppSwitch, type AppSwitchProps } from "./app-switch";
-export { AppTabs, type AppTabOption, type AppTabsProps } from "./app-tabs";
+export {
+  APP_TAB_CLOSE_CLASS,
+  APP_TAB_ITEM_CLASS,
+  APP_TAB_MAIN_CLASS,
+  APP_TAB_TITLE_CLASS,
+  AppTabs,
+  type AppTabOption,
+  type AppTabsProps
+} from "./app-tabs";
 export { AppTooltip, type AppTooltipProps } from "./app-tooltip";
 export { AppToolbarButton, type AppToolbarButtonProps } from "./app-toolbar-button";
 export {

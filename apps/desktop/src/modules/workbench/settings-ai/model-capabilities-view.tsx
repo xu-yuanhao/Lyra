@@ -1,4 +1,5 @@
 import {
+  APP_STATUS_MESSAGE_BOXED_CLASS,
   AppButton,
   AppInput,
   AppSelect,
@@ -213,7 +214,7 @@ export const SettingsAiModelCapabilitiesView = ({
         onClick={onBack}
       />
       {entry.capabilities?.runtimeConflict == null ? null : (
-        <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="error" role="alert">
+        <AppStatusMessage className={`${AI_ERROR_CLASS} ${APP_STATUS_MESSAGE_BOXED_CLASS}`} tone="error" role="alert">
           {entry.capabilities.runtimeConflict}
         </AppStatusMessage>
       )}

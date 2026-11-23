@@ -2,6 +2,9 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from "react";
 
 import { cn } from "../utils";
 
+export const APP_SIDEBAR_SPLIT_CLASS =
+  "lyra-app-sidebar-split relative after:content-[''] after:absolute after:inset-y-0 after:left-[calc(var(--lyra-app-sidebar-rail-w)-var(--lyra-space-6))] after:z-[var(--lyra-z-floating)] after:w-[var(--lyra-space-12)] after:cursor-col-resize max-[720px]:after:hidden";
+
 export type AppSidebarProps = HTMLAttributes<HTMLElement>;
 
 /**

@@ -1,3 +1,4 @@
+import { APP_SIDEBAR_SPLIT_CLASS } from "@renderer/ui/components";
 import { FileManagerChooserBar } from "./surface-chooser-bar";
 import {
   FM_LAYOUT_CLASS,
@@ -17,7 +18,7 @@ export const FileManagerSurfaceView = ({
   downloadsSlot
 }: FileManagerSurfaceViewProps) => (
   <section className={FM_SURFACE_CLASS} aria-label="file-manager-surface">
-    <section className={`lyra-app-sidebar-split ${FM_LAYOUT_CLASS}`}>
+    <section className={`${APP_SIDEBAR_SPLIT_CLASS} ${FM_LAYOUT_CLASS}`}>
       <FileManagerSidebar
         renderModel={renderModel}
         labels={labels}

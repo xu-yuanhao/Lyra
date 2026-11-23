@@ -13,7 +13,12 @@ import {
   type SyntheticEvent
 } from "react";
 
-import { AppButton, AppIconButton } from "@renderer/ui/components";
+import {
+  APP_TAB_CLOSE_CLASS,
+  APP_TAB_TITLE_CLASS,
+  AppButton,
+  AppIconButton
+} from "@renderer/ui/components";
 import { LyraLogo } from "@renderer/ui/app";
 import { IdentityIconView } from "../identity";
 import {
@@ -322,11 +327,11 @@ export const BrowserTabStripView = ({
                     workspaceAppIdentityByTabId={workspaceAppIdentityByTabId}
                   />
                 </span>
-                <span className="lyra-tab-title lyra-browser-tab-title">{tabModel.tab.title}</span>
+                <span className={`${APP_TAB_TITLE_CLASS} lyra-browser-tab-title`}>{tabModel.tab.title}</span>
               </AppButton>
               {tabModel.showClose ? (
                 <AppIconButton
-                  className="lyra-tab-close lyra-browser-tab-close"
+                  className={`${APP_TAB_CLOSE_CLASS} lyra-browser-tab-close`}
                   aria-label={tabModel.closeLabel}
                   draggable={false}
                   onPointerDown={(event) => {
@@ -375,10 +380,10 @@ export const BrowserTabStripView = ({
                   workspaceAppIdentityByTabId={workspaceAppIdentityByTabId}
                 />
               </span>
-              <span className="lyra-tab-title lyra-browser-tab-title">{renderModel.preview.tab.title}</span>
+              <span className={`${APP_TAB_TITLE_CLASS} lyra-browser-tab-title`}>{renderModel.preview.tab.title}</span>
             </span>
             <AppIconButton
-              className="lyra-tab-close lyra-browser-tab-close lyra-browser-tab-right-drag-preview-close"
+              className={`${APP_TAB_CLOSE_CLASS} lyra-browser-tab-close lyra-browser-tab-right-drag-preview-close`}
               tabIndex={-1}
               aria-hidden="true"
             >

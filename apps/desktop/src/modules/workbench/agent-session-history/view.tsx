@@ -8,6 +8,7 @@ import {
   type MouseEvent
 } from "react";
 import {
+  APP_SIDEBAR_SPLIT_CLASS,
   AppButton,
   AppEmptyState,
   AppIconButton,
@@ -1287,7 +1288,7 @@ export const AgentSessionHistorySurface = ({
         </AppStatusMessage>
       )}
 
-      <section className={`lyra-app-sidebar-split ${HISTORY_SPLIT_CLASS}`}>
+      <section className={`${APP_SIDEBAR_SPLIT_CLASS} ${HISTORY_SPLIT_CLASS}`}>
         <section className={`lyra-app-sidebar-nav ${HISTORY_LIST_CLASS}`} aria-busy={isLoading}>
           <div className={`lyra-app-sidebar-nav-list ${HISTORY_LIST_CONTENT_CLASS}`}>
             {isLoading ? (

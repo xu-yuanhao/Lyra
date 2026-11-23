@@ -27,7 +27,7 @@ import { TerminalPaneSurface } from "./pane-surface";
 import type { TerminalDockProps } from "./types";
 import { IdentityIconView, type ResolvedIdentityIcon } from "../identity";
 import { LyraLogo } from "@renderer/ui/app";
-import { AppButton, AppIconButton } from "@renderer/ui/components";
+import { APP_TAB_ITEM_CLASS, AppButton, AppIconButton } from "@renderer/ui/components";
 import { cn } from "@renderer/ui/utils";
 import { isMiddleClick } from "../ui-primitives";
 import { ProblemsList } from "../bottom-aux/problems-list";
@@ -286,7 +286,7 @@ export const TerminalDock = ({
             <div
               key={tab.id}
               className={cn(
-                "lyra-tab-item",
+                APP_TAB_ITEM_CLASS,
                 TD_TAB_CLASS,
                 "lyra-allow-web-drag",
                 problemsActive === false && tab.id === activeDockTab?.id && "lyra-tab-item-active",
@@ -380,7 +380,7 @@ export const TerminalDock = ({
             <div
               key={tab.id}
               className={cn(
-                "lyra-tab-item",
+                APP_TAB_ITEM_CLASS,
                 TD_TAB_CLASS,
                 tab.id === problems?.activeId && "lyra-tab-item-active",
                 tab.id === problems?.activeId && TD_TAB_ACTIVE_CLASS

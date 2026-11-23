@@ -16,6 +16,7 @@ import {
 import { ChevronDown, ChevronRight, CircleAlert, FolderOpen, GitBranch, RefreshCw } from "@lyra/icons";
 
 import {
+  APP_SIDEBAR_SPLIT_CLASS,
   AppEmptyState,
   AppLoadingState,
   AppObjectRow,
@@ -1070,7 +1071,7 @@ const AgentProjectTreeSidebar = ({
 };
 
 export const AgentProjectTreeSurface = (props: AgentProjectTreeSurfaceProps) => (
-  <section className={`lyra-app-sidebar-split ${TREE_SURFACE_CLASS}`} aria-label={props.labels.title}>
+  <section className={`${APP_SIDEBAR_SPLIT_CLASS} ${TREE_SURFACE_CLASS}`} aria-label={props.labels.title}>
     <AgentProjectTreeSidebar {...props} />
     <AgentProjectTreeEditorPane
       treeInstanceId={props.state.instanceId}

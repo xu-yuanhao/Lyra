@@ -9,7 +9,7 @@ export const HISTORY_TITLEBAR_CATEGORY_COUNT_CLASS =
 export const HISTORY_ERROR_CLASS =
   "lyra-agent-history-error items-center mt-[var(--lyra-space-10)] mx-[var(--lyra-space-12)] [&_span]:min-w-0 [&_span]:overflow-hidden [&_span]:text-ellipsis [&_span]:whitespace-nowrap";
 export const HISTORY_SPLIT_CLASS =
-  "lyra-agent-history-split w-full flex-1 min-h-0 grid grid-cols-[var(--lyra-app-sidebar-rail-w)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] max-[860px]:grid-cols-1 max-[860px]:grid-rows-[minmax(var(--lyra-unit-260),48vh)_minmax(var(--lyra-unit-260),1fr)]";
+  "lyra-agent-history-split w-full flex-1 min-h-0 grid grid-cols-[var(--lyra-app-sidebar-rail-w)_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] max-[860px]:after:hidden max-[860px]:grid-cols-1 max-[860px]:grid-rows-[minmax(var(--lyra-unit-260),48vh)_minmax(var(--lyra-unit-260),1fr)]";
 export const HISTORY_LIST_CLASS =
   "lyra-agent-history-list min-w-0 min-h-0 max-[860px]:border-b max-[860px]:border-[var(--lyra-app-border)] max-[860px]:border-[var(--lyra-stroke-thin)] max-[860px]:border-r-0";
 export const HISTORY_LIST_CONTENT_CLASS =

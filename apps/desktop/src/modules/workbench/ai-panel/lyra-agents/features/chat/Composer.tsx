@@ -46,6 +46,7 @@ import {
   Terminal
 } from "@lyra/icons";
 import {
+  APP_STATUS_MESSAGE_BOXED_CLASS,
   AppButton,
   AppIconButton,
   AppMenu,
@@ -559,7 +560,7 @@ export function Composer({
     <form ref={composerRootRef} className={COMPOSER_CLASS} onSubmit={handleSubmit}>
       {sendError !== null && (
         <AppStatusMessage
-          className={`${COMPOSER_SEND_ERROR_CLASS} lyra-app-status-message-boxed`}
+          className={`${COMPOSER_SEND_ERROR_CLASS} ${APP_STATUS_MESSAGE_BOXED_CLASS}`}
           icon={<CircleAlert size={TOOLBAR_ICON_SIZE} strokeWidth={TOOLBAR_ICON_STROKE_WIDTH} />}
           role="alert"
           tone="error"

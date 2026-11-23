@@ -13,6 +13,17 @@ export type AppTabOption<TValue extends string = string> = {
   readonly value: TValue;
 };
 
+export const APP_TAB_ITEM_CLASS =
+  "lyra-tab-item box-border h-[var(--lyra-tab-control-h)] min-h-[var(--lyra-tab-control-h)] grid grid-cols-[minmax(0,1fr)_var(--lyra-tab-close-size)] items-center gap-[var(--lyra-space-2)] rounded-[var(--lyra-radius-8)]";
+
+export const APP_TAB_MAIN_CLASS = "lyra-tab-main min-w-0 h-full w-full justify-start";
+
+export const APP_TAB_TITLE_CLASS =
+  "lyra-tab-title flex-[1_1_0] w-full min-w-0 overflow-hidden whitespace-nowrap [text-overflow:clip] [mask-image:linear-gradient(90deg,black_0%,black_calc(100%-var(--lyra-space-24)),transparent)] [-webkit-mask-image:linear-gradient(90deg,black_0%,black_calc(100%-var(--lyra-space-24)),transparent)]";
+
+export const APP_TAB_CLOSE_CLASS =
+  "lyra-tab-close size-[var(--lyra-tab-close-size)] place-items-center self-center justify-self-center grid";
+
 export type AppTabsProps<TValue extends string = string> = {
   readonly activeValues?: readonly TValue[];
   readonly ariaLabel: string;

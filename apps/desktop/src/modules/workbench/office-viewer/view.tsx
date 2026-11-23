@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { LyraDesktopApi } from "../../../shared/desktop-bridge";
 
+import { APP_MODULE_CLASS, APP_MODULE_FOOTER_CLASS, APP_MODULE_TOOLBAR_CLASS } from "@renderer/ui/components";
 import { renderOfficeFile } from "@lyra/office-render";
 
 type OfficeViewerStatus = "loading" | "ready" | "error";
@@ -68,7 +69,7 @@ export const OfficeViewerSurface = ({
 
   return (
     <section
-      className="lyra-app-module"
+      className={APP_MODULE_CLASS}
       data-lyra-component="lyra.office"
       aria-label="office-viewer-surface"
       style={{
@@ -80,14 +81,14 @@ export const OfficeViewerSurface = ({
         color: "var(--lyra-text-primary)"
       }}
     >
-      <header className="lyra-app-module-toolbar">
+      <header className={APP_MODULE_TOOLBAR_CLASS}>
         <strong>{title}</strong>
       </header>
       <div
         ref={hostRef}
         style={{ minHeight: "0", height: "100%", overflow: "hidden", padding: "0" }}
       />
-      <footer className="lyra-app-module-footer">
+      <footer className={APP_MODULE_FOOTER_CLASS}>
         <span>
           {status === "error"
             ? message

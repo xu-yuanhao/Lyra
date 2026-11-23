@@ -8,6 +8,7 @@ import {
 } from "@lyra/icons";
 
 import {
+  APP_SIDEBAR_SPLIT_CLASS,
   AppEmptyState,
   AppErrorState,
   AppIconButton,
@@ -562,7 +563,7 @@ export const AgentGitSurface = ({
   ) : fileRows;
 
   return (
-    <section className={`lyra-app-sidebar-split ${GIT_SURFACE_CLASS}`} aria-label={labels.title}>
+    <section className={`${APP_SIDEBAR_SPLIT_CLASS} ${GIT_SURFACE_CLASS}`} aria-label={labels.title}>
       <ContextMenuHost
         state={contextMenu.state}
         onClose={contextMenu.closeMenu}

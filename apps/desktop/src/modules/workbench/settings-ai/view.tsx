@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import {
+  APP_STATUS_MESSAGE_BOXED_CLASS,
   AppButton,
   AppEmptyState,
   AppIconButton,
@@ -1049,7 +1050,7 @@ export const SettingsAiMcpView = ({ labels, model }: SettingsAiMcpViewProps) => 
         </form>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="error" role="alert">
+          <AppStatusMessage className={`${AI_ERROR_CLASS} ${APP_STATUS_MESSAGE_BOXED_CLASS}`} tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
@@ -1327,7 +1328,7 @@ export const SettingsAiSkillsView = ({ labels, model }: SettingsAiSkillsViewProp
         </form>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="error" role="alert">
+          <AppStatusMessage className={`${AI_ERROR_CLASS} ${APP_STATUS_MESSAGE_BOXED_CLASS}`} tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
@@ -1903,7 +1904,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
         </div>
 
         {model.errorMessage === null ? null : (
-          <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="error" role="alert">
+          <AppStatusMessage className={`${AI_ERROR_CLASS} ${APP_STATUS_MESSAGE_BOXED_CLASS}`} tone="error" role="alert">
             {model.errorMessage}
           </AppStatusMessage>
         )}
@@ -2029,7 +2030,7 @@ export const SettingsAiModelsView = ({ labels, model, openDialog }: SettingsAiMo
                 </div>
 
                 {discoveryReturnedEmpty ? (
-                  <AppStatusMessage className={`${AI_ERROR_CLASS} lyra-app-status-message-boxed`} tone="neutral">
+                  <AppStatusMessage className={`${AI_ERROR_CLASS} ${APP_STATUS_MESSAGE_BOXED_CLASS}`} tone="neutral">
                     {labels.modelsDiscoverEmptyDescription}
                   </AppStatusMessage>
                 ) : null}

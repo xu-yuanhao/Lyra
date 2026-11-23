@@ -103,7 +103,7 @@ export const BrowserResultSurface = ({
             <span className="lyra-titlebar-context-chip">{payload.query}</span>
             <AppTabs
               ariaLabel={`${sourceFilterLabel} options`}
-              className="lyra-titlebar-context-tabs"
+              className={`lyra-titlebar-context-tabs max-w-[min(52vw,var(--lyra-unit-560))] overflow-hidden bg-[color-mix(in_srgb,var(--lyra-app-material-toolbar-bg)_70%,transparent)] [&_.lyra-app-tab]:max-w-[calc(var(--lyra-unit-108)+var(--lyra-space-2))]`}
               selectionMode="multiple"
               value={
                 searchEngineSelectionMode === "manual"

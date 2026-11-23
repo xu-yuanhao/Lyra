@@ -15,6 +15,7 @@ import {
 } from "@lyra/icons";
 
 import {
+  APP_STATUS_MESSAGE_BOXED_CLASS,
   AppButton,
   AppEmptyState,
   AppIconButton,
@@ -732,7 +733,7 @@ export const AgentPlanBoardSurface = ({
     return (
       <div className={APB_BOARD_CLASS}>
         {state.error !== null ? (
-          <AppStatusMessage className={`lyra-app-status-message-boxed ${APB_ERROR_CLASS}`} role="alert" tone="error">
+          <AppStatusMessage className={`${APP_STATUS_MESSAGE_BOXED_CLASS} ${APB_ERROR_CLASS}`} role="alert" tone="error">
             {state.error}
           </AppStatusMessage>
         ) : null}

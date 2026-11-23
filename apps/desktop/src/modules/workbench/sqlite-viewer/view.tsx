@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { APP_MODULE_CLASS, APP_MODULE_FOOTER_CLASS, APP_MODULE_TOOLBAR_CLASS } from "@renderer/ui/components/app-panel";
 import { Button } from "@renderer/ui/components/button";
 import {
   Table,
@@ -62,11 +63,11 @@ export const SqliteViewerSurface = ({
 
   return (
     <section
-      className="lyra-app-module grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] bg-[var(--lyra-app-panel-bg)] text-[var(--lyra-text-primary)]"
+      className={APP_MODULE_CLASS + " grid grid-rows-[auto_auto_minmax(0,1fr)_auto]"}
       data-lyra-component="lyra.sqlite"
       aria-label="sqlite-viewer-surface"
     >
-      <header className="lyra-app-module-toolbar">
+      <header className={APP_MODULE_TOOLBAR_CLASS}>
         <strong>{heading}</strong>
       </header>
       <div className="flex gap-[var(--lyra-space-8)] overflow-x-auto border-b border-[var(--lyra-app-border)] px-[var(--lyra-space-12)] py-[var(--lyra-space-8)]">
@@ -117,7 +118,7 @@ export const SqliteViewerSurface = ({
           </Table>
         ) : null}
       </div>
-      <footer className="lyra-app-module-footer">
+      <footer className={APP_MODULE_FOOTER_CLASS}>
         <span>
           {status === "error"
             ? message

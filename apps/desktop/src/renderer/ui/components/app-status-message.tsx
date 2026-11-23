@@ -17,6 +17,9 @@ const TONE_CLASS: Record<AppStatusMessageTone, string> = {
   info: "text-[var(--lyra-text-secondary)]"
 };
 
+export const APP_STATUS_MESSAGE_BOXED_CLASS =
+  "lyra-app-status-message-boxed rounded-[var(--lyra-radius-6)] border border-[var(--lyra-stroke-thin)] border-[color-mix(in_srgb,currentColor_34%,transparent)] bg-[color-mix(in_srgb,currentColor_9%,transparent)] px-[var(--lyra-space-10)] py-[var(--lyra-space-8)] break-words";
+
 export const AppStatusMessage = forwardRef<HTMLParagraphElement, AppStatusMessageProps>(({
   children,
   className,
