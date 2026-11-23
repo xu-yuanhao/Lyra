@@ -17,9 +17,11 @@ export const TOOL_GROUP_ICON_SLOT_CLASS =
   "lyra-agents-tool-group-icon-slot relative w-[var(--lyra-space-16)] h-[var(--lyra-space-16)] shrink-0";
 export const TOOL_GROUP_CURRENT_ICON_CLASS =
   "lyra-agents-tool-group-current-icon inline-flex items-center text-[var(--lyra-text-muted)]";
-export const TOOL_GROUP_BODY_CLASS = "lyra-agents-tool-group-body";
+export const TOOL_GROUP_BODY_CLASS = "lyra-agents-tool-group-body flex flex-col pl-[var(--lyra-space-22)] mt-[var(--lyra-space-2)]";
 export const toolCallStatusIconClass = (status: string): string => {
   if (status === "suspended" || status === "warning") return "[&_.lyra-agents-icon-swap-tool]:text-[var(--lyra-status-warning)]";
   if (status === "error") return "[&_.lyra-agents-icon-swap-tool]:text-[var(--lyra-status-error)]";
   return "";
 };
+export const STAGGER_ITEM_CLASS =
+  "lyra-agents-stagger-item opacity-0 animate-[stagger-in_var(--lyra-motion-panel-layout-duration)_var(--lyra-ease-standard)_both] [animation-delay:calc(var(--stagger-index,0)*55ms+90ms)] [.lyra-agents-collapse[data-open=false]_&]:animate-none [.lyra-agents-collapse[data-open=false]_&]:opacity-100 motion-reduce:animate-none motion-reduce:opacity-100";

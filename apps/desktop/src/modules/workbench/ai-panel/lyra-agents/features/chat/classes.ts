@@ -263,3 +263,7 @@ export const diffLineClass = (kind: string): string => {
 };
 export const MESSAGE_CONTENT_USER_CLASS =
   "lyra-agents-message-content-user flex-[0_1_auto] flex flex-col items-end w-fit max-w-[75%] min-w-0";
+export const COLLAPSE_CLASS =
+  "lyra-agents-collapse grid grid-rows-[0fr] transition-[grid-template-rows_var(--lyra-motion-panel-layout-duration)_var(--lyra-ease-tick)] data-[open=true]:grid-rows-[1fr] [&[data-open=true]>.lyra-agents-collapse-inner]:opacity-100 [&[data-open=true]>.lyra-agents-collapse-inner]:translate-y-0";
+export const COLLAPSE_INNER_CLASS =
+  "lyra-agents-collapse-inner overflow-hidden min-h-0 opacity-0 -translate-y-[calc(var(--lyra-space-2)*-1)] transition-[opacity_var(--lyra-motion-standard-duration)_var(--lyra-ease-fast)_40ms,transform_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast)_40ms]";

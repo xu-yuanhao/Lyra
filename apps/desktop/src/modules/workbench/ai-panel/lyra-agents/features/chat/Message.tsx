@@ -21,7 +21,10 @@ import { useStreamingMessageReasoning, useStreamingReasoningOpen } from "../rich
 import { formatMessage, t } from "@workbench/i18n";
 import { toolGroupLabel } from "@workbench/agent-session-view-model/tool-view-model";
 import { AppButton } from "@renderer/ui/components";
-import { MESSAGE_CITATION_TARGET_CLASS, MESSAGE_CONTENT_USER_CLASS } from "./classes";
+import { MESSAGE_CITATION_TARGET_CLASS, COLLAPSE_CLASS,
+  COLLAPSE_INNER_CLASS,
+  MESSAGE_CONTENT_USER_CLASS
+} from "./classes";
 import { MessageCitationText } from "./MessageCitationText";
 import { MessageTextBlock } from "./message-text-block";
 import { withStreamingReasoning } from "./message-activity-blocks";
@@ -1255,8 +1258,8 @@ const AgentMessage = memo(function AgentMessage({
               <span className="lyra-agents-message-process-fold-label">{processFoldLabel}</span>
               <span className="lyra-agents-message-process-fold-line" aria-hidden="true" />
             </AppButton>
-            <div className="lyra-agents-collapse" data-open={preSummaryOpen}>
-              <div className="lyra-agents-collapse-inner">
+            <div className={COLLAPSE_CLASS} data-open={preSummaryOpen}>
+              <div className={COLLAPSE_INNER_CLASS}>
                 {preSummaryOpen ? (
                   <div className="lyra-agents-message-process-fold-body">
                     {groupBlocksForRender(preSummaryBlocks)}

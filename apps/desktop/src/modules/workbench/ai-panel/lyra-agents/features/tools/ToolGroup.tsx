@@ -39,6 +39,7 @@ import {
   TOOL_GROUP_ICON_SLOT_CLASS,
   TOOL_GROUP_LABEL_CLASS,
   TOOL_GROUP_LEAD_CLASS,
+  STAGGER_ITEM_CLASS,
   toolCallStatusIconClass
 } from "./classes";
 
@@ -150,7 +151,7 @@ export function ToolGroupBlock({
           {activityRows.map((row, i) => (
             <div
               key={row.id}
-              className="lyra-agents-stagger-item"
+              className={STAGGER_ITEM_CLASS}
               style={{ "--stagger-index": i } as React.CSSProperties}
             >
               {row.type === "thinking" ? (

@@ -1871,67 +1871,6 @@
   color: var(--lyra-text-muted);
 }
 
-/* -------- Collapse container --------
-   grid-template-rows transition lets us animate to "auto" height without JS. */
-
-.lyra-agents-collapse {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows var(--lyra-motion-panel-layout-duration) var(--lyra-ease-tick);
-}
-
-.lyra-agents-collapse[data-open="true"] {
-  grid-template-rows: 1fr;
-}
-
-.lyra-agents-collapse-inner {
-  overflow: hidden;
-  min-height: 0;
-  opacity: 0;
-  transform: translateY(calc(var(--lyra-space-2) * -1));
-  transition:
-    opacity var(--lyra-motion-standard-duration) var(--lyra-ease-fast) 40ms,
-    transform var(--lyra-motion-fast-duration) var(--lyra-ease-fast) 40ms;
-}
-
-.lyra-agents-collapse[data-open="true"] > .lyra-agents-collapse-inner {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* -------- Stagger children --------
-   Each child reads its --stagger-index and delays its fade-in proportionally.
-   Items drift in from the left in sequence — a micro-animation, not a shove. */
-
-@keyframes stagger-in {
-  from {
-    opacity: 0;
-    transform: translateX(calc(var(--lyra-space-8) * -1));
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.lyra-agents-tool-group-body .lyra-agents-stagger-item {
-  opacity: 0;
-  animation: stagger-in var(--lyra-motion-panel-layout-duration) var(--lyra-ease-standard) both;
-  animation-delay: calc(var(--stagger-index, 0) * 55ms + 90ms);
-}
-
-.lyra-agents-collapse[data-open="false"] .lyra-agents-stagger-item {
-  animation: none;
-  opacity: 1;
-}
-
-.lyra-agents-tool-group-body {
-  display: flex;
-  flex-direction: column;
-  /* Level-2 icons align with level-1 text start: icon-slot(16) + gap(6) = var(--lyra-space-22) */
-  padding-left: var(--lyra-space-22);
-  margin-top: var(--lyra-space-2);
-}
 
 /* -------- Tool call row (level 2): tool icon ↔ chevron swap on hover -------- */
 
