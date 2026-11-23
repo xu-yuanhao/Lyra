@@ -267,8 +267,9 @@ body {
   background: var(--material-shell-background);
 }
 
-.lyra-root {
-  background: var(--material-shell-background);
+:root[data-lyra-window-material="native"][data-lyra-material-enabled="true"] {
+  --lyra-terminal-bg: transparent;
+  --lyra-terminal-cursor-accent: transparent;
 }
 
 :root[data-lyra-window-material="native"][data-lyra-material-enabled="true"],
@@ -278,116 +279,19 @@ body {
   background: transparent;
 }
 
-:root[data-lyra-window-material="native"][data-lyra-material-enabled="true"] {
-  .lyra-ai-panel-shell,
-  .lyra-ai-panel-shell.lyra-app-panel,
-  .lyra-file-manager-surface,
-  .lyra-file-editor-surface,
-  .lyra-panel-bottom,
-  .lyra-terminal-dock,
-  .lyra-terminal-stage,
-  .lyra-terminal-workspace-surface,
-  .lyra-terminal-pane,
-  .lyra-terminal-pane-active,
-  .lyra-terminal-pane-body,
-  .lyra-terminal-host {
-    background: transparent;
-  }
-
-  --lyra-terminal-bg: transparent;
-  --lyra-terminal-cursor-accent: transparent;
-
-  .lyra-terminal-host .xterm,
-  .lyra-terminal-host .xterm-viewport,
-  .lyra-terminal-host .xterm-rows {
-    background-color: transparent !important;
-  }
-
-  .lyra-agents-app {
-    --lyra-agents-composer-shell-bg: var(
-      --lyra-material-solid-surface-strong-bg,
-      var(--lyra-app-surface-strong-bg)
-    );
-  }
-
-  .lyra-agents-composer-wrap .lyra-agents-user-gate-host > .lyra-agents-decision-panel,
-  .lyra-agents-composer-toprow .lyra-agents-composer-rail-chip {
-    background: color-mix(
-      in srgb,
-      var(--lyra-material-solid-surface-strong-bg, var(--lyra-app-surface-strong-bg)) 92%,
-      var(--lyra-material-solid-surface-bg, var(--lyra-app-surface-bg)) 8%
-    );
-  }
-
-  .lyra-agents-composer {
-    background: var(--lyra-agents-composer-shell-bg);
-  }
-
-  .lyra-agents-composer > .lyra-ui-textarea.lyra-agents-composer-input,
-  .lyra-agents-composer > .lyra-agents-citation-composer-input.lyra-agents-composer-input,
-  .lyra-agents-composer > .lyra-ui-textarea.lyra-agents-composer-input:hover:not(:disabled),
-  .lyra-agents-composer > .lyra-ui-textarea.lyra-agents-composer-input:focus-visible,
-  .lyra-agents-composer > .lyra-agents-citation-composer-input.lyra-agents-composer-input:focus-visible {
-    background: var(
-      --lyra-material-solid-panel-bg,
-      var(--lyra-app-panel-bg)
-    );
-  }
-}
-
-:root[data-lyra-window-material="native"][data-lyra-material-enabled="true"][data-lyra-theme-tone="light"] {
-  .lyra-root::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: color-mix(in srgb, #fafafa 72%, transparent);
-  }
-
-  .lyra-root > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  .lyra-agents-app,
-  .lyra-settings-main {
-    background: transparent;
-  }
-}
-
 :root,
 body,
 #app,
 .lyra-root,
 .lyra-root::before,
-.lyra-root::after,
-.lyra-root .lyra-ui-app-shell-main,
-.lyra-root .lyra-workspace,
-.lyra-root .lyra-app-panel,
-.lyra-root .lyra-app-group,
-.lyra-root .lyra-ui-card {
-  transition:
-    background-color var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
-    border-color var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
-    box-shadow var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
-    color var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
-    fill var(--lyra-motion-slow-duration) var(--lyra-ease-fast) 
-    stroke var(--lyra-motion-slow-duration) var(--lyra-ease-fast);
-}
-
 .lyra-root::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: var(--lyra-z-overlay-effect);
-  pointer-events: none;
-  background: var(--lyra-theme-transition-from-bg, transparent);
-  opacity: 0;
-}
-
-.lyra-root.lyra-theme-transition::after {
-  animation: lyra-theme-crossfade var(--lyra-motion-slow) both;
+  transition:
+    background-color var(--lyra-motion-slow-duration) var(--lyra-ease-fast)
+    border-color var(--lyra-motion-slow-duration) var(--lyra-ease-fast)
+    box-shadow var(--lyra-motion-slow-duration) var(--lyra-ease-fast)
+    color var(--lyra-motion-slow-duration) var(--lyra-ease-fast)
+    fill var(--lyra-motion-slow-duration) var(--lyra-ease-fast)
+    stroke var(--lyra-motion-slow-duration) var(--lyra-ease-fast);
 }
 
 @keyframes lyra-theme-crossfade {
@@ -405,16 +309,7 @@ body,
   #app,
   .lyra-root,
   .lyra-root::before,
-  .lyra-root::after,
-  .lyra-root .lyra-ui-app-shell-main,
-  .lyra-root .lyra-workspace,
-  .lyra-root .lyra-app-panel,
-  .lyra-root .lyra-app-group,
-  .lyra-root .lyra-ui-card {
+  .lyra-root::after {
     transition: none;
-  }
-
-  .lyra-root.lyra-theme-transition::after {
-    animation: none;
   }
 }

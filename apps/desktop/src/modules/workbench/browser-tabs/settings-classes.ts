@@ -1,4 +1,5 @@
 import lyraMarkUrl from "../../../renderer/assets/brand/lyra-mark.svg";
+import { NATIVE_LIGHT_BG_TRANSPARENT_CLASS } from "@renderer/material-classes";
 
 const ST_OPAQUE_LOGO_MASK =
   `[:root[data-lyra-window-material=opaque]_&]:inline-block [:root[data-lyra-window-material=opaque]_&]:bg-current [:root[data-lyra-window-material=opaque]_&]:[mask:url("${lyraMarkUrl}")_center/contain_no-repeat] [:root[data-lyra-window-material=opaque]_&]:[-webkit-mask:url("${lyraMarkUrl}")_center/contain_no-repeat]`;
@@ -61,7 +62,7 @@ export const ST_ACCOUNT_ACTION_CLASS =
   "lyra-settings-account-action size-[var(--lyra-control-h-28)] min-h-[var(--lyra-control-h-28)] min-w-[var(--lyra-control-h-28)] p-0 text-[var(--lyra-text-muted)] enabled:hover:text-[var(--lyra-text-primary)]";
 
 export const ST_MAIN_CLASS =
-  "lyra-settings-main min-h-0 min-w-0 overflow-auto bg-[var(--lyra-settings-panel-bg)] px-[var(--lyra-page-pad-inline)] pt-[var(--lyra-page-pad-block-start)] pb-[var(--lyra-page-pad-block-end)] max-[980px]:p-[var(--lyra-space-20)] max-[720px]:p-[var(--lyra-space-16)] [backdrop-filter:var(--lyra-app-material-blur-sm)_var(--lyra-app-material-saturate)] [-webkit-backdrop-filter:var(--lyra-app-material-blur-sm)_var(--lyra-app-material-saturate)]";
+  `lyra-settings-main min-h-0 min-w-0 overflow-auto bg-[var(--lyra-settings-panel-bg)] px-[var(--lyra-page-pad-inline)] pt-[var(--lyra-page-pad-block-start)] pb-[var(--lyra-page-pad-block-end)] max-[980px]:p-[var(--lyra-space-20)] max-[720px]:p-[var(--lyra-space-16)] [backdrop-filter:var(--lyra-app-material-blur-sm)_var(--lyra-app-material-saturate)] [-webkit-backdrop-filter:var(--lyra-app-material-blur-sm)_var(--lyra-app-material-saturate)] ${NATIVE_LIGHT_BG_TRANSPARENT_CLASS}`;
 
 export const ST_CATEGORY_CLASS =
   "lyra-settings-category mx-auto grid min-w-0 w-[min(100%,max(var(--lyra-unit-690),calc(100%_-_var(--lyra-space-64)_*_2)))] scroll-mt-[var(--lyra-space-8)] gap-[var(--lyra-space-22)] [&>div]:min-w-0";

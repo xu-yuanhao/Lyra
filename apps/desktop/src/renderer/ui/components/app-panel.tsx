@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes } from "react";
 
 import { cn } from "../utils";
+import { THEME_COLOR_TRANSITION_CLASS } from "../../material-classes";
 
 export const APP_MODULE_CLASS =
   "lyra-app-module box-border h-full w-full min-h-0 min-w-0 bg-[var(--lyra-app-panel-bg)] font-[family-name:var(--lyra-font-ui)] text-[var(--lyra-text-primary)]";
@@ -25,6 +26,7 @@ export const AppPanel = forwardRef<HTMLElement, AppPanelProps>(({
     data-placement={placement}
     className={cn(
       "lyra-app-panel min-h-0 min-w-0 rounded-[var(--lyra-radius-10)] border border-[var(--lyra-app-material-border)] bg-[var(--lyra-app-material-panel-bg)] text-[var(--lyra-text-primary)] backdrop-blur-[var(--lyra-app-material-blur-sm)] backdrop-saturate-[var(--lyra-app-material-saturate)]",
+      THEME_COLOR_TRANSITION_CLASS,
       placement === "center" && "rounded-none",
       className
     )}

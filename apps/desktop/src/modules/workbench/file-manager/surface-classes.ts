@@ -1,8 +1,12 @@
 // Shared Tailwind class strings for file-manager list/grid surfaces.
 // Kept as constants so every emission site renders identical metrics.
 
+import { NATIVE_BG_TRANSPARENT_CLASS, THEME_COLOR_TRANSITION_CLASS } from "@renderer/material-classes";
+
+const NATIVE_BG = ` ${NATIVE_BG_TRANSPARENT_CLASS}`;
+
 export const FM_SURFACE_CLASS =
-  "lyra-file-manager-surface grid h-full w-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] bg-[var(--lyra-app-material-panel-bg)] [backdrop-filter:var(--lyra-app-material-blur-md)_var(--lyra-app-material-saturate)] [-webkit-backdrop-filter:var(--lyra-app-material-blur-md)_var(--lyra-app-material-saturate)]";
+  `lyra-file-manager-surface grid h-full w-full min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_auto] bg-[var(--lyra-app-material-panel-bg)] [backdrop-filter:var(--lyra-app-material-blur-md)_var(--lyra-app-material-saturate)] [-webkit-backdrop-filter:var(--lyra-app-material-blur-md)_var(--lyra-app-material-saturate)]${NATIVE_BG} ${THEME_COLOR_TRANSITION_CLASS}`;
 
 export const FM_LAYOUT_CLASS =
   "lyra-file-manager-layout grid min-h-0 min-w-0 grid-cols-[var(--lyra-app-sidebar-rail-w)_minmax(0,1fr)]";
@@ -163,4 +167,4 @@ export const APP_SECTION_TITLE_CLASS =
   "lyra-app-section-title min-w-0 min-h-[var(--lyra-control-h-24)] inline-flex items-center gap-[var(--lyra-space-8)] px-[var(--lyra-space-8)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-body)] font-medium leading-[var(--lyra-text-line-body)] [&_h2]:m-0 [&_h3]:m-0 [&_strong]:m-0 [&_h2]:text-inherit [&_h3]:text-inherit [&_strong]:text-inherit [&_h2]:text-[length:inherit] [&_h3]:text-[length:inherit] [&_strong]:text-[length:inherit] [&_h2]:font-[inherit] [&_h3]:font-[inherit] [&_strong]:font-[inherit] [&_h2]:leading-[inherit] [&_h3]:leading-[inherit] [&_strong]:leading-[inherit] [&_svg]:size-[var(--lyra-icon-size-14)] [&_svg]:[stroke-width:1.8]";
 
 export const APP_GROUP_CLASS =
-  "lyra-app-group min-w-0 overflow-hidden border border-[var(--lyra-stroke-thin)] border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)] shadow-none";
+  `lyra-app-group min-w-0 overflow-hidden border border-[var(--lyra-stroke-thin)] border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)] shadow-none ${THEME_COLOR_TRANSITION_CLASS}`;

@@ -1,9 +1,12 @@
 import { APP_TAB_TITLE_CLASS } from "@renderer/ui/components";
+import { NATIVE_BG_TRANSPARENT_CLASS } from "@renderer/material-classes";
+
+const NATIVE_BG = ` ${NATIVE_BG_TRANSPARENT_CLASS}`;
 
 export const TD_VARS_CLASS =
   "[--lyra-terminal-stage-bg:var(--lyra-app-panel-bg)] [--lyra-terminal-tabstrip-bg:var(--lyra-app-material-sidebar-bg)] [--lyra-terminal-tabstrip-line:color-mix(in_srgb,var(--lyra-app-border)_62%,transparent)] [--lyra-terminal-tabstrip-hover-bg:var(--lyra-app-row-hover-bg)] [--lyra-terminal-tabstrip-active-bg:var(--lyra-app-row-active-bg)]";
 export const TD_PANEL_BOTTOM_CLASS =
-  "lyra-panel-bottom overflow-hidden bg-[var(--lyra-app-panel-bg)] [.lyra-center-stack-terminal-top_>&]:row-start-1 [.lyra-center-stack-terminal-bottom_>&]:row-start-3";
+  "lyra-panel-bottom overflow-hidden bg-[var(--lyra-app-panel-bg)] [.lyra-center-stack-terminal-top_>&]:row-start-1 [.lyra-center-stack-terminal-bottom_>&]:row-start-3" + NATIVE_BG;
 export const TD_PANEL_BOTTOM_HIDDEN_CLASS =
   "lyra-panel-bottom-hidden pointer-events-none invisible [transition:visibility_0s_linear_var(--lyra-motion-panel-layout-duration)] motion-reduce:transition-none";
 export const TD_PANEL_BOTTOM_CONTENT_CLASS =
@@ -11,7 +14,7 @@ export const TD_PANEL_BOTTOM_CONTENT_CLASS =
 export const TD_BOTTOM_AUX_INACTIVE_CLASS =
   "lyra-bottom-aux-terminal-inactive invisible pointer-events-none z-0";
 export const TD_DOCK_CLASS =
-  `lyra-terminal-dock ${TD_VARS_CLASS} relative grid h-full min-h-0 grid-cols-[var(--lyra-unit-152)_minmax(0,1fr)] bg-[var(--lyra-terminal-stage-bg)] max-[720px]:grid-cols-[var(--lyra-unit-120)_minmax(0,1fr)]`;
+  `lyra-terminal-dock ${TD_VARS_CLASS} relative grid h-full min-h-0 grid-cols-[var(--lyra-unit-152)_minmax(0,1fr)] bg-[var(--lyra-terminal-stage-bg)] max-[720px]:grid-cols-[var(--lyra-unit-120)_minmax(0,1fr)]${NATIVE_BG}`;
 export const TD_DOCK_DROP_TARGET_CLASS =
   "lyra-terminal-dock-workspace-drop-target after:pointer-events-none after:absolute after:inset-0 after:content-[''] after:border after:border-dashed after:border-[color-mix(in_srgb,var(--lyra-app-border)_38%,var(--lyra-text-secondary)_48%)] after:bg-[color-mix(in_srgb,var(--lyra-app-row-hover-bg)_16%,transparent)]";
 export const TD_SIDE_CLASS =
@@ -41,11 +44,11 @@ export const TD_TAB_LYRA_LOGO_CLASS =
 export const TD_TOOLBAR_ACTIONS_CLASS =
   "lyra-terminal-toolbar-actions relative grid h-[var(--lyra-shell-terminal-tabbar-h)] grid-cols-[repeat(4,var(--lyra-shell-terminal-tabbar-h))] content-start items-center justify-start gap-[var(--lyra-space-4)] bg-transparent px-[var(--lyra-space-2)] before:absolute before:top-0 before:right-[var(--lyra-space-8)] before:left-[var(--lyra-space-8)] before:h-[var(--lyra-stroke-thin)] before:bg-[color-mix(in_srgb,var(--lyra-terminal-tabstrip-line)_76%,transparent)] [&_.lyra-app-icon-button]:size-[var(--lyra-shell-terminal-tabbar-h)] [&_.lyra-app-icon-button]:justify-self-center";
 export const TD_STAGE_CLASS =
-  "lyra-terminal-stage grid min-h-0 min-w-0 bg-[var(--lyra-terminal-stage-bg)] [&>*]:col-start-1 [&>*]:row-start-1 [&>*]:min-h-0 [&>*]:min-w-0";
+  "lyra-terminal-stage grid min-h-0 min-w-0 bg-[var(--lyra-terminal-stage-bg)] [&>*]:col-start-1 [&>*]:row-start-1 [&>*]:min-h-0 [&>*]:min-w-0" + NATIVE_BG;
 export const TD_EMPTY_CLASS =
   "lyra-terminal-empty grid h-full w-full place-items-center text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-body)]";
 export const TD_WORKSPACE_SURFACE_CLASS =
-  `lyra-terminal-workspace-surface ${TD_VARS_CLASS} h-full min-h-0 w-full overflow-hidden bg-[var(--lyra-terminal-stage-bg)] [contain:layout_paint]`;
+  `lyra-terminal-workspace-surface ${TD_VARS_CLASS} h-full min-h-0 w-full overflow-hidden bg-[var(--lyra-terminal-stage-bg)] [contain:layout_paint]${NATIVE_BG}`;
 export const TD_PANES_CLASS =
   "lyra-terminal-panes flex h-full min-h-0 min-w-0 gap-0 overflow-hidden";
 export const TD_PANES_HORIZONTAL_CLASS =
@@ -53,13 +56,13 @@ export const TD_PANES_HORIZONTAL_CLASS =
 export const TD_PANES_VERTICAL_CLASS =
   "lyra-terminal-panes-vertical flex-row [&_.lyra-terminal-pane:last-child]:border-r-0";
 export const TD_PANE_CLASS =
-  "lyra-terminal-pane relative block h-full min-h-0 min-w-0 flex-[1_1_auto] border-r border-[var(--lyra-stroke-thin)] border-[color-mix(in_srgb,var(--lyra-app-border)_72%,transparent)] bg-[var(--lyra-terminal-bg)]";
-export const TD_PANE_ACTIVE_CLASS = "lyra-terminal-pane-active bg-[var(--lyra-terminal-bg)]";
+  "lyra-terminal-pane relative block h-full min-h-0 min-w-0 flex-[1_1_auto] border-r border-[var(--lyra-stroke-thin)] border-[color-mix(in_srgb,var(--lyra-app-border)_72%,transparent)] bg-[var(--lyra-terminal-bg)]" + NATIVE_BG;
+export const TD_PANE_ACTIVE_CLASS = "lyra-terminal-pane-active bg-[var(--lyra-terminal-bg)]" + NATIVE_BG;
 export const TD_PANE_BODY_CLASS =
-  "lyra-terminal-pane-body absolute inset-0 min-h-0 min-w-0 overflow-hidden bg-[var(--lyra-terminal-bg)] [.lyra-terminal-pane-active_&]:shadow-[inset_0_0_0_var(--lyra-stroke-thin)_color-mix(in_srgb,var(--lyra-app-border-strong)_58%,transparent)]";
+  "lyra-terminal-pane-body absolute inset-0 min-h-0 min-w-0 overflow-hidden bg-[var(--lyra-terminal-bg)] [.lyra-terminal-pane-active_&]:shadow-[inset_0_0_0_var(--lyra-stroke-thin)_color-mix(in_srgb,var(--lyra-app-border-strong)_58%,transparent)]" + NATIVE_BG;
 export const TD_PANE_CLOSE_CLASS =
   "lyra-terminal-pane-close absolute top-[var(--lyra-space-6)] right-[var(--lyra-space-6)] z-[2] grid size-[var(--lyra-control-h-24)] place-items-center border-0 bg-[color-mix(in_srgb,var(--lyra-terminal-bg)_82%,transparent)] text-[var(--lyra-text-muted)] opacity-0 transition-[opacity,color] duration-[var(--lyra-transition-fast)] hover:bg-[color-mix(in_srgb,var(--lyra-terminal-bg)_72%,var(--lyra-app-row-hover-bg))] hover:text-[var(--lyra-status-error)] [.lyra-terminal-pane:hover_&]:opacity-100 [.lyra-terminal-pane:focus-within_&]:opacity-100 [.lyra-terminal-pane-active_&]:opacity-100";
 export const TD_HOST_CLASS =
-  "lyra-terminal-host absolute inset-0 box-border bg-[var(--lyra-terminal-bg)] p-0 [&_.xterm]:w-full! [&_.xterm]:h-full! [&_.xterm]:bg-[var(--lyra-terminal-bg)]! [&_.xterm-viewport]:bg-[var(--lyra-terminal-bg)]! [&_.xterm-rows]:bg-[var(--lyra-terminal-bg)]! [&_.xterm_.xterm-scroll-area]:bg-transparent! [&_.xterm-cursor.xterm-cursor-blink.xterm-cursor-bar]:animate-[lyra-terminal-cursor-bar-blink_1s_step-end_infinite] motion-reduce:[&_.xterm-cursor.xterm-cursor-blink.xterm-cursor-bar]:animate-none";
+  "lyra-terminal-host absolute inset-0 box-border bg-[var(--lyra-terminal-bg)] p-0 [&_.xterm]:w-full! [&_.xterm]:h-full! [&_.xterm]:bg-[var(--lyra-terminal-bg)]! [&_.xterm-viewport]:bg-[var(--lyra-terminal-bg)]! [&_.xterm-rows]:bg-[var(--lyra-terminal-bg)]! [&_.xterm_.xterm-scroll-area]:bg-transparent! [&_.xterm-cursor.xterm-cursor-blink.xterm-cursor-bar]:animate-[lyra-terminal-cursor-bar-blink_1s_step-end_infinite] motion-reduce:[&_.xterm-cursor.xterm-cursor-blink.xterm-cursor-bar]:animate-none" + NATIVE_BG;
 export const TD_STATUS_CLASS =
   "lyra-terminal-status absolute right-[var(--lyra-space-8)] bottom-[var(--lyra-space-8)] left-[var(--lyra-space-8)] rounded-[var(--lyra-radius-8)] border border-[var(--lyra-stroke-thin)] border-[color-mix(in_srgb,var(--lyra-status-error)_30%,var(--lyra-app-border))] bg-[var(--lyra-app-popover-bg)] px-[var(--lyra-space-8)] py-[var(--lyra-space-6)] text-[var(--lyra-status-error)] text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-body)] shadow-[var(--lyra-shadow-elevated-sm)]";

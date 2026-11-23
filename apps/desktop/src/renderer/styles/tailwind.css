@@ -3,6 +3,9 @@
 
 @custom-variant dark (&:where([data-lyra-theme-tone="dark"], [data-lyra-theme-tone="dark"] *));
 
+@custom-variant native-material (&:is(:root[data-lyra-window-material="native"][data-lyra-material-enabled="true"] *));
+@custom-variant native-material-light (&:is(:root[data-lyra-window-material="native"][data-lyra-material-enabled="true"][data-lyra-theme-tone="light"] *));
+
 @source "../main.tsx";
 @source "../ui/**/*.{ts,tsx}";
 @source "../../modules/workbench/**/*.{ts,tsx}";

@@ -1,6 +1,8 @@
 // Tailwind class constants for workbench shell chrome migrated from shell.scss.
 // Hook classes (lyra-*) are preserved for runtime selectors, tests, and variants.
 
+import { THEME_COLOR_TRANSITION_CLASS } from "@renderer/material-classes";
+
 export const NO_DRAG_CLASS = "[-webkit-app-region:no-drag]";
 
 export const RESIZE_BLUR_DISABLE_CLASS =
@@ -14,7 +16,11 @@ export const SHELL_MODAL_DIM_CLASS =
 
 export const SHELL_ROOT_SURFACE_CLASS =
   "w-full h-full min-h-0 relative grid grid-rows-[var(--lyra-size-titlebar-h)_minmax(0,1fr)] bg-[var(--lyra-app-material-shell-bg)] [backdrop-filter:var(--lyra-app-material-blur-lg)_var(--lyra-app-material-saturate)] [-webkit-backdrop-filter:var(--lyra-app-material-blur-lg)_var(--lyra-app-material-saturate)] overflow-hidden select-none [-webkit-user-drag:none] [&_*]:[-webkit-user-drag:none] [&_.lyra-allow-web-drag]:[-webkit-user-drag:element] [&_.lyra-allow-web-drag_*]:[-webkit-user-drag:element] [&_input]:select-text [&_textarea]:select-text [&_[contenteditable=true]]:select-text [&_.lyra-allow-select]:select-text [&_.lyra-allow-select_*]:select-text [&_.lyra-terminal-host]:select-text [&_.lyra-terminal-host_*]:select-text [&_.xterm]:select-text [&_.xterm_*]:select-text " +
-  RESIZE_BLUR_DISABLE_CLASS;
+  RESIZE_BLUR_DISABLE_CLASS +
+  "after:content-[''] after:absolute after:inset-0 after:z-[var(--lyra-z-overlay-effect)] after:pointer-events-none after:bg-[var(--lyra-theme-transition-from-bg,transparent)] after:opacity-0 " +
+  "[&.lyra-theme-transition]:after:animate-[lyra-theme-crossfade_var(--lyra-motion-slow)_both] motion-reduce:[&.lyra-theme-transition]:after:animate-none " +
+  "native-material-light:before:content-[''] native-material-light:before:absolute native-material-light:before:inset-0 native-material-light:before:z-0 native-material-light:before:pointer-events-none native-material-light:before:bg-[color-mix(in_srgb,#fafafa_72%,transparent)] " +
+  "native-material-light:[&>*]:relative native-material-light:[&>*]:z-[1]";
 
 export const TITLEBAR_BASE_CLASS =
   "lyra-titlebar min-h-0 grid items-center gap-[var(--lyra-space-10)] px-[var(--lyra-space-10)] relative bg-[var(--lyra-app-material-toolbar-bg)] [backdrop-filter:var(--lyra-app-material-blur-sm)_var(--lyra-app-material-saturate)] [-webkit-backdrop-filter:var(--lyra-app-material-blur-sm)_var(--lyra-app-material-saturate)] [border-bottom:var(--lyra-stroke-hairline)_solid_var(--lyra-divider-faint)] [-webkit-app-region:drag] [transition:filter_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast),opacity_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast)] max-[980px]:px-[var(--lyra-space-8)] " +
@@ -78,7 +84,7 @@ export const CENTER_STACK_TERMINAL_BOTTOM_CLASS =
   "grid-rows-[minmax(0,1fr)_0_var(--bottom-height,var(--lyra-unit-180))] max-[980px]:grid-rows-[minmax(0,1fr)_0_var(--bottom-height,var(--lyra-unit-160))]";
 
 export const WORKSPACE_CLASS =
-  "lyra-workspace [--lyra-browser-tabs-toolbar-h:var(--lyra-shell-titlebar-nav-h)] [--lyra-agent-browser-beam:color-mix(in_srgb,var(--lyra-text-accent)_76%,var(--lyra-text-primary)_24%)] w-full h-full bg-[var(--lyra-app-material-panel-bg)] grid grid-rows-[minmax(0,1fr)_var(--lyra-size-browser-tab-h)] overflow-hidden relative has-[>.lyra-browser-tabs-with-navigation]:grid-rows-[minmax(0,1fr)_calc(var(--lyra-browser-tabs-toolbar-h)_+_var(--lyra-size-browser-tab-h))] [&>.lyra-browser-tabs]:row-start-2";
+  `lyra-workspace [--lyra-browser-tabs-toolbar-h:var(--lyra-shell-titlebar-nav-h)] [--lyra-agent-browser-beam:color-mix(in_srgb,var(--lyra-text-accent)_76%,var(--lyra-text-primary)_24%)] w-full h-full bg-[var(--lyra-app-material-panel-bg)] grid grid-rows-[minmax(0,1fr)_var(--lyra-size-browser-tab-h)] overflow-hidden relative has-[>.lyra-browser-tabs-with-navigation]:grid-rows-[minmax(0,1fr)_calc(var(--lyra-browser-tabs-toolbar-h)_+_var(--lyra-size-browser-tab-h))] [&>.lyra-browser-tabs]:row-start-2 ${THEME_COLOR_TRANSITION_CLASS}`;
 
 export const WORKSPACE_SURFACE_BASE_CLASS =
   "relative w-full h-full min-w-0 min-h-0 overflow-hidden row-start-1";

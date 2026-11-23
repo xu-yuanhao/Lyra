@@ -1,5 +1,7 @@
+import { NATIVE_BG_TRANSPARENT_CLASS } from "@renderer/material-classes";
+
 export const FE_SURFACE_BASE_CLASS =
-  "lyra-file-editor-surface grid h-full min-h-0 w-full min-w-0 grid-rows-[minmax(0,1fr)] bg-[var(--lyra-app-panel-bg)]";
+  `lyra-file-editor-surface grid h-full min-h-0 w-full min-w-0 grid-rows-[minmax(0,1fr)] bg-[var(--lyra-app-panel-bg)] ${NATIVE_BG_TRANSPARENT_CLASS}`;
 export const FE_SURFACE_AI_WORKSPACE_CLASS =
   "lyra-file-editor-surface-ai-workspace bg-[linear-gradient(180deg,color-mix(in_srgb,var(--lyra-app-surface-bg)_90%,transparent)_0%,color-mix(in_srgb,var(--lyra-app-panel-bg)_100%,transparent)_100%)]";
 export const FE_SURFACE_AI_MINIATURE_CLASS =
