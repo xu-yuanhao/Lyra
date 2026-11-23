@@ -17,6 +17,16 @@ import { LyraLogo } from "@renderer/ui/app";
 import type { DetectedEditor, LyraDesktopApi } from "../../../../../../shared/desktop-bridge";
 import { IdentityIconView, useSessionIdentityIcon } from "../../../../identity";
 import { formatMessage, t } from "@workbench/i18n";
+import {
+  EDITOR_MENU_ICON_CLASS,
+  EDITOR_MENU_ROW_CLASS,
+  PROJECT_DIR_CHIP_CHEVRON_CLASS,
+  PROJECT_DIR_CHIP_CLASS,
+  PROJECT_DIR_CHIP_ICON_CLASS,
+  PROJECT_DIR_CHIP_IMAGE_CLASS,
+  PROJECT_DIR_CHIP_LABEL_CLASS,
+  PROJECT_DIR_CHIP_LYRA_LOGO_CLASS
+} from "./classes";
 
 const ICON_SIZE = 13;
 const ICON_STROKE_WIDTH = 2;
@@ -59,18 +69,18 @@ export function ProjectDirChip({
   const chipContent = (
     <>
       <IdentityIconView
-        className="lyra-agents-project-dir-chip-icon"
-        imageClassName="lyra-agents-project-dir-chip-image"
+        className={PROJECT_DIR_CHIP_ICON_CLASS}
+        imageClassName={PROJECT_DIR_CHIP_IMAGE_CLASS}
         iconUrl={icon.url}
         label={icon.label}
         fallback={
           icon.renderHint === "lyra-logo"
-            ? <LyraLogo className="lyra-agents-project-dir-chip-lyra-logo" alt="" />
+            ? <LyraLogo className={PROJECT_DIR_CHIP_LYRA_LOGO_CLASS} alt="" />
             : <Folder size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
         }
       />
-      <span className="lyra-agents-project-dir-chip-label">{label}</span>
-      <ChevronDown size={12} strokeWidth={1.8} className="lyra-agents-project-dir-chip-chevron" aria-hidden="true" />
+      <span className={PROJECT_DIR_CHIP_LABEL_CLASS}>{label}</span>
+      <ChevronDown size={12} strokeWidth={1.8} className={PROJECT_DIR_CHIP_CHEVRON_CLASS} aria-hidden="true" />
     </>
   );
 
@@ -79,7 +89,7 @@ export function ProjectDirChip({
       variant="ghost"
       size="sm"
       type="button"
-      className="lyra-agents-project-dir-chip"
+      className={PROJECT_DIR_CHIP_CLASS}
       aria-label={label}
       title={
         canOpenProjectTree
@@ -175,8 +185,8 @@ export function ProjectDirChip({
         {editors.length > 0 ? <AppMenuSeparator /> : null}
         {editors.map((editor) => (
           <AppMenuItem key={editor.id} onClick={() => openEditor(editor.id)}>
-            <span className="lyra-agents-editor-menu-row">
-              {editor.icon ? <img src={editor.icon} alt="" className="lyra-agents-editor-menu-icon" /> : null}
+            <span className={EDITOR_MENU_ROW_CLASS}>
+              {editor.icon ? <img src={editor.icon} alt="" className={EDITOR_MENU_ICON_CLASS} /> : null}
               {formatMessage("header.openInEditor", { editor: editor.label })}
             </span>
           </AppMenuItem>

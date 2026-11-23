@@ -72,6 +72,7 @@ import {
   messageVirtualizerOptions,
   shouldAdjustMessageScrollOnItemSizeChange
 } from "./virtual-message-window";
+import { COMPOSER_CONTEXT_RING_SLOT_CLASS } from "./classes";
 
 // ponytail: sticky anchor offset from the top of the scroll viewport.
 const STICKY_ANCHOR_TOP_OFFSET_PX = 18;
@@ -942,7 +943,7 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
         <ComposerMetaBuiltinProvider value={composerMetaBuiltins}>
           <WorkbenchChromeComposerMetaRow sessionId={session.id} />
         </ComposerMetaBuiltinProvider>
-        <div className="lyra-agents-composer-context-ring-slot">
+        <div className={COMPOSER_CONTEXT_RING_SLOT_CLASS}>
           <ContextRing />
         </div>
       </div>

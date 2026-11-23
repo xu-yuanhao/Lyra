@@ -8,6 +8,7 @@ import type {
 } from "../../../../../../shared/desktop-bridge";
 import type { SessionMeta } from "../../core/types";
 import { COMPOSER_CHANGES_COUNTS_CLASS, COMPOSER_RAIL_CHIP_CLASS } from "./classes";
+import { BG_TERMINAL_ITEM_BODY_CLASS, BG_TERMINAL_ITEM_CLASS, BG_TERMINAL_ITEM_PATH_CLASS, BG_TERMINAL_ITEM_TITLE_CLASS, BG_TERMINAL_KILL_CLASS } from "./classes";
 
 export function BackgroundTerminalButton({
   session,
@@ -88,16 +89,16 @@ export function BackgroundTerminalButton({
         onCloseAutoFocus={(event) => event.preventDefault()}
       >
         {privateTerminals.map((item) => (
-          <div key={item.sessionId} className="lyra-agents-bg-terminal-item">
-            <div className="lyra-agents-bg-terminal-item-body">
-              <p className="lyra-agents-bg-terminal-item-title">{item.title.trim() || item.sessionId}</p>
-              {item.cwd ? <p className="lyra-agents-bg-terminal-item-path">{item.cwd}</p> : null}
+          <div key={item.sessionId} className={BG_TERMINAL_ITEM_CLASS}>
+            <div className={BG_TERMINAL_ITEM_BODY_CLASS}>
+              <p className={BG_TERMINAL_ITEM_TITLE_CLASS}>{item.title.trim() || item.sessionId}</p>
+              {item.cwd ? <p className={BG_TERMINAL_ITEM_PATH_CLASS}>{item.cwd}</p> : null}
             </div>
             <AppButton
               type="button"
               size="icon"
               variant="ghost"
-              className="lyra-agents-bg-terminal-kill"
+              className={BG_TERMINAL_KILL_CLASS}
               aria-label={t("lyra-agents-composer.endTerminal")}
               onClick={() => {
                 void closePrivate(item.sessionId);

@@ -7,6 +7,7 @@ import { ProjectDirChip } from "../ai-panel/lyra-agents/features/chat/ProjectDir
 import { executeWorkspaceAppCommand } from "../workspace-apps";
 import { workbenchChromeBus } from "./workbench-chrome-bus";
 import { useWorkbenchChromeBusContribution } from "./workbench-chrome-hooks";
+import { PROJECT_META_ROW_CLASS } from "../ai-panel/lyra-agents/features/chat/classes";
 
 export type ComposerMetaBuiltinProjectDirProps = React.ComponentProps<typeof ProjectDirChip>;
 export type ComposerMetaBuiltinBackgroundTerminalProps = React.ComponentProps<
@@ -106,7 +107,7 @@ export const WorkbenchChromeComposerMetaRow = ({
   }
 
   return (
-    <div className="lyra-agents-project-dir-chip-row lyra-agents-project-meta-row">
+    <div className={PROJECT_META_ROW_CLASS}>
       {metaItems.map((item) => {
         if (item.kind === "builtin") {
           return renderBuiltinMetaItem(item, builtins);

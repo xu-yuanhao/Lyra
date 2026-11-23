@@ -12,6 +12,12 @@ import { Button } from "@renderer/ui/components/button";
 import { LYRA_ASCII_LOGO } from "./ascii-logo";
 import { useAsciiFlicker } from "./use-ascii-flicker";
 import { t } from "@workbench/i18n";
+import {
+  CHAT_EMPTY_CLASS,
+  CHAT_EMPTY_LOGO_CLASS,
+  CHAT_EMPTY_PROJECT_CLASS,
+  CHAT_EMPTY_QUESTION_CLASS
+} from "./classes";
 
 export function ChatEmptyState({
   projectName,
@@ -30,21 +36,21 @@ export function ChatEmptyState({
   useAsciiFlicker(logoRef, LYRA_ASCII_LOGO, isHovering);
 
   return (
-    <div className="lyra-agents-chat-empty" data-testid="lyra-agents-chat-empty">
+    <div className={CHAT_EMPTY_CLASS} data-testid="lyra-agents-chat-empty">
       <pre
         ref={logoRef}
-        className="lyra-agents-chat-empty-logo"
+        className={CHAT_EMPTY_LOGO_CLASS}
         aria-hidden="true"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >{LYRA_ASCII_LOGO}</pre>
-      <p className="lyra-agents-chat-empty-question">
+      <p className={CHAT_EMPTY_QUESTION_CLASS}>
         {t("lyra-agents-empty.questionPrefix")}
         <Button
           variant="ghost"
           size="sm"
           type="button"
-          className="lyra-agents-chat-empty-project font-semibold text-[var(--lyra-text-primary)]"
+          className={CHAT_EMPTY_PROJECT_CLASS}
           onClick={() => void onChooseProject()}
         >
           {displayName}

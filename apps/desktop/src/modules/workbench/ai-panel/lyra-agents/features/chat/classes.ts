@@ -95,7 +95,7 @@ export const CONTEXT_RING_TONE_CLASS: Record<string, string> = {
 
 // ---- Composer shell / rail / input ----
 export const COMPOSER_WRAP_CLASS =
-  "lyra-agents-composer-wrap absolute bottom-0 left-1/2 right-auto -translate-x-1/2 w-full max-w-full box-border pt-[var(--lyra-agents-composer-wrap-padding-top)] px-[var(--lyra-space-20)] pb-[var(--lyra-agents-composer-wrap-padding-bottom)] z-[var(--lyra-z-ai-composer)] pointer-events-none flex flex-col items-center gap-0 isolate bg-transparent";
+  "lyra-agents-composer-wrap absolute bottom-0 left-1/2 right-auto -translate-x-1/2 w-full max-w-full box-border pt-[var(--lyra-agents-composer-wrap-padding-top)] px-[var(--lyra-space-20)] pb-[var(--lyra-agents-composer-wrap-padding-bottom)] [@supports(padding-bottom:env(safe-area-inset-bottom))]:pb-[calc(var(--lyra-agents-composer-wrap-padding-bottom)+env(safe-area-inset-bottom))] z-[var(--lyra-z-ai-composer)] pointer-events-none flex flex-col items-center gap-0 isolate bg-transparent";
 export const COMPOSER_RAIL_CLASS =
   "lyra-agents-composer-rail self-stretch flex items-start justify-start gap-[var(--lyra-space-8)] mb-[var(--lyra-space-8)] pointer-events-none";
 export const COMPOSER_TOPROW_CLASS =
@@ -183,3 +183,38 @@ export const imageAttachmentChipVariantClass = (kind: string): string => {
   if (kind === "window") return CITATION_CHIP_ATTACHMENT_WINDOW_CLASS;
   return CITATION_CHIP_ATTACHMENT_FILE_CLASS;
 };
+export const CHAT_EMPTY_CLASS =
+  "lyra-agents-chat-empty [container-type:inline-size] flex flex-col items-center justify-center gap-[var(--lyra-space-16)] w-full min-h-full p-[var(--lyra-space-16)] text-center text-[var(--lyra-text-muted)]";
+export const CHAT_EMPTY_LOGO_CLASS =
+  "lyra-agents-chat-empty-logo m-0 font-[family-name:var(--lyra-font-mono)] text-[length:clamp(var(--lyra-space-1),0.6cqw,var(--lyra-space-5))] leading-[var(--lyra-text-line-flat)] whitespace-pre max-w-full select-none pointer-events-auto cursor-pointer [--lyra-logo-wave-trough:var(--lyra-agents-content-bg)] [--lyra-logo-wave-mid:color-mix(in_srgb,var(--lyra-text-muted)_60%,transparent)] [--lyra-logo-wave-crest:var(--lyra-text-primary)] [background:linear-gradient(100deg,var(--lyra-logo-wave-trough)_0%,var(--lyra-logo-wave-mid)_12.5%,var(--lyra-logo-wave-crest)_25%,var(--lyra-logo-wave-mid)_37.5%,var(--lyra-logo-wave-trough)_50%,var(--lyra-logo-wave-mid)_62.5%,var(--lyra-logo-wave-crest)_75%,var(--lyra-logo-wave-mid)_87.5%,var(--lyra-logo-wave-trough)_100%)] bg-[length:200%_100%] bg-clip-text text-transparent [-webkit-text-fill-color:transparent] animate-[lyra-logo-wave-sweep_800ms_linear] motion-reduce:animate-none motion-reduce:bg-none motion-reduce:[-webkit-text-fill-color:color-mix(in_srgb,var(--lyra-text-muted)_52%,transparent)] motion-reduce:text-[color-mix(in_srgb,var(--lyra-text-muted)_52%,transparent)]";
+export const CHAT_EMPTY_QUESTION_CLASS =
+  "lyra-agents-chat-empty-question m-0 font-[family-name:var(--lyra-font-ui)] text-[length:clamp(var(--lyra-space-20),5cqw,var(--lyra-space-48))] leading-[var(--lyra-text-line-display)] text-[var(--lyra-text-secondary)] inline-flex items-baseline flex-wrap justify-center gap-[var(--lyra-space-4)]";
+export const CHAT_EMPTY_PROJECT_CLASS =
+  "lyra-agents-chat-empty-project [font-size:inherit] font-semibold text-[var(--lyra-text-primary)]";
+export const COMPOSER_CONTEXT_RING_SLOT_CLASS =
+  "lyra-agents-composer-context-ring-slot absolute bottom-[var(--lyra-agents-composer-wrap-padding-bottom)] right-[var(--lyra-space-20)] h-[var(--lyra-agents-composer-toolbar-control-size)] pointer-events-auto flex items-center justify-center [@supports(padding-bottom:env(safe-area-inset-bottom))]:bottom-[calc(var(--lyra-agents-composer-wrap-padding-bottom)+env(safe-area-inset-bottom))]";
+export const PROJECT_META_ROW_CLASS =
+  "lyra-agents-project-dir-chip-row lyra-agents-project-meta-row pointer-events-auto self-stretch flex items-center justify-start gap-[var(--lyra-space-8)] w-full min-w-0 mt-[var(--lyra-space-4)] pl-[var(--lyra-space-2)] pr-[calc(var(--lyra-icon-size-16)+var(--lyra-space-16))] flex-nowrap overflow-hidden";
+export const PROJECT_DIR_CHIP_CLASS =
+  "lyra-agents-project-dir-chip flex-[0_1_auto] min-w-0 inline-flex items-center gap-[var(--lyra-space-4)] max-w-full h-[var(--lyra-agents-composer-toolbar-control-size)] px-[var(--lyra-space-8)] bg-transparent text-[var(--lyra-text-muted)] border-0 rounded-[var(--lyra-agents-composer-toolbar-radius)] cursor-pointer transition-[background-color_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast),color_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast),opacity_var(--lyra-motion-standard)] hover:bg-[var(--lyra-app-row-hover-bg)] hover:text-[var(--lyra-text-primary)] disabled:cursor-default disabled:opacity-[var(--lyra-opacity-disabled)] disabled:hover:bg-transparent disabled:hover:text-[var(--lyra-text-muted)] [&_svg]:flex-[0_0_auto]";
+export const PROJECT_DIR_CHIP_LABEL_CLASS =
+  "lyra-agents-project-dir-chip-label min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-[family-name:var(--lyra-font-ui)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-flat)]";
+export const PROJECT_DIR_CHIP_CHEVRON_CLASS =
+  "lyra-agents-project-dir-chip-chevron flex-[0_0_auto] text-[var(--lyra-text-muted)] -ml-[var(--lyra-space-4)]";
+export const PROJECT_DIR_CHIP_ICON_CLASS =
+  "lyra-agents-project-dir-chip-icon w-[var(--lyra-icon-size-14)] h-[var(--lyra-icon-size-14)] flex-[0_0_var(--lyra-icon-size-14)] inline-flex items-center justify-center text-current";
+export const PROJECT_DIR_CHIP_IMAGE_CLASS = "lyra-agents-project-dir-chip-image rounded-[var(--lyra-radius-4)]";
+export const PROJECT_DIR_CHIP_LYRA_LOGO_CLASS =
+  "lyra-agents-project-dir-chip-lyra-logo [--lyra-app-logo-size:var(--lyra-icon-size-14)] w-[var(--lyra-icon-size-14)] h-[var(--lyra-icon-size-14)] text-current";
+export const EDITOR_MENU_ROW_CLASS =
+  "lyra-agents-editor-menu-row flex items-center gap-[var(--lyra-space-8)] min-w-0";
+export const EDITOR_MENU_ICON_CLASS =
+  "lyra-agents-editor-menu-icon w-[var(--lyra-icon-size-16)] h-[var(--lyra-icon-size-16)] flex-[0_0_var(--lyra-icon-size-16)] rounded-[var(--lyra-radius-4)] object-contain";
+export const BG_TERMINAL_ITEM_CLASS =
+  "lyra-agents-bg-terminal-item flex items-center justify-between gap-[var(--lyra-space-8)] px-[var(--lyra-space-8)] py-[var(--lyra-space-4)] min-w-0 hover:bg-[var(--lyra-app-row-hover-bg)]";
+export const BG_TERMINAL_ITEM_BODY_CLASS = "lyra-agents-bg-terminal-item-body min-w-0 flex-[1_1_auto]";
+export const BG_TERMINAL_ITEM_TITLE_CLASS =
+  "lyra-agents-bg-terminal-item-title m-0 overflow-hidden text-ellipsis whitespace-nowrap font-[family-name:var(--lyra-font-ui)] text-[length:var(--lyra-text-size-caption)] text-[var(--lyra-text-primary)]";
+export const BG_TERMINAL_ITEM_PATH_CLASS =
+  "lyra-agents-bg-terminal-item-path m-0 overflow-hidden text-ellipsis whitespace-nowrap font-[family-name:var(--lyra-font-ui)] text-[length:var(--lyra-text-size-caption)] text-[var(--lyra-text-muted)]";
+export const BG_TERMINAL_KILL_CLASS = "lyra-agents-bg-terminal-kill flex-[0_0_auto]";
