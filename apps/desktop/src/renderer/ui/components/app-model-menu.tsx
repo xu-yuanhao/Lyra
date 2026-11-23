@@ -45,6 +45,9 @@ const MODEL_MENU_OPTION_ICON_CLASS = cn(
   "[&_svg]:size-[var(--lyra-icon-size-16)] [&_.lyra-agent-provider-brand-icon]:size-[var(--lyra-icon-size-16)]"
 );
 
+const MODEL_MENU_CHECK_CLASS =
+  "lyra-ui-menu-check size-[var(--lyra-icon-size-14)] text-[var(--lyra-text-primary)] [stroke-width:1.8]";
+
 const MODEL_MENU_LABEL_CLASS =
   "lyra-app-model-menu-item-label min-w-0 overflow-hidden text-left text-ellipsis whitespace-nowrap";
 
@@ -190,7 +193,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
           {option.label}
         </span>
         {active ? (
-          <Check className="lyra-ui-menu-check" aria-hidden="true" />
+          <Check className={MODEL_MENU_CHECK_CLASS} aria-hidden="true" />
         ) : null}
       </DropdownMenuItem>
     );
@@ -255,7 +258,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
                     {effort.label}
                   </span>
                   {active ? (
-                    <Check className="lyra-ui-menu-check" aria-hidden="true" />
+                    <Check className={MODEL_MENU_CHECK_CLASS} aria-hidden="true" />
                   ) : null}
                 </DropdownMenuItem>
               );
@@ -408,7 +411,7 @@ export const AppModelMenu = <TModelValue extends string = string>({
                               {option.label}
                             </span>
                             {active ? (
-                              <Check className="lyra-ui-menu-check" aria-hidden="true" />
+                              <Check className={MODEL_MENU_CHECK_CLASS} aria-hidden="true" />
                             ) : null}
                           </DropdownMenuItem>
                         );

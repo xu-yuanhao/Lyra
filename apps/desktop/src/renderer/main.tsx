@@ -141,7 +141,7 @@ const RendererRoot = () => {
     <WorkbenchI18nProvider>
       <AppStatusProvider>
         <AppErrorBoundary
-          className="lyra-app-root-error"
+          className="lyra-app-root-error min-h-screen"
           title={t("appStatus.unexpectedErrorTitle")}
           description={t("appStatus.unexpectedErrorDescription")}
           onError={dismissLyraBootstrapScreen}
