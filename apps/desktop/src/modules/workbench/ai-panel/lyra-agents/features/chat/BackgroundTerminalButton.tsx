@@ -7,6 +7,7 @@ import type {
   LyraDesktopApi
 } from "../../../../../../shared/desktop-bridge";
 import type { SessionMeta } from "../../core/types";
+import { COMPOSER_CHANGES_COUNTS_CLASS, COMPOSER_RAIL_CHIP_CLASS } from "./classes";
 
 export function BackgroundTerminalButton({
   session,
@@ -72,13 +73,13 @@ export function BackgroundTerminalButton({
           type="button"
           size="sm"
           variant="ghost"
-          className="lyra-agents-composer-rail-chip"
+          className={COMPOSER_RAIL_CHIP_CLASS}
           aria-label={label}
           title={label}
         >
           <SquareTerminal size={13} strokeWidth={2.1} aria-hidden="true" />
           <span>{label}</span>
-          <span className="lyra-agents-composer-changes-counts">{count}</span>
+          <span className={COMPOSER_CHANGES_COUNTS_CLASS}>{count}</span>
         </AppButton>
       </AppMenuTrigger>
       <AppMenuContent

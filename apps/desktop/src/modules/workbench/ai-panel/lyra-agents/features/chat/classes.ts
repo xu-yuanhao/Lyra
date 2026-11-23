@@ -92,3 +92,40 @@ export const CONTEXT_RING_TONE_CLASS: Record<string, string> = {
   "lyra-context-ring--failed":
     "[&_.lyra-context-ring-fill]:[stroke:var(--lyra-status-error)] [&_.lyra-context-ring-fill]:opacity-50"
 };
+
+// ---- Composer shell / rail / input ----
+export const COMPOSER_WRAP_CLASS =
+  "lyra-agents-composer-wrap absolute bottom-0 left-1/2 right-auto -translate-x-1/2 w-full max-w-full box-border pt-[var(--lyra-agents-composer-wrap-padding-top)] px-[var(--lyra-space-20)] pb-[var(--lyra-agents-composer-wrap-padding-bottom)] z-[var(--lyra-z-ai-composer)] pointer-events-none flex flex-col items-center gap-0 isolate bg-transparent";
+export const COMPOSER_RAIL_CLASS =
+  "lyra-agents-composer-rail self-stretch flex items-start justify-start gap-[var(--lyra-space-8)] mb-[var(--lyra-space-8)] pointer-events-none";
+export const COMPOSER_TOPROW_CLASS =
+  "lyra-agents-composer-toprow relative flex-1 min-w-0 flex items-center justify-start flex-wrap gap-[var(--lyra-space-6)] mb-0 pointer-events-none empty:hidden";
+export const COMPOSER_RAIL_CHIP_CLASS =
+  "lyra-agents-composer-rail-chip pointer-events-auto inline-flex items-center gap-[var(--lyra-space-4)] h-[var(--lyra-agents-composer-toolbar-control-size)] px-[var(--lyra-space-8)] [border:var(--lyra-stroke-thin)_solid_var(--lyra-app-input-border)] rounded-[var(--lyra-radius-pill)] bg-[var(--lyra-app-surface-strong-bg)] text-[var(--lyra-text-secondary)] text-[length:var(--lyra-text-size-12)] [font:inherit] tabular-nums leading-[var(--lyra-text-line-flat)] cursor-pointer hover:bg-[color-mix(in_srgb,var(--lyra-app-surface-strong-bg)_94%,var(--lyra-text-primary)_6%)] hover:text-[var(--lyra-text-primary)] disabled:opacity-[var(--lyra-opacity-disabled)] disabled:cursor-default [&_svg]:flex-none";
+export const COMPOSER_CHANGES_COUNTS_CLASS =
+  "lyra-agents-composer-changes-counts inline-flex items-center gap-[var(--lyra-space-4)]";
+export const COMPOSER_CLASS =
+  "lyra-agents-composer relative pointer-events-auto flex flex-col w-full gap-0 self-stretch bg-[var(--lyra-agents-composer-shell-bg)] [border:var(--lyra-stroke-thin)_solid_var(--lyra-app-input-border)] rounded-[var(--lyra-radius-12)] p-[var(--lyra-space-8)_var(--lyra-space-10)] shadow-none transition-[background-color_var(--lyra-motion-fast),border-color_var(--lyra-motion-fast)] focus-within:bg-[var(--lyra-agents-composer-shell-bg)] focus-within:[border-color:color-mix(in_srgb,var(--lyra-app-input-focus-border)_56%,var(--lyra-app-input-border))]";
+export const COMPOSER_SEND_ERROR_CLASS =
+  "lyra-agents-composer-send-error mb-[var(--lyra-space-6)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-caption)]";
+
+const COMPOSER_INPUT_BASE =
+  "w-full flex-none bg-[var(--lyra-agents-content-bg)] text-[var(--lyra-text-primary)] border-0 rounded-[var(--lyra-radius-8)] outline-none [font:inherit] text-[length:var(--lyra-text-size-14)] p-[var(--lyra-space-10)] shadow-none";
+export const COMPOSER_INPUT_CLASS =
+  `lyra-agents-composer-input ${COMPOSER_INPUT_BASE} resize-none leading-[var(--lyra-text-line-relaxed)] h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] overflow-y-hidden [scrollbar-width:none] [mask-image:none] [-webkit-mask-image:none] focus-visible:bg-[var(--lyra-agents-content-bg)] focus-visible:border-0 focus-visible:shadow-none hover:not-disabled:bg-[var(--lyra-agents-content-bg)] hover:not-disabled:border-0 [&::-webkit-scrollbar]:hidden placeholder:text-[var(--lyra-text-muted)] disabled:text-[var(--lyra-text-secondary)] disabled:cursor-default disabled:opacity-100`;
+export const CITATION_COMPOSER_INPUT_CLASS =
+  `lyra-agents-citation-composer-input lyra-agents-composer-input ${COMPOSER_INPUT_BASE} leading-[var(--lyra-text-line-24)] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] max-h-[calc((var(--lyra-space-64)+var(--lyra-space-8))*4)] overflow-y-auto whitespace-pre-wrap break-word focus-visible:outline-none focus-visible:bg-[var(--lyra-agents-content-bg)] data-[drop-active=true]:[outline:var(--lyra-stroke-thin)_solid_color-mix(in_srgb,var(--lyra-text-primary)_72%,transparent)] data-[drop-active=true]:[outline-offset:calc(-1*var(--lyra-stroke-thin))] data-[drop-active=true]:bg-[color-mix(in_srgb,var(--lyra-text-primary)_5%,var(--lyra-app-surface-strong-bg))] [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[var(--lyra-text-muted)] [&:empty]:before:pointer-events-none`;
+
+// ---- Browser capsule ----
+export const BROWSER_CAPSULE_WRAP_CLASS =
+  "lyra-agents-composer-browser-capsule-wrap pointer-events-auto relative flex-none ml-[var(--lyra-space-10)] inline-flex items-center [&:hover_.lyra-agents-composer-browser-capsule-dismiss]:opacity-100 [&:hover_.lyra-agents-composer-browser-capsule-dismiss]:pointer-events-auto";
+export const BROWSER_CAPSULE_CLASS =
+  "lyra-agents-composer-browser-capsule [&>span]:max-w-[12em] [&>span]:overflow-hidden [&>span]:text-ellipsis [&>span]:whitespace-nowrap";
+export const BROWSER_CAPSULE_LOGO_CLASS =
+  "lyra-agents-composer-browser-capsule-logo [--lyra-app-logo-size:var(--lyra-icon-size-14)] size-[var(--lyra-icon-size-14)] text-current";
+export const BROWSER_CAPSULE_FAVICON_CLASS =
+  "lyra-agents-composer-browser-capsule-favicon size-[var(--lyra-icon-size-14)] flex-none rounded-[var(--lyra-radius-4)] object-cover block [&[data-failed=true]]:hidden [&[data-failed=true]+_.lyra-agents-composer-browser-capsule-logo-fallback]:block";
+export const BROWSER_CAPSULE_LOGO_FALLBACK_CLASS =
+  "lyra-agents-composer-browser-capsule-logo lyra-agents-composer-browser-capsule-logo-fallback hidden";
+export const BROWSER_CAPSULE_DISMISS_CLASS =
+  "lyra-agents-composer-browser-capsule-dismiss absolute -top-[var(--lyra-space-6)] -right-[var(--lyra-space-6)] inline-flex items-center justify-center size-[var(--lyra-space-16)] p-0 [border:var(--lyra-stroke-thin)_solid_var(--lyra-app-input-border)] rounded-[var(--lyra-radius-pill)] bg-[var(--lyra-app-surface-strong-bg)] text-[var(--lyra-text-secondary)] cursor-pointer opacity-0 pointer-events-none focus-visible:opacity-100 focus-visible:pointer-events-auto after:content-[''] after:absolute after:inset-[calc(-1*var(--lyra-space-4))]";

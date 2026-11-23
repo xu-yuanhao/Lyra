@@ -5,6 +5,15 @@ import { t } from "@workbench/i18n";
 import type { AgentBrowserPreviewSnapshot } from "../../../../../../shared/agent";
 import type { LyraDesktopApi } from "../../../../../../shared/desktop-bridge";
 import { useAgentBrowserPreview, openAgentBrowserPreviewTarget } from "../../hooks/useAgentBrowserPreview";
+import {
+  BROWSER_CAPSULE_CLASS,
+  BROWSER_CAPSULE_DISMISS_CLASS,
+  BROWSER_CAPSULE_FAVICON_CLASS,
+  BROWSER_CAPSULE_LOGO_CLASS,
+  BROWSER_CAPSULE_LOGO_FALLBACK_CLASS,
+  BROWSER_CAPSULE_WRAP_CLASS,
+  COMPOSER_RAIL_CHIP_CLASS
+} from "./classes";
 
 const ERROR_PAGE_TITLES = new Set([
   "not found",
@@ -117,7 +126,7 @@ const BrowserCapsuleIdentity = ({
   if (faviconUrl.length === 0) {
     return (
       <>
-        <LyraLogo className="lyra-agents-composer-browser-capsule-logo" alt="" />
+        <LyraLogo className={BROWSER_CAPSULE_LOGO_CLASS} alt="" />
         <span>{label}</span>
       </>
     );
@@ -125,7 +134,7 @@ const BrowserCapsuleIdentity = ({
   return (
     <>
       <img
-        className="lyra-agents-composer-browser-capsule-favicon"
+        className={BROWSER_CAPSULE_FAVICON_CLASS}
         alt=""
         src={faviconUrl}
         onError={(event) => {
@@ -133,7 +142,7 @@ const BrowserCapsuleIdentity = ({
         }}
       />
       <LyraLogo
-        className="lyra-agents-composer-browser-capsule-logo lyra-agents-composer-browser-capsule-logo-fallback"
+        className={BROWSER_CAPSULE_LOGO_FALLBACK_CLASS}
         alt=""
       />
       <span>{label}</span>
@@ -159,12 +168,12 @@ export function AgentBrowserCapsule({
     return null;
   }
   return (
-    <div className="lyra-agents-composer-browser-capsule-wrap">
+    <div className={BROWSER_CAPSULE_WRAP_CLASS}>
       <AppButton
         variant="ghost"
         size="sm"
         type="button"
-        className="lyra-agents-composer-rail-chip lyra-agents-composer-browser-capsule"
+        className={`${COMPOSER_RAIL_CHIP_CLASS} ${BROWSER_CAPSULE_CLASS}`}
         aria-label={t("lyra-agents-composer.openInWorkspace")}
         title={page.title || page.url || t("lyra-agents-composer.openInWorkspace")}
         onClick={() => {
@@ -178,7 +187,7 @@ export function AgentBrowserCapsule({
         <AppButton
           variant="ghost"
           size="icon"
-          className="lyra-agents-composer-browser-capsule-dismiss"
+          className={BROWSER_CAPSULE_DISMISS_CLASS}
           aria-label={t("window.close")}
           title={t("window.close")}
           onClick={dismiss}

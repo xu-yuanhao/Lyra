@@ -34,6 +34,13 @@ import {
   resolveAgentActivityHostMessageId
 } from "./Message";
 import { Composer } from "./Composer";
+import {
+  COMPOSER_CHANGES_COUNTS_CLASS,
+  COMPOSER_RAIL_CLASS,
+  COMPOSER_RAIL_CHIP_CLASS,
+  COMPOSER_TOPROW_CLASS,
+  COMPOSER_WRAP_CLASS
+} from "./classes";
 import { BackgroundTerminalButton } from "./BackgroundTerminalButton";
 import { AgentBrowserCapsule } from "./agent-browser-capsule";
 import { ContextRing } from "./context-ring";
@@ -809,21 +816,21 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
         </div>
       </div>
 
-      <div className="lyra-agents-composer-wrap" ref={composerWrapRef}>
-        <div className="lyra-agents-composer-rail">
+      <div className={COMPOSER_WRAP_CLASS} ref={composerWrapRef}>
+        <div className={COMPOSER_RAIL_CLASS}>
           <AgentBrowserCapsule
             desktopApi={desktopApi}
             isTurnRunning={isTurnRunning}
             setActiveBrowserTab={setActiveBrowserTab}
             openUrlInWorkbench={openUrlInWorkbench}
           />
-          <div className="lyra-agents-composer-toprow">
+          <div className={COMPOSER_TOPROW_CLASS}>
           {gitCounts !== null ? (
             <AppButton
               variant="ghost"
               size="sm"
               type="button"
-              className="lyra-agents-composer-rail-chip lyra-agents-composer-changes-chip"
+              className={`${COMPOSER_RAIL_CHIP_CLASS} lyra-agents-composer-changes-chip`}
               aria-label={t("lyra-agents-composer.openChanges")}
               title={t("lyra-agents-composer.openChanges")}
               onClick={() => { void openProjectGit(); }}
@@ -831,7 +838,7 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
               <GitBranch size={13} strokeWidth={2.1} aria-hidden="true" />
               <span>{t("lyra-agents-composer.openChanges")}</span>
               {gitCounts.additions > 0 || gitCounts.deletions > 0 ? (
-                <span className="lyra-agents-composer-changes-counts">
+                <span className={COMPOSER_CHANGES_COUNTS_CLASS}>
                   <span className="lyra-agents-diff-add">+{gitCounts.additions}</span>
                   <span className="lyra-agents-diff-del">-{gitCounts.deletions}</span>
                 </span>
@@ -843,7 +850,7 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
               variant="ghost"
               size="sm"
               type="button"
-              className="lyra-agents-composer-rail-chip"
+              className={COMPOSER_RAIL_CHIP_CLASS}
               aria-label={t("lyra-agents-composer.openPlan")}
               title={t("lyra-agents-composer.openPlan")}
               onClick={() => { void openPlanBoard(); }}
@@ -858,7 +865,7 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
               variant="ghost"
               size="sm"
               type="button"
-              className="lyra-agents-composer-rail-chip lyra-agents-scroll-to-bottom in pointer-events-auto z-[var(--lyra-z-scroll-affordance)]"
+              className={`${COMPOSER_RAIL_CHIP_CLASS} lyra-agents-scroll-to-bottom in pointer-events-auto z-[var(--lyra-z-scroll-affordance)]`}
               onClick={autoScroll.resume}
               aria-label={t("scroll.toBottom")}
               title={t("scroll.toBottom")}

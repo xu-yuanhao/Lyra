@@ -17,7 +17,7 @@ export const APB_TEMP_CHAT_BUSY_CLASS =
 export const APB_TEMP_CHAT_ERROR_CLASS =
   "lyra-agent-plan-board-temp-chat-error text-[length:var(--lyra-text-size-12)]";
 export const APB_TEMP_CHAT_COMPOSER_WRAP_CLASS =
-  "lyra-agent-plan-board-temp-chat-composer-wrap absolute inset-x-0 bottom-0 w-full max-w-none px-[var(--lyra-space-12)] pt-[var(--lyra-space-16)] pb-[var(--lyra-space-12)]";
+  "lyra-agent-plan-board-temp-chat-composer-wrap absolute inset-x-0 bottom-0 w-full max-w-none px-[var(--lyra-space-12)] pt-[var(--lyra-space-16)] pb-[var(--lyra-space-12)] pointer-events-none";
 
 export const APB_BOARD_CLASS =
   "lyra-agent-plan-board relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--lyra-app-surface-bg)] text-[var(--lyra-text-primary)]";

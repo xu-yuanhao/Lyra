@@ -16,6 +16,8 @@ import type { LyraDesktopApi } from "../../../shared/desktop-bridge";
 import { LyraMarkdown } from "../ai-panel/lyra-agents/features/rich-text/LyraMarkdown";
 import {
   COMPOSER_BOTTOM_CLASS,
+  COMPOSER_CLASS,
+  COMPOSER_INPUT_CLASS,
   COMPOSER_PRIMARY_ACTIONS_CLASS,
   COMPOSER_SEND_CLASS
 } from "../ai-panel/lyra-agents/features/chat/classes";
@@ -287,16 +289,16 @@ export const PlanTempChat = ({
           </AppStatusMessage>
         ) : null}
       </div>
-      <div className={`lyra-agents-composer-wrap ${APB_TEMP_CHAT_COMPOSER_WRAP_CLASS}`}>
+      <div className={APB_TEMP_CHAT_COMPOSER_WRAP_CLASS}>
         <form
-          className="lyra-agents-composer"
+          className={COMPOSER_CLASS}
           onSubmit={(event) => {
             event.preventDefault();
             void handleSend();
           }}
         >
           <AppTextarea
-            className="lyra-agents-composer-input"
+            className={COMPOSER_INPUT_CLASS}
             placeholder={labels.tempChatPlaceholder}
             value={draft}
             disabled={busy || plan === null}

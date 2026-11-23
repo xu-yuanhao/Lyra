@@ -10,6 +10,7 @@ import {
   type KeyboardEvent
 } from "react";
 import { isAiPanelAttachDrag, resolveAiPanelDropEffect } from "./ai-panel-drag-attach";
+import { CITATION_COMPOSER_INPUT_CLASS } from "./classes";
 import { hydrateActivePageDragCitationFromMain } from "../../../../browser-tabs/page-drag-transfer";
 import { isPageDragCitationSessionActive } from "../../../../browser-tabs/page-drag-citation-session";
 import { readImageAttachmentsFromClipboardData } from "./image-drop";
@@ -559,7 +560,7 @@ export const CitationComposerInput = forwardRef<CitationComposerInputHandle, Cit
     return (
       <div
         ref={editorRef}
-        className="lyra-agents-composer-input lyra-agents-citation-composer-input"
+        className={CITATION_COMPOSER_INPUT_CLASS}
         contentEditable={disabled ? "false" : "true"}
         role="textbox"
         aria-label={placeholder}

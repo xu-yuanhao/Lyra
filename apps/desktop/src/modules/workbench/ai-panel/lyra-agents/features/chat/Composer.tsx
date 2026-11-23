@@ -16,6 +16,8 @@ import {
   ATTACH_SUBMENU_TRIGGER_CLASS,
   COMPOSER_ACTION_CLASS,
   COMPOSER_BOTTOM_CLASS,
+  COMPOSER_CLASS,
+  COMPOSER_SEND_ERROR_CLASS,
   COMPOSER_MODEL_CONTROLS_CLASS,
   COMPOSER_MODEL_PICKER_CLASS,
   COMPOSER_MODEL_SETTINGS_BUTTON_CLASS,
@@ -554,10 +556,10 @@ export function Composer({
   const hidePermissionLabel = toolbarLabelMode === "icons";
 
   return (
-    <form ref={composerRootRef} className="lyra-agents-composer" onSubmit={handleSubmit}>
+    <form ref={composerRootRef} className={COMPOSER_CLASS} onSubmit={handleSubmit}>
       {sendError !== null && (
         <AppStatusMessage
-          className="lyra-agents-composer-send-error lyra-app-status-message-boxed"
+          className={`${COMPOSER_SEND_ERROR_CLASS} lyra-app-status-message-boxed`}
           icon={<CircleAlert size={TOOLBAR_ICON_SIZE} strokeWidth={TOOLBAR_ICON_STROKE_WIDTH} />}
           role="alert"
           tone="error"
