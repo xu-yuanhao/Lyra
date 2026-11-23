@@ -17,6 +17,7 @@ import { TerminalToolCard } from "./TerminalToolCard";
 import { AppButton, AppShimmer } from "@renderer/ui/components";
 import { VirtualizedDiffView } from "./VirtualizedDiffView";
 import { EDIT_CARD_WAITING_CLASS, EDIT_DETAILS_CLASS, TASK_CARD_CLASS, TASK_CARD_HEAD_CLASS, TASK_ITEM_CLASS } from "../chat/classes";
+import { TOOL_INFO_PRE_CLASS } from "./classes";
 import {
   INFO_BLOCK_CLASS,
   INFO_DIM_CLASS,
@@ -300,7 +301,7 @@ function WebCard({
         </>
       )}
       {details.summary ? (
-        <pre className={`lyra-agents-info-pre ${TOOL_MONO_TEXT_CLASS}`}>
+        <pre className={`${TOOL_INFO_PRE_CLASS} ${TOOL_MONO_TEXT_CLASS}`}>
           <ActionText text={details.summary} />
         </pre>
       ) : null}
@@ -345,7 +346,7 @@ function WorkbenchCard({
       )}
 
       {details.excerpt ? (
-        <pre className={`lyra-agents-info-pre ${TOOL_MONO_TEXT_CLASS}`}>
+        <pre className={`${TOOL_INFO_PRE_CLASS} ${TOOL_MONO_TEXT_CLASS}`}>
           <ActionText text={details.excerpt} />
         </pre>
       ) : null}
@@ -445,9 +446,9 @@ function AskCard({
   const answer = details.answer.trim();
   return (
     <div className={`${INFO_BLOCK_CLASS} lyra-agents-ask-card select-text`}>
-      <pre className={`lyra-agents-info-pre lyra-agents-ask-question ${TOOL_MONO_TEXT_CLASS}`}>{details.question}</pre>
+      <pre className={`${TOOL_INFO_PRE_CLASS} lyra-agents-ask-question ${TOOL_MONO_TEXT_CLASS}`}>{details.question}</pre>
       {answer.length > 0 ? (
-        <pre className={`lyra-agents-info-pre lyra-agents-ask-answer ${TOOL_MONO_TEXT_CLASS}`}>{answer}</pre>
+        <pre className={`${TOOL_INFO_PRE_CLASS} lyra-agents-ask-answer ${TOOL_MONO_TEXT_CLASS}`}>{answer}</pre>
       ) : null}
     </div>
   );

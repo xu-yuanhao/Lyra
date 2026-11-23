@@ -26,4 +26,4 @@ export const DS_FILENAME_CLASS =
   "lyra-agents-diff-stats-filename flex-1 truncate font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)]";
 export const DS_FILE_NUMS_CLASS =
   "lyra-agents-diff-stats-file-nums flex shrink-0 gap-[var(--lyra-space-5)] font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-12)]";
-export const PILLS_RAIL_CLASS = "lyra-agents-pills-rail";
+export const PILLS_RAIL_CLASS = "lyra-agents-pills-rail @max-[720px]:max-w-full @max-[360px]:top-[var(--lyra-space-32)]";
