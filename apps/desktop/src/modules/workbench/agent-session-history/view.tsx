@@ -53,6 +53,34 @@ import {
   AgentSessionPreviewPane,
   projectFolderNameFromPath
 } from "./agent-session-preview-pane";
+import {
+  HISTORY_CLASS,
+  HISTORY_ERROR_CLASS,
+  HISTORY_GROUP_LIST_CLASS,
+  HISTORY_LIST_CLASS,
+  HISTORY_LIST_CONTENT_CLASS,
+  HISTORY_PREVIEW_CLASS,
+  HISTORY_PREVIEW_EMPTY_CLASS,
+  HISTORY_PROJECT_GROUP_CLASS,
+  HISTORY_PROJECT_GROUP_HEADER_CLASS,
+  HISTORY_PROJECT_GROUP_NEW_CLASS,
+  HISTORY_PROJECT_GROUP_SESSIONS_CLASS,
+  HISTORY_ROW_ACTION_CLASS,
+  HISTORY_SESSION_CARD_AGE_CLASS,
+  HISTORY_SESSION_CARD_BODY_CLASS,
+  HISTORY_SESSION_CARD_CLASS,
+  HISTORY_SESSION_CARD_LINE_CLASS,
+  HISTORY_SESSION_CARD_TITLE_CLASS,
+  HISTORY_SESSION_STATUS_CLASS,
+  HISTORY_SITE_FAVICON_CLASS,
+  HISTORY_SITE_FAVICON_FALLBACK_CLASS,
+  HISTORY_SPLIT_CLASS,
+  HISTORY_STATE_CLASS,
+  HISTORY_TITLEBAR_CATEGORIES_CLASS,
+  HISTORY_TITLEBAR_CATEGORY_CLASS,
+  HISTORY_TITLEBAR_CATEGORY_COUNT_CLASS,
+  HISTORY_WEB_PAGE_HOST_CLASS
+} from "./classes";
 import type {
   AgentSessionHistoryCategory,
   AgentSessionHistoryPreviewState,
@@ -261,7 +289,7 @@ const BrowserHistoryFavicon = ({ entry }: { readonly entry: BrowserHistoryEntry 
         src={faviconUrl}
         alt=""
         aria-hidden="true"
-        className="lyra-agent-history-site-favicon"
+        className={HISTORY_SITE_FAVICON_CLASS}
         loading="eager"
         decoding="async"
         onError={() => setFailed(true)}
@@ -270,7 +298,7 @@ const BrowserHistoryFavicon = ({ entry }: { readonly entry: BrowserHistoryEntry 
   }
 
   return (
-    <span className="lyra-agent-history-site-favicon-fallback" aria-hidden="true">
+    <span className={HISTORY_SITE_FAVICON_FALLBACK_CLASS} aria-hidden="true">
       {faviconFallbackLabel(entry)}
     </span>
   );
@@ -338,10 +366,10 @@ const SessionRow = ({
       side="right"
       align="start"
       delayDuration={160}
-      contentClassName="lyra-agent-history-session-card"
+      contentClassName={HISTORY_SESSION_CARD_CLASS}
       content={(
-        <div className="lyra-agent-history-session-card-body">
-          <div className="lyra-agent-history-session-card-title">
+        <div className={HISTORY_SESSION_CARD_BODY_CLASS}>
+          <div className={HISTORY_SESSION_CARD_TITLE_CLASS}>
             <MessageCitationText
               text={rawTitle}
               transcriptCitations={session.transcriptCitations ?? []}
@@ -351,19 +379,19 @@ const SessionRow = ({
             />
           </div>
           {branch.length === 0 ? null : (
-            <div className="lyra-agent-history-session-card-line">
+            <div className={HISTORY_SESSION_CARD_LINE_CLASS}>
               <GitBranch size={12} aria-hidden="true" />
               <span>{branch}</span>
             </div>
           )}
           {workingDir.length === 0 ? null : (
-            <div className="lyra-agent-history-session-card-line">
+            <div className={HISTORY_SESSION_CARD_LINE_CLASS}>
               <Folder size={12} aria-hidden="true" />
               <span>{displayHomeRelativePath(workingDir)}</span>
             </div>
           )}
           {age.length === 0 ? null : (
-            <div className="lyra-agent-history-session-card-age">{age}</div>
+            <div className={HISTORY_SESSION_CARD_AGE_CLASS}>{age}</div>
           )}
           {session.loadError === null || session.loadError === undefined || session.loadError.length === 0 ? null : (
             <AppStatusMessage
@@ -396,7 +424,7 @@ const SessionRow = ({
         }
         active={active || selected}
         icon={(
-          <span className="lyra-agent-history-session-status" aria-hidden="true">
+          <span className={HISTORY_SESSION_STATUS_CLASS} aria-hidden="true">
             {running ? <BrailleSpinner /> : null}
           </span>
         )}
@@ -427,7 +455,7 @@ const SessionRow = ({
               <span className="lyra-app-sidebar-row-age lyra-agent-history-row-age">{age}</span>
             )}
             <AppIconButton
-              className="lyra-app-sidebar-row-action lyra-agent-history-row-action"
+              className={`lyra-app-sidebar-row-action ${HISTORY_ROW_ACTION_CLASS}`}
               aria-label={`${session.saved ? labels.unsaved : labels.saved}: ${title}`}
               title={session.saved ? labels.unsaved : labels.saved}
               active={session.saved}
@@ -437,7 +465,7 @@ const SessionRow = ({
               <Pin size={14} aria-hidden="true" />
             </AppIconButton>
             <AppIconButton
-              className="lyra-app-sidebar-row-action lyra-agent-history-row-action"
+              className={`lyra-app-sidebar-row-action ${HISTORY_ROW_ACTION_CLASS}`}
               tone="danger"
               aria-label={`${labels.delete}: ${title}`}
               title={labels.delete}
@@ -466,7 +494,7 @@ const ProjectGroupHeader = ({
   readonly onToggle: () => void;
   readonly onCreateSession: () => void;
 }) => (
-  <div className="lyra-app-sidebar-group lyra-agent-history-project-group-header">
+  <div className={`lyra-app-sidebar-group ${HISTORY_PROJECT_GROUP_HEADER_CLASS}`}>
     <AppButton
       variant="ghost"
       size="sm"
@@ -493,7 +521,7 @@ const ProjectGroupHeader = ({
     </AppButton>
     {canCreateSession ? (
       <AppIconButton
-        className="lyra-agent-history-project-group-new"
+        className={HISTORY_PROJECT_GROUP_NEW_CLASS}
         aria-label={t("header.newSession")}
         title={t("header.newSession")}
         onClick={(event) => {
@@ -552,7 +580,7 @@ const BrowserHistoryRow = ({
       title={<span title={entry.title}>{entry.title}</span>}
       actions={(
         <AppIconButton
-          className="lyra-app-sidebar-row-action lyra-agent-history-row-action"
+          className={`lyra-app-sidebar-row-action ${HISTORY_ROW_ACTION_CLASS}`}
           aria-label={`${labels.openBrowserHistoryEntry}: ${entry.url}`}
           title={labels.openBrowserHistoryEntry}
           onClick={() => onOpen(entry)}
@@ -584,9 +612,9 @@ const BrowserHistoryPreviewPane = ({
 
   if (entry === null) {
     return (
-      <aside className="lyra-agent-history-preview" aria-label={labels.categoryBrowserHistory}>
+      <aside className={HISTORY_PREVIEW_CLASS} aria-label={labels.categoryBrowserHistory}>
         <AppEmptyState
-          className="lyra-agent-history-preview-empty"
+          className={HISTORY_PREVIEW_EMPTY_CLASS}
           title={labels.browserHistoryEmptyTitle}
         />
       </aside>
@@ -594,10 +622,10 @@ const BrowserHistoryPreviewPane = ({
   }
 
   return (
-    <aside className="lyra-agent-history-preview" aria-label={labels.categoryBrowserHistory}>
+    <aside className={HISTORY_PREVIEW_CLASS} aria-label={labels.categoryBrowserHistory}>
       <div
         ref={handlePreviewHostRef}
-        className="lyra-agent-history-web-page-host"
+        className={HISTORY_WEB_PAGE_HOST_CLASS}
         aria-label={entry.title}
         data-browser-page-host="true"
         data-tab-id={previewPageId}
@@ -834,7 +862,7 @@ export const AgentSessionHistorySurface = ({
     ariaLabel: labels.categoryFilter,
     controls: (
       <div
-        className="lyra-titlebar-context-group lyra-history-titlebar-categories"
+        className={`lyra-titlebar-context-group ${HISTORY_TITLEBAR_CATEGORIES_CLASS}`}
         aria-label={labels.categoryFilter}
       >
         {categoryOptions.map((option) => (
@@ -843,15 +871,15 @@ export const AgentSessionHistorySurface = ({
             type="button"
             className={
               category === option.id
-                ? "lyra-titlebar-context-text-button lyra-titlebar-context-button-active lyra-history-titlebar-category"
-                : "lyra-titlebar-context-text-button lyra-history-titlebar-category"
+                ? `lyra-titlebar-context-text-button lyra-titlebar-context-button-active ${HISTORY_TITLEBAR_CATEGORY_CLASS}`
+                : `lyra-titlebar-context-text-button ${HISTORY_TITLEBAR_CATEGORY_CLASS}`
             }
             active={category === option.id}
             aria-pressed={category === option.id}
             onClick={() => setCategory(option.id)}
           >
             <span>{option.label}</span>
-            <span className="lyra-history-titlebar-category-count">{option.count}</span>
+            <span className={HISTORY_TITLEBAR_CATEGORY_COUNT_CLASS}>{option.count}</span>
           </AppToolbarButton>
         ))}
       </div>
@@ -1251,26 +1279,26 @@ export const AgentSessionHistorySurface = ({
         onClose={contextMenu.closeMenu}
         onSelectItem={contextMenu.selectItem}
       />
-      <section className="lyra-agent-history" aria-label={labels.title}>
+      <section className={HISTORY_CLASS} aria-label={labels.title}>
       {errorMessage === null ? null : (
-        <AppStatusMessage className="lyra-agent-history-error" role="status" tone="error">
+        <AppStatusMessage className={HISTORY_ERROR_CLASS} role="status" tone="error">
           <strong>{labels.errorTitle}</strong>
           <span>{errorMessage}</span>
         </AppStatusMessage>
       )}
 
-      <section className="lyra-app-sidebar-split lyra-agent-history-split">
-        <section className="lyra-app-sidebar-nav lyra-agent-history-list" aria-busy={isLoading}>
-          <div className="lyra-app-sidebar-nav-list lyra-agent-history-list-content">
+      <section className={`lyra-app-sidebar-split ${HISTORY_SPLIT_CLASS}`}>
+        <section className={`lyra-app-sidebar-nav ${HISTORY_LIST_CLASS}`} aria-busy={isLoading}>
+          <div className={`lyra-app-sidebar-nav-list ${HISTORY_LIST_CONTENT_CLASS}`}>
             {isLoading ? (
-              <AppLoadingState className="lyra-agent-history-state" title={labels.loading} />
+              <AppLoadingState className={HISTORY_STATE_CLASS} title={labels.loading} />
             ) : hasRows === false ? (
               <AppEmptyState
-                className="lyra-agent-history-state"
+                className={HISTORY_STATE_CLASS}
                 title={emptyTitle}
               />
             ) : isBrowserHistoryCategory ? (
-              <div className="lyra-agent-history-group-list">
+              <div className={HISTORY_GROUP_LIST_CLASS}>
                 {filteredBrowserHistory.map((entry) => (
                   <BrowserHistoryRow
                     key={entry.id}
@@ -1283,13 +1311,13 @@ export const AgentSessionHistorySurface = ({
                 ))}
               </div>
             ) : category === "sessions" ? (
-              <div className="lyra-agent-history-group-list">
+              <div className={HISTORY_GROUP_LIST_CLASS}>
                 {projectSessionGroups.map((group) => {
                   const collapsed = collapsedProjectGroupIds.has(group.id);
                   return (
                     <section
                       key={group.id}
-                      className="lyra-agent-history-project-group"
+                      className={HISTORY_PROJECT_GROUP_CLASS}
                     >
                       <ProjectGroupHeader
                         group={group}
@@ -1304,7 +1332,7 @@ export const AgentSessionHistorySurface = ({
                         }}
                       />
                       {collapsed ? null : (
-                        <div className="lyra-agent-history-project-group-sessions">
+                        <div className={HISTORY_PROJECT_GROUP_SESSIONS_CLASS}>
                           {group.sessions.map(renderSessionRow)}
                         </div>
                       )}
@@ -1313,7 +1341,7 @@ export const AgentSessionHistorySurface = ({
                 })}
               </div>
             ) : (
-              <div className="lyra-agent-history-group-list">
+              <div className={HISTORY_GROUP_LIST_CLASS}>
                 {filteredSessions.map(renderSessionRow)}
               </div>
             )}

@@ -9,6 +9,14 @@ import { messageVirtualizerOptions } from "../ai-panel/lyra-agents/features/chat
 import { DataContextProvider, Message, createDataProviderValue } from "../ai-panel/lyra-agents";
 import type { ChatMessage } from "../ai-panel/lyra-agents/core/types";
 import type { AgentSessionHistorySurfaceProps } from "./types";
+import {
+  HISTORY_PREVIEW_CHAT_CLASS,
+  HISTORY_PREVIEW_CHAT_INNER_CLASS,
+  HISTORY_PREVIEW_CLASS,
+  HISTORY_PREVIEW_EMPTY_CLASS,
+  HISTORY_PREVIEW_EMPTY_INLINE_CLASS,
+  HISTORY_PREVIEW_STATE_CLASS
+} from "./classes";
 
 const PreviewTranscript = ({
   messages,
@@ -27,12 +35,12 @@ const PreviewTranscript = ({
   return (
     <div
       ref={scrollRef}
-      className="lyra-agent-history-preview-chat lyra-agents-chat-scroll"
+      className={`lyra-agents-chat-scroll ${HISTORY_PREVIEW_CHAT_CLASS}`}
       role="log"
       aria-label={label}
     >
       <div
-        className="lyra-agent-history-preview-chat-inner lyra-agents-chat-inner"
+        className={`lyra-agents-chat-inner ${HISTORY_PREVIEW_CHAT_INNER_CLASS}`}
         style={{ height: virtualizer.getTotalSize(), position: "relative" }}
       >
         {virtualizer.getVirtualItems().map((item) => {
@@ -75,17 +83,17 @@ export const AgentSessionPreviewPane = ({
 }) => {
   if (loading) {
     return (
-      <aside className="lyra-agent-history-preview" aria-label={labels.previewTitle}>
-        <AppLoadingState className="lyra-agent-history-preview-state" title={labels.loading} />
+      <aside className={HISTORY_PREVIEW_CLASS} aria-label={labels.previewTitle}>
+        <AppLoadingState className={HISTORY_PREVIEW_STATE_CLASS} title={labels.loading} />
       </aside>
     );
   }
 
   if (snapshot === null) {
     return (
-      <aside className="lyra-agent-history-preview" aria-label={labels.previewTitle}>
+      <aside className={HISTORY_PREVIEW_CLASS} aria-label={labels.previewTitle}>
         <AppEmptyState
-          className="lyra-agent-history-preview-empty"
+          className={HISTORY_PREVIEW_EMPTY_CLASS}
           title={labels.previewEmptyTitle}
         />
       </aside>
@@ -117,10 +125,10 @@ export const AgentSessionPreviewPane = ({
   });
 
   return (
-    <aside className="lyra-agent-history-preview" aria-label={labels.previewTitle}>
+    <aside className={HISTORY_PREVIEW_CLASS} aria-label={labels.previewTitle}>
       {messages.length === 0 ? (
         <AppEmptyState
-          className="lyra-agent-history-preview-empty lyra-agent-history-preview-empty-inline"
+          className={`${HISTORY_PREVIEW_EMPTY_CLASS} ${HISTORY_PREVIEW_EMPTY_INLINE_CLASS}`}
           title={labels.emptyTitle}
         />
       ) : (
