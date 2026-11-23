@@ -38,6 +38,15 @@ import {
   MESSAGE_TEXT_BLOCK_CLASS,
   MESSAGE_TEXT_CLASS,
   MESSAGE_USER_CLASS,
+  MESSAGE_ROLLBACK_ACTIONS_CLASS,
+  MESSAGE_ROLLBACK_BODY_CLASS,
+  MESSAGE_ROLLBACK_FILES_CLASS,
+  MESSAGE_ROLLBACK_POPOVER_CLASS,
+  MESSAGE_ROLLBACK_TITLE_CLASS,
+  MESSAGE_TIME_AGENT_CLASS,
+  MESSAGE_TIME_CLASS,
+  MESSAGE_TIME_USER_CLASS,
+  SERVICE_STATUS_DOTS_CLASS,
   COLLAPSE_CLASS,
   COLLAPSE_INNER_CLASS,
   MESSAGE_CONTENT_USER_CLASS
@@ -630,7 +639,7 @@ const agentMessagePropsAreEqual = (prev: AgentMessageProps, next: AgentMessagePr
 };
 
 export const ServiceStatusDots = () => (
-  <span className="lyra-agents-service-status-dots" aria-hidden="true">
+  <span className={SERVICE_STATUS_DOTS_CLASS} aria-hidden="true">
     <span />
     <span />
     <span />
@@ -937,7 +946,7 @@ export function Message({
             })()}
           </div>
           {(message.time || userBubbleOverflowing) && (
-            <span className="lyra-agents-message-time lyra-agents-message-time-user">
+            <span className={`${MESSAGE_TIME_CLASS} ${MESSAGE_TIME_USER_CLASS}`}>
               <span className="lyra-agents-time-text">{message.time}</span>
               <span className="lyra-agents-time-actions">
                 <MessageCopyAction message={message} />
@@ -986,18 +995,18 @@ export function Message({
             </span>
           )}
           {(rollbackPreview !== null || rollbackError !== null) && (
-            <div className="lyra-agents-message-rollback-popover" role="dialog" aria-label={t("lyra-agents-message.rollbackConfirm")}>
+            <div className={MESSAGE_ROLLBACK_POPOVER_CLASS} role="dialog" aria-label={t("lyra-agents-message.rollbackConfirm")}>
               {rollbackPreview !== null ? (
                 <>
-                  <div className="lyra-agents-message-rollback-title">{t("lyra-agents-message.rollbackTitle")}</div>
-                  <div className="lyra-agents-message-rollback-body">
+                  <div className={MESSAGE_ROLLBACK_TITLE_CLASS}>{t("lyra-agents-message.rollbackTitle")}</div>
+                  <div className={MESSAGE_ROLLBACK_BODY_CLASS}>
                     {formatMessage("lyra-agents-message.rollbackBody", {
                       messages: rollbackPreview.removedMessageCount,
                       files: rollbackPreview.changedFiles.length
                     })}
                   </div>
                   {rollbackPreview.changedFiles.length > 0 ? (
-                    <div className="lyra-agents-message-rollback-files">
+                    <div className={MESSAGE_ROLLBACK_FILES_CLASS}>
                       {rollbackPreview.changedFiles.slice(0, 4).map((file) => (
                         <span key={file.path}>{file.path}</span>
                       ))}
@@ -1010,7 +1019,7 @@ export function Message({
                       ) : null}
                     </div>
                   ) : null}
-                  <div className="lyra-agents-message-rollback-actions">
+                  <div className={MESSAGE_ROLLBACK_ACTIONS_CLASS}>
                     <AppButton variant="ghost" size="sm" type="button" onClick={() => setRollbackPreview(null)} disabled={rollbackBusy}>
                       {t("lyra-agents-message.rollbackCancel")}
                     </AppButton>
@@ -1021,9 +1030,9 @@ export function Message({
                 </>
               ) : (
                 <>
-                  <div className="lyra-agents-message-rollback-title">{t("lyra-agents-message.rollbackErrorTitle")}</div>
-                  <div className="lyra-agents-message-rollback-body">{rollbackError}</div>
-                  <div className="lyra-agents-message-rollback-actions">
+                  <div className={MESSAGE_ROLLBACK_TITLE_CLASS}>{t("lyra-agents-message.rollbackErrorTitle")}</div>
+                  <div className={MESSAGE_ROLLBACK_BODY_CLASS}>{rollbackError}</div>
+                  <div className={MESSAGE_ROLLBACK_ACTIONS_CLASS}>
                     <AppButton variant="ghost" size="sm" type="button" onClick={() => setRollbackError(null)}>{t("lyra-agents-message.rollbackClose")}</AppButton>
                   </div>
                 </>
@@ -1307,11 +1316,11 @@ const AgentMessage = memo(function AgentMessage({
           <ChangedFilesCard files={collectChangedFiles(message)} />
         )}
         {showRespondingStatus ? (
-          <span className="lyra-agents-message-time lyra-agents-message-time-agent" aria-label={t("lyra-agents-message.agentResponding")}>
+          <span className={`${MESSAGE_TIME_CLASS} ${MESSAGE_TIME_AGENT_CLASS}`} aria-label={t("lyra-agents-message.agentResponding")}>
             {messageActivityIndicator(activitySource, followActivity)}
           </span>
         ) : (!isLiveTurnMessage && message.time && (hasTextBlocks || hasImages)) ? (
-          <span className="lyra-agents-message-time lyra-agents-message-time-agent">
+          <span className={`${MESSAGE_TIME_CLASS} ${MESSAGE_TIME_AGENT_CLASS}`}>
             <span className="lyra-agents-time-text">{message.time}</span>
             <span className="lyra-agents-time-actions">
               <MessageCopyAction message={message} />

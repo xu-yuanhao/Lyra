@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { BRAILLE_SPINNER_CLASS } from "../features/chat/classes";
+
 const FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 /**
@@ -15,5 +17,5 @@ export function BrailleSpinner() {
     return () => window.clearInterval(iv);
   }, []);
 
-  return <span className="lyra-agents-braille-spinner">{FRAMES[frame]}</span>;
+  return <span className={BRAILLE_SPINNER_CLASS}>{FRAMES[frame]}</span>;
 }

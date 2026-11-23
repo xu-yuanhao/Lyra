@@ -326,3 +326,35 @@ export const CHANGED_FILES_CHEVRON_CLASS =
   "lyra-agents-changed-files-chevron inline-flex text-[var(--lyra-text-muted)]";
 export const CHANGED_FILES_DIFF_CLASS =
   "lyra-agents-changed-files-diff min-w-0 bg-[color-mix(in_srgb,var(--lyra-app-surface-bg)_88%,var(--lyra-app-border))]";
+export const MESSAGE_TIME_CLASS =
+  "lyra-agents-message-time relative inline-flex items-center h-[var(--lyra-space-16)] min-w-[var(--lyra-space-44)] mt-[var(--lyra-space-4)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] select-none" +
+  " [&>.lyra-agents-time-text]:absolute [&>.lyra-agents-time-copy]:absolute [&>.lyra-agents-time-actions]:absolute" +
+  " [&>.lyra-agents-time-text]:transition-[opacity_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast)] [&>.lyra-agents-time-copy]:transition-[opacity_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast)] [&>.lyra-agents-time-actions]:transition-[opacity_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast)]" +
+  " [&_.lyra-agents-time-text]:opacity-100" +
+  " [&>.lyra-agents-time-copy]:opacity-0 [&>.lyra-agents-time-actions]:opacity-0 [&>.lyra-agents-time-copy]:cursor-pointer [&>.lyra-agents-time-actions]:cursor-pointer [&>.lyra-agents-time-copy]:text-[var(--lyra-text-muted)] [&>.lyra-agents-time-actions]:text-[var(--lyra-text-muted)] [&>.lyra-agents-time-copy]:inline-flex [&>.lyra-agents-time-actions]:inline-flex [&>.lyra-agents-time-copy]:items-center [&>.lyra-agents-time-actions]:items-center [&>.lyra-agents-time-copy]:gap-[var(--lyra-space-3)] [&>.lyra-agents-time-actions]:gap-[var(--lyra-space-3)] [&>.lyra-agents-time-copy]:whitespace-nowrap [&>.lyra-agents-time-actions]:whitespace-nowrap [&>.lyra-agents-time-copy]:transition-[opacity_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast),color_var(--lyra-transition-fast)] [&>.lyra-agents-time-actions]:transition-[opacity_var(--lyra-motion-fast-duration)_var(--lyra-ease-fast),color_var(--lyra-transition-fast)]" +
+  " [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:static [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:opacity-100 [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:w-[var(--lyra-control-h-24)] [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:h-[var(--lyra-control-h-24)] [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:inline-flex [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:items-center [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:justify-center [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:p-0 [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:border-0 [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:rounded-none [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:bg-transparent [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:text-[var(--lyra-text-secondary)] [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:shadow-none [&_.lyra-agents-time-actions_.lyra-agents-time-copy]:transition-[color_var(--lyra-transition-fast),opacity_var(--lyra-transition-fast)]" +
+  " [.lyra-agents-message:hover_&_.lyra-agents-time-text]:opacity-0" +
+  " [.lyra-agents-message:hover_&_.lyra-agents-time-copy]:opacity-100" +
+  " [.lyra-agents-message:hover_&_.lyra-agents-time-actions]:opacity-100" +
+  " [.lyra-agents-message:hover_&_.lyra-agents-time-copy:hover]:text-[var(--lyra-text-primary)]" +
+  " [.lyra-agents-message:hover_&_.lyra-agents-time-actions_span:hover]:text-[var(--lyra-text-primary)]" +
+  " [.lyra-agents-message:hover_&_.lyra-agents-time-actions_.lyra-agents-time-copy:hover]:bg-transparent [.lyra-agents-message:hover_&_.lyra-agents-time-actions_.lyra-agents-time-copy:hover]:border-transparent" +
+  " [&_.lyra-agents-time-copy[aria-disabled=true]]:cursor-not-allowed [&_.lyra-agents-time-copy[aria-disabled=true]]:opacity-[var(--lyra-opacity-disabled)]";
+export const MESSAGE_TIME_USER_CLASS =
+  "lyra-agents-message-time-user self-end [&>.lyra-agents-time-text]:right-0 [&>.lyra-agents-time-copy]:right-0 [&>.lyra-agents-time-actions]:right-0";
+export const MESSAGE_TIME_AGENT_CLASS =
+  "lyra-agents-message-time-agent self-start [&>.lyra-agents-time-text]:left-0 [&>.lyra-agents-time-copy]:left-0 [&>.lyra-agents-time-actions]:left-0";
+export const MESSAGE_ROLLBACK_POPOVER_CLASS =
+  "lyra-agents-message-rollback-popover self-end w-[min(var(--lyra-unit-320),100%)] mt-[var(--lyra-space-8)] p-[var(--lyra-space-12)] [border:var(--lyra-stroke-thin)_solid_var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-popover-bg)] shadow-[var(--lyra-shadow-elevated-md)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-normal)] z-[2]";
+export const MESSAGE_ROLLBACK_TITLE_CLASS =
+  "lyra-agents-message-rollback-title text-[length:var(--lyra-text-size-body)] font-semibold text-[var(--lyra-text-primary)]";
+export const MESSAGE_ROLLBACK_BODY_CLASS =
+  "lyra-agents-message-rollback-body mt-[var(--lyra-space-4)] text-[var(--lyra-text-secondary)]";
+export const MESSAGE_ROLLBACK_FILES_CLASS =
+  "lyra-agents-message-rollback-files flex flex-col gap-[var(--lyra-space-3)] max-h-[var(--lyra-unit-88)] overflow-hidden mt-[var(--lyra-space-8)] text-[var(--lyra-text-muted)] font-[family-name:var(--lyra-font-mono)] text-[length:var(--lyra-text-size-caption)]";
+export const MESSAGE_ROLLBACK_ACTIONS_CLASS =
+  "lyra-agents-message-rollback-actions flex justify-end gap-[var(--lyra-space-6)] mt-[var(--lyra-space-10)]";
+export const BRAILLE_SPINNER_CLASS =
+  "lyra-agents-braille-spinner text-[length:var(--lyra-text-size-body)] text-[var(--lyra-text-muted)] font-[family-name:monospace] tracking-normal";
+export const SERVICE_STATUS_DOTS_CLASS =
+  "lyra-agents-service-status-dots inline-flex items-center gap-[var(--lyra-space-3)] h-[var(--lyra-space-16)] text-[var(--lyra-text-muted)] [&_span]:w-[var(--lyra-space-3)] [&_span]:h-[var(--lyra-space-3)] [&_span]:rounded-[var(--lyra-radius-pill)] [&_span]:bg-current [&_span]:opacity-[0.38] [&_span]:animate-[lyra-agents-service-status-dot_1.15s_var(--lyra-ease-standard)_infinite] [&_span:nth-child(2)]:[animation-delay:140ms] [&_span:nth-child(3)]:[animation-delay:280ms]";
