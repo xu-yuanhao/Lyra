@@ -4,7 +4,8 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
-  useState
+  useState,
+  useId
 } from "react";
 import type {
   AuthLocalePreference,
@@ -22,7 +23,7 @@ import {
   setWorkbenchLocale,
   useWorkbenchLocaleSnapshot
 } from "@workbench/i18n";
-import { AppButton, AppShimmer } from "@renderer/ui/components";
+import { AppButton, AppCheckbox, AppShimmer } from "@renderer/ui/components";
 import { getDesktopApi } from "@workbench/shell/service";
 import { writeClipboardText } from "../../shared/clipboard";
 import {
@@ -219,8 +220,8 @@ const ThemePreview = ({
   readonly label: string;
   readonly onSelect: () => void;
 }) => (
-  <button
-    type="button"
+  <AppButton
+    variant="plain"
     className={`${STARTUP_THEME_CARD_CLASS}${selected ? " is-selected" : ""}`}
     aria-pressed={selected}
     onClick={onSelect}
@@ -240,7 +241,7 @@ const ThemePreview = ({
       {label}
       {selected ? <span aria-hidden="true">✓</span> : null}
     </span>
-  </button>
+  </AppButton>
 );
 
 export const StartupGate = ({ onReady }: StartupGateProps) => {
@@ -329,6 +330,7 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
   const [languagePackError, setLanguagePackError] = useState<string | null>(null);
   const [theme, setTheme] = useState<WorkbenchThemeId>(readStoredStartupTheme);
   const [legalChecked, setLegalChecked] = useState(false);
+  const legalConsentId = useId();
   const [legalResumeView, setLegalResumeView] = useState<
     "landing" | "welcome-signup" | "ready"
   >("landing");
@@ -731,18 +733,19 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
           <StartupPreferenceTitle text={language.legalTitle} />
           <p className={STARTUP_LEGAL_DESCRIPTION_CLASS}>{language.legalDescription}</p>
           <div className={`${STARTUP_LEGAL_CLASS} ${STARTUP_LEGAL_LINKS_CLASS}`}>
-            <button type="button" className={STARTUP_LEGAL_BUTTON_CLASS} onClick={() => openLegal(TERMS_URL)}>
+            <AppButton variant="plain" className={STARTUP_LEGAL_BUTTON_CLASS} onClick={() => openLegal(TERMS_URL)}>
               {language.terms} ↗
-            </button>
-            <button type="button" className={STARTUP_LEGAL_BUTTON_CLASS} onClick={() => openLegal(PRIVACY_URL)}>
+            </AppButton>
+            <AppButton variant="plain" className={STARTUP_LEGAL_BUTTON_CLASS} onClick={() => openLegal(PRIVACY_URL)}>
               {language.privacy} ↗
-            </button>
+            </AppButton>
           </div>
-          <label className={STARTUP_LEGAL_CHECK_CLASS}>
-            <input
-              type="checkbox"
+          <label className={STARTUP_LEGAL_CHECK_CLASS} htmlFor={legalConsentId}>
+            <AppCheckbox
+              id={legalConsentId}
+              className="mt-[var(--lyra-space-2)]"
               checked={legalChecked}
-              onChange={(event) => setLegalChecked(event.currentTarget.checked)}
+              onCheckedChange={(checked) => setLegalChecked(checked === true)}
             />
             <span>{language.legalConsent}</span>
           </label>
@@ -763,8 +766,8 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
     return (
       <StartupFrame {...audioControlProps}>
         <div className={STARTUP_STATUS_CLASS}>
-          <button
-            type="button"
+          <AppButton
+            variant="plain"
             className={STARTUP_AUTH_COPY_CLASS}
             onClick={() => void copyAuthorizationUrl()}
             onMouseEnter={() => setIsAuthUrlHovered(true)}
@@ -781,17 +784,17 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
                     ? language.copyAuthUrl
                     : language.browser}
             />
-          </button>
+          </AppButton>
           {authError ? <p className={STARTUP_ERROR_CLASS}>{authError}</p> : null}
-          <button
-            type="button"
+          <AppButton
+            variant="plain"
             className={`${STARTUP_LOCAL_CLASS} ${STARTUP_CANCEL_CLASS}`}
             onClick={cancelAuth}
             onMouseEnter={() => setIsCancelHovered(true)}
             onMouseLeave={() => setIsCancelHovered(false)}
           >
             {language.cancel}
-          </button>
+          </AppButton>
         </div>
       </StartupFrame>
     );
@@ -822,22 +825,22 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
     return (
       <StartupFrame {...audioControlProps}>
         <div className={STARTUP_PANEL_CLASS}>
-          <button className={STARTUP_BACK_CLASS} type="button" onClick={() => setView(authIntent === "local" ? "landing" : "welcome-signup")}>
+          <AppButton variant="plain" className={STARTUP_BACK_CLASS} onClick={() => setView(authIntent === "local" ? "landing" : "welcome-signup")}>
             <span aria-hidden="true">←</span> {language.back}
-          </button>
+          </AppButton>
           <StartupPreferenceTitle text={language.chooseLanguage} />
           <div className={STARTUP_CHOICE_LIST_CLASS}>
             {localeChoices.map((choice) => (
-              <button
+              <AppButton
                 key={choice.id}
-                type="button"
+                variant="plain"
                 className={`${STARTUP_CHOICE_CLASS}${JSON.stringify(localeChoice) === JSON.stringify(choice.preference) ? " is-selected" : ""}`}
                 disabled={installingLocale !== null}
                 onClick={() => void selectLocaleChoice(choice)}
               >
                 <span>{installingLocale === choice.id ? language.downloading : choice.label}</span>
                 {JSON.stringify(localeChoice) === JSON.stringify(choice.preference) ? <span aria-hidden="true">✓</span> : null}
-              </button>
+              </AppButton>
             ))}
           </div>
           <AppButton variant="default" size="lg" disabled={installingLocale !== null} onClick={() => setView("theme")}>{language.continue}</AppButton>
@@ -851,9 +854,9 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
     return (
       <StartupFrame {...audioControlProps}>
         <div className={STARTUP_PANEL_CLASS}>
-          <button className={STARTUP_BACK_CLASS} type="button" onClick={() => setView(authIntent === "login" ? "welcome-login" : "language")}>
+          <AppButton variant="plain" className={STARTUP_BACK_CLASS} onClick={() => setView(authIntent === "login" ? "welcome-login" : "language")}>
             <span aria-hidden="true">←</span> {language.back}
-          </button>
+          </AppButton>
           <StartupPreferenceTitle text={language.chooseTheme} />
           <div className={STARTUP_THEME_GRID_CLASS}>
             {(["lyra-system", "lyra-dark", "lyra-light"] as const).map((id) => (
@@ -922,9 +925,9 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
             {language.signup}
           </AppButton>
         </div>
-        <button
+        <AppButton
+          variant="plain"
           className={STARTUP_LOCAL_CLASS}
-          type="button"
           onClick={() => {
             setAuthIntent("local");
             setView("language");
@@ -933,24 +936,24 @@ export const StartupGate = ({ onReady }: StartupGateProps) => {
           onMouseLeave={setHover("default")}
         >
           {language.local}
-        </button>
+        </AppButton>
         <div className={STARTUP_LEGAL_CLASS}>
-          <button
-            type="button"
+          <AppButton
+            variant="plain"
             onClick={() => openLegal(TERMS_URL)}
             onMouseEnter={setHover("terms")}
             onMouseLeave={setHover("default")}
           >
             {language.terms} ↗
-          </button>
-          <button
-            type="button"
+          </AppButton>
+          <AppButton
+            variant="plain"
             onClick={() => openLegal(PRIVACY_URL)}
             onMouseEnter={setHover("privacy")}
             onMouseLeave={setHover("default")}
           >
             {language.privacy} ↗
-          </button>
+          </AppButton>
         </div>
         {authError ? <p className={STARTUP_ERROR_CLASS}>{authError || (auth?.configured === false ? language.configured : language.authError)}</p> : null}
       </div>

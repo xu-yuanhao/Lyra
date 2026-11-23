@@ -333,9 +333,9 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
           )}
         </div>
         {videoReady ? (
-          <button
+          <AppButton
+            variant="plain"
             className={`${STARTUP_AUDIO_TOGGLE_CLASS}${videoMuted ? " is-muted" : ""}`}
-            type="button"
             aria-label={videoMuted ? "Unmute video" : "Mute video"}
             aria-pressed={!videoMuted}
             title={videoMuted ? "Unmute video" : "Mute video"}
@@ -344,7 +344,7 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
             {videoMuted
               ? <VolumeX size={17} strokeWidth={1.7} aria-hidden="true" />
               : <Volume2 size={17} strokeWidth={1.7} aria-hidden="true" />}
-          </button>
+          </AppButton>
         ) : null}
         <StartupTagline text={statusText} onHover={noop} onLeave={noop} />
         <div
@@ -367,8 +367,8 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
           </div>
         </div>
         {installPath.length > 0 ? (
-          <button
-            type="button"
+          <AppButton
+            variant="plain"
             className={INSTALLER_PATH_CLASS}
             onClick={revealInstallPath}
             disabled={busy}
@@ -376,7 +376,7 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
           >
             <Folder size={16} strokeWidth={1.7} aria-hidden="true" />
             <span>{elideInstallPath(installPath, 42)}</span>
-          </button>
+          </AppButton>
         ) : null}
         {error !== null ? <p className={STARTUP_ERROR_CLASS}>{error}</p> : null}
         {finished ? null : (

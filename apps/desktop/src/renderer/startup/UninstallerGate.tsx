@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Folder } from "@lyra/icons";
-import { AppButton } from "@renderer/ui/components";
+import { AppButton, AppCheckbox } from "@renderer/ui/components";
 import { getDesktopApi } from "@workbench/shell/service";
 import type { ProductUninstallProgress } from "../../shared/desktop-bridge";
 import { dismissLyraBootstrapScreen } from "./bootstrap-screen";
@@ -42,6 +42,7 @@ export const UninstallerGate = () => {
   const [failed, setFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [removeUserData, setRemoveUserData] = useState(false);
+  const removeUserDataId = useId();
   const [progress, setProgress] = useState<ProductUninstallProgress | null>(null);
   const [statusIndex, setStatusIndex] = useState(0);
   const startingRef = useRef(false);
@@ -158,8 +159,8 @@ export const UninstallerGate = () => {
           </div>
         </div>
         {installPath.length > 0 ? (
-          <button
-            type="button"
+          <AppButton
+            variant="plain"
             className={INSTALLER_PATH_CLASS}
             onClick={revealInstallPath}
             disabled={busy}
@@ -167,14 +168,15 @@ export const UninstallerGate = () => {
           >
             <Folder size={16} strokeWidth={1.7} aria-hidden="true" />
             <span>{elideInstallPath(installPath, 42)}</span>
-          </button>
+          </AppButton>
         ) : null}
-        <label className={UNINSTALLER_CHECK_CLASS}>
-          <input
-            type="checkbox"
+        <label className={UNINSTALLER_CHECK_CLASS} htmlFor={removeUserDataId}>
+          <AppCheckbox
+            id={removeUserDataId}
+            className="mt-[var(--lyra-space-2)]"
             checked={removeUserData}
             disabled={busy || finished}
-            onChange={(event) => setRemoveUserData(event.currentTarget.checked)}
+            onCheckedChange={(checked) => setRemoveUserData(checked === true)}
           />
           <span>Also delete my files and settings</span>
         </label>

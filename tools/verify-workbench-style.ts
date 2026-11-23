@@ -165,10 +165,7 @@ const BASELINE_VIOLATION_PATTERNS: readonly RegExp[] = [
   /apps\/desktop\/src\/modules\/workbench\/ai-panel\/lyra-agents\/features\/chat\/ProjectDirChip\.tsx:34 uses raw numeric inline style for gap$/u,
   /apps\/desktop\/src\/modules\/workbench\/ai-panel\/lyra-agents\/features\/chat\/ProjectDirChip\.tsx:34 uses raw px inline style for padding$/u,
   /apps\/desktop\/src\/modules\/workbench\/ai-panel\/lyra-agents\/features\/chat\/ProjectDirChip\.tsx:34 uses raw numeric inline style for fontSize$/u,
-  /^apps\/desktop\/src\/modules\/workbench\/browser-tabs\/settings-surface-view\.tsx:1 Presentational workbench views must not own React state\/effect hooks\. Move runtime behavior into a model or runtime hook\.$/u,
-  // ponytail: startup gates predate the kit mandate and are being rebuilt in
-  // the UI refactor; path-scoped baselines keep the guard green until then.
-  /apps\/desktop\/src\/renderer\/startup\/(?:InstallerGate|StartupGate|UninstallerGate|startup-chrome)\.tsx:\d+ Workbench business TSX must use Lyra App components instead of bare </u,
+  /^apps\/desktop\/src\/modules\/workbench\/browser-tabs\/settings-surface-view\.tsx:1 Presentational workbench views must not own React state\/effect hooks\. Move runtime behavior into a model or runtime hook\.$/u
 ];
 
 const APPROVED_DESKTOP_ICON_MODULES = new Set([

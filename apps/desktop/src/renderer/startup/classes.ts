@@ -109,7 +109,7 @@ export const STARTUP_LEGAL_DESCRIPTION_CLASS =
   "lyra-startup-legal-description max-w-[var(--lyra-unit-560)] m-0 text-[var(--app-text-muted)] leading-[var(--lyra-text-line-loose)] text-center";
 
 export const STARTUP_LEGAL_CHECK_CLASS =
-  "lyra-startup-legal-check flex max-w-[var(--lyra-unit-560)] gap-[var(--lyra-space-10)] items-start text-[var(--app-text-primary)] text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-relaxed)] cursor-pointer [&_input]:w-[var(--lyra-icon-size-16)] [&_input]:h-[var(--lyra-icon-size-16)] [&_input]:mt-[var(--lyra-space-2)] [&_input]:flex-none";
+  "lyra-startup-legal-check flex max-w-[var(--lyra-unit-560)] gap-[var(--lyra-space-10)] items-start text-[var(--app-text-primary)] text-[length:var(--lyra-text-size-body)] leading-[var(--lyra-text-line-relaxed)] cursor-pointer [&:has([data-slot=checkbox]:disabled)]:cursor-default [&:has([data-slot=checkbox]:disabled)]:opacity-[var(--lyra-opacity-disabled)]";
 
 export const STARTUP_ERROR_CLASS =
   "lyra-startup-error max-w-full mx-0! mb-0! mt-[var(--lyra-space-14)]! text-[var(--lyra-status-error)]! text-[length:var(--lyra-text-size-12)]! wrap-anywhere [.lyra-uninstaller-hero_&]:mt-[var(--lyra-space-12)]";
@@ -203,7 +203,7 @@ export const INSTALLER_PATH_CLASS =
 export const UNINSTALLER_HERO_CLASS = "lyra-uninstaller-hero w-[min(100%,var(--lyra-unit-340))] gap-0";
 
 export const UNINSTALLER_CHECK_CLASS =
-  "lyra-uninstaller-check flex items-start gap-[var(--lyra-space-10)] w-full mt-[var(--lyra-space-16)] text-[var(--lyra-text-secondary)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-16)] text-left cursor-pointer [-webkit-app-region:no-drag] [app-region:no-drag] [&_input]:w-[var(--lyra-icon-size-16)] [&_input]:h-[var(--lyra-icon-size-16)] [&_input]:mt-[var(--lyra-space-2)] [&_input]:flex-none [&_input]:[accent-color:var(--lyra-text-primary)] [&:has(input:disabled)]:cursor-default [&:has(input:disabled)]:opacity-[var(--lyra-opacity-disabled)]";
+  "lyra-uninstaller-check flex items-start gap-[var(--lyra-space-10)] w-full mt-[var(--lyra-space-16)] text-[var(--lyra-text-secondary)] text-[length:var(--lyra-text-size-12)] leading-[var(--lyra-text-line-16)] text-left cursor-pointer [-webkit-app-region:no-drag] [app-region:no-drag] [&:has([data-slot=checkbox]:disabled)]:cursor-default [&:has([data-slot=checkbox]:disabled)]:opacity-[var(--lyra-opacity-disabled)]";
 
 export const INSTALLER_ACTIONS_CLASS =
   "lyra-installer-actions flex justify-center items-center gap-0 mt-[var(--lyra-space-24)] [-webkit-app-region:no-drag] [app-region:no-drag] [&_.lyra-ui-button]:min-w-[var(--lyra-space-56)] [.lyra-uninstaller-hero_&]:mt-[var(--lyra-space-24)]";

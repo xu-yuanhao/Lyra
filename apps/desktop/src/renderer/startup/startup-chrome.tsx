@@ -8,6 +8,7 @@ import {
   type RefObject
 } from "react";
 import { Volume2, VolumeX } from "@lyra/icons";
+import { AppButton } from "@renderer/ui/components";
 import {
   normalizeUiFontSizePx,
   observeSystemPrefersDark,
@@ -190,9 +191,9 @@ const StartupAudioControl = ({
         loop
         preload="auto"
       />
-      <button
+      <AppButton
+        variant="plain"
         className={`${STARTUP_AUDIO_TOGGLE_CLASS}${isEnabled ? "" : " is-muted"}`}
-        type="button"
         aria-label={isEnabled ? "Mute startup music" : "Play startup music"}
         aria-pressed={isEnabled}
         title={isEnabled ? "Mute startup music" : "Play startup music"}
@@ -201,7 +202,7 @@ const StartupAudioControl = ({
         onMouseLeave={onLeave}
       >
         <Icon size={17} strokeWidth={1.7} aria-hidden="true" />
-      </button>
+      </AppButton>
     </>
   );
 };
