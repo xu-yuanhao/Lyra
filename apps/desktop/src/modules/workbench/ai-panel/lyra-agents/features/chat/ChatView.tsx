@@ -74,6 +74,7 @@ import {
 } from "./virtual-message-window";
 import { COMPOSER_CONTEXT_RING_SLOT_CLASS } from "./classes";
 import { DIFF_ADD_CLASS, DIFF_DEL_CLASS } from "./classes";
+import { CHAT_INNER_CLASS, CHAT_MESSAGE_SLOT_CLASS, CHAT_SCROLL_CLASS, CHAT_THREAD_ANCHOR_BUTTON_CLASS, CHAT_THREAD_ANCHOR_CLASS, CHAT_THREAD_ANCHOR_LABEL_CLASS, CHAT_THREAD_ANCHOR_TEXT_CLASS } from "../../../classes";
 
 // ponytail: sticky anchor offset from the top of the scroll viewport.
 const STICKY_ANCHOR_TOP_OFFSET_PX = 18;
@@ -719,23 +720,23 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
       />
 
       <div
-        className="lyra-agents-chat-scroll"
+        className={CHAT_SCROLL_CLASS}
         ref={bindScrollRef}
         onScroll={handleScroll}
         onWheel={autoScroll.handleWheel}
       >
         {stickyMessage !== null && stickyMessagePreview.length > 0 ? (
-          <div className="lyra-agents-chat-thread-anchor">
+          <div className={CHAT_THREAD_ANCHOR_CLASS}>
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-chat-thread-anchor-button"
+              className={CHAT_THREAD_ANCHOR_BUTTON_CLASS}
               onClick={scrollToStickyMessage}
               aria-label={t("scroll.jumpToPreviousMessage")}
               title={`${t("scroll.jumpToPreviousMessage")}: ${stickyMessagePreview}`}
             >
               <CornerUpLeft size={13} strokeWidth={2.1} aria-hidden="true" />
-              <span className="lyra-agents-chat-thread-anchor-label">{t("scroll.previousMessage")}</span>
-              <span className="lyra-agents-chat-thread-anchor-text">
+              <span className={CHAT_THREAD_ANCHOR_LABEL_CLASS}>{t("scroll.previousMessage")}</span>
+              <span className={CHAT_THREAD_ANCHOR_TEXT_CLASS}>
                 <MessageCitationText
                   text={clipInlineMarkerText(messageReferenceText(stickyMessage), STICKY_ANCHOR_PREVIEW_CHARS)}
                   transcriptCitations={stickyMessage.transcriptCitations ?? []}
@@ -749,7 +750,7 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
         ) : null}
 
         <div
-          className="lyra-agents-chat-inner"
+          className={CHAT_INNER_CLASS}
           ref={bindContentRef}
           onClick={autoScroll.handleInteraction}
         >
@@ -783,7 +784,7 @@ export function ChatView({ showDecisions, showPermission, desktopApi = null }: C
                             key={message.id}
                             ref={virtualizer.measureElement}
                             data-index={item.index}
-                            className="lyra-agents-chat-message-slot"
+                            className={CHAT_MESSAGE_SLOT_CLASS}
                             data-chat-message-id={message.id}
                             data-chat-message-author={message.author}
                           >

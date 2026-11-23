@@ -17,6 +17,7 @@ import { Spinner } from "@renderer/ui/components/spinner";
 import { useWorkbenchTitlebarContribution } from "../shell/titlebar-context";
 import type { AgentSubagentSurfaceProps } from "./types";
 import { AGENTS_HOST_CLASS } from "../ai-panel/classes";
+import { CHAT_INNER_CLASS, CHAT_SCROLL_CLASS } from "../ai-panel/classes";
 
 const eventSessionId = (event: AgentRuntimeEvent): string | null => {
   if (event.kind === "sessionSnapshot") {
@@ -175,7 +176,7 @@ export const AgentSubagentSurface = ({
     <div className={`lyra-agent-subagent ${AGENTS_HOST_CLASS} flex-col`}>
       <DataContextProvider value={dataValue}>
         <div
-          className="lyra-agent-subagent-chat lyra-agents-chat-scroll min-h-0 flex-1"
+          className={`lyra-agent-subagent-chat ${CHAT_SCROLL_CLASS} min-h-0 flex-1`}
           role="log"
           aria-label={state.title}
         >
@@ -184,7 +185,7 @@ export const AgentSubagentSurface = ({
               {labels.loading}
             </div>
           ) : (
-            <div className="lyra-agent-subagent-chat-inner lyra-agents-chat-inner">
+            <div className={`lyra-agent-subagent-chat-inner ${CHAT_INNER_CLASS}`}>
               {messages.map((message) => (
                 <Message key={message.id} message={message} />
               ))}

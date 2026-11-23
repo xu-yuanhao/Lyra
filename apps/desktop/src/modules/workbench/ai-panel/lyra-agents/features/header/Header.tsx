@@ -28,6 +28,7 @@ import {
   inlineContentMarkersToDisplayText,
   inlineReferenceRecords
 } from "../chat/message-citation";
+import { HEADER_ACTION_CLASS, HEADER_MENU_CLASS, HEADER_MENU_ITEM_CLASS, HEADER_MORE_CLASS, HEADER_RIGHT_CLASS, HEADER_TITLE_CLASS } from "../../../classes";
 
 export function Header() {
   const { session, messages } = useData();
@@ -42,7 +43,7 @@ export function Header() {
   ).trim() || t("aiPanel.defaultSessionTitle");
   return (
     <header className="lyra-agents-header select-none">
-      <div className="lyra-agents-header-title" title={title}>
+      <div className={HEADER_TITLE_CLASS} title={title}>
         <MessageCitationText
           text={rawTitle.length > 0 ? rawTitle : title}
           transcriptCitations={records.transcriptCitations}
@@ -106,13 +107,13 @@ export function HeaderControls({
   };
 
   const sessionActionDisabled = sessionActionBusy || isTurnRunning;
-  const menuItemClassName = "lyra-app-menu-item-with-icon lyra-agents-header-menu-item";
+  const menuItemClassName = `lyra-app-menu-item-with-icon ${HEADER_MENU_ITEM_CLASS}`;
 
   return (
-    <div className="lyra-agents-header-right">
+    <div className={HEADER_RIGHT_CLASS}>
       {shouldShowNewSessionButton ? (
         <AppIconButton
-          className="lyra-agents-header-action app-header-new-session"
+          className={`${HEADER_ACTION_CLASS} app-header-new-session`}
           type="button"
           aria-label={t("header.newSession")}
           title={t("header.newSession")}
@@ -124,10 +125,10 @@ export function HeaderControls({
       ) : null}
       {hasMenuItems ? (
       <AppMenu open={menuOpen} onOpenChange={setMenuOpen}>
-        <div className="lyra-agents-header-more">
+        <div className={HEADER_MORE_CLASS}>
           <AppMenuTrigger asChild>
             <AppIconButton
-              className="lyra-agents-header-action app-header-more-button"
+              className={`${HEADER_ACTION_CLASS} app-header-more-button`}
               type="button"
               aria-label={t("header.more")}
               title={t("header.more")}
@@ -136,7 +137,7 @@ export function HeaderControls({
               <MoreHorizontal aria-hidden="true" size={15} strokeWidth={1.8} />
             </AppIconButton>
           </AppMenuTrigger>
-          <AppMenuContent className="lyra-agents-header-menu" align="end" sideOffset={6}>
+          <AppMenuContent className={HEADER_MENU_CLASS} align="end" sideOffset={6}>
             {canManageSession ? (
               <>
                 <AppMenuItem
@@ -204,7 +205,7 @@ export function HeaderControls({
       </AppMenu>
       ) : (
         <AppIconButton
-          className="lyra-agents-header-action app-header-more-button"
+          className={`${HEADER_ACTION_CLASS} app-header-more-button`}
           type="button"
           disabled
           aria-label={t("header.more")}

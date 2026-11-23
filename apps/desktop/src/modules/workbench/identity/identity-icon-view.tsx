@@ -1,6 +1,7 @@
 import { useState, type ReactNode, type SyntheticEvent } from "react";
 
 import { cn } from "@renderer/ui/utils";
+import { IDENTITY_ICON_CLASS, IDENTITY_ICON_FALLBACK_CLASS, IDENTITY_ICON_IMAGE_CLASS } from "../ai-panel/classes";
 
 export type IdentityIconViewProps = {
   readonly iconUrl?: string | null | undefined;
@@ -22,12 +23,12 @@ export const IdentityIconView = ({
   const showImage = normalizedUrl.length > 0 && normalizedUrl !== failedUrl;
 
   return (
-    <span className={cn("lyra-identity-icon", className)} title={label}>
+    <span className={cn(IDENTITY_ICON_CLASS, className)} title={label}>
       {showImage ? (
         <img
           src={normalizedUrl}
           alt=""
-          className={cn("lyra-identity-icon-image", imageClassName)}
+          className={cn(IDENTITY_ICON_IMAGE_CLASS, imageClassName)}
           loading="eager"
           decoding="async"
           onError={(event: SyntheticEvent<HTMLImageElement>) => {
@@ -35,7 +36,7 @@ export const IdentityIconView = ({
           }}
         />
       ) : (
-        <span className="lyra-identity-icon-fallback" aria-hidden="true">
+        <span className={IDENTITY_ICON_FALLBACK_CLASS} aria-hidden="true">
           {fallback}
         </span>
       )}

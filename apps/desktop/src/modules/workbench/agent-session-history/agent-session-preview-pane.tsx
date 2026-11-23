@@ -17,6 +17,7 @@ import {
   HISTORY_PREVIEW_EMPTY_INLINE_CLASS,
   HISTORY_PREVIEW_STATE_CLASS
 } from "./classes";
+import { CHAT_INNER_CLASS, CHAT_MESSAGE_SLOT_CLASS, CHAT_SCROLL_CLASS } from "../ai-panel/classes";
 
 const PreviewTranscript = ({
   messages,
@@ -35,12 +36,12 @@ const PreviewTranscript = ({
   return (
     <div
       ref={scrollRef}
-      className={`lyra-agents-chat-scroll ${HISTORY_PREVIEW_CHAT_CLASS}`}
+      className={`${CHAT_SCROLL_CLASS} ${HISTORY_PREVIEW_CHAT_CLASS}`}
       role="log"
       aria-label={label}
     >
       <div
-        className={`lyra-agents-chat-inner ${HISTORY_PREVIEW_CHAT_INNER_CLASS}`}
+        className={`${CHAT_INNER_CLASS} ${HISTORY_PREVIEW_CHAT_INNER_CLASS}`}
         style={{ height: virtualizer.getTotalSize(), position: "relative" }}
       >
         {virtualizer.getVirtualItems().map((item) => {
@@ -51,7 +52,7 @@ const PreviewTranscript = ({
               key={message.id}
               ref={virtualizer.measureElement}
               data-index={item.index}
-              className="lyra-agents-chat-message-slot"
+              className={CHAT_MESSAGE_SLOT_CLASS}
               style={{ transform: `translateY(${item.start}px)` }}
             >
               <Message message={message} />

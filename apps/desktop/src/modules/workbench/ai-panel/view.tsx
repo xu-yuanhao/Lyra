@@ -34,7 +34,24 @@ import {
   isMiddleClick,
   useChromeTabStripCloseLock
 } from "../ui-primitives";
-import { AGENTS_HOST_CLASS, AI_PANEL_ERROR_CLASS, AI_PANEL_SHELL_CLASS } from "./classes";
+import {
+  AGENTS_HEADER_CLASS,
+  AGENTS_HOST_CLASS,
+  AI_PANEL_ERROR_CLASS,
+  AI_PANEL_SHELL_CLASS,
+  SESSION_TAB_ADD_CLASS,
+  SESSION_TAB_CLOSE_CLASS,
+  SESSION_TAB_ICON_CLASS,
+  SESSION_TAB_ITEM_ACTIVE_CLASS,
+  SESSION_TAB_ITEM_CLASS,
+  SESSION_TAB_ITEM_DRAGGING_CLASS,
+  SESSION_TAB_LIST_CLASS,
+  SESSION_TAB_LOGO_CLASS,
+  SESSION_TAB_MAIN_CLASS,
+  SESSION_TAB_STRIP_CLASS,
+  SESSION_TAB_TITLE_CLASS,
+  SESSION_TABS_HEADER_CLASS
+} from "./classes";
 
 const AI_SESSION_TAB_DRAG_THRESHOLD_PX = 4;
 const AI_SESSION_TAB_FLEX_MIN_PX = 60;
@@ -71,11 +88,11 @@ const SessionTabIdentityIcon = ({
   const icon = useSessionIdentityIcon(desktopApi, workingDir);
   return (
     <IdentityIconView
-      className="lyra-agents-session-tab-icon"
+      className={SESSION_TAB_ICON_CLASS}
       imageClassName="lyra-agents-session-tab-image"
       iconUrl={icon.url}
       label={icon.label}
-      fallback={<LyraLogo className="lyra-agents-session-tab-logo" alt="" />}
+      fallback={<LyraLogo className={SESSION_TAB_LOGO_CLASS} alt="" />}
     />
   );
 };
@@ -236,20 +253,20 @@ const AiPanelTabsHeader = ({
 
   return (
     <header
-      className="lyra-agents-header lyra-agents-session-tabs-header select-none"
+      className={`${AGENTS_HEADER_CLASS} ${SESSION_TABS_HEADER_CLASS} select-none`}
       onPointerLeave={closeLock.onClearCloseLock}
     >
       <div
         className={cn(
           "lyra-tab-strip",
-          "lyra-agents-session-tab-strip",
-          dragVisual !== null && "lyra-agents-session-tab-strip-sorting",
+          SESSION_TAB_STRIP_CLASS,
+          dragVisual !== null && `${SESSION_TAB_STRIP_CLASS} lyra-agents-session-tab-strip-sorting`,
           closeLock.closeLockedTabWidth !== null && "lyra-tab-strip-close-lock"
         )}
         role="tablist"
         aria-label={t("aiPanel.sessionTabsAriaLabel")}
       >
-        <div className="lyra-agents-session-tab-list">
+        <div className={SESSION_TAB_LIST_CLASS}>
           {visibleTabs.map((tab, index) => {
             const active = tab.tabId === effectiveActiveTabId;
             const hasCurrentSnapshot =
@@ -283,11 +300,11 @@ const AiPanelTabsHeader = ({
                 key={tab.tabId}
                 className={cn(
                   "lyra-tab-item",
-                  "lyra-agents-session-tab-item",
+                  SESSION_TAB_ITEM_CLASS,
                   active && "lyra-tab-item-active",
-                  active && "lyra-agents-session-tab-item-active",
+                  active && SESSION_TAB_ITEM_ACTIVE_CLASS,
                   running && "lyra-agents-session-tab-item-running",
-                  draggingTabId === tab.tabId && "lyra-agents-session-tab-item-dragging"
+                  draggingTabId === tab.tabId && SESSION_TAB_ITEM_DRAGGING_CLASS
                 )}
                 style={tabStyle}
                 data-lyra-tab-id={tab.tabId}
@@ -309,7 +326,7 @@ const AiPanelTabsHeader = ({
                 }}
               >
                 <AppButton
-                  className="lyra-tab-main lyra-agents-session-tab-main"
+                  className={`lyra-tab-main ${SESSION_TAB_MAIN_CLASS}`}
                   variant="ghost"
                   size="sm"
                   role="tab"
@@ -333,7 +350,7 @@ const AiPanelTabsHeader = ({
                   }}
                 >
                   <SessionTabIdentityIcon desktopApi={desktopApi} workingDir={workingDir} />
-                  <span className="lyra-tab-title lyra-agents-session-tab-title">
+                  <span className={`lyra-tab-title ${SESSION_TAB_TITLE_CLASS}`}>
                     <MessageCitationText
                       text={rawTitle.trim().length > 0 ? rawTitle : title}
                       transcriptCitations={records.transcriptCitations}
@@ -344,7 +361,7 @@ const AiPanelTabsHeader = ({
                   </span>
                 </AppButton>
                 <AppIconButton
-                  className="lyra-tab-close lyra-agents-session-tab-close"
+                  className={`lyra-tab-close ${SESSION_TAB_CLOSE_CLASS}`}
                   aria-label={formatMessage("aiPanel.closeSessionTabAriaLabel", { title })}
                   title={formatMessage("aiPanel.closeSessionTabAriaLabel", { title })}
                   onPointerDown={(event) => {
@@ -368,7 +385,7 @@ const AiPanelTabsHeader = ({
           })}
         </div>
         <AppIconButton
-          className="lyra-tab-add lyra-agents-session-tab-add"
+          className={`lyra-tab-add ${SESSION_TAB_ADD_CLASS}`}
           aria-label={t("header.newSession")}
           title={t("header.newSession")}
           onClick={() => {
