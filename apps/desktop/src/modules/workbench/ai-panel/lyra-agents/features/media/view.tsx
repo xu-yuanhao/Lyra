@@ -19,6 +19,22 @@ import {
   isImageFileReference
 } from "../rich-text/ActionTargets";
 import {
+  ACTION_IMAGE_BUTTON_CLASS,
+  ACTION_IMAGE_PLACEHOLDER_CLASS,
+  ADAPTIVE_IMAGE_CLASS,
+  FIGURE_ROW_CLASS,
+  MEDIA_CARDS_CLASS,
+  MEDIA_LAYOUT_CLASS,
+  MEDIA_STACK_CLASS,
+  MEDIA_STACK_COUNT_CLASS,
+  MEDIA_STACK_LAYER_1_CLASS,
+  MEDIA_STACK_LAYER_2_CLASS,
+  MEDIA_STACK_LAYER_CLASS,
+  MESSAGE_IMAGE_AGENT_CLASS,
+  MESSAGE_IMAGE_CLASS,
+  SIDE_FLOW_CLASS
+} from "./classes";
+import {
   applyImageSizes,
   aspectKindFromSize,
   canFillWidth,
@@ -129,8 +145,8 @@ export function AdaptiveImage({
   const pending = width === undefined || height === undefined;
   const framed = presentation === "frame";
   const classes = [
-    "lyra-agents-action-image-button",
-    "lyra-agents-adaptive-image",
+    ACTION_IMAGE_BUTTON_CLASS,
+    ADAPTIVE_IMAGE_CLASS,
     framed ? "is-frame" : "is-natural",
     pending ? "is-pending" : "",
     small ? "is-small" : "",
@@ -194,7 +210,7 @@ export function AdaptiveImage({
     <AppButton
       variant="ghost"
       type="button"
-      className={`${classes}${displaySrc === undefined ? " lyra-agents-action-image-placeholder" : ""}`}
+      className={`${classes}${displaySrc === undefined ? " " + ACTION_IMAGE_PLACEHOLDER_CLASS : ""}`}
       title={t("tool.openImageInWorkbench")}
       onClick={(event) => {
         event.preventDefault();
@@ -257,7 +273,7 @@ export function SideFlow({
   );
   return (
     <figure className={[
-      "lyra-agents-side-flow",
+      SIDE_FLOW_CLASS,
       `lyra-agents-side-flow-${order}`,
       presentation === "natural" ? "is-natural" : "",
       banner ? "is-banner" : "",
@@ -301,7 +317,7 @@ export function MediaStack({
     <AppButton
       variant="ghost"
       type="button"
-      className="lyra-agents-action-image-button lyra-agents-media-stack"
+      className={`${ACTION_IMAGE_BUTTON_CLASS} ${MEDIA_STACK_CLASS}`}
       title={t("tool.openImageInWorkbench")}
       onClick={(event) => {
         event.preventDefault();
@@ -315,7 +331,7 @@ export function MediaStack({
         return (
           <span
             key={image.id}
-            className={`lyra-agents-media-stack-layer lyra-agents-media-stack-layer-${depth}`}
+            className={depth === 1 ? `${MEDIA_STACK_LAYER_CLASS} ${MEDIA_STACK_LAYER_1_CLASS}` : depth === 2 ? `${MEDIA_STACK_LAYER_CLASS} ${MEDIA_STACK_LAYER_2_CLASS}` : MEDIA_STACK_LAYER_CLASS}
           >
             {src === undefined ? null : (
               <img
@@ -333,7 +349,7 @@ export function MediaStack({
           </span>
         );
       })}
-      <span className="lyra-agents-media-stack-count">{images.length}</span>
+      <span className={MEDIA_STACK_COUNT_CLASS}>{images.length}</span>
     </AppButton>
   );
 }
@@ -355,7 +371,7 @@ const renderSegment = (
       );
     case "single":
       return (
-        <figure key={segment.id} className="lyra-agents-message-image lyra-agents-message-image-agent select-text">
+        <figure key={segment.id} className={`${MESSAGE_IMAGE_CLASS} ${MESSAGE_IMAGE_AGENT_CLASS} select-text`}>
           <AdaptiveImage
             image={segment.image}
             group={segment.group}
@@ -442,7 +458,7 @@ function MediaCards({
   }, [count, slotRatio]);
 
   return (
-    <div ref={nodeRef} className="lyra-agents-media-cards">
+    <div ref={nodeRef} className={MEDIA_CARDS_CLASS}>
       {children}
     </div>
   );
@@ -503,7 +519,7 @@ export function ChatMediaLayout({
   }, []);
 
   return (
-    <div ref={rootRef} className="lyra-agents-media-layout">
+    <div ref={rootRef} className={MEDIA_LAYOUT_CLASS}>
       {runs.map((run) => {
         if (run.type === "cards") {
           return (
@@ -528,7 +544,7 @@ export function ChatMediaLayout({
           return (
             <div
               key={run.id}
-              className={`lyra-agents-figure-row ${run.segments.length === 1 ? "is-single" : "is-multi"}`}
+              className={`${FIGURE_ROW_CLASS} ${run.segments.length === 1 ? "is-single" : "is-multi"}`}
             >
               {run.segments.map((segment, index) => {
                 if (segment.type !== "side-flow") {

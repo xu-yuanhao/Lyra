@@ -10,6 +10,7 @@ import {
   RT_ACTION_TEXT_LINK_SECRET_CLASS,
   RT_TOOL_ACTION_TARGETS_CLASS,
 } from "./classes";
+import { ACTION_IMAGE_BUTTON_CLASS, ACTION_IMAGE_PLACEHOLDER_CLASS, ACTION_IMAGE_PLACEHOLDER_LABEL_CLASS, ADAPTIVE_IMAGE_CLASS } from "../media/classes";
 
 export type ActionTarget = ToolActionTarget;
 
@@ -620,13 +621,13 @@ export function ClickableImage({
     return (
       <AppButton variant="ghost" size="sm"
         type="button"
-        className={["lyra-agents-action-image-button", "lyra-agents-action-image-placeholder", className]
+        className={[ACTION_IMAGE_BUTTON_CLASS, ACTION_IMAGE_PLACEHOLDER_CLASS, className]
           .filter(Boolean)
           .join(" ")}
         title={t("tool.openImageInWorkbench")}
         onClick={open}
       >
-        <span className="lyra-agents-action-image-placeholder-label">
+        <span className={ACTION_IMAGE_PLACEHOLDER_LABEL_CLASS}>
           {alt ?? t("tool.imageAttachment")}
         </span>
       </AppButton>
@@ -647,7 +648,7 @@ export function ClickableImage({
   return (
     <AppButton variant="ghost" size="sm"
       type="button"
-      className={["lyra-agents-action-image-button", "lyra-agents-adaptive-image", className].filter(Boolean).join(" ")}
+      className={[ACTION_IMAGE_BUTTON_CLASS, ADAPTIVE_IMAGE_CLASS, className].filter(Boolean).join(" ")}
       title={t("tool.openImageInWorkbench")}
       onClick={open}
     >

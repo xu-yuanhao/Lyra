@@ -42,6 +42,7 @@ import {
   COLLAPSE_INNER_CLASS,
   MESSAGE_CONTENT_USER_CLASS
 } from "./classes";
+import { MESSAGE_IMAGE_AGENT_CLASS, MESSAGE_IMAGE_CLASS } from "../media/classes";
 import { MessageCitationText } from "./MessageCitationText";
 import { MessageTextBlock } from "./message-text-block";
 import { withStreamingReasoning } from "./message-activity-blocks";
@@ -1133,7 +1134,7 @@ const AgentMessage = memo(function AgentMessage({
     if (b.type === "image") {
       const src = imagePreviewSource(b.image, session.workingDir);
       return (
-        <figure key={b.id} className="lyra-agents-message-image lyra-agents-message-image-agent select-text">
+        <figure key={b.id} className={`${MESSAGE_IMAGE_CLASS} ${MESSAGE_IMAGE_AGENT_CLASS} select-text`}>
           <ClickableImage
             src={src}
             image={b.image}
