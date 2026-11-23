@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { TerminalPaneSurface } from "./pane-surface";
+import { TITLEBAR_CONTEXT_CHIP_CLASS } from "../shell/classes";
 import type {
   TerminalDockLabels,
   TerminalDockPane,
@@ -44,7 +45,7 @@ export const TerminalWorkspaceSurface = ({
     () => ({
       ariaLabel: tab.title,
       content: (
-        <span className="lyra-titlebar-context-chip">{String(panes.length)}</span>
+        <span className={TITLEBAR_CONTEXT_CHIP_CLASS}>{String(panes.length)}</span>
       )
     }),
     [panes.length, tab.title]

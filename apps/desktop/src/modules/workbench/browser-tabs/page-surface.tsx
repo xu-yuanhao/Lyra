@@ -4,6 +4,7 @@ import { AppButton, AppLoadingState } from "@renderer/ui/components";
 import { useWorkbenchTitlebarContribution } from "../shell/titlebar-context";
 import type { SearchEngineDefinition } from "../browser-search/types";
 import { resolveNextSearchEngineSelection } from "../browser-search/service";
+import { TITLEBAR_CONTEXT_CHIP_CLASS, TITLEBAR_CONTEXT_CONTROLS_CLASS, TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS } from "../shell/classes";
 
 export type BrowserPageSurfaceProps = {
   readonly tabId: string;
@@ -65,15 +66,15 @@ export const BrowserPageSurface = ({
       ariaLabel: sourceFilterLabel,
       content: (
         <>
-          <span className="lyra-titlebar-context-chip">{searchQuery}</span>
-          <div className="lyra-titlebar-context-controls">
+          <span className={TITLEBAR_CONTEXT_CHIP_CLASS}>{searchQuery}</span>
+          <div className={TITLEBAR_CONTEXT_CONTROLS_CLASS}>
             <AppButton
               variant="ghost"
               size="sm"
               className={
                 searchEngineSelectionMode !== "manual"
-                  ? "lyra-titlebar-context-text-button lyra-titlebar-context-button-active"
-                  : "lyra-titlebar-context-text-button"
+                  ? `${TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS} lyra-titlebar-context-button-active`
+                  : TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS
               }
               aria-label={`${sourceFilterLabel}: ${autoSearchLabel}`}
               onClick={() => {
@@ -90,8 +91,8 @@ export const BrowserPageSurface = ({
                 className={
                   searchEngineSelectionMode === "manual" &&
                   searchSelectedEngineIds.includes(engine.id)
-                    ? "lyra-titlebar-context-text-button lyra-titlebar-context-button-active"
-                    : "lyra-titlebar-context-text-button"
+                    ? `${TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS} lyra-titlebar-context-button-active`
+                    : TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS
                 }
                 aria-label={`${sourceFilterLabel}: ${engine.label}`}
                 onClick={() => {

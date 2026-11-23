@@ -6,6 +6,7 @@ import {
   AppStatusMessage,
   AppSubPageBack
 } from "@renderer/ui/components";
+import { TITLEBAR_CONTEXT_CHIP_CLASS, TITLEBAR_CONTEXT_CONTROLS_CLASS, TITLEBAR_CONTEXT_ICON_BUTTON_CLASS, TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS } from "../shell/classes";
 import {
   FolderOpen,
   RefreshCw
@@ -664,7 +665,7 @@ export const SoftwareStoreSurface = ({
       ariaLabel: labels.title,
       content: (
         <>
-          <span className="lyra-titlebar-context-controls">
+          <span className={TITLEBAR_CONTEXT_CONTROLS_CLASS}>
             {SECTION_DEFS.map((def) => {
               const visible = def.id === "builtin" ? builtinItems.length > 0
                 : def.id === "uiux" ? uiuxItems.length > 0
@@ -675,8 +676,8 @@ export const SoftwareStoreSurface = ({
                   variant="ghost"
                   size="sm"
                   className={activeSection === def.id
-                    ? "lyra-titlebar-context-text-button lyra-titlebar-context-button-active"
-                    : "lyra-titlebar-context-text-button"}
+                    ? `${TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS} lyra-titlebar-context-button-active`
+                    : TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS}
                   aria-pressed={activeSection === def.id}
                   onClick={() => {
                     setActiveSection(def.id);
@@ -687,11 +688,11 @@ export const SoftwareStoreSurface = ({
               ) : null;
             })}
           </span>
-          <span className="lyra-titlebar-context-chip">
+          <span className={TITLEBAR_CONTEXT_CHIP_CLASS}>
             {String(items.length)}
           </span>
           <AppIconButton
-            className="lyra-titlebar-context-icon-button"
+            className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
             aria-label={labels.refresh}
             title={labels.refresh}
             onClick={() => {

@@ -29,6 +29,25 @@ import {
   AppShellWorkspace
 } from "@renderer/ui/layout";
 import { cx, PanelHost, PanelResizer } from "../ui-primitives";
+import {
+  CENTER_STACK_CLASS,
+  CENTER_STACK_TERMINAL_BOTTOM_CLASS,
+  CENTER_STACK_TERMINAL_TOP_CLASS,
+  MAIN_BASE_CLASS,
+  MAIN_GRID_AI_LEFT,
+  MAIN_GRID_AI_RIGHT,
+  NO_DRAG_CLASS,
+  SHELL_MODAL_DIM_CLASS,
+  TITLEBAR_BASE_CLASS,
+  TITLEBAR_FILL_CLASS,
+  TITLEBAR_GRID_NO_NAV,
+  TITLEBAR_GRID_NO_NAV_MAC,
+  TITLEBAR_GRID_WITH_NAV,
+  TITLEBAR_GRID_WITH_NAV_MAC,
+  TITLEBAR_TRAFFIC_SPACER_CLASS,
+  WINDOW_CONTROLS_CLASS,
+  WORKSPACE_CLASS
+} from "./classes";
 import { TitlebarAiLaunchPill } from "./titlebar-ai-launch-pill";
 import type {
   WorkbenchActionApi,
@@ -198,21 +217,29 @@ export const WorkbenchChrome = ({
   >
     <AppShellTitlebar
       className={cx(
-        "lyra-titlebar",
+        TITLEBAR_BASE_CLASS,
+        SHELL_MODAL_DIM_CLASS,
+        isMac
+          ? slots.titlebarNavigation === null
+            ? TITLEBAR_GRID_NO_NAV_MAC
+            : TITLEBAR_GRID_WITH_NAV_MAC
+          : slots.titlebarNavigation === null
+            ? TITLEBAR_GRID_NO_NAV
+            : TITLEBAR_GRID_WITH_NAV,
         isMac && "lyra-titlebar-macos",
         slots.titlebarNavigation === null && "lyra-titlebar-no-navigation"
       )}
     >
       {isMac ? (
         <div
-          className="lyra-titlebar-traffic-spacer"
+          className={cx("lyra-titlebar-traffic-spacer", TITLEBAR_TRAFFIC_SPACER_CLASS)}
           aria-hidden="true"
         />
       ) : null}
       {slots.titlebarNavigation}
       {slots.titlebarContext}
-      <div className="lyra-titlebar-fill" aria-hidden="true" />
-      <div className="lyra-window-controls lyra-no-drag">
+      <div className={cx("lyra-titlebar-fill", TITLEBAR_FILL_CLASS)} aria-hidden="true" />
+      <div className={cx("lyra-no-drag", NO_DRAG_CLASS, WINDOW_CONTROLS_CLASS)}>
         <WorkbenchTitlebarActions
           actions={actions}
           labels={labels}
@@ -225,10 +252,11 @@ export const WorkbenchChrome = ({
 
     <AppShellMain
       className={cx(
-        "lyra-main",
+        MAIN_BASE_CLASS,
+        SHELL_MODAL_DIM_CLASS,
         layout.aiPanelSide === "right"
-          ? "lyra-main-ai-panel-right"
-          : "lyra-main-ai-panel-left"
+          ? cx("lyra-main-ai-panel-right", MAIN_GRID_AI_RIGHT)
+          : cx("lyra-main-ai-panel-left", MAIN_GRID_AI_LEFT)
       )}
     >
       <PanelHost
@@ -247,13 +275,13 @@ export const WorkbenchChrome = ({
 
       <section
         className={cx(
-          "lyra-center-stack",
+          CENTER_STACK_CLASS,
           layout.terminalPanelSide === "top"
-            ? "lyra-center-stack-terminal-top"
-            : "lyra-center-stack-terminal-bottom"
+            ? cx("lyra-center-stack-terminal-top", CENTER_STACK_TERMINAL_TOP_CLASS)
+            : cx("lyra-center-stack-terminal-bottom", CENTER_STACK_TERMINAL_BOTTOM_CLASS)
         )}
       >
-        <AppShellWorkspace className="lyra-workspace" aria-label="workspace">
+        <AppShellWorkspace className={WORKSPACE_CLASS} aria-label="workspace">
           {slots.workspace}
           {slots.browserTabs}
         </AppShellWorkspace>

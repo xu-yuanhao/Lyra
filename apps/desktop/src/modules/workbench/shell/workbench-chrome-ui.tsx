@@ -1,5 +1,6 @@
 import type { WorkbenchChromeScopeV1 } from "@lyra/app-runtime";
 import { CheckCheck, Trash2 } from "@lyra/icons";
+import { TITLEBAR_CONTEXT_CLASS, TITLEBAR_CONTEXT_SCROLL_CLASS, TITLEBAR_CONTEXT_CONTROLS_CLASS, TITLEBAR_CONTEXT_CHIP_CLASS, TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS, TITLEBAR_CONTEXT_ICON_BUTTON_CLASS, TITLEBAR_CONTEXT_EMPTY_CLASS } from "./classes";
 import {
   useContext,
   useMemo,
@@ -48,14 +49,14 @@ const WorkbenchChromeToolbarContextFromBus = ({
 
   return (
     <div
-      className={cx("lyra-titlebar-context", "lyra-titlebar-context-from-bus")}
+      className={cx(TITLEBAR_CONTEXT_CLASS, "lyra-titlebar-context-from-bus")}
       aria-label={contribution.ariaLabel}
     >
-      <div className="lyra-titlebar-context-scroll">
+      <div className={TITLEBAR_CONTEXT_SCROLL_CLASS}>
         {actions.length > 0 || chips.length > 0 ? (
           <>
             {actions.length > 0 ? (
-              <div className="lyra-titlebar-context-controls">
+              <div className={TITLEBAR_CONTEXT_CONTROLS_CLASS}>
                 {actions.map((action) => (
                   action.display === "text" ? (
                     <AppButton
@@ -63,7 +64,7 @@ const WorkbenchChromeToolbarContextFromBus = ({
                       variant="ghost"
                       size="sm"
                       className={cx(
-                        "lyra-titlebar-context-text-button",
+                        TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS,
                         action.active === true ? "lyra-titlebar-context-button-active" : undefined
                       )}
                       aria-pressed={action.active === true}
@@ -78,7 +79,7 @@ const WorkbenchChromeToolbarContextFromBus = ({
                     <AppIconButton
                       key={action.id}
                       className={cx(
-                        "lyra-titlebar-context-icon-button",
+                        TITLEBAR_CONTEXT_ICON_BUTTON_CLASS,
                         action.tone === "danger" ? "lyra-titlebar-context-danger" : undefined
                       )}
                       tone={action.tone === "danger" ? "danger" : "default"}
@@ -96,7 +97,7 @@ const WorkbenchChromeToolbarContextFromBus = ({
               </div>
             ) : null}
             {chips.map((chip) => (
-              <span key={chip.id} className="lyra-titlebar-context-chip">
+              <span key={chip.id} className={TITLEBAR_CONTEXT_CHIP_CLASS}>
                 {chip.text}
               </span>
             ))}
@@ -120,7 +121,7 @@ export const WorkbenchChromeToolbarContextSlot = ({
   );
 
   if (busScope === null && legacyContribution === null) {
-    return <div className="lyra-titlebar-context lyra-titlebar-context-empty" aria-hidden="true" />;
+    return <div className={cx(TITLEBAR_CONTEXT_CLASS, TITLEBAR_CONTEXT_EMPTY_CLASS)} aria-hidden="true" />;
   }
 
   return (

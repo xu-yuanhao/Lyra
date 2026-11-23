@@ -16,6 +16,7 @@ import { AppButton, AppIconButton } from "@renderer/ui/components";
 
 import type { FileManagerSurfaceRenderModel } from "./surface-model";
 import type { FileManagerSurfaceChromeProps } from "./surface-view-types";
+import { TITLEBAR_CONTEXT_GROUP_CLASS, TITLEBAR_CONTEXT_TEXT_CLASS } from "../shell/classes";
 
 const FileManagerBreadcrumbs = ({
   renderModel,
@@ -33,16 +34,16 @@ const FileManagerBreadcrumbs = ({
   }
 
   return (
-    <div className="lyra-titlebar-context-group lyra-file-manager-titlebar-breadcrumbs max-w-[min(var(--lyra-unit-420),42vw)] overflow-hidden" aria-label="file-manager-breadcrumbs">
+    <div className={`${TITLEBAR_CONTEXT_GROUP_CLASS} lyra-file-manager-titlebar-breadcrumbs max-w-[min(var(--lyra-unit-420),42vw)] overflow-hidden`} aria-label="file-manager-breadcrumbs">
       {breadcrumb.kind === "trash" && breadcrumb.title.length > 0 ? (
-        <span className="lyra-titlebar-context-text">
+        <span className={TITLEBAR_CONTEXT_TEXT_CLASS}>
           {breadcrumb.title}
         </span>
       ) : breadcrumb.kind === "path" ? (
         breadcrumb.parts.map((part, index) => (
           <Fragment key={part.id}>
             {index === breadcrumb.parts.length - 1 ? (
-              <span className="lyra-titlebar-context-text lyra-file-manager-titlebar-breadcrumb-current max-w-[var(--lyra-unit-150)] overflow-hidden text-ellipsis">
+              <span className={`${TITLEBAR_CONTEXT_TEXT_CLASS} lyra-file-manager-titlebar-breadcrumb-current max-w-[var(--lyra-unit-150)] overflow-hidden text-ellipsis`}>
                 {part.title}
               </span>
             ) : (
@@ -64,7 +65,7 @@ const FileManagerBreadcrumbs = ({
           </Fragment>
         ))
       ) : breadcrumb.title.length > 0 ? (
-        <span className="lyra-titlebar-context-text">
+        <span className={TITLEBAR_CONTEXT_TEXT_CLASS}>
           {breadcrumb.title}
         </span>
       ) : (
@@ -82,7 +83,7 @@ export const FileManagerToolbarContent = ({
   const toolbar = renderModel.toolbar;
   return (
     <>
-      <div className="lyra-titlebar-context-group">
+      <div className={TITLEBAR_CONTEXT_GROUP_CLASS}>
         <AppIconButton
           aria-label={labels.navigationUp}
           title={labels.navigationUp}
@@ -105,7 +106,7 @@ export const FileManagerToolbarContent = ({
         onOpenBreadcrumb={actions.onOpenBreadcrumb}
       />
 
-      <div className="lyra-titlebar-context-group">
+      <div className={TITLEBAR_CONTEXT_GROUP_CLASS}>
         {toolbar.isLargeMode ? (
           <AppIconButton
             aria-label={labels.viewList}

@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { cx } from "../ui-primitives";
+import { TITLEBAR_CONTEXT_CLASS, TITLEBAR_CONTEXT_EMPTY_CLASS, TITLEBAR_CONTEXT_SCROLL_CLASS, TITLEBAR_CONTEXT_LEADING_CLASS, TITLEBAR_CONTEXT_META_CLASS, TITLEBAR_CONTEXT_CONTROLS_CLASS } from "./classes";
 
 export type WorkbenchTitlebarContribution = {
   readonly ariaLabel: string;
@@ -135,25 +136,25 @@ export const WorkbenchTitlebarContextSlot = () => {
   const contribution = useContext(WorkbenchTitlebarActiveContributionContext);
 
   if (contribution === null) {
-    return <div className="lyra-titlebar-context lyra-titlebar-context-empty" aria-hidden="true" />;
+    return <div className={cx(TITLEBAR_CONTEXT_CLASS, TITLEBAR_CONTEXT_EMPTY_CLASS)} aria-hidden="true" />;
   }
 
   return (
     <section
-      className={cx("lyra-titlebar-context", contribution.className)}
+      className={cx(TITLEBAR_CONTEXT_CLASS, contribution.className)}
       aria-label={contribution.ariaLabel}
     >
-      <div className="lyra-titlebar-context-scroll">
+      <div className={TITLEBAR_CONTEXT_SCROLL_CLASS}>
         {contribution.content ?? (
           <>
             {contribution.leading === undefined ? null : (
-              <div className="lyra-titlebar-context-leading">{contribution.leading}</div>
+              <div className={TITLEBAR_CONTEXT_LEADING_CLASS}>{contribution.leading}</div>
             )}
             {contribution.meta === undefined ? null : (
-              <div className="lyra-titlebar-context-meta">{contribution.meta}</div>
+              <div className={TITLEBAR_CONTEXT_META_CLASS}>{contribution.meta}</div>
             )}
             {contribution.controls === undefined ? null : (
-              <div className="lyra-titlebar-context-controls">{contribution.controls}</div>
+              <div className={TITLEBAR_CONTEXT_CONTROLS_CLASS}>{contribution.controls}</div>
             )}
           </>
         )}

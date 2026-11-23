@@ -1,5 +1,15 @@
 import type { MouseEventHandler, ReactNode } from "react";
 
+import {
+  PANEL_BASE_CLASS,
+  PANEL_LEFT_CLASS,
+  PANEL_LEFT_CONTENT_CLASS,
+  PANEL_LEFT_HIDDEN_CLASS,
+  RESIZER_BASE_CLASS,
+  RESIZER_HIDDEN_CLASS,
+  RESIZER_HORIZONTAL_CLASS,
+  RESIZER_VERTICAL_CLASS
+} from "../shell/classes";
 import { cx } from "./classnames";
 import {
   TD_PANEL_BOTTOM_CLASS,
@@ -24,13 +34,14 @@ export const PanelHost = ({
     return (
       <aside
         className={cx(
-          "lyra-panel lyra-panel-left",
-          visible === false && "lyra-panel-left-hidden"
+          PANEL_BASE_CLASS,
+          PANEL_LEFT_CLASS,
+          visible === false && PANEL_LEFT_HIDDEN_CLASS
         )}
         aria-label={ariaLabel}
         aria-hidden={visible ? undefined : true}
       >
-        <div className="lyra-panel-content lyra-panel-left-content">
+        <div className={PANEL_LEFT_CONTENT_CLASS}>
           {children}
         </div>
       </aside>
@@ -40,13 +51,13 @@ export const PanelHost = ({
   return (
     <footer
       className={cx(
-        "lyra-panel", TD_PANEL_BOTTOM_CLASS,
+        PANEL_BASE_CLASS, TD_PANEL_BOTTOM_CLASS,
         visible === false && TD_PANEL_BOTTOM_HIDDEN_CLASS
       )}
       aria-label={ariaLabel}
       aria-hidden={visible ? undefined : true}
     >
-      <div className={`lyra-panel-content ${TD_PANEL_BOTTOM_CONTENT_CLASS}`}>
+      <div className={TD_PANEL_BOTTOM_CONTENT_CLASS}>
         {children}
       </div>
     </footer>
@@ -68,11 +79,11 @@ export const PanelResizer = ({
 }: PanelResizerProps) => (
   <div
     className={cx(
-      "lyra-resizer",
+      RESIZER_BASE_CLASS,
       orientation === "vertical"
-        ? "lyra-resizer-vertical"
-        : "lyra-resizer-horizontal",
-      visible === false && "lyra-resizer-hidden"
+        ? RESIZER_VERTICAL_CLASS
+        : RESIZER_HORIZONTAL_CLASS,
+      visible === false && RESIZER_HIDDEN_CLASS
     )}
     role="separator"
     aria-label={ariaLabel}

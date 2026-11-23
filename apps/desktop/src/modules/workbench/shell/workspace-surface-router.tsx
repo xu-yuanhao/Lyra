@@ -43,6 +43,18 @@ import {
   type WorkspaceSurfaceRenderModel
 } from "./workspace-surface-render-model";
 import { WorkbenchTitlebarScopeProvider } from "./titlebar-context";
+import {
+  WORKSPACE_SPLIT_CLASS,
+  WORKSPACE_SPLIT_COUNT_2_CLASS,
+  WORKSPACE_SPLIT_COUNT_3_CLASS,
+  WORKSPACE_SPLIT_COUNT_4_CLASS,
+  WORKSPACE_SPLIT_PANE_BASE_CLASS,
+  WORKSPACE_SPLIT_PANE_ACTIVE_CLASS,
+  WORKSPACE_SURFACE_KEEPALIVE_CLASS,
+  WORKSPACE_SURFACE_SINGLE_CLASS,
+  WORKSPACE_SURFACE_SPLIT_CLASS,
+  workspaceSplitPaneGridClass
+} from "./classes";
 import { isFileEditorAppId } from "../workspace-apps";
 import { DynamicWorkspaceAppSurface } from "./dynamic-workspace-app-surface";
 import { OfficeViewerSurface } from "../office-viewer/view";
@@ -240,7 +252,7 @@ const KeepAliveSurface = ({
   return (
     <div
       ref={slotRef}
-      className="lyra-workspace-surface-keepalive"
+      className={WORKSPACE_SURFACE_KEEPALIVE_CLASS}
       data-lyra-surface-hidden={hidden ? "true" : undefined}
       aria-hidden={hidden ? true : undefined}
     >
@@ -411,13 +423,19 @@ export const WorkspaceSurfaceRouter = ({
   }, [activeId, tabsModel.tabs]);
 
   if (visibleLayout.mode === "split") {
+    const paneCount = visibleLayout.visibleTabIds.length;
     const splitClassName = [
-      "lyra-workspace-split",
-      `lyra-workspace-split-count-${visibleLayout.visibleTabIds.length}`,
-      `lyra-workspace-split-layout-${splitThreePaneLayout}`
+      WORKSPACE_SPLIT_CLASS,
+      `lyra-workspace-split-count-${paneCount}`,
+      `lyra-workspace-split-layout-${splitThreePaneLayout}`,
+      paneCount === 2
+        ? WORKSPACE_SPLIT_COUNT_2_CLASS
+        : paneCount === 3
+          ? WORKSPACE_SPLIT_COUNT_3_CLASS
+          : WORKSPACE_SPLIT_COUNT_4_CLASS
     ].join(" ");
     return (
-      <div className="lyra-workspace-surface-split">
+      <div className={WORKSPACE_SURFACE_SPLIT_CLASS}>
         <div className={splitClassName} aria-label="workspace-split-layout">
           {visibleLayout.visibleTabIds.map((tabId, index) => {
             const tab = tabById.get(tabId);
@@ -425,10 +443,11 @@ export const WorkspaceSurfaceRouter = ({
               return null;
             }
             const paneClassName = [
-              "lyra-workspace-split-pane",
               `lyra-workspace-split-pane-${index + 1}`,
+              WORKSPACE_SPLIT_PANE_BASE_CLASS,
+              workspaceSplitPaneGridClass(splitThreePaneLayout, index, paneCount),
               tab.id === visibleLayout.focusedSplitTabId
-                ? "lyra-workspace-split-pane-active"
+                ? WORKSPACE_SPLIT_PANE_ACTIVE_CLASS
                 : ""
             ]
               .filter((value) => value.length > 0)
@@ -483,7 +502,7 @@ export const WorkspaceSurfaceRouter = ({
     : keptAliveTabIds;
 
   return (
-    <div className="lyra-workspace-surface-single">
+    <div className={WORKSPACE_SURFACE_SINGLE_CLASS}>
       {singleTabIds.map((tabId) => {
         const tab = tabById.get(tabId);
         if (tab === undefined) return null;

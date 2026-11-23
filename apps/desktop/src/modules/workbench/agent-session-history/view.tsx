@@ -7,6 +7,7 @@ import {
   type KeyboardEvent,
   type MouseEvent
 } from "react";
+import { TITLEBAR_CONTEXT_GROUP_CLASS, TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS } from "../shell/classes";
 import {
   APP_SIDEBAR_GROUP_CLASS,
   APP_SIDEBAR_GROUP_NAME_CLASS,
@@ -868,7 +869,7 @@ export const AgentSessionHistorySurface = ({
     ariaLabel: labels.categoryFilter,
     controls: (
       <div
-        className={`lyra-titlebar-context-group ${HISTORY_TITLEBAR_CATEGORIES_CLASS}`}
+        className={`${TITLEBAR_CONTEXT_GROUP_CLASS} ${HISTORY_TITLEBAR_CATEGORIES_CLASS}`}
         aria-label={labels.categoryFilter}
       >
         {categoryOptions.map((option) => (
@@ -877,8 +878,8 @@ export const AgentSessionHistorySurface = ({
             type="button"
             className={
               category === option.id
-                ? `lyra-titlebar-context-text-button lyra-titlebar-context-button-active ${HISTORY_TITLEBAR_CATEGORY_CLASS}`
-                : `lyra-titlebar-context-text-button ${HISTORY_TITLEBAR_CATEGORY_CLASS}`
+                ? `${TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS} lyra-titlebar-context-button-active ${HISTORY_TITLEBAR_CATEGORY_CLASS}`
+                : `${TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS} ${HISTORY_TITLEBAR_CATEGORY_CLASS}`
             }
             active={category === option.id}
             aria-pressed={category === option.id}

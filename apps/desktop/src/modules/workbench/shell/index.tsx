@@ -20,6 +20,7 @@ import { isAgentSessionHistoryAppId } from "../workspace-apps";
 import { useWorkspaceTabsModel } from "../workspace-tabs";
 import { useWorkbenchUiRuntime } from "../ui-platform";
 import { cx } from "../ui-primitives";
+import { SHELL_ROOT_SURFACE_CLASS } from "./classes";
 import {
   getDesktopApi,
   syncCssVarsToDocumentRoot,
@@ -710,6 +711,7 @@ resolvedThemeId,
 
   const rootClassName = cx(
     "lyra-root",
+    SHELL_ROOT_SURFACE_CLASS,
     uiRuntime.rootClassName,
     isThemeTransitioning && "lyra-theme-transition",
     isFullScreen && "lyra-root-fullscreen",

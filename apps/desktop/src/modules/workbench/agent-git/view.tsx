@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { TITLEBAR_CONTEXT_ICON_BUTTON_CLASS, TITLEBAR_CONTEXT_TEXT_CLASS } from "../shell/classes";
 import {
   GitBranch,
   Minus,
@@ -129,23 +130,23 @@ const AgentGitTitlebarBridge = ({
     () => ({
       ariaLabel: labels.title,
       leading: (
-        <span className="lyra-titlebar-context-text" title={title}>
+        <span className={TITLEBAR_CONTEXT_TEXT_CLASS} title={title}>
           <GitBranch size={12} aria-hidden="true" />
           <span>{branchLabel(snapshot, title)}</span>
         </span>
       ),
       meta: snapshot?.isRepository === true ? (
         <>
-          <span className="lyra-titlebar-context-text">
+          <span className={TITLEBAR_CONTEXT_TEXT_CLASS}>
             {gitStatusLine(snapshot, labels)}
           </span>
           {snapshot.ahead > 0 || snapshot.behind > 0 ? (
-            <span className="lyra-titlebar-context-text">
+            <span className={TITLEBAR_CONTEXT_TEXT_CLASS}>
               ↑{snapshot.ahead} ↓{snapshot.behind}
             </span>
           ) : null}
           {selectedPath === null ? null : (
-            <span className="lyra-titlebar-context-text" title={selectedPath}>
+            <span className={TITLEBAR_CONTEXT_TEXT_CLASS} title={selectedPath}>
               {selectedPath}
             </span>
           )}
@@ -154,7 +155,7 @@ const AgentGitTitlebarBridge = ({
       controls: (
         <AppToolbarButton
           type="button"
-          className="lyra-titlebar-context-icon-button"
+          className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
           aria-label={labels.refresh}
           title={labels.refresh}
           onClick={onRefresh}

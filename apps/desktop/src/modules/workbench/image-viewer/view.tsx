@@ -1,4 +1,5 @@
 import { AppButton, AppErrorState, AppLoadingState, AppToolbarButton } from "@renderer/ui/components";
+import { TITLEBAR_CONTEXT_CHIP_CLASS, TITLEBAR_CONTEXT_CONTROLS_CLASS, TITLEBAR_CONTEXT_ICON_BUTTON_CLASS, TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS } from "../shell/classes";
 import {
   ChevronLeft,
   ChevronRight,
@@ -127,13 +128,13 @@ const ImageViewerTitlebarBridge = ({
       content: (
         <>
           {metadata.length === 0 ? null : (
-            <span className="lyra-titlebar-context-chip">{metadata}</span>
+            <span className={TITLEBAR_CONTEXT_CHIP_CLASS}>{metadata}</span>
           )}
-          <div className="lyra-titlebar-context-controls">
+          <div className={TITLEBAR_CONTEXT_CONTROLS_CLASS}>
             <FilePreviewModeButton filePath={state.filePath} />
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.previous}
               disabled={!canGoAdjacent}
               onClick={() => {
@@ -144,7 +145,7 @@ const ImageViewerTitlebarBridge = ({
             </AppToolbarButton>
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.next}
               disabled={!canGoAdjacent}
               onClick={() => {
@@ -155,7 +156,7 @@ const ImageViewerTitlebarBridge = ({
             </AppToolbarButton>
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.zoomOut}
               onClick={() => model.setViewport(state.instanceId, { zoom: state.view.zoom * 0.8 })}
             >
@@ -163,7 +164,7 @@ const ImageViewerTitlebarBridge = ({
             </AppToolbarButton>
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.zoomIn}
               onClick={() => model.setViewport(state.instanceId, { zoom: state.view.zoom * 1.25 })}
             >
@@ -171,14 +172,14 @@ const ImageViewerTitlebarBridge = ({
             </AppToolbarButton>
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-text-button"
+              className={TITLEBAR_CONTEXT_TEXT_BUTTON_CLASS}
               aria-label={labels.actualSize}
               label={labels.actualSize}
               onClick={() => model.setViewport(state.instanceId, { zoom: 1, offsetX: 0, offsetY: 0 })}
             />
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.fit}
               onClick={fitToViewport}
             >
@@ -186,7 +187,7 @@ const ImageViewerTitlebarBridge = ({
             </AppToolbarButton>
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.rotateLeft}
               onClick={() => model.setViewport(state.instanceId, { rotation: state.view.rotation - 90 })}
             >
@@ -194,7 +195,7 @@ const ImageViewerTitlebarBridge = ({
             </AppToolbarButton>
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.rotateRight}
               onClick={() => model.setViewport(state.instanceId, { rotation: state.view.rotation + 90 })}
             >
@@ -202,7 +203,7 @@ const ImageViewerTitlebarBridge = ({
             </AppToolbarButton>
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.reset}
               onClick={() => model.resetViewport(state.instanceId)}
             >
@@ -210,7 +211,7 @@ const ImageViewerTitlebarBridge = ({
             </AppToolbarButton>
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.background}
               onClick={cycleBackground}
             >

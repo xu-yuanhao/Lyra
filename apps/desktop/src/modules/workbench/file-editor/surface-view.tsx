@@ -12,6 +12,7 @@ import { parseUnifiedDiff } from "../agent-session-view-model/tool-parsing/diff"
 import { VirtualizedDiffView } from "../ai-panel/lyra-agents/features/tools/VirtualizedDiffView";
 import type { FileEditorRenderModel } from "./render-model";
 import type { FileEditorChangeReviewItem } from "./types";
+import { TITLEBAR_CONTEXT_CHIP_CLASS, TITLEBAR_CONTEXT_CONTROLS_CLASS, TITLEBAR_CONTEXT_GROUP_CLASS, TITLEBAR_CONTEXT_ICON_BUTTON_CLASS } from "../shell/classes";
 import {
   FE_HOST_HIDDEN_CLASS,
   FE_EMPTY_STATE_CLASS,
@@ -63,7 +64,7 @@ export const FileEditorTitlebarContent = ({
 }: Omit<FileEditorSurfaceViewProps, "attachHost" | "diffHostRef" | "onRetry" | "previewEnabled">) => {
   const { toolbar } = renderModel;
   return (
-    <div className="lyra-titlebar-context-controls">
+    <div className={TITLEBAR_CONTEXT_CONTROLS_CLASS}>
       {toolbar.delta === null ? null : (
         <span className={FE_AI_WORK_DELTA_CLASS} aria-label={toolbar.delta.ariaLabel}>
           <span className={FE_AI_WORK_DELTA_ADDED_CLASS}>
@@ -79,8 +80,8 @@ export const FileEditorTitlebarContent = ({
           type="button"
           className={
             toolbar.diffToggle.active
-              ? "lyra-titlebar-context-icon-button lyra-titlebar-context-button-active"
-              : "lyra-titlebar-context-icon-button"
+              ? `${TITLEBAR_CONTEXT_ICON_BUTTON_CLASS} lyra-titlebar-context-button-active`
+              : TITLEBAR_CONTEXT_ICON_BUTTON_CLASS
           }
           active={toolbar.diffToggle.active}
           aria-label={toolbar.diffToggle.label}
@@ -91,10 +92,10 @@ export const FileEditorTitlebarContent = ({
         </AppToolbarButton>
       )}
       {toolbar.reviewActions === null ? null : (
-        <span className="lyra-titlebar-context-group">
+        <span className={TITLEBAR_CONTEXT_GROUP_CLASS}>
           <AppToolbarButton
             type="button"
-            className="lyra-titlebar-context-icon-button"
+            className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
             aria-label={toolbar.reviewActions.prevLabel}
             disabled={!toolbar.reviewActions.canGoPrevious}
             onClick={() => {
@@ -105,7 +106,7 @@ export const FileEditorTitlebarContent = ({
           </AppToolbarButton>
           <AppToolbarButton
             type="button"
-            className="lyra-titlebar-context-icon-button"
+            className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
             aria-label={toolbar.reviewActions.nextLabel}
             disabled={!toolbar.reviewActions.canGoNext}
             onClick={() => {
@@ -116,7 +117,7 @@ export const FileEditorTitlebarContent = ({
           </AppToolbarButton>
           <AppToolbarButton
             type="button"
-            className="lyra-titlebar-context-icon-button"
+            className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
             aria-label={toolbar.reviewActions.acceptAllLabel}
             disabled={!toolbar.reviewActions.canAcceptAll}
             onClick={() => {
@@ -128,7 +129,7 @@ export const FileEditorTitlebarContent = ({
           {toolbar.reviewActions.decisionState === "accepted" ? (
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={toolbar.reviewActions.undoLabel}
               onClick={() => {
                 onUndoEditorWorkItem?.(toolbar.reviewActions!.item);
@@ -140,7 +141,7 @@ export const FileEditorTitlebarContent = ({
             <>
               <AppToolbarButton
                 type="button"
-                className="lyra-titlebar-context-icon-button"
+                className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
                 aria-label={toolbar.reviewActions.acceptLabel}
                 onClick={() => {
                   onAcceptEditorWorkItem?.(toolbar.reviewActions!.item);
@@ -152,8 +153,8 @@ export const FileEditorTitlebarContent = ({
                 type="button"
                 className={
                   toolbar.reviewActions.decisionState === "rejected"
-                    ? "lyra-titlebar-context-icon-button lyra-titlebar-context-danger lyra-titlebar-context-button-active"
-                    : "lyra-titlebar-context-icon-button lyra-titlebar-context-danger"
+                    ? `${TITLEBAR_CONTEXT_ICON_BUTTON_CLASS} lyra-titlebar-context-danger lyra-titlebar-context-button-active`
+                    : `${TITLEBAR_CONTEXT_ICON_BUTTON_CLASS} lyra-titlebar-context-danger`
                 }
                 tone="danger"
                 active={toolbar.reviewActions.decisionState === "rejected"}
@@ -169,13 +170,13 @@ export const FileEditorTitlebarContent = ({
         </span>
       )}
       {toolbar.readOnlyLabel === null ? null : (
-        <span className="lyra-titlebar-context-chip">
+        <span className={TITLEBAR_CONTEXT_CHIP_CLASS}>
           <Lock size={12} />
           {toolbar.readOnlyLabel}
         </span>
       )}
       {toolbar.conflictLabel === null ? null : (
-        <span className="lyra-titlebar-context-chip">
+        <span className={TITLEBAR_CONTEXT_CHIP_CLASS}>
           <AlertTriangle size={12} />
           {toolbar.conflictLabel}
         </span>
@@ -183,7 +184,7 @@ export const FileEditorTitlebarContent = ({
       {toolbar.saveButton === null ? null : (
         <AppToolbarButton
           type="button"
-          className="lyra-titlebar-context-icon-button"
+          className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
           aria-label={toolbar.saveButton.label}
           disabled={toolbar.saveButton.disabled}
           onClick={onSave}

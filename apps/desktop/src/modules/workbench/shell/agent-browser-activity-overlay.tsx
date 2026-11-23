@@ -1,3 +1,7 @@
+import {
+  AGENT_BROWSER_OVERLAY_CLASS,
+  AGENT_BROWSER_PAGE_GLOW_CLASS
+} from "./classes";
 import type { BrowserAgentVisualState } from "./use-workbench-browser-runtime";
 
 type AgentBrowserActivityOverlayProps = {
@@ -9,11 +13,11 @@ export const AgentBrowserActivityOverlay = ({
 }: AgentBrowserActivityOverlayProps) => {
   return (
     <div
-      className="lyra-agent-browser-activity-overlay"
+      className={AGENT_BROWSER_OVERLAY_CLASS}
       data-active={state.active ? "true" : "false"}
       aria-hidden="true"
     >
-      {state.active ? <span className="lyra-agent-browser-page-glow" /> : null}
+      {state.active ? <span className={AGENT_BROWSER_PAGE_GLOW_CLASS} /> : null}
     </div>
   );
 };

@@ -3,9 +3,11 @@ import { APP_TAB_TITLE_CLASS } from "@renderer/ui/components";
 export const TD_VARS_CLASS =
   "[--lyra-terminal-stage-bg:var(--lyra-app-panel-bg)] [--lyra-terminal-tabstrip-bg:var(--lyra-app-material-sidebar-bg)] [--lyra-terminal-tabstrip-line:color-mix(in_srgb,var(--lyra-app-border)_62%,transparent)] [--lyra-terminal-tabstrip-hover-bg:var(--lyra-app-row-hover-bg)] [--lyra-terminal-tabstrip-active-bg:var(--lyra-app-row-active-bg)]";
 export const TD_PANEL_BOTTOM_CLASS =
-  "lyra-panel-bottom overflow-hidden bg-[var(--lyra-app-panel-bg)]";
-export const TD_PANEL_BOTTOM_HIDDEN_CLASS = "lyra-panel-bottom-hidden";
-export const TD_PANEL_BOTTOM_CONTENT_CLASS = "lyra-panel-content lyra-panel-bottom-content";
+  "lyra-panel-bottom overflow-hidden bg-[var(--lyra-app-panel-bg)] [.lyra-center-stack-terminal-top_>&]:row-start-1 [.lyra-center-stack-terminal-bottom_>&]:row-start-3";
+export const TD_PANEL_BOTTOM_HIDDEN_CLASS =
+  "lyra-panel-bottom-hidden pointer-events-none invisible [transition:visibility_0s_linear_var(--lyra-motion-panel-layout-duration)] motion-reduce:transition-none";
+export const TD_PANEL_BOTTOM_CONTENT_CLASS =
+  "lyra-panel-content lyra-panel-bottom-content min-w-0 min-h-0 absolute top-0 left-0 w-full flex-none [transform:translate3d(0,0,0)] [backface-visibility:hidden] h-[var(--bottom-panel-content-height,var(--lyra-unit-180))] [.lyra-center-stack-terminal-bottom>.lyra-panel-bottom>&]:top-auto [.lyra-center-stack-terminal-bottom>.lyra-panel-bottom>&]:bottom-0";
 export const TD_BOTTOM_AUX_INACTIVE_CLASS =
   "lyra-bottom-aux-terminal-inactive invisible pointer-events-none z-0";
 export const TD_DOCK_CLASS =

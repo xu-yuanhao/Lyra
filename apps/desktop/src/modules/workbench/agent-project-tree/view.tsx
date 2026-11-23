@@ -14,6 +14,7 @@ import {
   type ReactNode
 } from "react";
 import { ChevronDown, ChevronRight, CircleAlert, FolderOpen, GitBranch, RefreshCw } from "@lyra/icons";
+import { TITLEBAR_CONTEXT_ICON_BUTTON_CLASS, TITLEBAR_CONTEXT_TEXT_CLASS } from "../shell/classes";
 
 import {
   APP_SIDEBAR_SPLIT_CLASS,
@@ -171,7 +172,7 @@ const AgentProjectTreeTitlebarBridge = ({
     () => ({
       ariaLabel: labels.title,
       leading: (
-        <span className="lyra-titlebar-context-text" title={title}>
+        <span className={TITLEBAR_CONTEXT_TEXT_CLASS} title={title}>
           <FolderOpen size={12} aria-hidden="true" />
           <span>{title}</span>
         </span>
@@ -182,7 +183,7 @@ const AgentProjectTreeTitlebarBridge = ({
           {onOpenGitPanel === undefined ? null : (
             <AppToolbarButton
               type="button"
-              className="lyra-titlebar-context-icon-button"
+              className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
               aria-label={labels.openSourceControl}
               title={labels.openSourceControl}
               onClick={onOpenGitPanel}
@@ -195,8 +196,8 @@ const AgentProjectTreeTitlebarBridge = ({
               type="button"
               className={
                 problemsActive
-                  ? "lyra-titlebar-context-icon-button lyra-titlebar-problems-active"
-                  : "lyra-titlebar-context-icon-button"
+                  ? `${TITLEBAR_CONTEXT_ICON_BUTTON_CLASS} lyra-titlebar-problems-active`
+                  : TITLEBAR_CONTEXT_ICON_BUTTON_CLASS
               }
               aria-label={problemsLabel}
               title={problemsLabel}
@@ -207,7 +208,7 @@ const AgentProjectTreeTitlebarBridge = ({
           )}
           <AppToolbarButton
             type="button"
-            className="lyra-titlebar-context-icon-button"
+            className={TITLEBAR_CONTEXT_ICON_BUTTON_CLASS}
             aria-label={labels.refresh}
             title={labels.refresh}
             onClick={onRefresh}

@@ -182,22 +182,6 @@ const ICON_PACKAGE_MODULE_PATTERN =
 
 const selectorRules: readonly SelectorRule[] = [
   {
-    selector: ".lyra-workspace",
-    required: [/grid-template-rows:\s*minmax\(0,\s*1fr\)\s*var\(--lyra-size-browser-tab-h\)\s*;/]
-  },
-  {
-    selector: ".lyra-workspace > .lyra-browser-tabs",
-    required: [/grid-row:\s*2\s*;/]
-  },
-  {
-    selector: ".lyra-workspace-surface-single",
-    required: [/grid-row:\s*1\s*;/]
-  },
-  {
-    selector: ".lyra-workspace-surface-split",
-    required: [/grid-row:\s*1\s*;/]
-  },
-  {
     selector: ".lyra-browser-tabs::before",
     required: [/top:\s*0\s*;/],
     forbidden: [/bottom:\s*0\s*;/]
@@ -242,9 +226,6 @@ const selectorRules: readonly SelectorRule[] = [
 ];
 
 const iconOnlyHoverRules: readonly IconOnlyHoverRule[] = [
-  { selector: ".lyra-titlebar-navigation-action:hover" },
-  { selector: ".lyra-titlebar-context-icon-button:hover:enabled" },
-  { selector: ".lyra-titlebar-context-text-button:hover:enabled" },
   { selector: ".lyra-browser-nav-button:hover" },
   { selector: ".lyra-browser-tab-close:hover" },
   { selector: ".lyra-browser-tab-add:hover" },

@@ -18,6 +18,29 @@ import type {
 } from "../../../shared/desktop-bridge";
 import { DEFAULT_WEB_THEME_SNAPSHOT } from "../../../shared/workbench-browser";
 import { AppIconButton, AppInput } from "@renderer/ui/components";
+import {
+  FIND_EMPTY_CLASS,
+  FIND_RESULT_INDEX_CLASS,
+  FIND_TRUNCATED_CLASS,
+  OMNIBOX_SUGGESTION_PANEL_CLASS,
+  SUGGESTION_ITEM_CLASS,
+  SUGGESTION_LEFT_CLASS,
+  SUGGESTION_TEXT_CLASS,
+  SUGGESTION_TYPE_BADGE_CLASS,
+  TITLEBAR_NAVIGATION_ACTIONS_CLASS,
+  TITLEBAR_NAVIGATION_ACTION_CLASS,
+  TITLEBAR_NAVIGATION_ACTION_RELOADING_CLASS,
+  TITLEBAR_NAVIGATION_CLASS,
+  TITLEBAR_NAVIGATION_EXTERNAL_ACTIONS_CLASS,
+  TITLEBAR_NAVIGATION_FAVORITE_ACTION_CLASS,
+  TITLEBAR_NAVIGATION_FORM_CLASS,
+  TITLEBAR_NAVIGATION_INPUT_CLASS,
+  TITLEBAR_NAVIGATION_ROW_CLASS,
+  TITLEBAR_NAVIGATION_SHELL_CLASS,
+  TITLEBAR_NAVIGATION_SHELL_CONTEXTUAL_CLASS,
+  TITLEBAR_PAGE_FIND_COUNTER_CLASS
+} from "./classes";
+import { cx } from "../ui-primitives";
 import { t, formatMessage } from "@workbench/i18n";
 import type { OmniboxSuggestion } from "./use-titlebar-navigation-model";
 import { useAnchoredOverlayPosition } from "./use-anchored-overlay-position";
@@ -411,7 +434,7 @@ export const TitlebarNavigation = ({
   const overlayList = inlineSuggestionPanelOpen ? (
     <ul
       ref={overlayRef}
-      className="lyra-omnibox-suggestion-panel"
+      className={OMNIBOX_SUGGESTION_PANEL_CLASS}
       role="listbox"
       aria-label={t("navigation.addressSuggestionAriaLabel")}
       data-placement={overlayPosition.placement}
@@ -422,22 +445,23 @@ export const TitlebarNavigation = ({
           key={`${suggestion.value}-${index}`}
           role="option"
           aria-selected={index === selectedIndex}
-          className={`lyra-suggestion-item ${
-            index === selectedIndex ? "is-selected" : ""
-          }`}
+          className={cx(
+            SUGGESTION_ITEM_CLASS,
+            index === selectedIndex && "is-selected"
+          )}
           onMouseDown={(e) => {
             e.preventDefault();
             onSuggestionClick(suggestion);
           }}
         >
-          <div className="lyra-suggestion-left">
+          <div className={SUGGESTION_LEFT_CLASS}>
             {suggestion.type === "history" && <Globe size={13} />}
             {suggestion.type === "search" && <Search size={13} />}
-            <span className="lyra-suggestion-text">
+            <span className={SUGGESTION_TEXT_CLASS}>
               {suggestion.value} {suggestion.label ? `(${suggestion.label})` : ""}
             </span>
           </div>
-          <span className="lyra-suggestion-type-badge">
+          <span className={SUGGESTION_TYPE_BADGE_CLASS}>
             {suggestion.type === "history" ? t("navigation.suggestionTypeHistory") : t("navigation.suggestionTypeSearch")}
           </span>
         </li>
@@ -446,7 +470,7 @@ export const TitlebarNavigation = ({
   ) : inlinePageFindPanelOpen ? (
     <ul
       ref={overlayRef}
-      className="lyra-omnibox-suggestion-panel"
+      className={OMNIBOX_SUGGESTION_PANEL_CLASS}
       role="listbox"
       aria-label={t("navigation.pageFindResultsAriaLabel")}
       data-placement={overlayPosition.placement}
@@ -462,31 +486,31 @@ export const TitlebarNavigation = ({
               key={match.id}
               role="option"
               aria-selected={selected}
-              className={`lyra-suggestion-item ${selected ? "is-selected" : ""}`}
+              className={cx(SUGGESTION_ITEM_CLASS, selected && "is-selected")}
               onMouseDown={(event) => {
                 event.preventDefault();
                 void onPageFindMatchClick(match.index);
               }}
             >
-              <div className="lyra-suggestion-left">
-                <span className="lyra-find-result-index">#{match.index}</span>
-                <span className="lyra-suggestion-text">
+              <div className={SUGGESTION_LEFT_CLASS}>
+                <span className={FIND_RESULT_INDEX_CLASS}>#{match.index}</span>
+                <span className={SUGGESTION_TEXT_CLASS}>
                   {renderPageFindSnippet(match.snippet)}
                 </span>
               </div>
-              <span className="lyra-suggestion-type-badge">
+              <span className={SUGGESTION_TYPE_BADGE_CLASS}>
                 {selected ? t("navigation.pageFindResultCurrent") : t("navigation.pageFindResultLabel")}
               </span>
             </li>
           );
         })
       ) : (
-        <li className="lyra-find-empty">
+        <li className={FIND_EMPTY_CLASS}>
           {value.trim().length === 0 ? t("navigation.pageFindEmptyStart") : t("navigation.pageFindEmptyNoMatch")}
         </li>
       )}
       {pageFindResult?.truncated === true ? (
-        <li className="lyra-find-truncated">
+        <li className={FIND_TRUNCATED_CLASS}>
           {formatMessage("navigation.pageFindTruncationNotice", { count: pageFindMatches.length })}
         </li>
       ) : null}
@@ -495,23 +519,23 @@ export const TitlebarNavigation = ({
 
   return (
     <>
-      <div className="lyra-titlebar-navigation lyra-no-drag">
-        <form ref={navigationRef} className="lyra-titlebar-navigation-form" onSubmit={handleSubmit}>
+      <div className={cx(TITLEBAR_NAVIGATION_CLASS, "lyra-no-drag")}>
+        <form ref={navigationRef} className={TITLEBAR_NAVIGATION_FORM_CLASS} onSubmit={handleSubmit}>
           <div
             className={
               isContextualAddress
-                ? "lyra-titlebar-navigation-shell lyra-titlebar-navigation-shell-contextual"
-                : "lyra-titlebar-navigation-shell"
+                ? cx(TITLEBAR_NAVIGATION_SHELL_CLASS, TITLEBAR_NAVIGATION_SHELL_CONTEXTUAL_CLASS)
+                : TITLEBAR_NAVIGATION_SHELL_CLASS
             }
             data-has-trailing-control={hasTrailingControl ? "true" : "false"}
             data-has-favorite-control={hasFavoriteButton ? "true" : "false"}
             data-mode={pageFindMode ? "page-find" : "normal"}
             data-primary-action={primaryActionKind}
           >
-            <div className="lyra-titlebar-navigation-row">
+            <div className={TITLEBAR_NAVIGATION_ROW_CLASS}>
               <AppInput
                 ref={inputRef}
-                className="lyra-titlebar-navigation-input"
+                className={TITLEBAR_NAVIGATION_INPUT_CLASS}
                 type="text"
                 value={value}
                 placeholder={placeholder}
@@ -536,14 +560,14 @@ export const TitlebarNavigation = ({
                 onKeyDown={onKeyDown}
               />
               {pageFindMode || primaryActionKind === "submit" ? (
-                <span className="lyra-titlebar-navigation-actions">
+                <span className={TITLEBAR_NAVIGATION_ACTIONS_CLASS}>
                   {pageFindMode ? (
                     <>
-                      <span className="lyra-titlebar-page-find-counter">
+                      <span className={TITLEBAR_PAGE_FIND_COUNTER_CLASS}>
                         {pageFindCounter}
                       </span>
                       <AppIconButton
-                        className="lyra-titlebar-navigation-action"
+                        className={TITLEBAR_NAVIGATION_ACTION_CLASS}
                         aria-label={t("navigation.previousPageResult")}
                         title={t("navigation.previousPageResult")}
                         onMouseDown={(event) => event.preventDefault()}
@@ -554,7 +578,7 @@ export const TitlebarNavigation = ({
                         <ChevronUp size={14} aria-hidden="true" />
                       </AppIconButton>
                       <AppIconButton
-                        className="lyra-titlebar-navigation-action"
+                        className={TITLEBAR_NAVIGATION_ACTION_CLASS}
                         aria-label={t("navigation.nextPageResult")}
                         title={t("navigation.nextPageResult")}
                         onMouseDown={(event) => event.preventDefault()}
@@ -568,7 +592,7 @@ export const TitlebarNavigation = ({
                   ) : (
                     <AppIconButton
                       type="submit"
-                      className="lyra-titlebar-navigation-action"
+                      className={TITLEBAR_NAVIGATION_ACTION_CLASS}
                       aria-label={submitLabel}
                       title={submitLabel}
                     >
@@ -581,14 +605,14 @@ export const TitlebarNavigation = ({
           </div>
         </form>
         {hasExternalActions ? (
-          <div className="lyra-titlebar-navigation-external-actions">
+          <div className={TITLEBAR_NAVIGATION_EXTERNAL_ACTIONS_CLASS}>
             {!pageFindMode && primaryActionKind === "reload" ? (
               <AppIconButton
                 type="button"
                 className={
                   reloadAnimating
-                    ? "lyra-titlebar-navigation-action lyra-titlebar-navigation-action-reloading"
-                    : "lyra-titlebar-navigation-action"
+                    ? cx(TITLEBAR_NAVIGATION_ACTION_CLASS, TITLEBAR_NAVIGATION_ACTION_RELOADING_CLASS)
+                    : TITLEBAR_NAVIGATION_ACTION_CLASS
                 }
                 aria-label={reloadLabel}
                 title={reloadLabel}
@@ -600,7 +624,7 @@ export const TitlebarNavigation = ({
             {trailingControl}
             {hasFavoriteButton ? (
               <AppIconButton
-                className="lyra-titlebar-navigation-action lyra-titlebar-navigation-favorite-action"
+                className={cx(TITLEBAR_NAVIGATION_ACTION_CLASS, TITLEBAR_NAVIGATION_FAVORITE_ACTION_CLASS)}
                 active={favoriteButton!.active}
                 aria-label={favoriteButton!.label}
                 title={favoriteButton!.label}
