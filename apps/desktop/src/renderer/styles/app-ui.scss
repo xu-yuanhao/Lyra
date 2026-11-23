@@ -87,88 +87,6 @@
   line-height: var(--lyra-text-line-caption);
 }
 
-.lyra-app-module-compound {
-  display: flex;
-  min-width: var(--lyra-space-64);
-  flex: 1 1 auto;
-}
-
-.lyra-app-module-aside {
-  min-width: 0;
-  min-height: 0;
-  overflow: auto;
-  padding: var(--lyra-space-8);
-  border-inline-end: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-}
-
-.lyra-app-module-aside[data-edge="end"] {
-  border-inline-end: 0;
-  border-inline-start: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-}
-
-.lyra-app-module-card {
-  padding: var(--lyra-space-10);
-  border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-10);
-  background: var(--lyra-app-surface-bg);
-}
-
-.lyra-app-module-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: var(--lyra-z-sticky-header);
-  display: grid;
-  place-items: center;
-  padding: var(--lyra-space-16);
-  background: var(--lyra-app-overlay-bg);
-}
-
-.lyra-app-module-dialog {
-  width: min(var(--lyra-unit-420), 100%);
-  padding: var(--lyra-space-16);
-  border: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  border-radius: var(--lyra-radius-10);
-  color: var(--lyra-text-primary);
-  background: var(--lyra-app-popover-bg);
-  box-shadow: var(--lyra-shadow-elevated-lg);
-}
-
-.lyra-app-module-muted {
-  color: var(--lyra-text-secondary);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-}
-
-.lyra-app-module-banner {
-  display: flex;
-  align-items: center;
-  gap: var(--lyra-space-8);
-  min-width: 0;
-  padding: var(--lyra-space-6) var(--lyra-space-12);
-  border-bottom: var(--lyra-stroke-thin) solid var(--lyra-app-border);
-  color: var(--lyra-text-secondary);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-  background: var(--lyra-app-muted-bg);
-}
-
-.lyra-app-module-banner[data-tone="warning"] {
-  background: color-mix(in srgb, var(--lyra-status-warning) 16%, var(--lyra-app-surface-bg));
-}
-
-.lyra-app-module-meter {
-  display: block;
-  height: var(--lyra-space-4);
-  margin-top: var(--lyra-space-8);
-  overflow: hidden;
-  background: var(--lyra-app-muted-bg);
-}
-
-.lyra-app-module-meter > i {
-  display: block;
-  height: 100%;
-  background: var(--lyra-app-primary-button);
-}
 
 .lyra-app-content-column {
   --lyra-app-content-max-width: var(--lyra-unit-690);
@@ -271,33 +189,6 @@
   line-height: var(--lyra-text-line-body);
 }
 
-.lyra-app-form-grid {
-  --lyra-app-form-grid-columns: repeat(2, minmax(0, 1fr));
-  min-width: 0;
-  display: grid;
-  grid-template-columns: var(--lyra-app-form-grid-columns);
-  gap: var(--lyra-space-12);
-}
-
-.lyra-app-form-field {
-  min-width: 0;
-  display: grid;
-  gap: var(--lyra-space-6);
-  color: var(--lyra-text-muted);
-  font-size: var(--lyra-text-size-caption);
-  line-height: var(--lyra-text-line-caption);
-}
-
-.lyra-app-form-field-wide {
-  grid-column: 1 / -1;
-}
-
-.lyra-app-inline-actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--lyra-space-8);
-}
 
 .lyra-titlebar-context-tabs {
   max-width: min(52vw, var(--lyra-unit-560));
@@ -722,23 +613,6 @@
   place-items: center;
 }
 
-.lyra-app-sidebar-status {
-  min-width: 0;
-  margin-top: auto;
-  position: relative;
-  padding: var(--lyra-space-12) var(--lyra-space-8) 0;
-  color: var(--lyra-text-muted);
-}
-
-.lyra-app-sidebar-status::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: var(--lyra-space-8);
-  right: var(--lyra-space-8);
-  height: var(--lyra-stroke-thin);
-  background: color-mix(in srgb, var(--lyra-app-border) 42%, transparent);
-}
 
 /* Optional container for statuses that need to stand out from surrounding copy. */
 .lyra-app-status-message-boxed {
