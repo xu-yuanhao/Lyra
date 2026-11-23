@@ -1,5 +1,6 @@
 import type { ToolPeek } from "../../core/types";
 import { imagePreviewSourceFromSource } from "../rich-text/ActionTargets";
+import { TOOL_PEEK_CHIP_CLASS, TOOL_PEEK_CLASS, TOOL_PEEK_EXCERPT_CLASS, TOOL_PEEK_THUMB_CLASS } from "./classes";
 
 export function ToolPeekStrip({
   peek,
@@ -17,21 +18,21 @@ export function ToolPeekStrip({
     : imagePreviewSourceFromSource(peek.thumbnail.src);
 
   return (
-    <span className={`lyra-agents-tool-peek ${className}`.trim()}>
+    <span className={`${TOOL_PEEK_CLASS} ${className}`.trim()}>
       {peek.thumbnail !== undefined && thumbnailSrc !== undefined ? (
         <img
           src={thumbnailSrc}
           alt={peek.thumbnail.alt}
-          className="lyra-agents-tool-peek-thumb"
+          className={TOOL_PEEK_THUMB_CLASS}
         />
       ) : null}
       {peek.chips.map((chip) => (
-        <span key={chip} className="lyra-agents-tool-peek-chip">
+        <span key={chip} className={TOOL_PEEK_CHIP_CLASS}>
           {chip}
         </span>
       ))}
       {peek.excerpt !== undefined ? (
-        <span className="lyra-agents-tool-peek-excerpt" title={peek.excerpt}>
+        <span className={TOOL_PEEK_EXCERPT_CLASS} title={peek.excerpt}>
           {peek.excerpt}
         </span>
       ) : null}

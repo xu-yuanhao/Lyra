@@ -17,6 +17,12 @@ import { TerminalToolCard } from "./TerminalToolCard";
 import { AppButton, AppShimmer } from "@renderer/ui/components";
 import { VirtualizedDiffView } from "./VirtualizedDiffView";
 import { EDIT_CARD_WAITING_CLASS, EDIT_DETAILS_CLASS, TASK_CARD_CLASS, TASK_CARD_HEAD_CLASS, TASK_ITEM_CLASS } from "../chat/classes";
+import {
+  TOOL_MONO_TEXT_CLASS,
+  TOOL_RESULT_ITEM_CLASS,
+  TOOL_RESULT_LINE_CLASS,
+  TOOL_RESULT_META_CLASS
+} from "./classes";
 
 function ToolDump({
   code,
@@ -184,7 +190,7 @@ function SearchCard({
       <div className="lyra-agents-tool-result-list lyra-agents-search-results">
         {details.results.map((r, i) => (
           <div key={i} className="lyra-agents-search-row">
-            <FileOpenButton filePath={`${r.file}:${r.line}`} className="lyra-agents-tool-result-line lyra-agents-info-dim lyra-agents-search-path-button">
+            <FileOpenButton filePath={`${r.file}:${r.line}`} className={`lyra-agents-tool-result-line ${TOOL_RESULT_LINE_CLASS} lyra-agents-info-dim lyra-agents-search-path-button`}>
               {r.file}:{r.line}
             </FileOpenButton>
             <span className="lyra-agents-search-text">
@@ -242,20 +248,20 @@ function WebCard({
           </div>
           <div className="lyra-agents-tool-result-list lyra-agents-web-results">
             {results.map((result, index) => (
-              <div key={`${result.url}-${index}`} className="lyra-agents-tool-result-item">
+              <div key={`${result.url}-${index}`} className={TOOL_RESULT_ITEM_CLASS}>
                 <AppButton variant="ghost" size="sm"
                   type="button"
-                  className="lyra-agents-tool-result-line lyra-agents-web-result-title"
+                  className={`${TOOL_RESULT_LINE_CLASS} lyra-agents-web-result-title`}
                   title={result.url}
                   onClick={() => openResult(result.url, result.title)}
                 >
                   {result.title}
                 </AppButton>
-                <div className="lyra-agents-tool-result-meta lyra-agents-web-result-url">
+                <div className={`${TOOL_RESULT_META_CLASS} lyra-agents-web-result-url`}>
                   {webResultHost(result.url)}
                 </div>
                 {result.snippet ? (
-                  <p className="lyra-agents-tool-result-note lyra-agents-web-result-snippet">
+                  <p className={`${TOOL_RESULT_META_CLASS} lyra-agents-web-result-snippet`}>
                     {result.snippet}
                   </p>
                 ) : null}
@@ -269,7 +275,7 @@ function WebCard({
             <span className="lyra-agents-info-dim">{t("tool.webUrlLabel")}</span>
             <AppButton variant="ghost" size="sm"
               type="button"
-              className="lyra-agents-tool-result-line lyra-agents-web-url-button"
+              className={`${TOOL_RESULT_LINE_CLASS} lyra-agents-web-url-button`}
               title={details.url}
               onClick={() => openResult(details.url, details.title ?? details.url)}
             >
@@ -277,12 +283,12 @@ function WebCard({
             </AppButton>
           </div>
           {details.title && (
-            <div className="lyra-agents-tool-result-line lyra-agents-web-fetch-title">{details.title}</div>
+            <div className={`${TOOL_RESULT_LINE_CLASS} lyra-agents-web-fetch-title`}>{details.title}</div>
           )}
         </>
       )}
       {details.summary ? (
-        <pre className="lyra-agents-info-pre">
+        <pre className={`lyra-agents-info-pre ${TOOL_MONO_TEXT_CLASS}`}>
           <ActionText text={details.summary} />
         </pre>
       ) : null}
@@ -327,7 +333,7 @@ function WorkbenchCard({
       )}
 
       {details.excerpt ? (
-        <pre className="lyra-agents-info-pre">
+        <pre className={`lyra-agents-info-pre ${TOOL_MONO_TEXT_CLASS}`}>
           <ActionText text={details.excerpt} />
         </pre>
       ) : null}
@@ -353,7 +359,7 @@ function WorkbenchTabRow({
     return (
       <AppButton variant="ghost" size="sm"
         type="button"
-        className="lyra-agents-tool-result-line lyra-agents-workbench-tab-title"
+        className={`${TOOL_RESULT_LINE_CLASS} lyra-agents-workbench-tab-title`}
         title={tab.url}
         onClick={onOpen}
       >
@@ -362,7 +368,7 @@ function WorkbenchTabRow({
     );
   }
   return (
-    <div className="lyra-agents-tool-result-line lyra-agents-workbench-tab-title-static">
+    <div className={`${TOOL_RESULT_LINE_CLASS} lyra-agents-workbench-tab-title-static`}>
       {tab.title}
     </div>
   );
@@ -407,10 +413,10 @@ function TaskCard({
 }) {
   return (
     <div className={`lyra-agents-info-block ${TASK_CARD_CLASS}`}>
-      <div className={`lyra-agents-tool-result-line ${TASK_CARD_HEAD_CLASS}`}>{t("tool.executionPlan")}</div>
+      <div className={`${TOOL_RESULT_LINE_CLASS} ${TASK_CARD_HEAD_CLASS}`}>{t("tool.executionPlan")}</div>
       <ul className="lyra-agents-tool-result-list lyra-agents-task-list">
         {details.tasks.map((task, i) => (
-          <li key={i} className={`lyra-agents-tool-result-line ${TASK_ITEM_CLASS} status-${task.status}`}>
+          <li key={i} className={`${TOOL_RESULT_LINE_CLASS} ${TASK_ITEM_CLASS} status-${task.status}`}>
             <AppShimmer text={task.title} active={task.status === "running"} />
           </li>
         ))}
@@ -427,9 +433,9 @@ function AskCard({
   const answer = details.answer.trim();
   return (
     <div className="lyra-agents-info-block lyra-agents-ask-card">
-      <pre className="lyra-agents-info-pre lyra-agents-ask-question">{details.question}</pre>
+      <pre className={`lyra-agents-info-pre lyra-agents-ask-question ${TOOL_MONO_TEXT_CLASS}`}>{details.question}</pre>
       {answer.length > 0 ? (
-        <pre className="lyra-agents-info-pre lyra-agents-ask-answer">{answer}</pre>
+        <pre className={`lyra-agents-info-pre lyra-agents-ask-answer ${TOOL_MONO_TEXT_CLASS}`}>{answer}</pre>
       ) : null}
     </div>
   );

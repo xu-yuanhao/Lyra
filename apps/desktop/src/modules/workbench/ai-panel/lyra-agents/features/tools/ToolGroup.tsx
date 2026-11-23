@@ -32,14 +32,28 @@ import { parseUnifiedDiff } from "@workbench/agent-session-view-model/tool-parsi
 import { splitDisplayPath } from "../chat/changed-files";
 import {
   CHEVRON_SLOT_CLASS,
+  ICON_SWAP_CHEVRON_CLASS,
+  ICON_SWAP_CLASS,
+  ICON_SWAP_TOOL_CLASS,
+  STAGGER_ITEM_CLASS,
   THINKING_BODY_CLASS,
+  TOOL_CALL_BODY_CLASS,
+  TOOL_CALL_BODY_DESCENDANT_CLASS,
+  TOOL_CALL_CLASS,
+  TOOL_CALL_FILE_ICON_CLASS,
+  TOOL_CALL_HEAD_CLASS,
+  TOOL_CALL_HEAD_LABEL_CLASS,
+  TOOL_CALL_HEAD_ROW_CLASS,
+  TOOL_CALL_TARGET_CLASS,
+  TOOL_CALL_TARGET_NAME_CLASS,
+  TOOL_CALL_TITLE_CLASS,
+  TOOL_CALL_TWIST_CLASS,
   TOOL_GROUP_BODY_CLASS,
   TOOL_GROUP_CLASS,
   TOOL_GROUP_HEAD_CLASS,
   TOOL_GROUP_ICON_SLOT_CLASS,
   TOOL_GROUP_LABEL_CLASS,
   TOOL_GROUP_LEAD_CLASS,
-  STAGGER_ITEM_CLASS,
   toolCallStatusIconClass
 } from "./classes";
 
@@ -217,23 +231,23 @@ function ToolCallRow({
   };
 
   return (
-    <div className={`lyra-agents-tool-call ${open ? "open" : ""} lyra-agents-status-${call.status} ${toolCallStatusIconClass(call.status)}`}>
-      <div className={`lyra-agents-tool-call-head-row ${hasDetails || isSubagent ? "has-details" : ""}`}>
+    <div className={`${TOOL_CALL_CLASS} ${open ? "open" : ""} lyra-agents-status-${call.status} ${toolCallStatusIconClass(call.status)}`}>
+      <div className={`${TOOL_CALL_HEAD_ROW_CLASS} ${hasDetails || isSubagent ? "has-details" : ""}`}>
         <AppButton
           variant="ghost"
           size="sm"
           type="button"
-          className="lyra-agents-tool-call-twist"
+          className={TOOL_CALL_TWIST_CLASS}
           onClick={toggle}
           aria-expanded={open}
           aria-label={open ? t("tool.collapseCall") : t("tool.expandCall")}
           disabled={!canToggle}
         >
-          <span ref={anchorRef} className="lyra-agents-icon-swap">
-            <span className="lyra-agents-icon-swap-tool">
+          <span ref={anchorRef} className={ICON_SWAP_CLASS}>
+            <span className={ICON_SWAP_TOOL_CLASS}>
               <ToolCallIcon call={call} />
             </span>
-            <span className="lyra-agents-icon-swap-chevron">
+            <span className={ICON_SWAP_CHEVRON_CLASS}>
               <ChevronIcon open={open} />
             </span>
           </span>
@@ -242,7 +256,7 @@ function ToolCallRow({
           variant="ghost"
           size="sm"
           type="button"
-          className={`lyra-agents-tool-call-head ${hasDetails || isSubagent ? "has-details" : ""}`}
+          className={`${TOOL_CALL_HEAD_CLASS} ${hasDetails || isSubagent ? "has-details" : ""}`}
           onClick={() => {
             if (isSubagent) {
               openSubagent(subagentId, call.title);
@@ -280,7 +294,7 @@ function ToolCallRow({
           )}
           <div
             ref={scrollerRef}
-            className="lyra-agents-tool-call-body"
+            className={`${TOOL_CALL_BODY_CLASS} ${TOOL_CALL_BODY_DESCENDANT_CLASS}`}
             data-scrollable="true"
             onMouseEnter={followBottom.onMouseEnter}
             onMouseLeave={followBottom.onMouseLeave}
@@ -416,17 +430,17 @@ function ToolCallHeadLabel({
   };
 
   return (
-    <span className="lyra-agents-tool-call-head-label">
+    <span className={TOOL_CALL_HEAD_LABEL_CLASS}>
       <AppShimmer
         text={call.title}
         active={shimmer}
-        className="lyra-agents-tool-call-title"
+        className={TOOL_CALL_TITLE_CLASS}
       />
       {targetFile !== undefined ? (
         <span
           role="button"
           tabIndex={0}
-          className="lyra-agents-tool-call-target"
+          className={TOOL_CALL_TARGET_CLASS}
           title={targetFile}
           onClick={openTargetFile}
           onKeyDown={(event) => {
@@ -435,10 +449,10 @@ function ToolCallHeadLabel({
             openTargetFile(event);
           }}
         >
-          <span className="lyra-agents-tool-call-file-icon" aria-hidden="true">
+          <span className={TOOL_CALL_FILE_ICON_CLASS} aria-hidden="true">
             <FileTypeIcon filename={targetFile} size={14} />
           </span>
-          <span className="lyra-agents-tool-call-target-name">{editFileLabel(targetFile)}</span>
+          <span className={TOOL_CALL_TARGET_NAME_CLASS}>{editFileLabel(targetFile)}</span>
         </span>
       ) : null}
     </span>
@@ -465,22 +479,22 @@ function ThinkingRow({
     accordion.toggleEntry(groupId, entry.id, open);
   };
   return (
-    <div className={`lyra-agents-tool-call ${open ? "open" : ""} lyra-agents-status-${entry.status} ${toolCallStatusIconClass(entry.status)}`}>
-      <div className="lyra-agents-tool-call-head-row has-details">
+    <div className={`${TOOL_CALL_CLASS} ${open ? "open" : ""} lyra-agents-status-${entry.status} ${toolCallStatusIconClass(entry.status)}`}>
+      <div className={`${TOOL_CALL_HEAD_ROW_CLASS} has-details`}>
         <AppButton
           variant="ghost"
           size="sm"
           type="button"
-          className="lyra-agents-tool-call-twist"
+          className={TOOL_CALL_TWIST_CLASS}
           onClick={toggle}
           aria-expanded={open}
           aria-label={open ? t("tool.collapseCall") : t("tool.expandCall")}
         >
-          <span ref={anchorRef} className="lyra-agents-icon-swap">
-            <span className="lyra-agents-icon-swap-tool">
+          <span ref={anchorRef} className={ICON_SWAP_CLASS}>
+            <span className={ICON_SWAP_TOOL_CLASS}>
               <ToolIcon kind="thought" />
             </span>
-            <span className="lyra-agents-icon-swap-chevron">
+            <span className={ICON_SWAP_CHEVRON_CLASS}>
               <ChevronIcon open={open} />
             </span>
           </span>
@@ -489,17 +503,17 @@ function ThinkingRow({
           variant="ghost"
           size="sm"
           type="button"
-          className="lyra-agents-tool-call-head has-details"
+          className={`${TOOL_CALL_HEAD_CLASS} has-details`}
           onClick={toggle}
           aria-expanded={open}
         >
-          <span className="lyra-agents-tool-call-head-label">
+          <span className={TOOL_CALL_HEAD_LABEL_CLASS}>
             <AppShimmer
               text={isRunning
                 ? t("lyra-agents-message.thinkingInProgress")
                 : t("lyra-agents-message.thinkingLabel")}
               active={groupOpen && isRunning}
-              className="lyra-agents-tool-call-title"
+              className={TOOL_CALL_TITLE_CLASS}
             />
           </span>
         </AppButton>
@@ -516,7 +530,7 @@ function ThinkingRow({
       {open ? (
         <div
           ref={scrollerRef}
-          className="lyra-agents-tool-call-body"
+          className={`${TOOL_CALL_BODY_CLASS} ${TOOL_CALL_BODY_DESCENDANT_CLASS}`}
           data-scrollable="true"
           onMouseEnter={followBottom.onMouseEnter}
           onMouseLeave={followBottom.onMouseLeave}
