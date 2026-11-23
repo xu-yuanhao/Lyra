@@ -1,5 +1,11 @@
 import type { MouseEvent, ReactNode } from "react";
 import { Button } from "@renderer/ui/components/button";
+import {
+  CITATION_CHIP_PREVIEW_CLASS,
+  CITATION_CHIP_PREVIEW_WRAP_CLASS,
+  INLINE_RESOURCE_CLASS,
+  RESOURCE_CHIP_CLASS
+} from "./classes";
 
 export type ResourceChipProps = {
   readonly ariaLabel: string;
@@ -11,18 +17,19 @@ export type ResourceChipProps = {
   readonly webLinkUrl?: string | undefined;
 };
 
-const chipClassName = (className?: string): string => [
+const chipClassName = (className?: string, cursor = "cursor-pointer"): string => [
   "lyra-agents-citation-chip",
-  "lyra-agents-inline-resource",
-  "lyra-agents-resource-chip",
+  INLINE_RESOURCE_CLASS,
+  RESOURCE_CHIP_CLASS,
+  cursor,
   className
 ].filter(Boolean).join(" ");
 
 const ChipContents = ({ icon, label }: Pick<ResourceChipProps, "icon" | "label">) => (
   <>
     {icon}
-    <span className="lyra-agents-citation-chip-preview-wrap">
-      <span className="lyra-agents-citation-chip-preview">{label}</span>
+    <span className={CITATION_CHIP_PREVIEW_WRAP_CLASS}>
+      <span className={CITATION_CHIP_PREVIEW_CLASS}>{label}</span>
     </span>
   </>
 );
@@ -45,7 +52,7 @@ export const ResourceChip = ({
 }: ResourceChipProps) => {
   if (onActivate === undefined) {
     return (
-      <span className={chipClassName(className)} title={title} aria-label={ariaLabel} data-web-link-url={webLinkUrl}>
+      <span className={chipClassName(className, "cursor-default")} title={title} aria-label={ariaLabel} data-web-link-url={webLinkUrl}>
         <ChipContents icon={icon} label={label} />
       </span>
     );

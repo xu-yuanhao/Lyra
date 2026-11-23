@@ -10,6 +10,7 @@ import { PageCitationChipView } from "./PageCitationChipView";
 import { splitMessageWebLinks } from "./message-web-links";
 import { websiteLinkLabel } from "./web-link-display";
 import { WebsiteLinkIcon } from "./page-citation-tab-icon";
+import { CITATION_CHIP_LINK_CLASS, INLINE_RESOURCE_GROUP_CLASS } from "./classes";
 import { ResourceChip } from "./ResourceChip";
 import { useWebLinkClipboard } from "./web-link-clipboard";
 
@@ -86,7 +87,7 @@ export const MessageCitationText = ({
           return (
             <ResourceChip
               key={`link-${index}`}
-              className="lyra-agents-citation-chip-link"
+              className={CITATION_CHIP_LINK_CLASS}
               webLinkUrl={segment.url}
               title={segment.url}
               ariaLabel={segment.url}
@@ -153,7 +154,7 @@ export const MessageCitationText = ({
   );
 
   if (hasOnlyRenderedCitations) {
-    return <span className="lyra-agents-inline-resource-group">{contents}</span>;
+    return <span className={INLINE_RESOURCE_GROUP_CLASS}>{contents}</span>;
   }
   return contents;
 };

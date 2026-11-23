@@ -22,13 +22,27 @@ import {
   mountWebsiteLinkIcon
 } from "./page-citation-tab-icon";
 import { pageCitationWebUrl, websiteLinkLabel } from "./web-link-display";
+import {
+  CITATION_CHIP_FILE_CLASS,
+  CITATION_CHIP_ICON_CLASS,
+  CITATION_CHIP_ICON_HOST_CLASS,
+  CITATION_CHIP_LINK_CLASS,
+  CITATION_CHIP_PREVIEW_CLASS,
+  CITATION_CHIP_PREVIEW_WRAP_CLASS,
+  INLINE_RESOURCE_CLASS,
+  citationChipRoleClass,
+  imageAttachmentChipVariantClass
+} from "./classes";
 
 const composerChip = (modifierClassName: string): HTMLSpanElement => {
   const chip = document.createElement("span");
-  chip.className = `lyra-agents-citation-chip lyra-agents-inline-resource ${modifierClassName}`;
+  chip.className = `lyra-agents-citation-chip ${INLINE_RESOURCE_CLASS} cursor-pointer ${modifierClassName}`;
   chip.contentEditable = "false";
   return chip;
 };
+
+
+
 
 const applyCitationDataset = (chip: HTMLSpanElement, citation: AgentTranscriptCitation): void => {
   chip.dataset.citationId = citation.id;
@@ -85,14 +99,14 @@ export const createPageCitationChipElement = (citation: AgentPageCitation): HTML
   applyPageCitationDataset(chip, citation);
 
   const icon = document.createElement("span");
-  icon.className = "lyra-agents-citation-chip-icon-host";
+  icon.className = CITATION_CHIP_ICON_HOST_CLASS;
   mountPageCitationTabIcon(icon, citation);
   chip.appendChild(icon);
 
   const previewWrap = document.createElement("span");
-  previewWrap.className = "lyra-agents-citation-chip-preview-wrap";
+  previewWrap.className = CITATION_CHIP_PREVIEW_WRAP_CLASS;
   const preview = document.createElement("span");
-  preview.className = "lyra-agents-citation-chip-preview";
+  preview.className = CITATION_CHIP_PREVIEW_CLASS;
   preview.textContent = label;
   previewWrap.appendChild(preview);
   chip.appendChild(previewWrap);
@@ -101,7 +115,7 @@ export const createPageCitationChipElement = (citation: AgentPageCitation): HTML
 
 export const createLinkChipElement = (link: ComposerLinkSegment): HTMLSpanElement => {
   const label = link.label.trim() || websiteLinkLabel(link.url);
-  const chip = composerChip("lyra-agents-citation-chip-link");
+  const chip = composerChip(CITATION_CHIP_LINK_CLASS);
   chip.title = link.url;
   chip.setAttribute("role", "button");
   chip.setAttribute("tabindex", "-1");
@@ -113,20 +127,20 @@ export const createLinkChipElement = (link: ComposerLinkSegment): HTMLSpanElemen
   }
 
   const icon = document.createElement("span");
-  icon.className = "lyra-agents-citation-chip-icon-host";
+  icon.className = CITATION_CHIP_ICON_HOST_CLASS;
   mountWebsiteLinkIcon(
     icon,
     link.faviconUrl,
     12,
-    "lyra-agents-citation-chip-icon",
+    CITATION_CHIP_ICON_CLASS,
     link.url
   );
   chip.appendChild(icon);
 
   const previewWrap = document.createElement("span");
-  previewWrap.className = "lyra-agents-citation-chip-preview-wrap";
+  previewWrap.className = CITATION_CHIP_PREVIEW_WRAP_CLASS;
   const preview = document.createElement("span");
-  preview.className = "lyra-agents-citation-chip-preview";
+  preview.className = CITATION_CHIP_PREVIEW_CLASS;
   preview.textContent = websiteLinkLabel(link.url);
   previewWrap.appendChild(preview);
   chip.appendChild(previewWrap);
@@ -137,7 +151,7 @@ export const createImageChipElement = (image: AgentImageAttachment): HTMLSpanEle
   const kind = imageAttachmentChipKind(image);
   const preview = inlineReferenceLabel(imageAttachmentPreview(image), [], [], [image]);
   const chip = composerChip(
-    `lyra-agents-citation-chip-attachment lyra-agents-citation-chip-attachment-${kind}`
+    `lyra-agents-citation-chip-attachment ${imageAttachmentChipVariantClass(kind)}`
   );
   chip.title = preview;
   chip.setAttribute("aria-label", imageChipAriaLabel(image));
@@ -146,14 +160,14 @@ export const createImageChipElement = (image: AgentImageAttachment): HTMLSpanEle
   chip.dataset.attachmentMediaType = image.mediaType;
 
   const icon = document.createElement("span");
-  icon.className = "lyra-agents-citation-chip-icon";
+  icon.className = CITATION_CHIP_ICON_CLASS;
   mountComposerChipIcon(icon, composerChipIconKindForImage(image));
   chip.appendChild(icon);
 
   const previewWrap = document.createElement("span");
-  previewWrap.className = "lyra-agents-citation-chip-preview-wrap";
+  previewWrap.className = CITATION_CHIP_PREVIEW_WRAP_CLASS;
   const previewNode = document.createElement("span");
-  previewNode.className = "lyra-agents-citation-chip-preview";
+  previewNode.className = CITATION_CHIP_PREVIEW_CLASS;
   previewNode.textContent = preview;
   previewWrap.appendChild(previewNode);
   chip.appendChild(previewWrap);
@@ -161,7 +175,7 @@ export const createImageChipElement = (image: AgentImageAttachment): HTMLSpanEle
 };
 
 export const createFileChipElement = (file: AgentFileAttachment): HTMLSpanElement => {
-  const chip = composerChip("lyra-agents-citation-chip-file");
+  const chip = composerChip(CITATION_CHIP_FILE_CLASS);
   const label = inlineReferenceLabel(file.preview);
   chip.title = label;
   chip.setAttribute("aria-label", fileAttachmentChipAriaLabel({ ...file, preview: label }));
@@ -172,14 +186,14 @@ export const createFileChipElement = (file: AgentFileAttachment): HTMLSpanElemen
   }
 
   const icon = document.createElement("span");
-  icon.className = "lyra-agents-citation-chip-icon";
+  icon.className = CITATION_CHIP_ICON_CLASS;
   mountFileChipTypeIcon(icon, file.name, file.kind);
   chip.appendChild(icon);
 
   const previewWrap = document.createElement("span");
-  previewWrap.className = "lyra-agents-citation-chip-preview-wrap";
+  previewWrap.className = CITATION_CHIP_PREVIEW_WRAP_CLASS;
   const previewNode = document.createElement("span");
-  previewNode.className = "lyra-agents-citation-chip-preview";
+  previewNode.className = CITATION_CHIP_PREVIEW_CLASS;
   previewNode.textContent = label;
   previewWrap.appendChild(previewNode);
   chip.appendChild(previewWrap);
@@ -204,7 +218,7 @@ export const createComposerChipElement = (segment: Exclude<ComposerSegment, { ty
 
 export const createCitationChipElement = (citation: AgentTranscriptCitation): HTMLSpanElement => {
   const label = inlineReferenceLabel(citation.preview);
-  const chip = composerChip(`lyra-agents-citation-chip-${citation.role}`);
+  const chip = composerChip(citationChipRoleClass(citation.role));
   chip.title = label;
   chip.setAttribute("role", "button");
   chip.setAttribute("tabindex", "-1");
@@ -212,15 +226,15 @@ export const createCitationChipElement = (citation: AgentTranscriptCitation): HT
   applyCitationDataset(chip, citation);
 
   const icon = document.createElement("span");
-  icon.className = "lyra-agents-citation-chip-icon";
+  icon.className = CITATION_CHIP_ICON_CLASS;
   mountComposerChipIcon(icon, citation.role);
   chip.appendChild(icon);
 
   const previewWrap = document.createElement("span");
-  previewWrap.className = "lyra-agents-citation-chip-preview-wrap";
+  previewWrap.className = CITATION_CHIP_PREVIEW_WRAP_CLASS;
 
   const preview = document.createElement("span");
-  preview.className = "lyra-agents-citation-chip-preview";
+  preview.className = CITATION_CHIP_PREVIEW_CLASS;
   preview.textContent = label;
   previewWrap.appendChild(preview);
   chip.appendChild(previewWrap);

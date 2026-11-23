@@ -114,7 +114,7 @@ const COMPOSER_INPUT_BASE =
 export const COMPOSER_INPUT_CLASS =
   `lyra-agents-composer-input ${COMPOSER_INPUT_BASE} resize-none leading-[var(--lyra-text-line-relaxed)] h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] overflow-y-hidden [scrollbar-width:none] [mask-image:none] [-webkit-mask-image:none] focus-visible:bg-[var(--lyra-agents-content-bg)] focus-visible:border-0 focus-visible:shadow-none hover:not-disabled:bg-[var(--lyra-agents-content-bg)] hover:not-disabled:border-0 [&::-webkit-scrollbar]:hidden placeholder:text-[var(--lyra-text-muted)] disabled:text-[var(--lyra-text-secondary)] disabled:cursor-default disabled:opacity-100`;
 export const CITATION_COMPOSER_INPUT_CLASS =
-  `lyra-agents-citation-composer-input lyra-agents-composer-input ${COMPOSER_INPUT_BASE} leading-[var(--lyra-text-line-24)] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] max-h-[calc((var(--lyra-space-64)+var(--lyra-space-8))*4)] overflow-y-auto whitespace-pre-wrap break-word focus-visible:outline-none focus-visible:bg-[var(--lyra-agents-content-bg)] data-[drop-active=true]:[outline:var(--lyra-stroke-thin)_solid_color-mix(in_srgb,var(--lyra-text-primary)_72%,transparent)] data-[drop-active=true]:[outline-offset:calc(-1*var(--lyra-stroke-thin))] data-[drop-active=true]:bg-[color-mix(in_srgb,var(--lyra-text-primary)_5%,var(--lyra-app-surface-strong-bg))] [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[var(--lyra-text-muted)] [&:empty]:before:pointer-events-none`;
+  `lyra-agents-citation-composer-input lyra-agents-composer-input ${COMPOSER_INPUT_BASE} leading-[var(--lyra-text-line-24)] min-h-[calc(var(--lyra-space-64)+var(--lyra-space-8))] max-h-[calc((var(--lyra-space-64)+var(--lyra-space-8))*4)] overflow-y-auto whitespace-pre-wrap break-word focus-visible:outline-none focus-visible:bg-[var(--lyra-agents-content-bg)] data-[drop-active=true]:[outline:var(--lyra-stroke-thin)_solid_color-mix(in_srgb,var(--lyra-text-primary)_72%,transparent)] data-[drop-active=true]:[outline-offset:calc(-1*var(--lyra-stroke-thin))] data-[drop-active=true]:bg-[color-mix(in_srgb,var(--lyra-text-primary)_5%,var(--lyra-app-surface-strong-bg))] [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-[var(--lyra-text-muted)] [&:empty]:before:pointer-events-none [&_.lyra-agents-citation-chip]:[-webkit-user-modify:read-only]`;
 
 // ---- Browser capsule ----
 export const BROWSER_CAPSULE_WRAP_CLASS =
@@ -129,3 +129,57 @@ export const BROWSER_CAPSULE_LOGO_FALLBACK_CLASS =
   "lyra-agents-composer-browser-capsule-logo lyra-agents-composer-browser-capsule-logo-fallback hidden";
 export const BROWSER_CAPSULE_DISMISS_CLASS =
   "lyra-agents-composer-browser-capsule-dismiss absolute -top-[var(--lyra-space-6)] -right-[var(--lyra-space-6)] inline-flex items-center justify-center size-[var(--lyra-space-16)] p-0 [border:var(--lyra-stroke-thin)_solid_var(--lyra-app-input-border)] rounded-[var(--lyra-radius-pill)] bg-[var(--lyra-app-surface-strong-bg)] text-[var(--lyra-text-secondary)] cursor-pointer opacity-0 pointer-events-none focus-visible:opacity-100 focus-visible:pointer-events-auto after:content-[''] after:absolute after:inset-[calc(-1*var(--lyra-space-4))]";
+
+// ---- Inline resource / citation chips ----
+const INLINE_RESOURCE_VARS =
+  "[--lyra-agents-inline-resource-max-width:min(14rem,calc(100cqi_-_var(--lyra-space-64)))] [--lyra-agents-inline-resource-color:color-mix(in_srgb,var(--lyra-syntax-keyword)_76%,var(--lyra-text-primary)_24%)] [--lyra-agents-inline-resource-icon-color:color-mix(in_srgb,var(--lyra-syntax-keyword)_88%,var(--lyra-text-primary)_12%)]";
+export const INLINE_RESOURCE_CLASS =
+  `lyra-agents-inline-resource ${INLINE_RESOURCE_VARS} inline-flex items-baseline gap-[var(--lyra-space-4)] min-w-0 max-w-[var(--lyra-agents-inline-resource-max-width)] min-h-0 m-0 p-0 border-0 rounded-none bg-transparent text-[var(--lyra-agents-inline-resource-color)] [font:inherit] leading-[inherit] align-baseline select-none box-border whitespace-nowrap overflow-hidden [overflow-wrap:normal] [word-break:normal] [-webkit-box-decoration-break:clone] [box-decoration-break:clone] appearance-none text-left hover:[filter:none] hover:text-[var(--lyra-agents-inline-resource-color)] hover:underline focus-visible:[filter:none] focus-visible:text-[var(--lyra-agents-inline-resource-color)] focus-visible:underline ` +
+  "[&.lyra-ui-button]:h-auto [&.lyra-ui-button]:justify-start [&.lyra-ui-button]:transform-none " +
+  "[&.lyra-ui-button:hover:not(:disabled)]:border-transparent [&.lyra-ui-button:hover:not(:disabled)]:bg-transparent [&.lyra-ui-button:hover:not(:disabled)]:text-[var(--lyra-agents-inline-resource-color)] [&.lyra-ui-button:hover:not(:disabled)]:transform-none " +
+  "[&.lyra-ui-button:active:not(:disabled)]:border-transparent [&.lyra-ui-button:active:not(:disabled)]:bg-transparent [&.lyra-ui-button:active:not(:disabled)]:text-[var(--lyra-agents-inline-resource-color)] [&.lyra-ui-button:active:not(:disabled)]:transform-none";
+export const INLINE_RESOURCE_GROUP_CLASS =
+  "lyra-agents-inline-resource-group inline-flex flex-col items-start gap-[var(--lyra-space-2)] min-w-0 max-w-full align-top";
+export const RESOURCE_CHIP_CLASS =
+  "lyra-agents-resource-chip [&:focus]:outline-none [&:focus-visible]:[outline:var(--lyra-stroke-thin)_solid_color-mix(in_srgb,var(--lyra-text-accent)_44%,transparent)] [&:focus-visible]:outline-offset-[var(--lyra-space-2)]";
+export const CITATION_CHIP_PREVIEW_WRAP_CLASS =
+  "lyra-agents-citation-chip-preview-wrap relative self-baseline flex-1 min-w-0 max-w-full overflow-hidden whitespace-nowrap";
+export const CITATION_CHIP_PREVIEW_CLASS =
+  "lyra-agents-citation-chip-preview block leading-[inherit] overflow-hidden whitespace-nowrap [word-break:normal] [overflow-wrap:normal] text-ellipsis p-0";
+export const CITATION_CHIP_ICON_CLASS =
+  "lyra-agents-citation-chip-icon inline-flex flex-none self-center items-center justify-center size-[var(--lyra-space-14)] text-[var(--lyra-agents-inline-resource-icon-color)] [&_svg]:size-[var(--lyra-space-12)]";
+export const CITATION_CHIP_ICON_HOST_CLASS =
+  "lyra-agents-citation-chip-icon-host inline-flex flex-none self-center items-center justify-center text-[var(--lyra-agents-inline-resource-icon-color)]";
+export const CITATION_CHIP_LINK_CLASS =
+  "lyra-agents-citation-chip-link max-w-[var(--lyra-agents-inline-resource-max-width)] [&_.lyra-agents-citation-chip-icon-host]:size-[var(--lyra-space-14)] [&_.lyra-agents-citation-chip-icon-host]:text-[var(--lyra-agents-inline-resource-icon-color)]";
+export const PAGE_CITATION_FAVICON_CLASS =
+  "lyra-agents-page-citation-chip-favicon relative inline-flex size-[var(--lyra-space-12)] items-center justify-center [&_img]:absolute [&_img]:inset-0 [&_img]:size-[var(--lyra-space-12)] [&_img]:rounded-[var(--lyra-radius-4)] [&_img]:object-contain [&_img]:opacity-0 [&_img]:transition-[opacity_var(--lyra-motion-fast)] [&_img[data-failed=true]]:opacity-0 [&_img[data-loaded=true]]:opacity-100 [&_img[data-loaded=true]+_.lyra-agents-page-citation-chip-favicon-fallback]:opacity-0";
+export const PAGE_CITATION_FAVICON_FALLBACK_CLASS =
+  "lyra-agents-page-citation-chip-favicon-fallback absolute inset-0 inline-flex items-center justify-center opacity-100 transition-[opacity_var(--lyra-motion-fast)]";
+export const MESSAGE_CITATION_TARGET_CLASS =
+  "lyra-agents-message-citation-target animate-[lyra-agents-citation-target-highlight_2.6s_var(--lyra-ease-standard)_forwards]";
+
+const ChipIconUnset = "[&_.lyra-agents-citation-chip-icon]:[color:unset]";
+const ChipIconType =
+  "[&_.lyra-agents-citation-chip-icon]:[--lyra-agents-inline-resource-icon-color:color-mix(in_srgb,var(--lyra-syntax-type)_84%,var(--lyra-text-primary)_16%)]";
+const ChipIconFunc =
+  "[&_.lyra-agents-citation-chip-icon]:[--lyra-agents-inline-resource-icon-color:color-mix(in_srgb,var(--lyra-syntax-function)_84%,var(--lyra-text-primary)_16%)]";
+const ChipIconFunc82 =
+  "[&_.lyra-agents-citation-chip-icon]:[--lyra-agents-inline-resource-icon-color:color-mix(in_srgb,var(--lyra-syntax-function)_82%,var(--lyra-text-primary)_18%)]";
+export const CITATION_CHIP_FILE_CLASS = `lyra-agents-citation-chip-file ${ChipIconUnset}`;
+export const CITATION_CHIP_ATTACHMENT_FILE_CLASS = `lyra-agents-citation-chip-attachment-file ${ChipIconUnset}`;
+export const CITATION_CHIP_ASSISTANT_CLASS = `lyra-agents-citation-chip-assistant ${ChipIconType}`;
+export const CITATION_CHIP_USER_CLASS = `lyra-agents-citation-chip-user ${ChipIconFunc82}`;
+export const CITATION_CHIP_ATTACHMENT_WORKSPACE_CLASS = `lyra-agents-citation-chip-attachment-workspace ${ChipIconType}`;
+export const CITATION_CHIP_ATTACHMENT_BROWSER_CLASS = `lyra-agents-citation-chip-attachment-browser ${ChipIconType}`;
+export const CITATION_CHIP_ATTACHMENT_WINDOW_CLASS = `lyra-agents-citation-chip-attachment-window ${ChipIconFunc}`;
+
+export const citationChipRoleClass = (role: string): string =>
+  role === "user" ? CITATION_CHIP_USER_CLASS : CITATION_CHIP_ASSISTANT_CLASS;
+
+export const imageAttachmentChipVariantClass = (kind: string): string => {
+  if (kind === "workspace") return CITATION_CHIP_ATTACHMENT_WORKSPACE_CLASS;
+  if (kind === "browser") return CITATION_CHIP_ATTACHMENT_BROWSER_CLASS;
+  if (kind === "window") return CITATION_CHIP_ATTACHMENT_WINDOW_CLASS;
+  return CITATION_CHIP_ATTACHMENT_FILE_CLASS;
+};

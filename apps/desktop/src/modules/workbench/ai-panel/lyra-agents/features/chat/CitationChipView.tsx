@@ -2,6 +2,7 @@ import type { AgentTranscriptCitation } from "../../../../../../shared/agent";
 import { ComposerChipIcon } from "./composer-chip-icon";
 import { citationChipAriaLabel, inlineReferenceLabel } from "./message-citation";
 import { ResourceChip } from "./ResourceChip";
+import { citationChipRoleClass } from "./classes";
 
 type CitationChipViewProps = {
   citation: AgentTranscriptCitation;
@@ -12,7 +13,7 @@ export const CitationChipView = ({ citation, onClick }: CitationChipViewProps) =
   const preview = inlineReferenceLabel(citation.preview);
   return (
     <ResourceChip
-      className={`lyra-agents-citation-chip-${citation.role}`}
+      className={citationChipRoleClass(citation.role)}
       title={preview}
       ariaLabel={citationChipAriaLabel({ ...citation, preview })}
       icon={<ComposerChipIcon kind={citation.role} />}

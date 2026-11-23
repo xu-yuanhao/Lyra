@@ -19,6 +19,11 @@ import type { WorkbenchAppId, WorkspaceAppIconKey } from "../../../../workspace-
 import type { WorkspaceTab, WorkspaceTabPageKind } from "../../../../workspace-tabs/types";
 import { terminalTabIdFromPageUrl } from "./terminal-tab-citation";
 import {
+  CITATION_CHIP_ICON_CLASS,
+  PAGE_CITATION_FAVICON_CLASS,
+  PAGE_CITATION_FAVICON_FALLBACK_CLASS
+} from "./classes";
+import {
   cachedWebsiteFaviconUrl,
   resolveWebsiteFaviconUrl
 } from "./web-link";
@@ -121,7 +126,7 @@ export const WebsiteLinkIcon = ({
   faviconUrl,
   pageUrl,
   size = 12,
-  className = "lyra-agents-citation-chip-icon"
+  className = CITATION_CHIP_ICON_CLASS
 }: WebsiteLinkIconProps) => {
   const providedFaviconUrl = faviconUrl?.trim() || null;
   const [resolvedFavicon, setResolvedFavicon] = useState(() => ({
@@ -155,7 +160,7 @@ export const WebsiteLinkIcon = ({
   if (resolvedFaviconUrl !== null && resolvedFaviconUrl.length > 0) {
     return (
       <span className={className} aria-hidden="true">
-        <span className="lyra-agents-page-citation-chip-favicon">
+        <span className={PAGE_CITATION_FAVICON_CLASS}>
           <img
             key={resolvedFaviconUrl}
             src={resolvedFaviconUrl}
@@ -166,7 +171,7 @@ export const WebsiteLinkIcon = ({
             onLoad={handleFaviconLoad}
             onError={handleFaviconError}
           />
-          <span className="lyra-agents-page-citation-chip-favicon-fallback">
+          <span className={PAGE_CITATION_FAVICON_FALLBACK_CLASS}>
             <BrowserTabDefaultIcon size={size} />
           </span>
         </span>
@@ -192,7 +197,7 @@ export const PageCitationTabIcon = ({
   citation,
   tab,
   size = 12,
-  className = "lyra-agents-citation-chip-icon"
+  className = CITATION_CHIP_ICON_CLASS
 }: PageCitationTabIconProps) => {
   const sourceKind = tab !== undefined
     ? "workspace-tab" as const
@@ -269,7 +274,7 @@ export const mountWebsiteLinkIcon = (
   container: HTMLElement,
   faviconUrl?: string | null,
   size = 12,
-  className = "lyra-agents-citation-chip-icon",
+  className = CITATION_CHIP_ICON_CLASS,
   pageUrl?: string | null
 ): (() => void) => {
   let root = iconRoots.get(container);
@@ -309,7 +314,7 @@ export const mountPageCitationTabIcon = (
 export const renderPageCitationTabIconNode = (
   citation: AgentPageCitation,
   size = 12,
-  className = "lyra-agents-citation-chip-icon"
+  className = CITATION_CHIP_ICON_CLASS
 ): ReactNode => (
   <PageCitationTabIcon citation={citation} size={size} className={className} />
 );

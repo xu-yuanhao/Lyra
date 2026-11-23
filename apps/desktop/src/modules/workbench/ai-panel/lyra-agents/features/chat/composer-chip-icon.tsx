@@ -13,6 +13,7 @@ import type { AgentTranscriptCitation } from "../../../../../../shared/agent";
 import { FileTypeIcon } from "../../components/FileTypeIcon";
 import type { AgentImageAttachment } from "../../core/types";
 import type { AgentFileEntryKind } from "./composer-file";
+import { CITATION_CHIP_ICON_CLASS } from "./classes";
 import { imageAttachmentChipKind } from "./composer-image";
 
 export type ComposerChipIconKind =
@@ -58,7 +59,7 @@ export const ComposerChipIcon = ({
 }: {
   readonly kind: ComposerChipIconKind;
 }) => (
-  <span className="lyra-agents-citation-chip-icon" aria-hidden="true">
+  <span className={CITATION_CHIP_ICON_CLASS} aria-hidden="true">
     <ComposerChipIconSvg kind={kind} />
   </span>
 );
@@ -79,7 +80,7 @@ export const FileChipTypeIcon = ({
   readonly kind?: AgentFileEntryKind | undefined;
 }) => (
   <span
-    className="lyra-agents-citation-chip-icon"
+    className={CITATION_CHIP_ICON_CLASS}
     data-file-type={fileChipTypeIconId(name, kind)}
     aria-hidden="true"
   >

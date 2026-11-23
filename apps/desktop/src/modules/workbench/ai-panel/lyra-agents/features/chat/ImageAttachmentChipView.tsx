@@ -6,6 +6,7 @@ import {
 import { imageAttachmentChipKind, imageAttachmentPreview, imageChipAriaLabel } from "./composer-image";
 import { inlineReferenceLabel } from "./message-citation";
 import { ResourceChip } from "./ResourceChip";
+import { imageAttachmentChipVariantClass } from "./classes";
 
 type ImageAttachmentChipViewProps = {
   image: AgentImageAttachment;
@@ -17,7 +18,7 @@ export const ImageAttachmentChipView = ({ image, onClick }: ImageAttachmentChipV
   const preview = inlineReferenceLabel(imageAttachmentPreview(image), [], [], [image]);
   return (
     <ResourceChip
-      className={`lyra-agents-citation-chip-attachment lyra-agents-citation-chip-attachment-${kind}`}
+      className={`lyra-agents-citation-chip-attachment ${imageAttachmentChipVariantClass(kind)}`}
       title={preview}
       ariaLabel={imageChipAriaLabel(image)}
       icon={<ComposerChipIcon kind={composerChipIconKindForImage(image)} />}

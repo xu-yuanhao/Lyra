@@ -29,6 +29,11 @@ import { imageAttachmentFromSrc } from "../media/layout";
 import { WebsiteLinkIcon } from "../chat/page-citation-tab-icon";
 import { websiteLinkLabel } from "../chat/web-link-display";
 import {
+  CITATION_CHIP_PREVIEW_CLASS,
+  CITATION_CHIP_PREVIEW_WRAP_CLASS,
+  INLINE_RESOURCE_CLASS
+} from "../chat/classes";
+import {
   RT_MD_LINK_CLASS,
   RT_MD_URL_LINK_CLASS,
 } from "./classes";
@@ -221,7 +226,7 @@ export function LyraLink({
   const classes = [
     RT_MD_LINK_CLASS,
     isWebsite ? RT_MD_URL_LINK_CLASS : "",
-    isWebsite ? "lyra-agents-inline-resource" : "",
+    isWebsite ? `${INLINE_RESOURCE_CLASS} cursor-pointer` : "",
     className
   ].filter(Boolean).join(" ");
 
@@ -236,8 +241,8 @@ export function LyraLink({
       {isWebsite ? (
         <>
           <WebsiteLinkIcon pageUrl={target.value} />
-          <span className="lyra-agents-citation-chip-preview-wrap">
-            <span className="lyra-agents-citation-chip-preview">{websiteLinkLabel(target.value)}</span>
+          <span className={CITATION_CHIP_PREVIEW_WRAP_CLASS}>
+            <span className={CITATION_CHIP_PREVIEW_CLASS}>{websiteLinkLabel(target.value)}</span>
           </span>
         </>
       ) : children}

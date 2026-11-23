@@ -3,6 +3,7 @@ import type { AgentFileAttachment } from "./composer-file";
 import { fileAttachmentChipAriaLabel } from "./composer-file";
 import { inlineReferenceLabel } from "./message-citation";
 import { ResourceChip } from "./ResourceChip";
+import { CITATION_CHIP_FILE_CLASS } from "./classes";
 
 type FileAttachmentChipViewProps = {
   file: AgentFileAttachment;
@@ -13,7 +14,7 @@ export const FileAttachmentChipView = ({ file, onClick }: FileAttachmentChipView
   const preview = inlineReferenceLabel(file.preview);
   return (
     <ResourceChip
-      className="lyra-agents-citation-chip-file"
+      className={CITATION_CHIP_FILE_CLASS}
       title={preview}
       ariaLabel={fileAttachmentChipAriaLabel({ ...file, preview })}
       icon={<FileChipTypeIcon name={file.name} kind={file.kind} />}
