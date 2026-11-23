@@ -32,6 +32,7 @@ import { parseUnifiedDiff } from "@workbench/agent-session-view-model/tool-parsi
 import { splitDisplayPath } from "../chat/changed-files";
 import {
   CHEVRON_SLOT_CLASS,
+  FOLD_LINE_CLASS,
   ICON_SWAP_CHEVRON_CLASS,
   ICON_SWAP_CLASS,
   ICON_SWAP_TOOL_CLASS,
@@ -47,6 +48,12 @@ import {
   TOOL_CALL_TARGET_CLASS,
   TOOL_CALL_TARGET_NAME_CLASS,
   TOOL_CALL_TITLE_CLASS,
+  TOOL_ARTIFACTS_CLASS,
+  TOOL_ARTIFACT_AUDIO_CLASS,
+  TOOL_ARTIFACT_MEDIA_CLASS,
+  TOOL_ARTIFACT_PREVIEW_CLASS,
+  TOOL_ARTIFACT_PREVIEW_HEAD_CLASS,
+  TOOL_ARTIFACT_PREVIEW_LIST_CLASS,
   TOOL_CALL_TWIST_CLASS,
   TOOL_GROUP_BODY_CLASS,
   TOOL_GROUP_CLASS,
@@ -154,7 +161,7 @@ export function ToolGroupBlock({
         <AppButton
           variant="ghost"
           size="icon"
-          className="lyra-agents-fold-line lyra-agents-fold-line-group"
+          className={`${FOLD_LINE_CLASS} left-0`}
           onClick={() => toggleGroup(group.id, true)}
           aria-label={t("tool.collapseGroup")}
         />
@@ -287,7 +294,7 @@ function ToolCallRow({
             <AppButton
               variant="ghost"
               size="icon"
-              className="lyra-agents-fold-line lyra-agents-fold-line-call"
+              className={`${FOLD_LINE_CLASS} left-0`}
               onClick={toggle}
               aria-label={t("tool.collapseCall")}
             />
@@ -336,7 +343,7 @@ function ToolArtifacts({ call }: { readonly call: ToolCall }) {
     /^(?:image|audio|video)\//iu.test(target.mediaType ?? "")
   );
   return (
-    <div className="lyra-agents-tool-artifacts">
+    <div className={TOOL_ARTIFACTS_CLASS}>
       {mediaTargets.map((target) => {
         const mediaType = target.mediaType?.toLowerCase() ?? "";
         const source = artifactMediaSource(target);
@@ -347,7 +354,7 @@ function ToolArtifacts({ call }: { readonly call: ToolCall }) {
               key={`${target.kind}:${target.value}`}
               src={source}
               alt={target.label}
-              className="lyra-agents-tool-artifact-image"
+              className={TOOL_ARTIFACT_MEDIA_CLASS}
             />
           );
         }
@@ -355,7 +362,7 @@ function ToolArtifacts({ call }: { readonly call: ToolCall }) {
           return (
             <audio
               key={`${target.kind}:${target.value}`}
-              className="lyra-agents-tool-artifact-audio"
+              className={TOOL_ARTIFACT_AUDIO_CLASS}
               controls
               preload="metadata"
               src={source}
@@ -366,7 +373,7 @@ function ToolArtifacts({ call }: { readonly call: ToolCall }) {
         return (
           <video
             key={`${target.kind}:${target.value}`}
-            className="lyra-agents-tool-artifact-video"
+            className={TOOL_ARTIFACT_MEDIA_CLASS}
             controls
             preload="metadata"
             src={source}
@@ -376,14 +383,14 @@ function ToolArtifacts({ call }: { readonly call: ToolCall }) {
       })}
       {(call.artifactPreviews?.length ?? 0) > 0
         && !(call.details?.type === "edit" && call.details.hunks.length > 0) ? (
-        <div className="lyra-agents-tool-artifact-preview-list">
+        <div className={TOOL_ARTIFACT_PREVIEW_LIST_CLASS}>
           {call.artifactPreviews?.map((preview, index) => {
             const unified = looksLikeUnifiedDiff(preview.text)
               ? parseUnifiedDiff(preview.text)
               : null;
             return (
-              <div className="lyra-agents-tool-artifact-preview" key={`${preview.path ?? preview.label}:${index}`}>
-                <div className="lyra-agents-tool-artifact-preview-head">
+              <div className={TOOL_ARTIFACT_PREVIEW_CLASS} key={`${preview.path ?? preview.label}:${index}`}>
+                <div className={TOOL_ARTIFACT_PREVIEW_HEAD_CLASS}>
                   <span>{preview.label}</span>
                   <AppButton
                     variant="ghost"
@@ -522,7 +529,7 @@ function ThinkingRow({
         <AppButton
           variant="ghost"
           size="icon"
-          className="lyra-agents-fold-line lyra-agents-fold-line-call"
+          className={`${FOLD_LINE_CLASS} left-0`}
           onClick={toggle}
           aria-label={t("tool.collapseCall")}
         />
