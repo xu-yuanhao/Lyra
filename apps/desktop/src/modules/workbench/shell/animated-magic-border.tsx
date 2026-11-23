@@ -1,5 +1,17 @@
 import { useLayoutEffect, useRef } from "react";
 
+const MAGIC_BORDER_TRACK_CLASS =
+  "lyra-magic-border-track pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit] p-[var(--lyra-stroke-thin)] [mask:linear-gradient(black,black)_content-box,linear-gradient(black,black)] [-webkit-mask:linear-gradient(black,black)_content-box,linear-gradient(black,black)] [mask-composite:exclude] [-webkit-mask-composite:xor]";
+
+const MAGIC_BORDER_SWEEP_CLASS =
+  "lyra-magic-border-sweep pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[300%] [transform:translate(-50%,-50%)] bg-[conic-gradient(from_0deg,var(--lyra-pill-rainbow-red)_0%,var(--lyra-pill-rainbow-orange)_14%,var(--lyra-pill-rainbow-yellow)_28%,var(--lyra-pill-rainbow-green)_42%,var(--lyra-pill-rainbow-cyan)_57%,var(--lyra-pill-rainbow-blue)_71%,var(--lyra-pill-rainbow-violet)_85%,var(--lyra-pill-rainbow-red)_100%)] [will-change:transform,mask-image]";
+
+const MAGIC_BORDER_SWEEP_OPEN_STATIC_CLASS =
+  `${MAGIC_BORDER_SWEEP_CLASS} [mask-image:none] [-webkit-mask-image:none]`;
+
+const MAGIC_BORDER_SWEEP_CLOSED_STATIC_CLASS =
+  `${MAGIC_BORDER_SWEEP_CLASS} [mask-image:conic-gradient(transparent_0deg,black_72deg,black_96deg,transparent_96deg)] [-webkit-mask-image:conic-gradient(transparent_0deg,black_72deg,black_96deg,transparent_96deg)]`;
+
 const CLOSED_SWEEP_DEGREES = 96;
 const OPEN_SWEEP_DEGREES = 360;
 const OPEN_MASK_THRESHOLD_DEGREES = 356;
@@ -151,16 +163,16 @@ export const AnimatedMagicBorder = ({ isOpen, className }: AnimatedMagicBorderPr
   const isReduced = prefersReducedMotion();
   const sweepClassName = isReduced
     ? isOpen
-      ? "lyra-magic-border-sweep lyra-magic-border-sweep-open-static"
-      : "lyra-magic-border-sweep lyra-magic-border-sweep-closed-static"
-    : "lyra-magic-border-sweep";
+      ? MAGIC_BORDER_SWEEP_OPEN_STATIC_CLASS
+      : MAGIC_BORDER_SWEEP_CLOSED_STATIC_CLASS
+    : MAGIC_BORDER_SWEEP_CLASS;
 
   return (
     <div
       className={
         className === undefined
-          ? "lyra-magic-border-track"
-          : `lyra-magic-border-track ${className}`
+          ? MAGIC_BORDER_TRACK_CLASS
+          : `${MAGIC_BORDER_TRACK_CLASS} ${className}`
       }
       aria-hidden="true"
     >

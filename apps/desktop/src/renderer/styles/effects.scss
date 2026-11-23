@@ -1,90 +1,13 @@
-/* Lyra effects layer. Keep this file limited to layout and surface composition; real colors live in tokens.css or material.scss. */
-
-/* Source: animated-magic-border.css */
-.lyra-magic-border-track {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: var(--lyra-stroke-thin);
-  -webkit-mask:
-    linear-gradient(black, black) content-box,
-    linear-gradient(black, black);
-  mask:
-    linear-gradient(black, black) content-box,
-    linear-gradient(black, black);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 0;
-}
-
-.lyra-magic-border-sweep {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 300%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  background: conic-gradient(
-    from 0deg,
-    var(--lyra-pill-rainbow-red) 0%,
-    var(--lyra-pill-rainbow-orange) 14%,
-    var(--lyra-pill-rainbow-yellow) 28%,
-    var(--lyra-pill-rainbow-green) 42%,
-    var(--lyra-pill-rainbow-cyan) 57%,
-    var(--lyra-pill-rainbow-blue) 71%,
-    var(--lyra-pill-rainbow-violet) 85%,
-    var(--lyra-pill-rainbow-red) 100%
-  );
-  pointer-events: none;
-  will-change: transform, mask-image;
-}
-
-.lyra-magic-border-sweep-closed-static {
-  -webkit-mask-image: conic-gradient(transparent 0deg, black 72deg, black 96deg, transparent 96deg);
-  mask-image: conic-gradient(transparent 0deg, black 72deg, black 96deg, transparent 96deg);
-}
-
-.lyra-magic-border-sweep-open-static {
-  -webkit-mask-image: none;
-  mask-image: none;
-}
-
-/* Shared activity treatment for tools, startup preparation, and auth waits. */
-.lyra-agents-tool-execution-indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--lyra-space-16);
-  height: var(--lyra-space-16);
-  gap: var(--lyra-space-1);
-  color: var(--lyra-text-muted);
-}
-
-.lyra-agents-tool-execution-indicator span {
-  width: var(--lyra-space-2);
-  height: var(--lyra-space-10);
-  border-radius: var(--lyra-radius-pill);
-  background: currentColor;
-  opacity: 0.32;
-  animation: lyra-agents-tool-execution-step 0.95s steps(2, end) infinite;
-}
-
-.lyra-agents-tool-execution-indicator span:nth-child(2) {
-  animation-delay: 120ms;
-}
-
-.lyra-agents-tool-execution-indicator span:nth-child(3) {
-  animation-delay: 240ms;
-}
-
-.lyra-agents-tool-execution-indicator span:nth-child(4) {
-  animation-delay: 360ms;
-}
+/* Lyra effects layer. Keyframes referenced by Tailwind animate-* utilities. */
 
 @keyframes lyra-agents-tool-execution-step {
-  0% { opacity: 0.28; }
-  50% { opacity: var(--lyra-opacity-lifted); }
-  100% { opacity: 0.36; }
+  0% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: var(--lyra-opacity-lifted);
+  }
+  100% {
+    opacity: 0.36;
+  }
 }
