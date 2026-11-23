@@ -21,7 +21,7 @@ import { useStreamingMessageReasoning, useStreamingReasoningOpen } from "../rich
 import { formatMessage, t } from "@workbench/i18n";
 import { toolGroupLabel } from "@workbench/agent-session-view-model/tool-view-model";
 import { AppButton } from "@renderer/ui/components";
-import { MESSAGE_CITATION_TARGET_CLASS } from "./classes";
+import { MESSAGE_CITATION_TARGET_CLASS, MESSAGE_CONTENT_USER_CLASS } from "./classes";
 import { MessageCitationText } from "./MessageCitationText";
 import { MessageTextBlock } from "./message-text-block";
 import { withStreamingReasoning } from "./message-activity-blocks";
@@ -842,7 +842,7 @@ export function Message({
         className="lyra-agents-message lyra-agents-message-user"
         data-message-id={message.id}
       >
-        <div className="lyra-agents-message-content-user">
+        <div className={MESSAGE_CONTENT_USER_CLASS}>
           <div
             className={`lyra-agents-message-bubble${highlightCitationTarget ? ` ${MESSAGE_CITATION_TARGET_CLASS} rounded-[var(--lyra-radius-12)]` : ""}${userBubbleOverflowing && !userBubbleExpanded ? " lyra-agents-message-bubble-collapsed" : ""}`}
             onContextMenu={(event) => onContextMenu?.(event, message)}

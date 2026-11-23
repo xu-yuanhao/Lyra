@@ -261,3 +261,5 @@ export const diffLineClass = (kind: string): string => {
   if (kind === "del") return `${DIFF_LINE_BASE_CLASS} ${DIFF_LINE_DEL_CLASS} lyra-agents-diff-line-del`;
   return `${DIFF_LINE_BASE_CLASS} ${DIFF_LINE_CTX_CLASS} lyra-agents-diff-line-ctx`;
 };
+export const MESSAGE_CONTENT_USER_CLASS =
+  "lyra-agents-message-content-user flex-[0_1_auto] flex flex-col items-end w-fit max-w-[75%] min-w-0";

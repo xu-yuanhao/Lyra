@@ -22,9 +22,13 @@ import { ChatMediaLayout } from "../media";
 import { scanMarkdownMediaTokens } from "../media/layout";
 import { useWebLinkClipboard } from "../chat/web-link-clipboard";
 import {
+  RT_MD_DETAILS_BODY_CLASS,
+  RT_MD_DETAILS_CHEVRON_CLASS,
+  RT_MD_DETAILS_CLASS,
+  RT_MD_DETAILS_SUMMARY_CLASS,
   RT_RICH_TEXT_CLASS,
   RT_STREAMDOWN_CLASS,
-  RT_STREAMDOWN_CHUNKS_CLASS,
+  RT_STREAMDOWN_CHUNKS_CLASS
 } from "./classes";
 
 const emptyMediaTokens: ReturnType<typeof scanMarkdownMediaTokens> = [];
@@ -57,9 +61,9 @@ function LyraDetails({ children, node: _node, ...props }: ComponentProps<"detail
     : null;
 
   return (
-    <details {...props} className="lyra-agents-md-details">
+    <details {...props} className={RT_MD_DETAILS_CLASS}>
       {summary}
-      <div className="lyra-agents-md-details-body">
+      <div className={RT_MD_DETAILS_BODY_CLASS}>
         {rawBody !== null && rawBody.length > 0 ? (
           <LyraMarkdown
             arrangeMedia={arrangeMedia}
@@ -77,8 +81,8 @@ function LyraSummary({ children, node: _node, ...props }: ComponentProps<"summar
   readonly node?: unknown;
 }) {
   return (
-    <summary {...props} className="lyra-agents-md-details-summary">
-      <span className="lyra-agents-md-details-chevron" aria-hidden="true" />
+    <summary {...props} className={RT_MD_DETAILS_SUMMARY_CLASS}>
+      <span className={RT_MD_DETAILS_CHEVRON_CLASS} aria-hidden="true" />
       <span>{children}</span>
     </summary>
   );

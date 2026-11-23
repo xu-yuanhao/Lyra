@@ -11,6 +11,8 @@ import { streamdownLinkSafety } from "./streamdown-plugins";
 import {
   RT_PLAIN_TEXT_CLASS,
   RT_RICH_TEXT_CLASS,
+  RT_STREAMING_RICH_CLASS,
+  RT_STREAMING_TEXT_CLASS
 } from "./classes";
 import {
   useLyraRichTextClickHandler
@@ -57,7 +59,7 @@ export function StreamingText({
   if (!aiRichRenderingEnabled) {
     if (streaming) {
       return (
-        <div className={`lyra-agents-streaming-text ${RT_PLAIN_TEXT_CLASS}`}>
+        <div className={`${RT_STREAMING_TEXT_CLASS} ${RT_PLAIN_TEXT_CLASS}`}>
           <span>{streamStoreText}</span>
         </div>
       );
@@ -68,7 +70,7 @@ export function StreamingText({
   return (
     <div
       ref={rootRef}
-      className={`lyra-agents-streaming-text ${RT_RICH_TEXT_CLASS}`}
+      className={`${RT_STREAMING_TEXT_CLASS} ${RT_STREAMING_RICH_CLASS} ${RT_RICH_TEXT_CLASS}`}
       onClick={handleClick}
     >
       <LyraMarkdown
