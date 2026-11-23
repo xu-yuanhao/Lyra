@@ -13,6 +13,7 @@ import {
   type MouseEvent,
   type ReactNode
 } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronRight, CircleAlert, FolderOpen, GitBranch, RefreshCw } from "@lyra/icons";
 import { TITLEBAR_CONTEXT_ICON_BUTTON_CLASS, TITLEBAR_CONTEXT_TEXT_CLASS } from "../shell/classes";
 
@@ -70,12 +71,10 @@ import { useAgentProjectTreeContextMenu } from "./context-menu";
 import { AgentProjectTreeEditorTabStrip } from "./editor-tab-strip";
 import type { AgentProjectTreeSurfaceProps } from "./types";
 import {
+  fixedRowVirtualizerOptions,
   flattenVisibleRows,
   prepareEntries,
-  PROJECT_TREE_ROW_HEIGHT_PX,
-  PROJECT_TREE_ROW_OVERSCAN,
-  windowFixedRows,
-  windowVisibleRows,
+  PROJECT_TREE_VIRTUALIZE_AFTER,
   type DirectoryStateMap,
   type VisibleTreeRow
 } from "./visible-rows";
@@ -554,7 +553,6 @@ const AgentProjectTreeSidebar = ({
   const [directoryStates, setDirectoryStates] = useState<DirectoryStateMap>({});
   const [actionError, setActionError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [viewport, setViewport] = useState({ height: 0, start: 0 });
   const listRef = useRef<HTMLDivElement | null>(null);
   const expandedPaths = useMemo(
     () => new Set(state.expandedPaths),
@@ -743,40 +741,9 @@ const AgentProjectTreeSidebar = ({
   }, [directoryStates, expandedPaths, loadDirectory, state.rootPath]);
 
   useEffect(() => {
-    const element = listRef.current;
-    if (element === null) return undefined;
-    const update = (): void => {
-      const height = element.clientHeight;
-      const start = height <= 0
-        ? 0
-        : Math.max(
-            0,
-            Math.floor(element.scrollTop / PROJECT_TREE_ROW_HEIGHT_PX) - PROJECT_TREE_ROW_OVERSCAN
-          );
-      setViewport((current) => {
-        if (current.height === height && current.start === start) {
-          return current;
-        }
-        return { height, start };
-      });
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    element.addEventListener("scroll", update, { passive: true });
-    return () => {
-      observer.disconnect();
-      element.removeEventListener("scroll", update);
-    };
-  }, [state.rootPath]);
-
-  useEffect(() => {
     if (fileSearch === null) {
       return;
     }
-    setViewport((current) => (
-      current.start === 0 ? current : { ...current, start: 0 }
-    ));
     const list = listRef.current;
     if (list !== null) {
       list.scrollTop = 0;
@@ -889,27 +856,23 @@ const AgentProjectTreeSidebar = ({
     [fileSearch, state.rootPath]
   );
 
-  const windowed = useMemo(
-    () => windowVisibleRows({
-      rows: visibleRows,
-      viewportHeight: viewport.height,
-      start: viewport.start
-    }),
-    [visibleRows, viewport.height, viewport.start]
-  );
+  const activeRowCount = searchRows === null ? visibleRows.length : searchRows.length;
+  const virtualizer = useVirtualizer(fixedRowVirtualizerOptions({
+    count: activeRowCount,
+    getScrollElement: () => listRef.current
+  }));
+  const virtualized = activeRowCount > PROJECT_TREE_VIRTUALIZE_AFTER;
+  const virtualItems = virtualizer.getVirtualItems();
+  const virtualOffsetY = virtualItems[0]?.start ?? 0;
+  const virtualTotalSize = virtualizer.getTotalSize();
+  const sliceActiveRows = <TRow,>(rows: readonly TRow[]): readonly TRow[] =>
+    virtualized
+      ? virtualItems
+        .map((item) => rows[item.index])
+        .filter((row): row is TRow => row !== undefined)
+      : rows;
 
-  const windowedSearch = useMemo(
-    () => searchRows === null
-      ? null
-      : windowFixedRows({
-        rows: searchRows,
-        viewportHeight: viewport.height,
-        start: viewport.start
-      }),
-    [searchRows, viewport.height, viewport.start]
-  );
-
-  const treeRows = windowed.rows.map((row) => {
+  const renderTreeRow = (row: VisibleTreeRow): ReactNode => {
     const content = row.kind === "entry"
       ? (
         <TreeEntryRow
@@ -930,71 +893,70 @@ const AgentProjectTreeSidebar = ({
       <div
         key={row.key}
         className={TREE_NODE_CLASS}
-        style={windowed.virtualized ? { height: "var(--lyra-app-sidebar-row-h)" } : undefined}
+        style={virtualized ? { height: "var(--lyra-app-sidebar-row-h)" } : undefined}
       >
         {content}
       </div>
     );
-  });
+  };
 
-  const searchListRows = windowedSearch === null
-    ? []
-    : windowedSearch.rows.map((row) => {
-      const content = row.kind === "file"
+  const renderSearchRow = (row: ProjectTreeSearchRow): ReactNode => {
+    const content = row.kind === "file"
+      ? (
+        <SearchFileRow row={row} onToggle={onToggleSearchGroup} />
+      )
+      : row.kind === "hit"
         ? (
-          <SearchFileRow row={row} onToggle={onToggleSearchGroup} />
+          <SearchHitRow hit={row.hit} onOpen={onOpenSearchHit} />
         )
-        : row.kind === "hit"
+        : row.kind === "loading"
           ? (
-            <SearchHitRow hit={row.hit} onOpen={onOpenSearchHit} />
+            <AppLoadingState
+              className={TREE_INLINE_STATE_CLASS}
+              align="start"
+              density="compact"
+              title={labels.searchSearching ?? labels.loading}
+              style={indentStyle(1, "8")}
+            />
           )
-          : row.kind === "loading"
-            ? (
-              <AppLoadingState
-                className={TREE_INLINE_STATE_CLASS}
-                align="start"
-                density="compact"
-                title={labels.searchSearching ?? labels.loading}
-                style={indentStyle(1, "8")}
-              />
-            )
-            : (
-              <AppEmptyState
-                className={TREE_INLINE_STATE_CLASS}
-                align="start"
-                density="compact"
-                title={labels.searchEmpty ?? labels.emptyDirectory}
-                style={indentStyle(1, "8")}
-              />
-            );
-      return (
-        <div
-          key={row.key}
-          className={TREE_NODE_CLASS}
-          style={windowedSearch.virtualized ? { height: "var(--lyra-app-sidebar-row-h)" } : undefined}
-        >
-          {content}
-        </div>
-      );
-    });
+          : (
+            <AppEmptyState
+              className={TREE_INLINE_STATE_CLASS}
+              align="start"
+              density="compact"
+              title={labels.searchEmpty ?? labels.emptyDirectory}
+              style={indentStyle(1, "8")}
+            />
+          );
+    return (
+      <div
+        key={row.key}
+        className={TREE_NODE_CLASS}
+        style={virtualized ? { height: "var(--lyra-app-sidebar-row-h)" } : undefined}
+      >
+        {content}
+      </div>
+    );
+  };
 
-  const activeWindow = windowedSearch ?? windowed;
-  const activeRows = windowedSearch === null ? treeRows : searchListRows;
-  const listBody = activeWindow.virtualized
+  const renderedRows = searchRows === null
+    ? sliceActiveRows(visibleRows).map(renderTreeRow)
+    : sliceActiveRows(searchRows).map(renderSearchRow);
+  const listBody = virtualized
     ? (
       <div
         className={TREE_VIRTUAL_CLASS}
-        style={{ height: activeWindow.totalHeight } as CSSProperties}
+        style={{ height: virtualTotalSize } as CSSProperties}
       >
         <div
           className={TREE_VIRTUAL_WINDOW_CLASS}
-          style={{ transform: `translateY(${activeWindow.offsetY}px)` } as CSSProperties}
+          style={{ transform: `translateY(${virtualOffsetY}px)` } as CSSProperties}
         >
-          {activeRows}
+          {renderedRows}
         </div>
       </div>
     )
-    : activeRows;
+    : renderedRows;
 
   return (
     <>

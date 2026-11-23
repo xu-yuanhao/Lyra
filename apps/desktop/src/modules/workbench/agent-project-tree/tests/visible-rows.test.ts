@@ -3,9 +3,7 @@ import { describe, expect, test } from "vitest";
 import type { FileManagerEntry } from "../../../../shared/file-manager";
 import {
   flattenVisibleRows,
-  prepareEntries,
-  windowFixedRows,
-  windowVisibleRows
+  prepareEntries
 } from "../visible-rows";
 
 const file = (name: string, path: string): FileManagerEntry => ({
@@ -97,55 +95,5 @@ describe("flattenVisibleRows", () => {
         depth: 2
       }
     ]);
-  });
-});
-
-describe("windowVisibleRows", () => {
-  test("renders the full list when the tree is smaller than the virtualize threshold", () => {
-    const rows = Array.from({ length: 40 }, (_, index) => ({
-      kind: "entry" as const,
-      key: `/p/f-${index}`,
-      depth: 1,
-      entry: file(`f-${index}.ts`, `/p/f-${index}`)
-    }));
-    const windowed = windowVisibleRows({
-      rows,
-      viewportHeight: 220,
-      start: 0
-    });
-    expect(windowed.virtualized).toBe(false);
-    expect(windowed.rows).toHaveLength(40);
-  });
-
-  test("windows to the visible slice plus overscan when a viewport exists", () => {
-    const rows = Array.from({ length: 200 }, (_, index) => ({
-      kind: "entry" as const,
-      key: `/p/f-${index}`,
-      depth: 1,
-      entry: file(`f-${index}.ts`, `/p/f-${index}`)
-    }));
-    const windowed = windowVisibleRows({
-      rows,
-      viewportHeight: 220,
-      start: 10
-    });
-    expect(windowed.virtualized).toBe(true);
-    expect(windowed.start).toBe(10);
-    expect(windowed.rows).toHaveLength(88);
-    expect(windowed.offsetY).toBe(10 * 28);
-    expect(windowed.totalHeight).toBe(200 * 28);
-  });
-
-  test("windows with a custom row height", () => {
-    const rows = Array.from({ length: 200 }, (_, index) => index);
-    const windowed = windowFixedRows({
-      rows,
-      viewportHeight: 220,
-      start: 10,
-      rowHeight: 22
-    });
-    expect(windowed.virtualized).toBe(true);
-    expect(windowed.offsetY).toBe(10 * 22);
-    expect(windowed.totalHeight).toBe(200 * 22);
   });
 });

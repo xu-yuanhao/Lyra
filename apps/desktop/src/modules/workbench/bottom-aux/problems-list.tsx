@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   AlertTriangle,
   ChevronDown,
@@ -11,14 +12,13 @@ import { Button } from "@renderer/ui/components/button";
 
 import type { LspDiagnostic } from "../../../shared/desktop-bridge";
 import {
-  PROJECT_TREE_ROW_OVERSCAN,
-  windowFixedRows
+  fixedRowVirtualizerOptions,
+  PROJECT_TREE_VIRTUALIZE_AFTER
 } from "../agent-project-tree/visible-rows";
 import type { FileEditorRevealLocation } from "../file-editor";
 import { flattenProblemsRows, groupDiagnosticsByFile } from "./problems";
 
 const PROBLEMS_ROW_HEIGHT_PX = 22;
-const PROBLEMS_LIST_VIEWPORT_FALLBACK_PX = 600;
 const PROBLEMS_ROW_KEY_ATTR = "data-lyra-problems-key";
 
 const LIST_CLASS =
@@ -64,21 +64,20 @@ export const ProblemsList = ({
 }) => {
   const groups = useMemo(() => groupDiagnosticsByFile(items, rootPath), [items, rootPath]);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
-  const [viewport, setViewport] = useState({
-    height: PROBLEMS_LIST_VIEWPORT_FALLBACK_PX,
-    start: 0
-  });
   const listRef = useRef<HTMLDivElement | null>(null);
   const rows = useMemo(() => flattenProblemsRows(groups, collapsed), [collapsed, groups]);
-  const windowed = useMemo(
-    () => windowFixedRows({
-      rows,
-      viewportHeight: viewport.height,
-      start: viewport.start,
-      rowHeight: PROBLEMS_ROW_HEIGHT_PX
-    }),
-    [rows, viewport.height, viewport.start]
-  );
+  const virtualizer = useVirtualizer(fixedRowVirtualizerOptions({
+    count: rows.length,
+    getScrollElement: () => listRef.current,
+    rowHeight: PROBLEMS_ROW_HEIGHT_PX
+  }));
+  const virtualized = rows.length > PROJECT_TREE_VIRTUALIZE_AFTER;
+  const virtualItems = virtualizer.getVirtualItems();
+  const visibleRows = virtualized
+    ? virtualItems
+      .map((item) => rows[item.index])
+      .filter((row): row is (typeof rows)[number] => row !== undefined)
+    : rows;
 
   const toggleFile = useCallback((filePath: string): void => {
     setCollapsed((current) => {
@@ -170,36 +169,6 @@ export const ProblemsList = ({
     }
   };
 
-  useEffect(() => {
-    const element = listRef.current;
-    if (element === null) {
-      return undefined;
-    }
-    const update = (): void => {
-      const height = element.clientHeight;
-      const start = height <= 0
-        ? 0
-        : Math.max(
-          0,
-          Math.floor(element.scrollTop / PROBLEMS_ROW_HEIGHT_PX) - PROJECT_TREE_ROW_OVERSCAN
-        );
-      setViewport((current) => {
-        if (current.height === height && current.start === start) {
-          return current;
-        }
-        return { height: height > 0 ? height : PROBLEMS_LIST_VIEWPORT_FALLBACK_PX, start };
-      });
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    element.addEventListener("scroll", update, { passive: true });
-    return () => {
-      observer.disconnect();
-      element.removeEventListener("scroll", update);
-    };
-  }, [rows.length]);
-
   if (items.length === 0) {
     return (
       <div className={`${LIST_CLASS} grid place-items-center`} role="tree" aria-label={listLabel}>
@@ -208,7 +177,7 @@ export const ProblemsList = ({
     );
   }
 
-  const rendered = windowed.rows.map((row) => {
+  const rendered = visibleRows.map((row) => {
     if (row.kind === "file") {
       const expanded = collapsed.has(row.group.filePath) === false;
       return (
@@ -264,14 +233,14 @@ export const ProblemsList = ({
       </Button>
     );
   });
-  const body = windowed.virtualized ? (
+  const body = virtualized ? (
     <div
       className="relative w-full"
-      style={{ height: windowed.totalHeight } as CSSProperties}
+      style={{ height: virtualizer.getTotalSize() } as CSSProperties}
     >
       <div
         className="absolute inset-x-0"
-        style={{ transform: `translateY(${windowed.offsetY}px)` } as CSSProperties}
+        style={{ transform: `translateY(${virtualItems[0]?.start ?? 0}px)` } as CSSProperties}
       >
         {rendered}
       </div>

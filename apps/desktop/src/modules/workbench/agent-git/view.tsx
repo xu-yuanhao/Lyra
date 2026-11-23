@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { TITLEBAR_CONTEXT_ICON_BUTTON_CLASS, TITLEBAR_CONTEXT_TEXT_CLASS } from "../shell/classes";
 import {
   GitBranch,
@@ -28,9 +29,8 @@ import { VirtualizedDiffView } from "../ai-panel/lyra-agents/features/tools/Virt
 import type { DiffHunk } from "../ai-panel/lyra-agents/core/types";
 import { parseUnifiedDiff } from "../agent-session-view-model/tool-parsing/diff";
 import {
-  PROJECT_TREE_ROW_HEIGHT_PX,
-  PROJECT_TREE_ROW_OVERSCAN,
-  windowFixedRows
+  fixedRowVirtualizerOptions,
+  PROJECT_TREE_VIRTUALIZE_AFTER
 } from "../agent-project-tree/visible-rows";
 import { ContextMenuHost, useContextMenuModel, type ContextMenuItem } from "../context-menu";
 import {
@@ -172,8 +172,6 @@ const AgentGitTitlebarBridge = ({
 
 const statusScope = (file: AgentGitChangedFile): AgentGitDiffScope =>
   file.unstaged || file.untracked ? "unstaged" : "staged";
-
-const GIT_LIST_VIEWPORT_FALLBACK_PX = 600;
 
 const gitDiffHunks = (text: string): readonly DiffHunk[] => {
   const parsed = parseUnifiedDiff(text);
@@ -345,10 +343,6 @@ export const AgentGitSurface = ({
   });
   const [diffState, setDiffState] = useState<AgentGitDiffState>({ kind: "empty" });
   const [busyPath, setBusyPath] = useState<string | null>(null);
-  const [viewport, setViewport] = useState({
-    height: GIT_LIST_VIEWPORT_FALLBACK_PX,
-    start: 0
-  });
   const listRef = useRef<HTMLDivElement | null>(null);
   const snapshot = statusState.snapshot;
 
@@ -385,36 +379,6 @@ export const AgentGitSurface = ({
     setDiffState({ kind: "empty" });
     void loadStatus();
   }, [loadStatus]);
-
-  useEffect(() => {
-    const element = listRef.current;
-    if (element === null) {
-      return undefined;
-    }
-    const update = (): void => {
-      const height = element.clientHeight;
-      const start = height <= 0
-        ? 0
-        : Math.max(
-          0,
-          Math.floor(element.scrollTop / PROJECT_TREE_ROW_HEIGHT_PX) - PROJECT_TREE_ROW_OVERSCAN
-        );
-      setViewport((current) => {
-        if (current.height === height && current.start === start) {
-          return current;
-        }
-        return { height: height > 0 ? height : GIT_LIST_VIEWPORT_FALLBACK_PX, start };
-      });
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    element.addEventListener("scroll", update, { passive: true });
-    return () => {
-      observer.disconnect();
-      element.removeEventListener("scroll", update);
-    };
-  }, [rootPath, snapshot?.entries.length]);
 
   const loadDiff = useCallback(async (file: AgentGitChangedFile): Promise<void> => {
     if (desktopApi?.agent === undefined) {
@@ -516,14 +480,17 @@ export const AgentGitSurface = ({
   const entries = snapshot?.entries ?? [];
   const selectedPath =
     diffState.kind === "empty" ? null : diffState.file.path;
-  const windowed = useMemo(
-    () => windowFixedRows({
-      rows: entries,
-      viewportHeight: viewport.height,
-      start: viewport.start
-    }),
-    [entries, viewport.height, viewport.start]
-  );
+  const virtualizer = useVirtualizer(fixedRowVirtualizerOptions({
+    count: entries.length,
+    getScrollElement: () => listRef.current
+  }));
+  const virtualized = entries.length > PROJECT_TREE_VIRTUALIZE_AFTER;
+  const virtualItems = virtualizer.getVirtualItems();
+  const visibleEntries = virtualized
+    ? virtualItems
+      .map((item) => entries[item.index])
+      .filter((entry): entry is AgentGitChangedFile => entry !== undefined)
+    : entries;
   const onSelectFile = useCallback((nextFile: AgentGitChangedFile): void => {
     void loadDiff(nextFile);
   }, [loadDiff]);
@@ -536,7 +503,7 @@ export const AgentGitSurface = ({
   const onDiscardFile = useCallback((nextFile: AgentGitChangedFile): void => {
     void applyMutation(nextFile, "discard");
   }, [applyMutation]);
-  const fileRows = windowed.rows.map((file) => (
+  const fileRows = visibleEntries.map((file) => (
     <GitFileRow
       key={file.path}
       file={file}
@@ -550,14 +517,14 @@ export const AgentGitSurface = ({
       onContextMenu={openFileMenu}
     />
   ));
-  const listBody = windowed.virtualized ? (
+  const listBody = virtualized ? (
     <div
       className={GIT_VIRTUAL_CLASS}
-      style={{ height: windowed.totalHeight } as CSSProperties}
+      style={{ height: virtualizer.getTotalSize() } as CSSProperties}
     >
       <div
         className={GIT_VIRTUAL_WINDOW_CLASS}
-        style={{ transform: `translateY(${windowed.offsetY}px)` } as CSSProperties}
+        style={{ transform: `translateY(${virtualItems[0]?.start ?? 0}px)` } as CSSProperties}
       >
         {fileRows}
       </div>
