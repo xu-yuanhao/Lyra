@@ -27,6 +27,28 @@ import { ContextMenuHost, useContextMenuModel } from "../context-menu";
 import { FileEditorSurface, type FileEditorLabels, type FileEditorModel } from "../file-editor";
 import { renderFileManagerEntryIcon } from "../file-manager";
 import {
+  TREE_EDITOR_CLASS,
+  TREE_EDITOR_SURFACE_HOST_CLASS,
+  TREE_EMPTY_CLASS,
+  TREE_ENTRY_ICON_CLASS,
+  TREE_ICON_SLOT_CLASS,
+  TREE_INLINE_STATE_CLASS,
+  TREE_LIST_CLASS,
+  TREE_NAME_CLASS,
+  TREE_NODE_CLASS,
+  TREE_ROOT_ROW_CLASS,
+  TREE_ROW_CLASS,
+  TREE_SEARCH_HIT_CLASS,
+  TREE_SEARCH_LINE_CLASS,
+  TREE_SIDEBAR_CLASS,
+  TREE_SURFACE_CLASS,
+  TREE_TWIST_CLASS,
+  TREE_TWIST_HOVER_RULES,
+  TREE_VIRTUAL_CLASS,
+  TREE_VIRTUAL_WINDOW_CLASS,
+  TREE_ERROR_CLASS
+} from "./classes";
+import {
   clearFileManagerEntryDragPayload,
   writeFileManagerEntryDragPayload
 } from "../file-manager/drag-transfer";
@@ -118,10 +140,10 @@ const indentStyle = (depth: number, extra: "8" | "24"): { readonly paddingLeft: 
 });
 
 const renderTreeIconSlot = (icon: ReactNode, twist?: ReactNode): ReactNode => (
-  <span className={`lyra-agent-project-tree-icon-slot${twist === undefined ? "" : " has-twist"}`} aria-hidden="true">
-    <span className="lyra-agent-project-tree-entry-icon">{icon}</span>
+  <span className={`${TREE_ICON_SLOT_CLASS}${twist === undefined ? "" : " has-twist"}`} aria-hidden="true">
+    <span className={TREE_ENTRY_ICON_CLASS}>{icon}</span>
     {twist === undefined ? null : (
-      <span className="lyra-agent-project-tree-twist">{twist}</span>
+      <span className={TREE_TWIST_CLASS}>{twist}</span>
     )}
   </span>
 );
@@ -262,7 +284,7 @@ const TreeEntryRow = memo(({
   onContextMenu
 }: TreeEntryRowProps) => (
   <AppObjectRow
-    className="lyra-app-sidebar-row lyra-agent-project-tree-row"
+    className={`lyra-app-sidebar-row ${TREE_ROW_CLASS} ${TREE_TWIST_HOVER_RULES}`}
     active={selected}
     style={indentStyle(depth, "8")}
     aria-expanded={entry.kind === "directory" ? expanded : undefined}
@@ -274,7 +296,7 @@ const TreeEntryRow = memo(({
         : undefined
     )}
     title={(
-      <span className="lyra-agent-project-tree-name" title={entry.name}>{entry.name}</span>
+      <span className={TREE_NAME_CLASS} title={entry.name}>{entry.name}</span>
     )}
     data-lyra-allow-web-drag="true"
     draggable
@@ -317,7 +339,7 @@ const SearchFileRow = memo(({
   readonly onToggle: (filePath: string) => void;
 }) => (
   <AppObjectRow
-    className="lyra-app-sidebar-row lyra-agent-project-tree-row"
+    className={`lyra-app-sidebar-row ${TREE_ROW_CLASS} ${TREE_TWIST_HOVER_RULES}`}
     style={indentStyle(1, "8")}
     aria-expanded={row.expanded}
     aria-label={row.filePath}
@@ -326,7 +348,7 @@ const SearchFileRow = memo(({
       row.expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />
     )}
     title={(
-      <span className="lyra-agent-project-tree-name" title={row.relativePath}>{row.relativePath}</span>
+      <span className={TREE_NAME_CLASS} title={row.relativePath}>{row.relativePath}</span>
     )}
     data-lyra-allow-web-drag="true"
     draggable
@@ -348,12 +370,12 @@ const SearchHitRow = memo(({
   readonly onOpen: (filePath: string, line: number, column: number) => void;
 }) => (
   <AppObjectRow
-    className="lyra-app-sidebar-row lyra-agent-project-tree-row lyra-agent-project-tree-search-hit"
+    className={`lyra-app-sidebar-row ${TREE_ROW_CLASS} ${TREE_SEARCH_HIT_CLASS}`}
     style={indentStyle(1, "8")}
     aria-label={`${hit.filePath}:${hit.line}`}
-    icon={<span className="lyra-agent-project-tree-search-line">{hit.line}</span>}
+    icon={<span className={TREE_SEARCH_LINE_CLASS}>{hit.line}</span>}
     title={(
-      <span className="lyra-agent-project-tree-name" title={hit.preview}>{hit.preview}</span>
+      <span className={TREE_NAME_CLASS} title={hit.preview}>{hit.preview}</span>
     )}
     onClick={() => {
       onOpen(hit.filePath, hit.line, hit.column);
@@ -368,7 +390,7 @@ const renderStatusRow = (
   if (row.kind === "loading") {
     return (
       <AppLoadingState
-        className="lyra-agent-project-tree-inline-state"
+        className={TREE_INLINE_STATE_CLASS}
         align="start"
         density="compact"
         title={labels.loading}
@@ -379,7 +401,7 @@ const renderStatusRow = (
   if (row.kind === "error") {
     return (
       <AppStatusMessage
-        className="lyra-agent-project-tree-inline-state"
+        className={TREE_INLINE_STATE_CLASS}
         tone="error"
         style={indentStyle(row.depth, "8")}
       >
@@ -389,7 +411,7 @@ const renderStatusRow = (
   }
   return (
     <AppEmptyState
-      className="lyra-agent-project-tree-inline-state"
+      className={TREE_INLINE_STATE_CLASS}
       align="start"
       density="compact"
       title={labels.emptyDirectory}
@@ -452,7 +474,7 @@ const AgentProjectTreeEditorPane = memo(({
   }, [editorInstanceId, fileEditorState?.isDirty, model, treeInstanceId]);
 
   return (
-    <main ref={paneRef} className="lyra-agent-project-tree-editor">
+    <main ref={paneRef} className={TREE_EDITOR_CLASS}>
       {chromeVisible ? (
         <AgentProjectTreeEditorTabStrip
           tabs={editorTabs}
@@ -470,11 +492,11 @@ const AgentProjectTreeEditorPane = memo(({
       ) : null}
       {fileEditorState === null && imageViewerState === null && !officeFile && !sqliteFile ? (
         <AppEmptyState
-          className="lyra-agent-project-tree-empty"
+          className={TREE_EMPTY_CLASS}
           title={emptyTitle}
         />
       ) : (
-        <div className="lyra-agent-project-tree-editor-surface-host">
+        <div className={TREE_EDITOR_SURFACE_HOST_CLASS}>
           {sqliteFile && activeTab !== undefined ? (
             <SqliteViewerSurface
               key={activeTab.filePath}
@@ -905,7 +927,7 @@ const AgentProjectTreeSidebar = ({
     return (
       <div
         key={row.key}
-        className="lyra-agent-project-tree-node"
+        className={TREE_NODE_CLASS}
         style={windowed.virtualized ? { height: "var(--lyra-app-sidebar-row-h)" } : undefined}
       >
         {content}
@@ -927,7 +949,7 @@ const AgentProjectTreeSidebar = ({
           : row.kind === "loading"
             ? (
               <AppLoadingState
-                className="lyra-agent-project-tree-inline-state"
+                className={TREE_INLINE_STATE_CLASS}
                 align="start"
                 density="compact"
                 title={labels.searchSearching ?? labels.loading}
@@ -936,7 +958,7 @@ const AgentProjectTreeSidebar = ({
             )
             : (
               <AppEmptyState
-                className="lyra-agent-project-tree-inline-state"
+                className={TREE_INLINE_STATE_CLASS}
                 align="start"
                 density="compact"
                 title={labels.searchEmpty ?? labels.emptyDirectory}
@@ -946,7 +968,7 @@ const AgentProjectTreeSidebar = ({
       return (
         <div
           key={row.key}
-          className="lyra-agent-project-tree-node"
+          className={TREE_NODE_CLASS}
           style={windowedSearch.virtualized ? { height: "var(--lyra-app-sidebar-row-h)" } : undefined}
         >
           {content}
@@ -959,11 +981,11 @@ const AgentProjectTreeSidebar = ({
   const listBody = activeWindow.virtualized
     ? (
       <div
-        className="lyra-agent-project-tree-virtual"
+        className={TREE_VIRTUAL_CLASS}
         style={{ height: activeWindow.totalHeight } as CSSProperties}
       >
         <div
-          className="lyra-agent-project-tree-virtual-window"
+          className={TREE_VIRTUAL_WINDOW_CLASS}
           style={{ transform: `translateY(${activeWindow.offsetY}px)` } as CSSProperties}
         >
           {activeRows}
@@ -991,9 +1013,9 @@ const AgentProjectTreeSidebar = ({
           ? {}
           : { onOpenProblems: onOpenProblemsPanel, problemsActive })}
       />
-      <aside className="lyra-agent-project-tree-sidebar">
+      <aside className={TREE_SIDEBAR_CLASS}>
         <AppObjectRow
-          className="lyra-app-sidebar-row lyra-agent-project-tree-root-row"
+          className={`lyra-app-sidebar-row ${TREE_ROOT_ROW_CLASS} ${TREE_TWIST_HOVER_RULES}`}
           active={state.selectedPath === state.rootPath}
           aria-expanded={fileSearch !== null || expandedPaths.has(state.rootPath)}
           aria-label={state.rootPath}
@@ -1004,7 +1026,7 @@ const AgentProjectTreeSidebar = ({
               : <ChevronRight size={13} />
           )}
           title={(
-            <span className="lyra-agent-project-tree-name">{state.title}</span>
+            <span className={TREE_NAME_CLASS}>{state.title}</span>
           )}
           data-lyra-allow-web-drag="true"
           draggable
@@ -1031,14 +1053,14 @@ const AgentProjectTreeSidebar = ({
         />
         <div
           ref={listRef}
-          className="lyra-agent-project-tree-list"
+          className={TREE_LIST_CLASS}
           role={fileSearch === null ? "tree" : "list"}
           aria-label={labels.title}
         >
           {listBody}
         </div>
         {actionError === null ? null : (
-          <AppStatusMessage className="lyra-agent-project-tree-error" tone="error" role="status">
+          <AppStatusMessage className={TREE_ERROR_CLASS} tone="error" role="status">
             {actionError}
           </AppStatusMessage>
         )}
@@ -1048,7 +1070,7 @@ const AgentProjectTreeSidebar = ({
 };
 
 export const AgentProjectTreeSurface = (props: AgentProjectTreeSurfaceProps) => (
-  <section className="lyra-app-sidebar-split lyra-agent-project-tree-surface" aria-label={props.labels.title}>
+  <section className={`lyra-app-sidebar-split ${TREE_SURFACE_CLASS}`} aria-label={props.labels.title}>
     <AgentProjectTreeSidebar {...props} />
     <AgentProjectTreeEditorPane
       treeInstanceId={props.state.instanceId}

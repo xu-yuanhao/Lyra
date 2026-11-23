@@ -10,6 +10,7 @@ import {
   type ChromeTabCloseGestureEvent
 } from "../ui-primitives";
 import type { AgentProjectTreeEditorTab } from "./open-editor-tab";
+import { TREE_EDITOR_TAB_CLASS, TREE_EDITOR_TAB_MAIN_CLASS, TREE_EDITOR_TAB_PREVIEW_CLASS, TREE_EDITOR_TABS_CLASS } from "./classes";
 
 const titleFromPath = (filePath: string): string => {
   const normalized = filePath.replaceAll("\\", "/");
@@ -36,7 +37,7 @@ export const AgentProjectTreeEditorTabStrip = ({
   }
   return (
     <div
-      className="lyra-tab-strip lyra-agent-project-tree-editor-tabs"
+      className={`lyra-tab-strip ${TREE_EDITOR_TABS_CLASS}`}
       role="tablist"
       aria-label={t("agentProjectTree.editorTabs")}
     >
@@ -48,9 +49,9 @@ export const AgentProjectTreeEditorTabStrip = ({
             key={tab.editorInstanceId}
             className={[
               "lyra-tab-item",
-              "lyra-agent-project-tree-editor-tab",
+              TREE_EDITOR_TAB_CLASS,
               active ? "lyra-tab-item-active" : "",
-              tab.preview ? "lyra-agent-project-tree-editor-tab-preview" : ""
+              tab.preview ? TREE_EDITOR_TAB_PREVIEW_CLASS : ""
             ].filter((value) => value.length > 0).join(" ")}
             data-lyra-tab-id={tab.editorInstanceId}
             onMouseDown={(event) => {
@@ -70,7 +71,7 @@ export const AgentProjectTreeEditorTabStrip = ({
             }}
           >
             <AppButton
-              className="lyra-tab-main lyra-tab-title lyra-agent-project-tree-editor-tab-main"
+              className={`lyra-tab-main lyra-tab-title ${TREE_EDITOR_TAB_MAIN_CLASS}`}
               variant="ghost"
               size="sm"
               role="tab"
