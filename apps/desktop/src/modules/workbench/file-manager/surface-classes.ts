@@ -149,3 +149,18 @@ export const FM_OS_WATERMARK_CLASS =
 
 export const FM_DRAG_PREVIEW_CLASS =
   "lyra-file-manager-drag-preview pointer-events-none fixed top-[calc(var(--lyra-unit-10000)*-1)] left-[calc(var(--lyra-unit-10000)*-1)] inline-flex min-h-[var(--lyra-control-h-24)] max-w-[var(--lyra-unit-260)] items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-[var(--lyra-radius-pill)] border border-[var(--lyra-app-border)] bg-[var(--lyra-app-popover-bg)] px-[var(--lyra-space-10)] text-[var(--lyra-text-primary)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-16)] [box-shadow:var(--lyra-shadow-elevated-md)]";
+
+export const APP_CONTENT_COLUMN_CLASS =
+  "lyra-app-content-column [--lyra-app-content-max-width:var(--lyra-unit-690)] [--lyra-app-content-padding-block-start:var(--lyra-page-pad-block-start)] [--lyra-app-content-padding-block-end:var(--lyra-page-pad-block-end)] [--lyra-app-content-padding-inline:var(--lyra-page-pad-inline)] [--lyra-app-content-gap:var(--lyra-space-22)] w-[min(100%,max(var(--lyra-app-content-max-width),calc(100%_-_var(--lyra-space-64)_*_2)))] min-w-0 mx-auto p-[var(--lyra-app-content-padding-block-start)_var(--lyra-app-content-padding-inline)_var(--lyra-app-content-padding-block-end)] grid content-start gap-[var(--lyra-app-content-gap)]";
+
+export const APP_CONTENT_COLUMN_WIDE_CLASS =
+  "lyra-app-content-column-wide [--lyra-app-content-max-width:var(--lyra-unit-860)]";
+
+export const APP_SECTION_CLASS =
+  "lyra-app-section min-w-0 grid gap-[var(--lyra-space-8)]";
+
+export const APP_SECTION_TITLE_CLASS =
+  "lyra-app-section-title min-w-0 min-h-[var(--lyra-control-h-24)] inline-flex items-center gap-[var(--lyra-space-8)] px-[var(--lyra-space-8)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-body)] font-medium leading-[var(--lyra-text-line-body)] [&_h2]:m-0 [&_h3]:m-0 [&_strong]:m-0 [&_h2]:text-inherit [&_h3]:text-inherit [&_strong]:text-inherit [&_h2]:text-[length:inherit] [&_h3]:text-[length:inherit] [&_strong]:text-[length:inherit] [&_h2]:font-[inherit] [&_h3]:font-[inherit] [&_strong]:font-[inherit] [&_h2]:leading-[inherit] [&_h3]:leading-[inherit] [&_strong]:leading-[inherit] [&_svg]:size-[var(--lyra-icon-size-14)] [&_svg]:[stroke-width:1.8]";
+
+export const APP_GROUP_CLASS =
+  "lyra-app-group min-w-0 overflow-hidden border border-[var(--lyra-stroke-thin)] border-[var(--lyra-app-border)] rounded-[var(--lyra-radius-10)] bg-[var(--lyra-app-surface-bg)] shadow-none";

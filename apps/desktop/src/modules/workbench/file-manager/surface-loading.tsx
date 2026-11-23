@@ -21,7 +21,12 @@ import {
   FM_LIST_GRID_CLASS,
   FM_LIST_SHELL_CLASS,
   FM_PAGE_CLASS,
-  FM_SECTION_HEADER_CLASS
+  FM_SECTION_HEADER_CLASS,
+  APP_CONTENT_COLUMN_CLASS,
+  APP_CONTENT_COLUMN_WIDE_CLASS,
+  APP_SECTION_CLASS,
+  APP_SECTION_TITLE_CLASS,
+  APP_GROUP_CLASS,
 } from "./surface-classes";
 import type {
   FileManagerSkeletonSlots,
@@ -53,7 +58,7 @@ export const FileManagerLoadingSkeleton = ({
 }) => {
   if (viewKind === "home") {
     return (
-      <div className="lyra-app-content-column lyra-file-manager-skeleton-home" aria-label="file-manager-loading-skeleton">
+      <div className={`${APP_CONTENT_COLUMN_CLASS} lyra-file-manager-skeleton-home`} aria-label="file-manager-loading-skeleton">
         <article className={`${FM_HOST_CARD_CLASS} lyra-file-manager-host-card-skeleton pointer-events-none`}>
           <div className={FM_HOST_IDENTITY_CLASS}>
             <span className={SKELETON_HOST_ICON} />
@@ -68,12 +73,12 @@ export const FileManagerLoadingSkeleton = ({
           </div>
         </article>
 
-        <section className="lyra-app-section lyra-file-manager-skeleton-home-section">
-          <header className={`lyra-app-section-title lyra-file-manager-skeleton-home-header ${FM_SECTION_HEADER_CLASS}`}>
+        <section className={`${APP_SECTION_CLASS} lyra-file-manager-skeleton-home-section`}>
+          <header className={`${APP_SECTION_TITLE_CLASS} lyra-file-manager-skeleton-home-header ${FM_SECTION_HEADER_CLASS}`}>
             <span className={SKELETON_ICON_16} />
             <span className={SKELETON_LINE_16} />
           </header>
-          <div className={`lyra-app-group lyra-app-row-list ${FM_HOME_GRID_CLASS}`}>
+          <div className={`${APP_GROUP_CLASS} lyra-app-row-list ${FM_HOME_GRID_CLASS}`}>
             {slots.deviceSlots.map((cardId) => (
               <article
                 key={`devices-card-${cardId}`}
@@ -109,8 +114,8 @@ export const FileManagerLoadingSkeleton = ({
   if (presentationMode === "large") {
     const tiles = viewKind === "trash" ? slots.trashLargeSlots : slots.directoryLargeSlots;
     return (
-      <div className={`lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`} aria-label="file-manager-loading-skeleton">
-        <div className={`lyra-app-group ${FM_LARGE_GRID_CLASS}`}>
+      <div className={`${APP_CONTENT_COLUMN_CLASS} ${APP_CONTENT_COLUMN_WIDE_CLASS} lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`} aria-label="file-manager-loading-skeleton">
+        <div className={`${APP_GROUP_CLASS} ${FM_LARGE_GRID_CLASS}`}>
           {tiles.map((tileId) => (
             <article
               key={`fm-large-skeleton-tile-${tileId}`}
@@ -135,8 +140,8 @@ export const FileManagerLoadingSkeleton = ({
   const rows = viewKind === "trash" ? slots.trashListSlots : slots.directoryListSlots;
 
   return (
-    <div className={`lyra-app-content-column lyra-app-content-column-wide lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`} aria-label="file-manager-loading-skeleton">
-      <div className={`lyra-app-group lyra-app-row-list ${FM_LIST_GRID_CLASS} lyra-file-manager-list-grid-skeleton pointer-events-none`}>
+    <div className={`${APP_CONTENT_COLUMN_CLASS} ${APP_CONTENT_COLUMN_WIDE_CLASS} lyra-file-manager-list-shell ${FM_PAGE_CLASS} ${FM_LIST_SHELL_CLASS}`} aria-label="file-manager-loading-skeleton">
+      <div className={`${APP_GROUP_CLASS} lyra-app-row-list ${FM_LIST_GRID_CLASS} lyra-file-manager-list-grid-skeleton pointer-events-none`}>
         {rows.map((rowId) => (
           <article
             key={`fm-list-skeleton-row-${rowId}`}

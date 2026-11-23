@@ -38,7 +38,11 @@ import {
   FM_HOST_NAME_CLASS,
   FM_HOST_OS_CLASS,
   FM_SECTION_HEADER_CLASS,
-  FM_SECTION_TITLE_CLASS
+  FM_SECTION_TITLE_CLASS,
+  APP_CONTENT_COLUMN_CLASS,
+  APP_SECTION_CLASS,
+  APP_SECTION_TITLE_CLASS,
+  APP_GROUP_CLASS,
 } from "./surface-classes";
 import { preventContextMenuDefaults } from "./surface-view-events";
 import type { FileManagerSurfaceChromeProps } from "./surface-view-types";
@@ -52,12 +56,12 @@ const HomeSection = ({
   readonly children: ReactNode;
   readonly section: "devices";
 }) => (
-  <section className={`lyra-app-section lyra-file-manager-home-section ${FM_SECTION_GAP_CLASS}`}>
-    <header className={`lyra-app-section-title lyra-file-manager-home-section-header ${FM_SECTION_HEADER_CLASS}`}>
+  <section className={`${APP_SECTION_CLASS} lyra-file-manager-home-section ${FM_SECTION_GAP_CLASS}`}>
+    <header className={`${APP_SECTION_TITLE_CLASS} lyra-file-manager-home-section-header ${FM_SECTION_HEADER_CLASS}`}>
       {renderFileManagerSectionIcon(section)}
       <h3 className={FM_SECTION_TITLE_CLASS}>{title}</h3>
     </header>
-    <div className={`lyra-app-group lyra-app-row-list ${FM_HOME_GRID_CLASS}`}>{children}</div>
+    <div className={`${APP_GROUP_CLASS} lyra-app-row-list ${FM_HOME_GRID_CLASS}`}>{children}</div>
   </section>
 );
 
@@ -79,7 +83,7 @@ export const FileManagerHomeContent = ({
   const hasDevices = home.disks.length > 0 || home.devices.length > 0;
 
   return (
-    <div className={`lyra-app-content-column lyra-file-manager-home ${FM_PAGE_CLASS} ${FM_PAGE_GRID_CLASS}`}>
+    <div className={`${APP_CONTENT_COLUMN_CLASS} lyra-file-manager-home ${FM_PAGE_CLASS} ${FM_PAGE_GRID_CLASS}`}>
       {host === null ? null : (
         <article className={FM_HOST_CARD_CLASS}>
           <div className={FM_HOST_IDENTITY_CLASS}>
@@ -211,15 +215,15 @@ export const FileManagerFavoritesContent = ({
   const favorites = renderModel.body.favorites;
 
   return (
-    <div className={`lyra-app-content-column lyra-file-manager-favorites-page ${FM_PAGE_CLASS} ${FM_PAGE_GRID_CLASS}`}>
-      <header className={`lyra-app-section-title lyra-file-manager-favorites-header ${FM_SECTION_HEADER_CLASS}`}>
+    <div className={`${APP_CONTENT_COLUMN_CLASS} lyra-file-manager-favorites-page ${FM_PAGE_CLASS} ${FM_PAGE_GRID_CLASS}`}>
+      <header className={`${APP_SECTION_TITLE_CLASS} lyra-file-manager-favorites-header ${FM_SECTION_HEADER_CLASS}`}>
         {renderFileManagerSectionIcon("favorites")}
         <h3 className={FM_SECTION_TITLE_CLASS}>{labels.homeSectionFavorites}</h3>
       </header>
       {favorites.isEmpty ? (
         <AppEmptyState className={FM_EMPTY_STATE_CLASS} title={labels.noFavorites} />
       ) : (
-        <div className={`lyra-app-group lyra-app-row-list ${FM_FAVORITES_LIST_CLASS}`}>
+        <div className={`${APP_GROUP_CLASS} lyra-app-row-list ${FM_FAVORITES_LIST_CLASS}`}>
           {favorites.favorites.map((favorite) => (
             <AppObjectRow
               key={favorite.id}
