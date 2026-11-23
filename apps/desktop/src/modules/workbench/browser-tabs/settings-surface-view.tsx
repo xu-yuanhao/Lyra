@@ -69,6 +69,7 @@ import {
   ST_CONTROL_SLOT_CLASS,
   ST_ENGINE_BRAND_ICON_CLASS,
   ST_INLINE_INPUT_CLASS,
+  ST_NAV_LOGO_CLASS,
   ST_INLINE_STATUS_COPY_CLASS,
   ST_INLINE_STATUS_ROW_CLASS,
   ST_ROW_BLOCK_CONTROL_CLASS,
@@ -169,7 +170,7 @@ const SettingsAccountView = ({
         iconUrl={account.avatarUrl}
         label={account.displayName}
         fallback={account.kind === "local"
-          ? <span className={`${ST_ACCOUNT_LOCAL_LOGO_CLASS} lyra-settings-nav-logo`} />
+          ? <span className={`${ST_ACCOUNT_LOCAL_LOGO_CLASS} ${ST_NAV_LOGO_CLASS}`} />
           : account.displayName.slice(0, 1).toUpperCase()}
       />
       <span className={ST_ACCOUNT_NAME_CLASS} title={account.displayName}>
@@ -631,7 +632,7 @@ export const SettingsSurfaceView = ({
                     }}
                   >
                     {category.id === "ai" ? (
-                      <span className="lyra-settings-nav-icon lyra-settings-nav-logo" aria-hidden="true" />
+                      <span className={`lyra-settings-nav-icon ${ST_NAV_LOGO_CLASS}`} aria-hidden="true" />
                     ) : Icon === undefined ? null : (
                       <Icon className={ST_NAV_ICON_CLASS} size={14} aria-hidden="true" />
                     )}

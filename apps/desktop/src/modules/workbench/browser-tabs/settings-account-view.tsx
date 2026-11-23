@@ -37,7 +37,9 @@ import {
   AC_SUMMARY_ITEM_CLASS,
   AC_WEEK_BAR_CLASS,
   AC_WEEK_CHART_CLASS,
+  ST_ACCOUNT_LOCAL_LOGO_CLASS,
   ST_CATEGORY_ACCOUNT_CLASS,
+  ST_NAV_LOGO_CLASS,
   acHeatmapLevelClass
 } from "./settings-classes";
 
@@ -344,7 +346,7 @@ export const SettingsAccountPage = ({ account, desktopApi, labels }: SettingsAcc
           iconUrl={account.avatarUrl}
           label={account.displayName}
           fallback={account.kind === "local"
-            ? <span className="lyra-settings-account-local-logo lyra-settings-nav-logo" />
+            ? <span className={`${ST_ACCOUNT_LOCAL_LOGO_CLASS} ${ST_NAV_LOGO_CLASS}`} />
             : account.displayName.slice(0, 1).toUpperCase()}
         />
         <div className={AC_PROFILE_COPY_CLASS}>

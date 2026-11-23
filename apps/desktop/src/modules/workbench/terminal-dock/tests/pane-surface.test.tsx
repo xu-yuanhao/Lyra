@@ -95,6 +95,10 @@ const terminalStyles = readFileSync(
   resolve(process.cwd(), "src/renderer/styles/surfaces.scss"),
   "utf8"
 );
+const terminalClasses = readFileSync(
+  resolve(process.cwd(), "src/modules/workbench/terminal-dock/classes.ts"),
+  "utf8"
+);
 
 describe("terminal pane surface", () => {
   afterEach(async () => {
@@ -139,8 +143,8 @@ describe("terminal pane surface", () => {
     expect(terminalStyles).toMatch(
       /@keyframes lyra-terminal-cursor-bar-blink\s*\{[\s\S]*?50%\s*\{\s*box-shadow:\s*none;/
     );
-    expect(terminalStyles).toMatch(
-      /\.xterm-rows\.xterm-focus[\s\S]*?\.xterm-cursor\.xterm-cursor-blink\.xterm-cursor-bar\s*\{[\s\S]*?animation:\s*lyra-terminal-cursor-bar-blink 1s step-end infinite;/
+    expect(terminalClasses).toMatch(
+      /xterm-cursor\.xterm-cursor-blink\.xterm-cursor-bar[^\n]*animate-\[lyra-terminal-cursor-bar-blink_1s_step-end_infinite\]/
     );
   });
 

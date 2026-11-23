@@ -128,7 +128,7 @@ const SPECIAL_BRAND_MATCHERS: readonly {
 ];
 
 const APB_ROOT_CLASS =
-  "lyra-agent-provider-brand-icon inline-flex size-[var(--lyra-icon-size-16)] shrink-0 items-center justify-center text-current [&_svg]:size-full";
+  "lyra-agent-provider-brand-icon inline-flex size-[var(--lyra-icon-size-16)] shrink-0 items-center justify-center text-current [&_svg]:size-full [:root[data-lyra-theme-tone=dark]_&[data-lyra-brand-luma=dark]_svg]:[filter:invert(1)_hue-rotate(180deg)] [:root[data-lyra-theme-tone=light]_&[data-lyra-brand-luma=light]_svg]:[filter:invert(1)_hue-rotate(180deg)]";
 const APB_IMAGE_CLASS = "lyra-agent-provider-brand-icon-image size-full object-contain";
 const APB_IMAGE_AVATAR_CLASS = "lyra-agent-provider-brand-icon-avatar rounded-full object-cover";
 const APB_INITIALS_CLASS =

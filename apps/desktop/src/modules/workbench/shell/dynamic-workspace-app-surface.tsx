@@ -60,7 +60,7 @@ export const DynamicWorkspaceAppSurface = ({
   return (
     <div
       ref={containerRef}
-      className="lyra-dynamic-app-surface"
+      className="lyra-dynamic-app-surface block h-full w-full min-h-0 min-w-0"
       role="region"
       aria-label={title}
     />

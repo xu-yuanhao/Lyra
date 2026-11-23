@@ -2,7 +2,7 @@ export const AI_STACK_CLASS = "lyra-settings-ai-stack grid min-w-0 gap-[var(--ly
 export const AI_MODELS_PANEL_CLASS = "lyra-settings-ai-models-panel grid min-w-0 gap-[var(--lyra-space-10)]";
 
 export const AI_PAGE_HEADER_CLASS =
-  "lyra-settings-ai-page-header grid min-h-[var(--lyra-control-h-36)] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--lyra-space-8)] p-0 [&_h3]:m-0 [&_h3]:text-[var(--lyra-text-primary)] [&_h3]:text-[length:var(--lyra-text-size-body)] [&_h3]:font-semibold [&_h3]:leading-[var(--lyra-text-line-body)] [&[data-drop-active=true]_.lyra-app-search-field]:outline [&[data-drop-active=true]_.lyra-app-search-field]:outline-[var(--lyra-stroke-thin)] [&[data-drop-active=true]_.lyra-app-search-field]:outline-[color-mix(in_srgb,var(--lyra-text-primary)_72%,transparent)] [&[data-drop-active=true]_.lyra-app-search-field]:outline-offset-[var(--lyra-space-2)]";
+  "lyra-settings-ai-page-header grid min-h-[var(--lyra-control-h-36)] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--lyra-space-8)] max-[980px]:items-stretch max-[980px]:grid-cols-1 p-0 [&_h3]:m-0 [&_h3]:text-[var(--lyra-text-primary)] [&_h3]:text-[length:var(--lyra-text-size-body)] [&_h3]:font-semibold [&_h3]:leading-[var(--lyra-text-line-body)] [&[data-drop-active=true]_.lyra-app-search-field]:outline [&[data-drop-active=true]_.lyra-app-search-field]:outline-[var(--lyra-stroke-thin)] [&[data-drop-active=true]_.lyra-app-search-field]:outline-[color-mix(in_srgb,var(--lyra-text-primary)_72%,transparent)] [&[data-drop-active=true]_.lyra-app-search-field]:outline-offset-[var(--lyra-space-2)]";
 
 export const AI_FORM_CLASS =
   "lyra-settings-ai-form grid grid-cols-[minmax(0,1fr)] items-start gap-[var(--lyra-space-12)]";
@@ -47,7 +47,7 @@ export const AI_SKILL_LIST_CLASS =
   "lyra-settings-ai-skill-list grid min-w-0 gap-0 overflow-hidden rounded-[var(--lyra-settings-radius-control)] border border-[var(--lyra-stroke-thin)] border-[color-mix(in_srgb,var(--lyra-settings-border)_70%,transparent)] bg-[var(--lyra-settings-card-bg)]";
 
 export const AI_SKILL_CARD_CLASS =
-  "lyra-settings-ai-skill-card relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--lyra-space-12)] border-0 bg-transparent px-[var(--lyra-space-14)] py-[var(--lyra-space-12)] hover:bg-[var(--lyra-settings-row-hover-bg)] [&:hover_.lyra-settings-ai-row-action]:opacity-100 [&:hover_.lyra-settings-ai-row-delete]:opacity-100 [&:focus-within_.lyra-settings-ai-row-action]:opacity-100 [&:focus-within_.lyra-settings-ai-row-delete]:opacity-100 " + AI_LIST_DIVIDER;
+  "lyra-settings-ai-skill-card relative grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-[var(--lyra-space-12)] max-[980px]:grid-cols-1 data-[pending=true]:after:absolute data-[pending=true]:after:inset-0 data-[pending=true]:after:p-[var(--lyra-stroke-thin)] data-[pending=true]:after:rounded-[inherit] data-[pending=true]:after:bg-[conic-gradient(from_0deg,transparent_0_64%,color-mix(in_srgb,var(--lyra-text-primary)_76%,transparent)_76%,transparent_88%_100%)] data-[pending=true]:after:pointer-events-none data-[pending=true]:after:[mask:linear-gradient(var(--lyra-effect-overlay-solid-bg)_0_0)_content-box,linear-gradient(var(--lyra-effect-overlay-solid-bg)_0_0)] data-[pending=true]:after:[mask-composite:exclude] data-[pending=true]:after:[-webkit-mask:linear-gradient(var(--lyra-effect-overlay-solid-bg)_0_0)_content-box,linear-gradient(var(--lyra-effect-overlay-solid-bg)_0_0)] data-[pending=true]:after:[-webkit-mask-composite:xor] data-[pending=true]:after:animate-[lyra-settings-ai-skill-pending-border_1.1s_linear_infinite] motion-reduce:data-[pending=true]:after:animate-none motion-reduce:data-[pending=true]:after:bg-[color-mix(in_srgb,var(--lyra-text-primary)_52%,transparent)] border-0 bg-transparent px-[var(--lyra-space-14)] py-[var(--lyra-space-12)] hover:bg-[var(--lyra-settings-row-hover-bg)] [&:hover_.lyra-settings-ai-row-action]:opacity-100 [&:hover_.lyra-settings-ai-row-delete]:opacity-100 [&:focus-within_.lyra-settings-ai-row-action]:opacity-100 [&:focus-within_.lyra-settings-ai-row-delete]:opacity-100 " + AI_LIST_DIVIDER;
 
 export const AI_SKILL_MAIN_CLASS = "lyra-settings-ai-skill-main grid min-w-0 gap-[var(--lyra-space-8)]";
 
@@ -69,7 +69,7 @@ export const AI_SKILL_META_CLASS =
   "lyra-settings-ai-skill-meta flex min-w-0 flex-wrap gap-[var(--lyra-space-8)] " + AI_SKILL_TEXT_CLASS + " [&_strong]:text-[var(--lyra-text-primary)] [&_strong]:font-semibold";
 
 export const AI_SKILL_ACTIONS_CLASS =
-  "lyra-settings-ai-skill-actions inline-flex items-center justify-end gap-[var(--lyra-space-6)]";
+  "lyra-settings-ai-skill-actions inline-flex items-center justify-end max-[980px]:justify-start gap-[var(--lyra-space-6)]";
 
 export const AI_MCP_ITEM_CLASS =
   "lyra-settings-ai-mcp-item relative grid min-w-0 gap-0 [.lyra-settings-ai-mcp-item+&::before]:absolute [.lyra-settings-ai-mcp-item+&::before]:top-0 [.lyra-settings-ai-mcp-item+&::before]:left-[var(--lyra-space-14)] [.lyra-settings-ai-mcp-item+&::before]:right-[var(--lyra-space-14)] [.lyra-settings-ai-mcp-item+&::before]:h-[var(--lyra-stroke-thin)] [.lyra-settings-ai-mcp-item+&::before]:bg-[color-mix(in_srgb,var(--lyra-settings-border)_72%,transparent)] [.lyra-settings-ai-mcp-item+&::before]:content-['']";

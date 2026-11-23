@@ -1,66 +1,8 @@
-/* Lyra surfaces layer. Keep this file limited to layout and surface composition; real colors live in tokens.css or material.scss. */
-
-/* Core-owned first-party and nested application mount point. */
-.lyra-dynamic-app-surface {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-}
-
-/* Source: settings.css */
-/* Settings surface: page-specific layout and AI settings. Visual source is --lyra-app-*. */
-:root[data-lyra-window-material="native"][data-lyra-material-enabled="true"] .lyra-settings-surface {
-  background: transparent;
-}
-
-:root[data-lyra-window-material="opaque"] .lyra-settings-surface {
-  background: var(--lyra-settings-bg);
-}
-
-:root[data-lyra-window-material="opaque"] .lyra-settings-shell,
-:root[data-lyra-window-material="opaque"] .lyra-settings-nav-logo {
-  display: inline-block;
-  background: currentColor;
-  -webkit-mask: url("../assets/brand/lyra-mark.svg") center / contain no-repeat;
-  mask: url("../assets/brand/lyra-mark.svg") center / contain no-repeat;
-}
+/* Lyra surfaces layer. Keyframes referenced by Tailwind animate-* utilities. */
 
 @keyframes lyra-language-picker-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-
-.lyra-settings-ai-skill-card[data-pending="true"]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  padding: var(--lyra-stroke-thin);
-  border-radius: inherit;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0 64%,
-    color-mix(in srgb, var(--lyra-text-primary) 76%, transparent) 76%,
-    transparent 88% 100%
-  );
-  pointer-events: none;
-  -webkit-mask:
-    linear-gradient(var(--lyra-effect-overlay-solid-bg) 0 0) content-box,
-    linear-gradient(var(--lyra-effect-overlay-solid-bg) 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(var(--lyra-effect-overlay-solid-bg) 0 0) content-box,
-    linear-gradient(var(--lyra-effect-overlay-solid-bg) 0 0);
-  mask-composite: exclude;
-  animation: lyra-settings-ai-skill-pending-border 1.1s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lyra-settings-ai-skill-card[data-pending="true"]::after {
-    animation: none;
-    background: color-mix(in srgb, var(--lyra-text-primary) 52%, transparent);
   }
 }
 
@@ -70,102 +12,6 @@
   }
 }
 
-[data-lyra-theme-tone="dark"] .lyra-agent-provider-brand-icon[data-lyra-brand-luma="dark"] svg,
-[data-lyra-theme-tone="light"] .lyra-agent-provider-brand-icon[data-lyra-brand-luma="light"] svg {
-  filter: invert(1) hue-rotate(180deg);
-}
-
-
-@media (min-width: 1180px) {
-  .lyra-settings-ai-form {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 980px) {
-  .lyra-settings-shell {
-    grid-template-columns: var(--lyra-unit-200) minmax(0, 1fr);
-  }
-
-  .lyra-settings-main {
-    padding: var(--lyra-space-20);
-  }
-
-  .lyra-settings-ai-form,
-  .lyra-settings-ai-advanced-grid,
-  .lyra-settings-ai-extra-fields-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .lyra-settings-inline-status-row,
-  .lyra-settings-status-list,
-  .lyra-settings-ai-skill-card {
-    grid-template-columns: 1fr;
-  }
-
-  .lyra-settings-ai-skill-actions {
-    justify-content: flex-start;
-  }
-
-  .lyra-account-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .lyra-account-summary-item + .lyra-account-summary-item {
-    border-left: 0;
-    border-top: var(--lyra-stroke-thin) solid var(--lyra-settings-border);
-  }
-
-  .lyra-account-detail-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .lyra-settings-ai-page-header {
-    align-items: stretch;
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 720px) {
-  .lyra-settings-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .lyra-settings-nav {
-    min-height: auto;
-    max-height: var(--lyra-unit-164);
-    border-right: 0;
-    border-bottom: var(--lyra-stroke-thin) solid var(--lyra-settings-border);
-  }
-
-  .lyra-settings-nav-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .lyra-settings-main {
-    padding: var(--lyra-space-16);
-  }
-
-  .lyra-account-profile,
-  .lyra-account-panel-header {
-    align-items: stretch;
-    grid-template-columns: 1fr;
-    display: grid;
-  }
-
-  .lyra-account-profile-avatar {
-    width: var(--lyra-space-64);
-    height: var(--lyra-space-64);
-  }
-
-  .lyra-account-summary-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Source: browser-search.css */
-/* Browser search surface, result list, and page shell styles */
 @keyframes lyra-brand-logo-smart-spin {
   from {
     transform: rotate(0turn);
@@ -174,31 +20,6 @@
   to {
     transform: rotate(var(--lyra-brand-logo-spin-turn, 1turn));
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lyra-brand-logo-spin {
-    animation: none;
-    will-change: auto;
-  }
-}
-
-/* Source: file-manager.css */
-/* File Manager: Cursor-like product surface built on Lyra App tokens. */
-.lyra-file-manager-list-row[data-lyra-allow-web-drag="true"] {
-  -webkit-user-drag: element;
-}
-
-.lyra-file-manager-list-row[data-lyra-allow-web-drag="true"] * {
-  -webkit-user-drag: none;
-}
-
-.lyra-file-manager-large-tile[data-lyra-allow-web-drag="true"] {
-  -webkit-user-drag: element;
-}
-
-.lyra-file-manager-large-tile[data-lyra-allow-web-drag="true"] * {
-  -webkit-user-drag: none;
 }
 
 @keyframes lyra-overflow-marquee {
@@ -213,7 +34,6 @@
   }
 }
 
-/* Source: image-viewer.css */
 @keyframes lyra-image-viewer-flow {
   0% {
     transform: translateX(-32%) rotate(-18deg);
@@ -226,36 +46,9 @@
   }
 }
 
-/* Source: terminal.css */
-/* Terminal dock, tabs, panes, and host styles */
-.lyra-terminal-host .xterm {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.lyra-terminal-host .xterm,
-.lyra-terminal-host .xterm-viewport,
-.lyra-terminal-host .xterm-rows {
-  background-color: var(--lyra-terminal-bg) !important;
-}
-
-.lyra-terminal-host .xterm .xterm-scroll-area {
-  background: transparent !important;
-}
-
 // xterm 5.3 uses its underline keyframes for bar cursors, leaving their box shadow visible.
 @keyframes lyra-terminal-cursor-bar-blink {
   50% {
     box-shadow: none;
   }
 }
-
-.lyra-terminal-host
-  .xterm
-  .xterm-rows.xterm-focus
-  .xterm-cursor.xterm-cursor-blink.xterm-cursor-bar {
-  animation: lyra-terminal-cursor-bar-blink 1s step-end infinite;
-}
-
-
-
