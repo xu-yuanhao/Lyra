@@ -182,14 +182,6 @@ const ICON_PACKAGE_MODULE_PATTERN =
 
 const selectorRules: readonly SelectorRule[] = [
   {
-    selector: ".lyra-context-menu-item",
-    required: [/border-radius:\s*var\(--lyra-radius-6\)\s*;/, /background:\s*transparent\s*;/]
-  },
-  {
-    selector: ".lyra-context-menu-item:hover:enabled",
-    required: [/background:\s*var\(--lyra-app-row-hover-bg\)\s*;/]
-  },
-  {
     selector: ".lyra-workspace",
     required: [/grid-template-rows:\s*minmax\(0,\s*1fr\)\s*var\(--lyra-size-browser-tab-h\)\s*;/]
   },
