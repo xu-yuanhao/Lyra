@@ -30,6 +30,23 @@ import {
   windowFixedRows
 } from "../agent-project-tree/visible-rows";
 import { ContextMenuHost, useContextMenuModel, type ContextMenuItem } from "../context-menu";
+import {
+  GIT_DIFF_CLASS,
+  GIT_DIR_CLASS,
+  GIT_EMPTY_SIDEBAR_CLASS,
+  GIT_ICON_BUTTON_CLASS,
+  GIT_INLINE_STATE_CLASS,
+  GIT_LIST_CLASS,
+  GIT_MAIN_CLASS,
+  GIT_NAME_CLASS,
+  GIT_ROW_CLASS,
+  GIT_ROW_SELECTED_CLASS,
+  GIT_SIDEBAR_CLASS,
+  GIT_SURFACE_CLASS,
+  GIT_VIRTUAL_CLASS,
+  GIT_VIRTUAL_WINDOW_CLASS,
+  gitStatusClass
+} from "./classes";
 import { useWorkbenchTitlebarContribution } from "../shell/titlebar-context";
 import type {
   AgentGitDiffState,
@@ -207,22 +224,23 @@ const GitFileRow = memo(({
       tabIndex={0}
       className={joinClassNames(
         "lyra-app-sidebar-row",
-        "lyra-agent-git-row",
-        selected && "lyra-app-sidebar-row-selected lyra-agent-git-row-selected"
+        GIT_ROW_CLASS,
+  GIT_ROW_SELECTED_CLASS,
+        selected && `lyra-app-sidebar-row-selected ${GIT_ROW_SELECTED_CLASS}`
       )}
       active={selected}
       icon={(
-        <span className={joinClassNames("lyra-agent-git-status", `lyra-agent-git-status-${file.status}`)}>
+        <span className={gitStatusClass(file.status)}>
           {statusLabel(file.status)}
         </span>
       )}
       title={(
-        <span className="lyra-agent-git-name" title={file.path}>
+        <span className={GIT_NAME_CLASS} title={file.path}>
           {name}
         </span>
       )}
       meta={directory.length === 0 ? undefined : (
-        <span className="lyra-agent-git-dir" title={file.path}>
+        <span className={GIT_DIR_CLASS} title={file.path}>
           {directory}
         </span>
       )}
@@ -231,7 +249,7 @@ const GitFileRow = memo(({
         <>
           {file.unstaged || file.untracked ? (
             <AppIconButton
-              className="lyra-app-sidebar-row-action lyra-agent-git-icon-button"
+              className={`lyra-app-sidebar-row-action ${GIT_ICON_BUTTON_CLASS}`}
               aria-label={`${labels.stage}: ${file.path}`}
               title={labels.stage}
               disabled={busy}
@@ -242,7 +260,7 @@ const GitFileRow = memo(({
           ) : null}
           {file.staged ? (
             <AppIconButton
-              className="lyra-app-sidebar-row-action lyra-agent-git-icon-button"
+              className={`lyra-app-sidebar-row-action ${GIT_ICON_BUTTON_CLASS}`}
               aria-label={`${labels.unstage}: ${file.path}`}
               title={labels.unstage}
               disabled={busy}
@@ -252,7 +270,7 @@ const GitFileRow = memo(({
             </AppIconButton>
           ) : null}
           <AppIconButton
-            className="lyra-app-sidebar-row-action lyra-agent-git-icon-button"
+            className={`lyra-app-sidebar-row-action ${GIT_ICON_BUTTON_CLASS}`}
             tone="danger"
             aria-label={`${labels.discard}: ${file.path}`}
             title={labels.discard}
@@ -305,7 +323,7 @@ const DiffPane = ({
     return <AppEmptyState className="lyra-agent-git-diff-state" title={labels.noDiff} />;
   }
   return (
-    <section className="lyra-agent-git-diff" aria-label={diffState.file.path}>
+    <section className={GIT_DIFF_CLASS} aria-label={diffState.file.path}>
       <VirtualizedDiffView fill hunks={hunks} />
     </section>
   );
@@ -531,11 +549,11 @@ export const AgentGitSurface = ({
   ));
   const listBody = windowed.virtualized ? (
     <div
-      className="lyra-agent-git-virtual"
+      className={GIT_VIRTUAL_CLASS}
       style={{ height: windowed.totalHeight } as CSSProperties}
     >
       <div
-        className="lyra-agent-git-virtual-window"
+        className={GIT_VIRTUAL_WINDOW_CLASS}
         style={{ transform: `translateY(${windowed.offsetY}px)` } as CSSProperties}
       >
         {fileRows}
@@ -544,7 +562,7 @@ export const AgentGitSurface = ({
   ) : fileRows;
 
   return (
-    <section className="lyra-app-sidebar-split lyra-agent-git-surface" aria-label={labels.title}>
+    <section className={`lyra-app-sidebar-split ${GIT_SURFACE_CLASS}`} aria-label={labels.title}>
       <ContextMenuHost
         state={contextMenu.state}
         onClose={contextMenu.closeMenu}
@@ -557,40 +575,40 @@ export const AgentGitSurface = ({
         selectedPath={selectedPath}
         onRefresh={onRefresh}
       />
-      <aside className="lyra-agent-git-sidebar">
+      <aside className={GIT_SIDEBAR_CLASS}>
         {snapshot === null && statusState.kind === "loading" ? (
           <AppLoadingState
-            className="lyra-agent-git-empty lyra-agent-git-empty-sidebar"
+            className={`lyra-agent-git-empty ${GIT_EMPTY_SIDEBAR_CLASS}`}
             title={labels.loading}
           />
         ) : snapshot === null && statusState.kind === "error" ? (
           <AppErrorState
-            className="lyra-agent-git-empty lyra-agent-git-empty-sidebar"
+            className={`lyra-agent-git-empty ${GIT_EMPTY_SIDEBAR_CLASS}`}
             title={statusState.message}
           />
         ) : snapshot?.isRepository === false ? (
           <AppErrorState
-            className="lyra-agent-git-empty lyra-agent-git-empty-sidebar"
+            className={`lyra-agent-git-empty ${GIT_EMPTY_SIDEBAR_CLASS}`}
             title={labels.notRepositoryTitle}
             description={snapshot.message ?? labels.notRepositoryDescription}
           />
         ) : entries.length === 0 ? (
           <AppEmptyState
-            className="lyra-agent-git-empty lyra-agent-git-empty-sidebar"
+            className={`lyra-agent-git-empty ${GIT_EMPTY_SIDEBAR_CLASS}`}
             title={labels.emptyTitle}
           />
         ) : (
-          <div ref={listRef} className="lyra-agent-git-list" aria-label={labels.changes}>
+          <div ref={listRef} className={GIT_LIST_CLASS} aria-label={labels.changes}>
             {listBody}
           </div>
         )}
         {statusState.kind === "error" && snapshot !== null ? (
-          <AppStatusMessage className="lyra-agent-git-inline-state" tone="error">
+          <AppStatusMessage className={GIT_INLINE_STATE_CLASS} tone="error">
             {statusState.message}
           </AppStatusMessage>
         ) : null}
       </aside>
-      <main className="lyra-agent-git-main">
+      <main className={GIT_MAIN_CLASS}>
         <DiffPane labels={labels} diffState={diffState} />
       </main>
     </section>
