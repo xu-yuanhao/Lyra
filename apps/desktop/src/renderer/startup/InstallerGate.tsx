@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Folder, Volume2, VolumeX } from "@lyra/icons";
-import { AppButton } from "@renderer/ui/components";
+import { AppButton, Progress, ProgressIndicator } from "@renderer/ui/components";
 import { getDesktopApi } from "@workbench/shell/service";
 import type { ComponentUpdateProgress } from "../../shared/desktop-bridge";
 import { dismissLyraBootstrapScreen } from "./bootstrap-screen";
@@ -347,17 +347,15 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
           </AppButton>
         ) : null}
         <StartupTagline text={statusText} onHover={noop} onLeave={noop} />
-        <div
+        <Progress
           className={INSTALLER_PROGRESS_CLASS}
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={indeterminate ? undefined : Math.round((finished ? 1 : fraction) * 100)}
+          value={indeterminate ? null : Math.round((finished ? 1 : fraction) * 100)}
+          max={100}
           aria-label={cancelling ? "Cleanup progress" : "Install progress"}
         >
           <div className={INSTALLER_PROGRESS_TRACK_CLASS}>
-            <div
-              className={`${INSTALLER_PROGRESS_FILL_CLASS}${indeterminate ? " is-indeterminate" : ""}`}
+            <ProgressIndicator
+              className={INSTALLER_PROGRESS_FILL_CLASS}
               style={indeterminate ? undefined : { width: `${Math.round((finished ? 1 : fraction) * 100)}%` }}
             />
           </div>
@@ -365,7 +363,7 @@ export const InstallerGate = ({ onComplete }: InstallerGateProps) => {
             <span>{rateText}</span>
             <span>{percentText}</span>
           </div>
-        </div>
+        </Progress>
         {installPath.length > 0 ? (
           <AppButton
             variant="plain"

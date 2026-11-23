@@ -192,7 +192,7 @@ export const INSTALLER_PROGRESS_TRACK_CLASS =
   "lyra-installer-progress-track h-[var(--lyra-space-2)] rounded-[var(--lyra-space-2)] bg-[color-mix(in_srgb,var(--lyra-text-primary)_12%,transparent)] overflow-hidden";
 
 export const INSTALLER_PROGRESS_FILL_CLASS =
-  "lyra-installer-progress-fill h-full w-0 bg-[var(--lyra-text-primary)] rounded-[var(--lyra-space-2)] [&.is-indeterminate]:w-[32%] [&.is-indeterminate]:animate-[lyra-installer-indeterminate_1.2s_var(--lyra-ease-standard)_infinite] motion-reduce:[&.is-indeterminate]:animate-none motion-reduce:[&.is-indeterminate]:w-[40%]";
+  "lyra-installer-progress-fill h-full w-0 bg-[var(--lyra-text-primary)] rounded-[var(--lyra-space-2)] data-[state=indeterminate]:w-[32%] data-[state=indeterminate]:animate-[lyra-installer-indeterminate_1.2s_var(--lyra-ease-standard)_infinite] motion-reduce:data-[state=indeterminate]:animate-none motion-reduce:data-[state=indeterminate]:w-[40%]";
 
 export const INSTALLER_METRICS_CLASS =
   "lyra-installer-metrics flex justify-between mt-[var(--lyra-space-8)] text-[var(--lyra-text-muted)] text-[length:var(--lyra-text-size-caption)] leading-[var(--lyra-text-line-14)] min-h-[var(--lyra-space-14)]";

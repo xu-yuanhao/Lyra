@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Folder } from "@lyra/icons";
-import { AppButton, AppCheckbox } from "@renderer/ui/components";
+import { AppButton, AppCheckbox, Progress, ProgressIndicator } from "@renderer/ui/components";
 import { getDesktopApi } from "@workbench/shell/service";
 import type { ProductUninstallProgress } from "../../shared/desktop-bridge";
 import { dismissLyraBootstrapScreen } from "./bootstrap-screen";
@@ -137,17 +137,15 @@ export const UninstallerGate = () => {
         </div>
         <h1 className={STARTUP_BRAND_CLASS}>LYRA</h1>
         <StartupTagline text={statusText} onHover={noop} onLeave={noop} />
-        <div
+        <Progress
           className={INSTALLER_PROGRESS_CLASS}
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round((finished ? 1 : fraction) * 100)}
+          value={running && progress === null ? null : Math.round((finished ? 1 : fraction) * 100)}
+          max={100}
           aria-label="Uninstall progress"
         >
           <div className={INSTALLER_PROGRESS_TRACK_CLASS}>
-            <div
-              className={`${INSTALLER_PROGRESS_FILL_CLASS}${running && progress === null ? " is-indeterminate" : ""}`}
+            <ProgressIndicator
+              className={INSTALLER_PROGRESS_FILL_CLASS}
               style={running && progress === null
                 ? undefined
                 : { width: `${Math.round((finished ? 1 : fraction) * 100)}%` }}
@@ -157,7 +155,7 @@ export const UninstallerGate = () => {
             <span />
             <span>{percentText}</span>
           </div>
-        </div>
+        </Progress>
         {installPath.length > 0 ? (
           <AppButton
             variant="plain"

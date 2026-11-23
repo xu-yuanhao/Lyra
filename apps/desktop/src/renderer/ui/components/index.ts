@@ -75,6 +75,7 @@ export {
   AppPopoverTrigger,
   type AppPopoverContentProps
 } from "./app-popover";
+export { Progress, ProgressIndicator } from "./progress";
 export { AppSearchField, type AppSearchFieldProps } from "./app-search-field";
 export { AppShimmer, type AppShimmerProps } from "./app-shimmer";
 export {
