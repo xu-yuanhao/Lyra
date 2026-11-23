@@ -65,6 +65,32 @@ describe("ProblemsList", () => {
     expect(screen.queryByText("missing")).not.toBeInTheDocument();
   });
 
+  test("supports tree keyboard navigation", () => {
+    render(
+      <ProblemsList
+        items={[item]}
+        rootPath="/work/Lyra"
+        emptyLabel="No problems"
+        listLabel="Problems"
+        onOpenFile={vi.fn()}
+      />
+    );
+    const fileRow = screen.getByRole("treeitem", { name: /a\.ts/u });
+    const itemRow = screen.getByText("missing").closest('[role="treeitem"]');
+    expect(itemRow).not.toBeNull();
+    fileRow.focus();
+    fireEvent.keyDown(fileRow, { key: "ArrowDown" });
+    expect(itemRow).toHaveFocus();
+    fireEvent.keyDown(itemRow as HTMLElement, { key: "ArrowLeft" });
+    expect(fileRow).toHaveFocus();
+    fireEvent.keyDown(fileRow, { key: "ArrowRight" });
+    expect(itemRow).toHaveFocus();
+    fireEvent.keyDown(fileRow, { key: "ArrowLeft" });
+    expect(screen.queryByText("missing")).not.toBeInTheDocument();
+    fireEvent.keyDown(fileRow, { key: "ArrowRight" });
+    expect(screen.getByText("missing")).toBeInTheDocument();
+  });
+
   test("windows a large problems list instead of mounting every row", () => {
     const items = Array.from({ length: 200 }, (_, index) => ({
       ...item,
